@@ -335,7 +335,7 @@ body{
 .alloc-swatch{width:10px;height:10px;border-radius:3px;flex-shrink:0;}
 .alloc-name{flex:1;color:var(--text-dim);}
 .alloc-pct{font-family:var(--mono);color:var(--text);width:46px;text-align:right;}
-.alloc-amt{font-family:var(--mono);color:var(--text-faint);width:100px;text-align:right;font-size:11.5px;}
+.alloc-amt{font-family:var(--mono);color:var(--text);width:auto;text-align:right;font-size:12px;}
 
 /* ---------- settings ---------- */
 .settings-row{
@@ -1276,8 +1276,27 @@ function computeExpenseVerdict(data, d) {
   return { month: latest.month, income: latest.income, expense: latest.expense, savingsRate: latest.savingsRate, target, ok, avg3Expense, vsAvgPct };
 }
 
+function amtPct(amt, pct) {
+  return `${formatCompactWon(amt)}원 (${pct.toFixed(1)}%)`;
+}
+
+function pivotMonthToLedgerKey(m) {
+  const match = (m || '').match(/(\d{4})-(\d{1,2})월/);
+  if (!match) return null;
+  return `${match[1]}-${match[2].padStart(2, '0')}`;
+}
+
 function computeExpenseInsights(data, d) {
   const insights = [];
+  const v = computeExpenseVerdict(data, d);
+  if (v) {
+    const title = v.ok ? `${v.month} 지출, 잘 관리하고 있어요.` : `${v.month} 지출, 목표보다 빠듯했어요.`;
+    let body = `총 지출 ${formatWon(v.expense)} · 저축률 ${v.savingsRate.toFixed(1)}% (목표 ${v.target}%).`;
+    if (v.vsAvgPct !== null) {
+      body += v.vsAvgPct >= 0 ? ` 최근 3개월 평균보다 ${v.vsAvgPct.toFixed(0)}% 더 썼어요.` : ` 최근 3개월 평균보다 ${Math.abs(v.vsAvgPct).toFixed(0)}% 덜 썼어요.`;
+    }
+    insights.push({ type: v.ok ? 'good' : 'warn', html: `<b>${title}</b> ${body}` });
+  }
   const overspent = d.catNames
     .map(name => ({ name, latest: d.catLatest[name], avg: d.catAvg3[name] }))
     .filter(x => x.avg > 0 && x.latest > x.avg * 1.3)
@@ -1311,6 +1330,7 @@ const valueLabelPlugin = {
   id: 'valueLabelPlugin',
   afterDatasetsDraw(chart) {
     const { ctx } = chart;
+    const horizontal = chart.options && chart.options.indexAxis === 'y';
     chart.data.datasets.forEach((dataset, dsIndex) => {
       if (dataset.hideLabel) return;
       const meta = chart.getDatasetMeta(dsIndex);
@@ -1322,10 +1342,17 @@ const valueLabelPlugin = {
         ctx.save();
         ctx.font = "600 10px 'IBM Plex Mono', monospace";
         ctx.fillStyle = dataset.labelColor || '#c7cddb';
-        ctx.textAlign = 'center';
-        const isLine = chart.config.type === 'line' || dataset.type === 'line';
-        const offset = isLine ? -8 : (value >= 0 ? -6 : 14);
-        ctx.fillText(formatCompactWon(value), pos.x, pos.y + offset);
+        if (horizontal) {
+          ctx.textAlign = value >= 0 ? 'left' : 'right';
+          ctx.textBaseline = 'middle';
+          const offsetX = dataset.labelOffset !== undefined ? dataset.labelOffset : (value >= 0 ? 6 : -6);
+          ctx.fillText(formatCompactWon(value), pos.x + offsetX, pos.y);
+        } else {
+          ctx.textAlign = 'center';
+          const isLine = chart.config.type === 'line' || dataset.type === 'line';
+          const offset = dataset.labelOffset !== undefined ? dataset.labelOffset : (isLine ? -8 : (value >= 0 ? -6 : 14));
+          ctx.fillText(formatCompactWon(value), pos.x, pos.y + offset);
+        }
         ctx.restore();
       });
     });
@@ -1370,12 +1397,32 @@ function avgOf(values) {
   return nums.length ? nums.reduce((a, b) => a + b, 0) / nums.length : 0;
 }
 
-function avgLineDataset(values, label) {
+function avgLinePlugin(values, opts) {
+  opts = opts || {};
   const avg = avgOf(values);
   return {
-    type: 'line', label: label || '평균', data: values.map(() => avg),
-    borderColor: 'rgba(233,231,223,0.5)', borderDash: [5, 4], borderWidth: 1.5,
-    pointRadius: 0, hideLabel: true, order: 0
+    id: 'avgLinePlugin_' + Math.random().toString(36).slice(2),
+    afterDatasetsDraw(chart) {
+      const yScale = chart.scales.y;
+      const xScale = chart.scales.x;
+      if (!yScale || !xScale) return;
+      const yPixel = yScale.getPixelForValue(avg);
+      const ctx = chart.ctx;
+      ctx.save();
+      ctx.setLineDash([5, 4]);
+      ctx.strokeStyle = 'rgba(233,231,223,0.5)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(xScale.left, yPixel);
+      ctx.lineTo(xScale.right, yPixel);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.font = "600 10px 'IBM Plex Mono', monospace";
+      ctx.fillStyle = '#d7d3c4';
+      ctx.textAlign = 'left';
+      ctx.fillText(`평균 ${formatCompactWon(avg)}`, xScale.left + 4, yPixel - 5);
+      ctx.restore();
+    }
   };
 }
 
@@ -1394,6 +1441,13 @@ function legendWithValues(formatFn) {
       }
     }
   };
+}
+
+function paddedRange(values) {
+  const max = Math.max(0, ...values);
+  const min = Math.min(0, ...values);
+  const span = (max - min) || 1;
+  return { min: min === 0 ? 0 : min - span * 0.08, max: max + span * 0.22 };
 }
 
 const MONO_TICK = { color: '#9aa3b6', font: { family: 'IBM Plex Mono', size: 10 } };
@@ -1709,8 +1763,7 @@ function renderAllocation(d) {
         return `<div class="alloc-row">
           <span class="alloc-swatch" style="background:${DISPLAY_COLORS[cat] || '#888'}"></span>
           <span class="alloc-name">${cat}${cat === '저축' ? ' <span style="color:var(--text-faint);font-size:10px;">(저축+연금)</span>' : ''}</span>
-          <span class="alloc-pct">${pct.toFixed(1)}%</span>
-          <span class="alloc-amt">${formatCompactWon(amt)}원</span>
+          <span class="alloc-amt">${amtPct(amt, pct)}</span>
         </div>`;
       }).join('')}
     </div>
@@ -2035,10 +2088,16 @@ function renderIncomePage(container, data, d) {
       <div class="panel-title"><div><span class="eyebrow">TOTAL</span>월별 총수입 추이</div></div>
       <div class="chart-wrap tall"><canvas id="chart-income-total"></canvas></div>
     </div>
-    <div class="panel full">
-      <div class="panel-title"><div><span class="eyebrow">COMPOSITION</span>수입 구성 추이 (최근 12개월)</div></div>
-      <div class="chart-wrap tall"><canvas id="chart-income-comp"></canvas></div>
-      <div class="chart-legend" id="income-legend"></div>
+    <div class="grid">
+      <div class="panel">
+        <div class="panel-title"><div><span class="eyebrow">COMPOSITION</span>수입 구성 추이 (최근 12개월)</div></div>
+        <div class="chart-wrap tall"><canvas id="chart-income-comp"></canvas></div>
+        <div class="chart-legend" id="income-legend"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title"><div><span class="eyebrow">${latest ? latest.month : ''}</span>수입처 비중</div></div>
+        <div class="chart-wrap tall"><canvas id="chart-income-pie"></canvas></div>
+      </div>
     </div>
     <div class="panel full">
       <div class="panel-title"><div><span class="eyebrow">RECORDS</span>수입 내역</div></div>
@@ -2057,16 +2116,15 @@ function renderIncomePage(container, data, d) {
     data: {
       labels: totalSeries.map(s => pivotMonthLabel(s.month)),
       datasets: [
-        { type: 'bar', label: '수입', data: totalSeries.map(s => s.total), backgroundColor: 'rgba(76,140,107,0.75)', borderRadius: 3, labelColor: '#c7e4d4' },
-        avgLineDataset(totalSeries.map(s => s.total))
+        { type: 'bar', label: '수입', data: totalSeries.map(s => s.total), backgroundColor: 'rgba(76,140,107,0.75)', borderRadius: 3, labelColor: '#c7e4d4' }
       ]
     },
     options: {
       responsive: true, maintainAspectRatio: false, layout: { padding: { top: 18 } },
-      plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => c.dataset.label === '평균' ? ` 평균: ${formatWon(c.dataset._avgValue)}` : ` ${formatWon(c.raw)}` } } },
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` ${formatWon(c.raw)}` } } },
       scales: { x: { ticks: MONO_TICK, grid: { display: false } }, y: { ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT } }
     },
-    plugins: [valueLabelPlugin]
+    plugins: [valueLabelPlugin, avgLinePlugin(totalSeries.map(s => s.total))]
   });
 
   const catNames = Object.keys(data.incomeCategories);
@@ -2090,6 +2148,15 @@ function renderIncomePage(container, data, d) {
     plugins: [stackTotalLabelPlugin]
   });
 
+  const pieIdx = d.latestPivotIdx;
+  const pieRows = catNames.map(name => ({ name, v: (data.incomeCategories[name] || [])[pieIdx] || 0 })).filter(r => r.v > 0);
+  const pieCtx = document.getElementById('chart-income-pie');
+  state.charts.incomePie = new Chart(pieCtx, {
+    type: 'doughnut',
+    data: { labels: pieRows.map(r => r.name), datasets: [{ data: pieRows.map(r => r.v), backgroundColor: pieRows.map((_, i) => palette[i % palette.length]), borderColor: '#171e2b', borderWidth: 2 }] },
+    options: { responsive: true, maintainAspectRatio: false, cutout: '55%', plugins: { legend: legendWithValues(), tooltip: { callbacks: { label: (c) => ` ${c.label}: ${formatCompactWon(c.raw)}원` } } } }
+  });
+
   renderAdvancedTable('income-table', incomeLedger, { majorOptions: [['수입', '전체']], defaultGroup: 'none' });
 }
 
@@ -2101,24 +2168,41 @@ function renderExpensePage(container, data, d) {
   const insights = computeExpenseInsights(data, d);
   const verdict = computeExpenseVerdict(data, d);
 
+  const fixedTrend = getFixedMonthlyTrend(data.ledger);
+  const thisMonthFixed = fixedTrend.length ? fixedTrend[fixedTrend.length - 1].total : 0;
+  const avg3Fixed = avgOf(fixedTrend.slice(-4, -1).map(t => t.total));
+
+  const catRows = d.catNames.map(name => ({ name, latest: d.catLatest[name] })).sort((a, b) => b.latest - a.latest);
+  const topCat = catRows[0];
+  const topCatPct = (topCat && verdict && verdict.expense) ? (topCat.latest / verdict.expense) * 100 : 0;
+
+  const latestKey = pivotMonthToLedgerKey(data.months[d.latestPivotIdx]);
+  const topExpenses = expenseLedger.filter(r => ledgerMonthKey(r.date) === latestKey).sort((a, b) => b.amount - a.amount).slice(0, 10);
+
   container.innerHTML = `
     <div class="grid-top">
       <div class="stat-grid">
-        <div class="stat-card"><div class="label">${verdict ? verdict.month : ''} 지출</div><div class="value" style="color:var(--red)">${formatCompactWon(verdict ? verdict.expense : 0)}원</div>
-          ${verdict && verdict.vsAvgPct !== null ? `<div class="sub ${verdict.vsAvgPct <= 0 ? 'up' : 'down'}">${verdict.vsAvgPct >= 0 ? '▲' : '▼'} 최근 3개월 평균 대비 ${Math.abs(verdict.vsAvgPct).toFixed(0)}%</div>` : ''}</div>
-        <div class="stat-card"><div class="label">최근 3개월 평균 지출</div><div class="value">${formatCompactWon(verdict ? verdict.avg3Expense : 0)}원</div></div>
+        <div class="stat-card"><div class="label">${verdict ? verdict.month : ''} 지출</div><div class="value" style="color:var(--red)">${formatCompactWon(verdict ? verdict.expense : 0)}원</div></div>
+        <div class="stat-card"><div class="label">3개월 평균 지출</div><div class="value">${formatCompactWon(verdict ? verdict.avg3Expense : 0)}원</div></div>
+        <div class="stat-card"><div class="label">이번 달 고정비</div><div class="value">${formatCompactWon(thisMonthFixed)}원</div></div>
+        <div class="stat-card"><div class="label">3개월 평균 고정비</div><div class="value">${formatCompactWon(avg3Fixed)}원</div></div>
+        <div class="stat-card"><div class="label">최대 비중 카테고리</div><div class="value" style="font-size:16px;">${topCat ? topCat.name : '—'}</div><div class="sub">${topCat ? amtPct(topCat.latest, topCatPct) : ''}</div></div>
       </div>
       <div class="panel" id="panel-expense-insights"></div>
     </div>
-    <div class="panel full" id="panel-expense-verdict"></div>
     <div class="panel full">
       <div class="panel-title"><div><span class="eyebrow">TREND</span>월별 총지출 추이</div></div>
       <div class="chart-wrap tall"><canvas id="chart-expense-trend"></canvas></div>
     </div>
     <div class="panel full" id="panel-cat-budget"></div>
     <div class="panel full">
-      <div class="panel-title"><div><span class="eyebrow">SPENDING</span>이번 달 카테고리 비중</div></div>
-      <div class="chart-wrap" style="height:220px;"><canvas id="chart-expense-pie"></canvas></div>
+      <div class="panel-title"><div><span class="eyebrow">TOP 10</span>이번 달 주요 지출 내역</div></div>
+      <div class="table-scroll">
+        <table class="data-table">
+          <thead><tr><th>날짜</th><th>소분류</th><th>항목</th><th>사용처</th><th style="text-align:right">금액</th></tr></thead>
+          <tbody>${topExpenses.length ? topExpenses.map(r => `<tr><td>${r.date}</td><td>${r.minor}</td><td>${r.item}</td><td>${r.vendor || ''}</td><td class="amt expense">${formatWon(r.amount)}</td></tr>`).join('') : '<tr><td colspan="5" style="text-align:center;color:var(--text-faint);padding:20px;">이번 달 지출 내역이 없어요.</td></tr>'}</tbody>
+        </table>
+      </div>
     </div>
     <div class="panel full">
       <div class="panel-title"><div><span class="eyebrow">RECORDS</span>지출 내역</div></div>
@@ -2127,7 +2211,6 @@ function renderExpensePage(container, data, d) {
     <div class="panel full" id="panel-fixed-costs"></div>
   `;
 
-  renderExpenseVerdict(data, d);
   document.getElementById('panel-expense-insights').innerHTML = `
     <div class="panel-title"><div><span class="eyebrow">GUIDE</span>지출 인사이트</div></div>
     ${insights.map(i => `<div class="insight ${i.type}"><span class="dot"></span><span>${i.html}</span></div>`).join('') || '<div class="empty-state">표시할 인사이트가 없어요.</div>'}
@@ -2139,35 +2222,20 @@ function renderExpensePage(container, data, d) {
     data: {
       labels: series.map(s => pivotMonthLabel(s.month)),
       datasets: [
-        { type: 'bar', label: '지출', data: series.map(s => s.expense), backgroundColor: 'rgba(193,72,63,0.75)', borderRadius: 3, labelColor: '#f0c4c0' },
-        avgLineDataset(series.map(s => s.expense))
+        { type: 'bar', label: '지출', data: series.map(s => s.expense), backgroundColor: 'rgba(193,72,63,0.75)', borderRadius: 3, labelColor: '#f0c4c0' }
       ]
     },
     options: {
       responsive: true, maintainAspectRatio: false, layout: { padding: { top: 18 } },
-      plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => c.dataset.label === '평균' ? ` 평균: ${formatWon(c.dataset._avgValue)}` : ` ${formatWon(c.raw)}` } } },
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` ${formatWon(c.raw)}` } } },
       scales: { x: { ticks: MONO_TICK, grid: { display: false } }, y: { ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT } }
     },
-    plugins: [valueLabelPlugin]
+    plugins: [valueLabelPlugin, avgLinePlugin(series.map(s => s.expense))]
   });
 
   renderCategoryBudgetPanel(data, d);
-  renderExpensePie(data, d);
   renderAdvancedTable('expense-table', expenseLedger, { majorOptions: [['지출', '전체']], defaultGroup: 'none' });
   renderFixedCostsPanel(data);
-}
-
-function renderExpenseVerdict(data, d) {
-  const v = computeExpenseVerdict(data, d);
-  const box = document.getElementById('panel-expense-verdict');
-  if (!v) { box.innerHTML = ''; return; }
-  const cls = v.ok ? 'good' : 'warn';
-  const title = v.ok ? `${v.month} 지출, 잘 관리하고 있어요` : `${v.month} 지출, 목표보다 빠듯했어요`;
-  let body = `총 지출 <b>${formatWon(v.expense)}</b> · 저축률 <b>${v.savingsRate.toFixed(1)}%</b> (목표 ${v.target}%). `;
-  if (v.vsAvgPct !== null) {
-    body += v.vsAvgPct >= 0 ? `최근 3개월 평균보다 <b>${v.vsAvgPct.toFixed(0)}%</b> 더 썼어요.` : `최근 3개월 평균보다 <b>${Math.abs(v.vsAvgPct).toFixed(0)}%</b> 덜 썼어요.`;
-  }
-  box.innerHTML = `<div class="callout ${cls}"><div class="callout-title">${title}</div><div class="callout-body">${body}</div></div>`;
 }
 
 function renderCategoryBudgetPanel(data, d) {
@@ -2186,6 +2254,7 @@ function renderCategoryBudgetPanel(data, d) {
     return { name, cur, guide };
   }).filter(r => r.cur > 0 || r.guide > 0).sort((a, b) => b.cur - a.cur);
   const maxVal = Math.max(...rows.map(r => Math.max(r.cur, r.guide)), 1);
+  const monthTotal = rows.reduce((a, r) => a + r.cur, 0);
 
   panel.innerHTML = `
     <div class="panel-title">
@@ -2199,55 +2268,29 @@ function renderCategoryBudgetPanel(data, d) {
     ${rows.map(r => {
       const over = r.guide > 0 && r.cur > r.guide * 1.15;
       const pct = (r.cur / maxVal) * 100;
+      const shareOfTotal = monthTotal ? (r.cur / monthTotal) * 100 : 0;
       return `<div class="cat-row ${over ? 'over' : ''}">
         <div class="cat-row-top"><span>${r.name}${over ? '<span class="cat-tag">가이드 초과</span>' : ''}</span>
-        <span class="amt">${formatCompactWon(r.cur)}원 <span style="color:var(--text-faint)">/ 가이드 ${formatCompactWon(r.guide)}원</span></span></div>
+        <span class="amt">${amtPct(r.cur, shareOfTotal)} <span style="color:var(--text-faint)">/ 가이드 ${formatCompactWon(r.guide)}원</span></span></div>
         <div class="cat-bar-track"><div class="cat-bar-fill" style="width:${pct}%"></div></div>
       </div>`;
     }).join('') || '<div class="empty-state">해당 월 데이터가 없어요.</div>'}
-    <div class="settings-note">가이드는 선택한 월 직전 3개월 평균 지출이에요 (공식 예산이 아니라 참고용). "공략 지출"(외식·카페·그외) 하루 예산은 아래 고정비 위 인사이트에서 확인하세요.</div>
+    <div class="settings-note">가이드는 선택한 월 직전 3개월 평균 지출이에요 (공식 예산이 아니라 참고용). 괄호 안 %는 해당 월 전체 지출 대비 비중이에요.</div>
   `;
   document.getElementById('cat-budget-prev').addEventListener('click', () => { state.expenseMonthIdx = Math.max(0, idx - 1); renderCategoryBudgetPanel(data, d); });
   document.getElementById('cat-budget-next').addEventListener('click', () => { state.expenseMonthIdx = Math.min(data.months.length - 1, idx + 1); renderCategoryBudgetPanel(data, d); });
-}
-
-function renderExpensePie(data, d) {
-  const rows = d.catNames.map(name => ({ name, latest: d.catLatest[name] })).filter(r => r.latest > 0).sort((a, b) => b.latest - a.latest);
-  const ctx = document.getElementById('chart-expense-pie');
-  state.charts.expensePie = new Chart(ctx, {
-    type: 'doughnut',
-    data: { labels: rows.map(r => r.name), datasets: [{ data: rows.map(r => r.latest), backgroundColor: rows.map((_, i) => CAT_PIE_PALETTE[i % CAT_PIE_PALETTE.length]), borderColor: '#171e2b', borderWidth: 2 }] },
-    options: { responsive: true, maintainAspectRatio: false, cutout: '55%', plugins: { legend: legendWithValues(), tooltip: { callbacks: { label: (c) => ` ${c.label}: ${formatCompactWon(c.raw)}원` } } } }
-  });
 }
 
 /* ---------------- 고정비 관리 ---------------- */
 
 function renderFixedCostsPanel(data) {
   const panel = document.getElementById('panel-fixed-costs');
-  const items = getFixedItems(data.ledger);
   const trend = getFixedMonthlyTrend(data.ledger);
-  const totalMonthly = items.reduce((a, it) => a + it.latestAmount, 0);
-  const monthKey = currentMonthKey();
-  const fixedLedger = data.ledger.filter(r => r.fixed && r.major.includes('지출'));
+  const totalMonthly = trend.length ? trend[trend.length - 1].total : 0;
 
   panel.innerHTML = `
-    <div class="panel-title"><div><span class="eyebrow">FIXED COSTS</span>고정비 관리</div><span style="font-family:var(--mono);font-size:12px;color:var(--text-dim)">월 합계 약 ${formatCompactWon(totalMonthly)}원 · ${items.length}건</span></div>
-    ${trend.length ? `<div class="chart-wrap" style="height:150px;"><canvas id="chart-fixed-trend"></canvas></div>` : ''}
-    <div class="settings-note" style="margin:10px 0;">이번 달 결제 여부를 체크해두면 다음에 열었을 때도 그대로 남아있어요 (이 브라우저에만 저장돼요).</div>
-    <div id="fixed-checklist">
-      ${items.map((it, i) => `
-        <div class="settings-row" data-fixed-idx="${i}">
-          <label style="display:flex;align-items:center;gap:8px;flex:1;">
-            <input type="checkbox" class="fixed-check" data-key="${it.item}|${it.vendor}" style="width:16px;height:16px;" />
-            <span>${it.item}${it.vendor ? ` <span style="color:var(--text-faint)">(${it.vendor})</span>` : ''}<div class="acct-cat">최근 결제 ${it.latestDate} · 총 ${it.count}회</div></span>
-          </label>
-          <span style="font-family:var(--mono);font-size:13px;">${formatWon(it.latestAmount)}</span>
-        </div>
-      `).join('') || '<div class="empty-state">"고정비" 태그가 붙은 지출이 아직 없어요.</div>'}
-    </div>
-    <div class="panel-title" style="margin-top:18px;"><div><span class="eyebrow">HISTORY</span>고정비 전체 내역</div></div>
-    <div id="fixed-history-table"></div>
+    <div class="panel-title"><div><span class="eyebrow">FIXED COSTS</span>고정비 추이</div><span style="font-family:var(--mono);font-size:12px;color:var(--text-dim)">최근 월 합계 ${formatCompactWon(totalMonthly)}원</span></div>
+    ${trend.length ? `<div class="chart-wrap tall"><canvas id="chart-fixed-trend"></canvas></div>` : '<div class="empty-state">"고정비" 태그가 붙은 지출이 아직 없어요.</div>'}
   `;
 
   if (trend.length) {
@@ -2257,8 +2300,7 @@ function renderFixedCostsPanel(data) {
       data: {
         labels: series.map(s => s.month),
         datasets: [
-          { type: 'bar', data: series.map(s => s.total), backgroundColor: 'rgba(201,162,39,0.75)', borderRadius: 3, labelColor: '#e9dba8' },
-          avgLineDataset(series.map(s => s.total))
+          { type: 'bar', data: series.map(s => s.total), backgroundColor: 'rgba(201,162,39,0.75)', borderRadius: 3, labelColor: '#e9dba8' }
         ]
       },
       options: {
@@ -2266,22 +2308,9 @@ function renderFixedCostsPanel(data) {
         plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` ${formatWon(c.raw)}` } } },
         scales: { x: { ticks: MONO_TICK, grid: { display: false } }, y: { ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT } }
       },
-      plugins: [valueLabelPlugin]
+      plugins: [valueLabelPlugin, avgLinePlugin(series.map(s => s.total))]
     });
   }
-
-  loadFixedChecklist(monthKey).then(saved => {
-    document.querySelectorAll('.fixed-check').forEach(cb => {
-      const key = cb.dataset.key;
-      cb.checked = !!saved[key];
-      cb.addEventListener('change', () => {
-        saved[cb.dataset.key] = cb.checked;
-        saveFixedChecklist(monthKey, saved);
-      });
-    });
-  });
-
-  renderAdvancedTable('fixed-history-table', fixedLedger, { majorOptions: [['지출', '전체']], defaultGroup: 'category', pageSize: 20 });
 }
 
 /* ---------------- page: 투자 ---------------- */
@@ -2386,8 +2415,7 @@ function renderInvestmentPage(container, data, d) {
           return `<div class="acct-row">
             <span class="alloc-swatch" style="background:#4c8c6b"></span>
             <span class="acct-name">${name}</span>
-            <span class="alloc-pct" style="width:44px;">${pct.toFixed(1)}%</span>
-            <span class="acct-amt">${formatWon(v.amount)}</span>
+            <span class="acct-amt">${amtPct(v.amount, pct)}</span>
           </div>`;
         }).join('') || '<div class="empty-state">계좌 데이터가 없어요.</div>'}
       </div>
@@ -2434,12 +2462,12 @@ function renderInvestmentPage(container, data, d) {
     data: {
       labels: months.map(assetMonthLabel),
       datasets: [
-        { label: '평가액', data: cumSeries.map(s => s.balance), borderColor: '#4c8c6b', backgroundColor: 'rgba(76,140,107,0.12)', fill: true, tension: 0.3, pointRadius: 2, labelColor: '#c7e4d4' },
-        { label: '누적 원금', data: cumSeries.map(s => s.cumContribution), borderColor: '#e0c766', backgroundColor: 'transparent', borderDash: [5, 4], tension: 0.3, pointRadius: 2, hideLabel: true }
+        { label: '평가액', data: cumSeries.map(s => s.balance), borderColor: '#4c8c6b', backgroundColor: 'rgba(76,140,107,0.12)', fill: true, tension: 0.3, pointRadius: 2, labelColor: '#c7e4d4', labelOffset: -20 },
+        { label: '누적 원금', data: cumSeries.map(s => s.cumContribution), borderColor: '#e0c766', backgroundColor: 'transparent', borderDash: [5, 4], tension: 0.3, pointRadius: 2, labelColor: '#efdfa0', labelOffset: 14 }
       ]
     },
     options: {
-      responsive: true, maintainAspectRatio: false, layout: { padding: { top: 18 } },
+      responsive: true, maintainAspectRatio: false, layout: { padding: { top: 26 } },
       plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` ${c.dataset.label}: ${formatWon(c.raw)}` } } },
       scales: { x: { ticks: MONO_TICK, grid: { display: false } }, y: { ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT } }
     },
@@ -2447,27 +2475,27 @@ function renderInvestmentPage(container, data, d) {
   });
 
   const monthsSlice = data.months.slice(-12);
+  const contribValues = (data.transferCategories['투자 자산'] || []).slice(-12).map(v => v || 0);
   const contribCtx = document.getElementById('chart-inv-contrib');
   state.charts.invContrib = new Chart(contribCtx, {
     data: {
       labels: monthsSlice.map(pivotMonthLabel),
       datasets: [
-        { type: 'bar', label: '투자 이체', data: (data.transferCategories['투자 자산'] || []).slice(-12).map(v => v || 0), backgroundColor: 'rgba(76,140,107,0.75)', borderRadius: 3, labelColor: '#c7e4d4' },
-        avgLineDataset((data.transferCategories['투자 자산'] || []).slice(-12).map(v => v || 0))
+        { type: 'bar', label: '투자 이체', data: contribValues, backgroundColor: 'rgba(76,140,107,0.75)', borderRadius: 3, labelColor: '#c7e4d4' }
       ]
     },
     options: {
-      responsive: true, maintainAspectRatio: false, layout: { padding: { top: 16 } },
-      plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => c.dataset.label === '평균' ? ` 평균: ${formatWon(c.dataset._avgValue)}` : ` ${formatWon(c.raw)}` } } },
+      responsive: true, maintainAspectRatio: false, layout: { padding: { top: 18 } },
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` ${formatWon(c.raw)}` } } },
       scales: { x: { ticks: MONO_TICK, grid: { display: false } }, y: { ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT } }
     },
-    plugins: [valueLabelPlugin]
+    plugins: [valueLabelPlugin, avgLinePlugin(contribValues)]
   });
 
   const returnsData = getInvestmentIncomeMonthly(data.ledger);
   const returnsPalette = ['#e0c766', '#4c8c6b', '#5b8fc7', '#9b7fc2', '#c1483f'];
   document.getElementById('inv-returns-legend').innerHTML = returnsData.items.map((n, i) => `<span><i style="background:${returnsPalette[i % returnsPalette.length]}"></i>${n}</span>`).join('');
-  const returnsMonths = returnsData.months.slice(-18);
+  const returnsMonths = returnsData.months;
   const returnsCtx = document.getElementById('chart-inv-returns');
   state.charts.invReturns = new Chart(returnsCtx, {
     type: 'bar',
@@ -2486,13 +2514,14 @@ function renderInvestmentPage(container, data, d) {
   if (hasTags) {
     const tagCtx = document.getElementById('chart-tag-profit');
     const tagTop = tagAgg.slice(0, 12);
+    const tagRange = paddedRange(tagTop.map(t => t[1]));
     state.charts.tagProfit = new Chart(tagCtx, {
       type: 'bar',
       data: { labels: tagTop.map(t => t[0]), datasets: [{ data: tagTop.map(t => t[1]), backgroundColor: tagTop.map(t => t[1] >= 0 ? 'rgba(76,140,107,0.8)' : 'rgba(193,72,63,0.8)'), borderRadius: 3 }] },
       options: {
-        indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+        indexAxis: 'y', responsive: true, maintainAspectRatio: false, layout: { padding: { right: 46 } },
         plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` ${formatWon(c.raw)}` } } },
-        scales: { x: { ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT }, y: { ticks: MONO_TICK, grid: { display: false } } }
+        scales: { x: { min: tagRange.min, max: tagRange.max, ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT }, y: { ticks: MONO_TICK, grid: { display: false } } }
       },
       plugins: [valueLabelPlugin]
     });
@@ -2501,14 +2530,15 @@ function renderInvestmentPage(container, data, d) {
     `).join('') || '<div class="empty-state">태그 데이터가 없어요.</div>';
   }
 
+  const stockRange = paddedRange(stockProfitFiltered.map(s => s[1]));
   const stockCtx = document.getElementById('chart-stock-profit');
   state.charts.stockProfit = new Chart(stockCtx, {
     type: 'bar',
     data: { labels: stockProfitFiltered.map(s => s[0]), datasets: [{ data: stockProfitFiltered.map(s => s[1]), backgroundColor: stockProfitFiltered.map(s => s[1] >= 0 ? 'rgba(76,140,107,0.8)' : 'rgba(193,72,63,0.8)'), borderRadius: 3 }] },
     options: {
-      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false, layout: { padding: { right: 46 } },
       plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` ${formatWon(c.raw)}` } } },
-      scales: { x: { ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT }, y: { ticks: MONO_TICK, grid: { display: false } } }
+      scales: { x: { min: stockRange.min, max: stockRange.max, ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT }, y: { ticks: MONO_TICK, grid: { display: false } } }
     },
     plugins: [valueLabelPlugin]
   });
@@ -2604,8 +2634,7 @@ function renderSavingsPage(container, data, d) {
           return `<div class="acct-row">
             <span class="alloc-swatch" style="background:${v.category === '저축 자산' ? '#5b8fc7' : '#9b7fc2'}"></span>
             <span class="acct-name">${name}<div class="acct-cat">${v.category}</div></span>
-            <span class="alloc-pct" style="width:44px;">${pct.toFixed(1)}%</span>
-            <span class="acct-amt">${formatWon(v.amount)}</span>
+            <span class="acct-amt">${amtPct(v.amount, pct)}</span>
           </div>`;
         }).join('') || '<div class="empty-state">계좌 데이터가 없어요.</div>'}
       </div>
