@@ -550,9 +550,13 @@ const SNAPSHOT_DATA = {"months": ["2023-1월", "2023-2월", "2023-3월", "2023-4
    ========================================================= */
 
 const SPREADSHEET_ID = '1tT7p4brwpOZyGojQfxyUb1WHNiDXn-6uH4I7B4oUMPA';
-const GID = '1990449957';
-const CSV_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&gid=${GID}`;
-const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/edit?gid=${GID}#gid=${GID}`;
+const GID_LEDGER_D = '1990449957';   // 가계부(D) - raw daily transaction ledger
+const GID_LEDGER_M = '1708600025';   // 가계부(M) - monthly category pivot summary
+const GID_ASSETS = '1458451221';     // 자산 스냅샷 - monthly asset balances
+const GID_REVIEW = '1412409776';     // 월간 리뷰 - Monthly Review panel
+const TAB_GIDS = [GID_LEDGER_D, GID_LEDGER_M, GID_ASSETS, GID_REVIEW];
+const csvUrlFor = (gid) => `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&gid=${gid}`;
+const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/edit?gid=${GID_LEDGER_D}#gid=${GID_LEDGER_D}`;
 
 const CAT_COLORS = {
   '현금 자산': '#c9a227',
@@ -1514,20 +1518,29 @@ function renderShell() {
 function renderBanner() {
   const slot = document.getElementById('banner-slot');
   if (!slot) return;
+  const tabLabels = { [GID_LEDGER_D]: '가계부(D)', [GID_LEDGER_M]: '가계부(M)', [GID_ASSETS]: '자산 스냅샷', [GID_REVIEW]: '월간 리뷰' };
+  const testLinks = TAB_GIDS.map(g => `<a href="${csvUrlFor(g)}" target="_blank" rel="noopener" style="color:var(--gold-soft);">${tabLabels[g]}</a>`).join(' · ');
+
   if (state.source === 'snapshot' && state.lastError) {
-    const isNetworkFail = /failed to fetch/i.test(state.lastError);
+    const isNetworkFail = /failed to fetch|시트 접근/i.test(state.lastError);
     slot.innerHTML = `
       <div class="banner err" style="align-items:flex-start;">
         <span>
           ⚠ 실시간 데이터를 불러오지 못해 저장된 스냅샷을 보여주고 있어요. (${state.lastError})
           ${isNetworkFail ? `
           <div style="margin-top:8px;font-size:12px;line-height:1.7;">
-            1) 시트 우측 상단 <b>공유</b> → 일반 액세스를 <b>"링크가 있는 모든 사용자"</b> + 권한 <b>"뷰어"</b>로 설정<br/>
-            2) 시크릿 창(로그인 안 한 상태)에서 아래 링크가 로그인 없이 바로 CSV로 다운로드되는지 확인:<br/>
-            <a href="${CSV_URL}" target="_blank" rel="noopener" style="color:var(--gold-soft);word-break:break-all;">${CSV_URL}</a><br/>
-            로그인 화면이 뜨면 아직 공유 설정이 비공개라는 뜻이에요.
-          </div>` : ''}
+            1) 4개 탭 모두 <b>공유</b> → 일반 액세스를 <b>"링크가 있는 모든 사용자"</b> + 권한 <b>"뷰어"</b>로 설정 (탭마다 따로 안 해도 문서 전체 공유 설정 하나면 돼요)<br/>
+            2) 시크릿 창(로그인 안 한 상태)에서 아래 탭별 링크가 로그인 없이 CSV로 열리는지 확인: ${testLinks}<br/>
+            로그인 화면이 뜨는 탭이 있으면 그게 원인이에요.
+          </div>` : `<div style="margin-top:6px;font-size:12px;">탭별 확인: ${testLinks}</div>`}
         </span>
+        <button class="btn small" id="retry-btn" style="margin-left:auto;flex-shrink:0;">다시 시도</button>
+      </div>`;
+    document.getElementById('retry-btn').addEventListener('click', () => fetchLive(true));
+  } else if (state.source === 'live' && state.lastError) {
+    slot.innerHTML = `
+      <div class="banner" style="align-items:flex-start;">
+        <span>ℹ️ ${state.lastError}</span>
         <button class="btn small" id="retry-btn" style="margin-left:auto;flex-shrink:0;">다시 시도</button>
       </div>`;
     document.getElementById('retry-btn').addEventListener('click', () => fetchLive(true));
@@ -2717,17 +2730,67 @@ async function saveGoals() {
 
 /* ---------------- fetch & init ---------------- */
 
+async function fetchCsvRows(gid) {
+  const res = await fetch(csvUrlFor(gid), { cache: 'no-store' });
+  if (!res.ok) throw new Error(`HTTP ${res.status} (gid ${gid})`);
+  const text = await res.text();
+  if (text.trim().startsWith('<')) throw new Error(`시트 접근 권한이 없어요 (gid ${gid})`);
+  const parsed = Papa.parse(text, { skipEmptyLines: false });
+  return parsed.data.map(r => r.map(c => (c === null || c === undefined) ? '' : String(c)));
+}
+
+async function fetchAllTabsAndMerge() {
+  const results = await Promise.allSettled(TAB_GIDS.map(fetchCsvRows));
+  const failures = results.filter(r => r.status === 'rejected');
+  const rowSets = results.filter(r => r.status === 'fulfilled').map(r => r.value);
+  if (rowSets.length === 0) {
+    throw new Error(failures[0] ? failures[0].reason.message : '탭을 하나도 불러오지 못했어요');
+  }
+
+  let pivot = null, review = null;
+  let assetRows = [], ledger = [], investmentTags = [];
+  for (const rows of rowSets) {
+    if (!pivot) { try { const p = parsePivotFromRows(rows); if (p.incomeTotal && p.expenseTotal) pivot = p; } catch (e) {} }
+    try {
+      const ar = parseAssetsFromRows(rows);
+      if (ar.length > assetRows.length) assetRows = ar;
+    } catch (e) {}
+    try {
+      const rv = parseReviewFromRows(rows);
+      if (rv.items && rv.items.length && (!review || rv.items.length > review.items.length)) review = rv;
+    } catch (e) {}
+    try {
+      const lg = parseLedgerFromRows(rows);
+      if (lg.length > ledger.length) ledger = lg;
+    } catch (e) {}
+    try {
+      const tags = parseInvestmentTagsFromRows(rows);
+      if (tags.length > investmentTags.length) investmentTags = tags;
+    } catch (e) {}
+  }
+
+  if (!pivot) throw new Error('카테고리 요약표를 찾지 못했습니다 (가계부(M) 탭 확인 필요)');
+  if (assetRows.length < 5) throw new Error('자산 현황표를 찾지 못했습니다 (자산 스냅샷 탭 확인 필요)');
+
+  const data = {
+    months: pivot.months, incomeTotal: pivot.incomeTotal, expenseTotal: pivot.expenseTotal,
+    expenseCategories: pivot.expenseCategories, incomeCategories: pivot.incomeCategories, transferCategories: pivot.transferCategories,
+    assetRows, review: review || { reviewMonth: null, achievement: null, items: [] }, ledger, investmentTags
+  };
+
+  if (failures.length) {
+    data._partialWarning = `${failures.length}개 탭을 못 불러왔지만(${failures.map(f => f.reason.message).join(', ')}), 나머지 데이터로 표시 중이에요.`;
+  }
+  return data;
+}
+
 async function fetchLive(manual) {
   setSyncState('loading');
   try {
-    const res = await fetch(CSV_URL, { cache: 'no-store' });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const text = await res.text();
-    if (text.trim().startsWith('<')) throw new Error('시트 접근 권한이 없어요');
-    const parsed = parseAllFromCsv(text);
-    state.data = parsed;
+    const data = await fetchAllTabsAndMerge();
+    state.data = data;
     state.source = 'live';
-    state.lastError = null;
+    state.lastError = data._partialWarning || null;
     state.lastSync = new Date();
     if (state.goalsAreSuggested) {
       const d0 = computeDerived(state.data);
