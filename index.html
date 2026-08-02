@@ -455,6 +455,29 @@ body{
 .acct-cat{font-family:var(--mono);font-size:10px;color:var(--text-faint);}
 .acct-amt{font-family:var(--mono);color:var(--text);}
 
+/* ---------- gauge ---------- */
+.gauge-wrap{position:relative;height:150px;margin-top:4px;}
+.gauge-wrap canvas{width:100% !important;height:100% !important;}
+.gauge-label{
+  position:absolute;left:0;right:0;top:60%;text-align:center;pointer-events:none;
+}
+.gauge-value{font-family:var(--serif);font-weight:800;font-size:26px;}
+.gauge-target{font-family:var(--mono);font-size:11px;color:var(--text-dim);margin-top:2px;}
+
+/* ---------- category flex (pie + bars) ---------- */
+.cat-flex{display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start;}
+.cat-flex .pie-col{width:200px;flex-shrink:0;}
+.cat-flex .bars-col{flex:1;min-width:220px;}
+@media (max-width:600px){
+  .cat-flex .pie-col{width:100%;}
+}
+
+/* ---------- 3-column grid variant (home allocation/trend/gauge row) ---------- */
+.grid-3{grid-template-columns:1fr 1fr 1fr;}
+@media (max-width:820px){
+  .grid-3{grid-template-columns:1fr;}
+}
+
 </style>
 </head>
 <body>
@@ -487,6 +510,7 @@ const state = {
   lastSync: null,
   lastError: null,
   goals: { savingsRateTarget: 40, emergencyFundTarget: 5000000 },
+  goalsAreSuggested: true,
   range: 12,
   page: 'home',
   ledgerFilter: { q: '', major: 'all', page: 1, pageSize: 50 },
@@ -806,14 +830,80 @@ function computeDerived(data) {
     catAvg3[name] = window3.reduce((a, b) => a + b, 0) / 3;
   });
 
+  const cashByKey = {};
+  data.months.forEach((m, i) => {
+    cashByKey[pivotMonthKey(m)] = { income: data.incomeTotal[i] || 0, expense: data.expenseTotal[i] || 0 };
+  });
+  const decomposition = [];
+  for (let i = 1; i < assetMonths.length; i++) {
+    const curM = assetMonths[i], prevM = assetMonths[i - 1];
+    const totalDelta = byMonth[curM] - byMonth[prevM];
+    const cf = cashByKey[assetMonthKey(curM)];
+    const netSavings = cf ? (cf.income - cf.expense) : null;
+    const marketOther = netSavings !== null ? totalDelta - netSavings : null;
+    decomposition.push({ month: curM, label: assetMonthLabel(curM), totalDelta, netSavings, marketOther });
+  }
+
   return {
     byMonth, assetMonths, latestMonth, prevMonth, totalAssets, prevTotalAssets, deltaAssets, deltaPct,
-    allocation, cashLike, cashflow, catNames, catLatest, catAvg3, latestPivotIdx
+    allocation, cashLike, cashflow, catNames, catLatest, catAvg3, latestPivotIdx, decomposition
   };
+}
+
+function daysInMonthFromLabel(label) {
+  const m = (label || '').match(/(\d{4})-(\d{1,2})/);
+  if (!m) return 30;
+  return new Date(parseInt(m[1]), parseInt(m[2]), 0).getDate();
+}
+
+function computePacing(review) {
+  if (!review || !review.reviewMonth || !review.items) return [];
+  const days = daysInMonthFromLabel(review.reviewMonth);
+  if (!days) return [];
+  return review.items
+    .filter(it => it.group && it.group.includes('공략') && it.target)
+    .map(it => {
+      const cur = parseWon(it.current), tgt = parseWon(it.target);
+      if (cur === null || tgt === null) return null;
+      const dailyTarget = tgt / days;
+      const dailyActual = cur / days;
+      return { item: it.item, dailyTarget, dailyActual, over: dailyActual - dailyTarget };
+    })
+    .filter(Boolean);
+}
+
+function computeSuggestedGoals(data, d) {
+  const last12 = d.cashflow.slice(-12);
+  const avgRate = last12.length ? last12.reduce((a, c) => a + c.savingsRate, 0) / last12.length : 40;
+  const suggestedSavings = Math.max(0, Math.round(avgRate / 5) * 5);
+  const last3Expense = d.cashflow.slice(-3).map(c => c.expense);
+  const avgExpense = last3Expense.length ? last3Expense.reduce((a, b) => a + b, 0) / last3Expense.length : 0;
+  const suggestedEmergency = Math.max(500000, Math.round((avgExpense * 3) / 100000) * 100000);
+  return { suggestedSavings, suggestedEmergency, avgRate, avgExpense };
 }
 
 function generateInsights(data, d, goals) {
   const insights = [];
+
+  const latestDecomp = d.decomposition[d.decomposition.length - 1];
+  if (latestDecomp && latestDecomp.netSavings !== null) {
+    if (latestDecomp.totalDelta < 0 && latestDecomp.netSavings > 0) {
+      insights.push({
+        type: 'info',
+        html: `이번 달은 저축(수입-지출)으로 <b>${formatCompactWon(latestDecomp.netSavings)}원</b>을 남겼지만, 총자산은 오히려 <b>${formatCompactWon(Math.abs(latestDecomp.totalDelta))}원</b> 줄었어요. 투자·연금 평가액이 약 <b>${formatCompactWon(Math.abs(latestDecomp.marketOther))}원</b> 빠진 것으로 추정돼요.`
+      });
+    } else if (latestDecomp.marketOther > 0) {
+      insights.push({
+        type: 'good',
+        html: `이번 달 자산 증가분 중 저축 유입은 <b>${formatCompactWon(latestDecomp.netSavings)}원</b>, 투자·연금 평가 상승분은 약 <b>${formatCompactWon(latestDecomp.marketOther)}원</b>으로 추정돼요.`
+      });
+    } else if (latestDecomp.marketOther < 0 && latestDecomp.totalDelta > 0) {
+      insights.push({
+        type: 'info',
+        html: `이번 달은 투자·연금 평가액이 약 <b>${formatCompactWon(Math.abs(latestDecomp.marketOther))}원</b> 빠졌지만, 저축 유입(<b>${formatCompactWon(latestDecomp.netSavings)}원</b>)이 이를 상쇄하고도 남아 총자산은 늘었어요.`
+      });
+    }
+  }
   const latestCf = d.cashflow[d.cashflow.length - 1];
 
   if (latestCf) {
@@ -897,6 +987,17 @@ function generateInsights(data, d, goals) {
       insights.push({
         type: 'info',
         html: `미분류 거래가 <b>${dq.current}건</b> 있어요. 분류를 정리하면 카테고리 분석이 더 정확해져요.`
+      });
+    }
+  }
+
+  const pacing = computePacing(data.review);
+  if (pacing.length) {
+    const worst = pacing.slice().sort((a, b) => b.over - a.over)[0];
+    if (worst.over > 0) {
+      insights.push({
+        type: 'warn',
+        html: `<b>${worst.item}</b> 목표를 지키려면 하루 <b>${formatCompactWon(worst.dailyTarget)}원</b> 이내로 써야 하는데, 지난달엔 하루 평균 ${formatCompactWon(worst.dailyActual)}원 썼어요 (+${formatCompactWon(worst.over)}원/일).`
       });
     }
   }
@@ -1003,26 +1104,124 @@ function renderAll() {
 function renderHomePage(container, data, d) {
   container.innerHTML = `
     <div class="hero" id="hero"></div>
-    <div class="grid">
-      <div class="panel" id="panel-review"></div>
-      <div class="panel" id="panel-insights"></div>
+    <div id="summary-stats"></div>
+    <div class="panel full" id="panel-decomp"></div>
+    <div class="panel full" id="panel-insights"></div>
+    <div class="grid grid-3">
       <div class="panel" id="panel-allocation"></div>
       <div class="panel" id="panel-trend"></div>
-      <div class="panel full" id="panel-cashflow"></div>
-      <div class="panel full" id="panel-category"></div>
+      <div class="panel" id="panel-gauge"></div>
+    </div>
+    <div class="panel full" id="panel-category"></div>
+    <div class="panel full" id="panel-cashflow"></div>
+    <div class="panel full" id="panel-review"></div>
+    <div class="grid">
       <div class="panel" id="panel-settings"></div>
       <div class="panel" id="panel-about"></div>
     </div>
   `;
   renderHero(d);
-  renderReview(data);
+  renderSummaryStats(data, d);
+  renderDecomposition(d);
   renderInsights(data, d);
   renderAllocation(d);
   renderTrend(d);
-  renderCashflow(data, d);
+  renderSavingsGauge(data, d);
   renderCategory(d);
-  renderSettings();
+  renderCashflow(data, d);
+  renderReview(data);
+  renderSettings(data, d);
   renderAbout();
+}
+
+function renderSummaryStats(data, d) {
+  const box = document.getElementById('summary-stats');
+  const latest = d.cashflow[d.cashflow.length - 1];
+  const income = latest ? latest.income : 0;
+  const expense = latest ? latest.expense : 0;
+  const netSavings = latest ? latest.income - latest.expense : 0;
+  const cfLabel = latest ? latest.month : '';
+  const assetLabel = d.latestMonth || '';
+  const sameMonth = assetMonthKey(assetLabel) === pivotMonthKey(cfLabel);
+  const cfNote = latest && assetLabel && !sameMonth
+    ? `<div class="settings-note" style="margin-top:8px;">가계부 집계는 <b>${cfLabel}</b> 기준(최신 완료월), 자산은 <b>${assetLabel}</b> 기준(진행 중인 월 포함)으로 최신 반영 시점이 달라요.</div>`
+    : '';
+  box.innerHTML = `
+    <div class="stat-grid">
+      <div class="stat-card"><div class="label">${cfLabel} 수입</div><div class="value" style="color:var(--green)">${formatCompactWon(income)}원</div></div>
+      <div class="stat-card"><div class="label">${cfLabel} 지출</div><div class="value" style="color:var(--red)">${formatCompactWon(expense)}원</div></div>
+      <div class="stat-card"><div class="label">남긴 돈 (수입-지출)</div><div class="value">${formatCompactWon(netSavings)}원</div></div>
+      <div class="stat-card"><div class="label">${assetLabel} 총자산 증감</div><div class="value" style="color:${d.deltaAssets >= 0 ? 'var(--green)' : 'var(--red)'}">${d.deltaAssets !== null ? (d.deltaAssets >= 0 ? '+' : '') + formatCompactWon(d.deltaAssets) + '원' : '—'}</div></div>
+    </div>
+    ${cfNote}
+  `;
+}
+
+function renderDecomposition(d) {
+  const panel = document.getElementById('panel-decomp');
+  const series = d.decomposition.slice(-12);
+  const latest = series[series.length - 1];
+  panel.innerHTML = `
+    <div class="panel-title"><div><span class="eyebrow">WHY</span>자산 증감, 어디서 왔을까?</div></div>
+    ${latest && latest.netSavings !== null ? `
+      <div class="insight ${latest.totalDelta >= 0 ? 'good' : 'warn'}"><span class="dot"></span>
+        <span>${d.latestMonth} 총자산 변화 <b>${formatWon(latest.totalDelta)}</b> = 저축 유입 ${formatWon(latest.netSavings)} + 투자/연금 평가·기타 ${formatWon(latest.marketOther)}</span>
+      </div>` : ''}
+    <div class="chart-wrap tall"><canvas id="chart-decomp"></canvas></div>
+    <div class="chart-legend">
+      <span><i style="background:#4c8c6b"></i>저축 유입 (수입-지출)</span>
+      <span><i style="background:#c9a227"></i>투자/연금 평가·기타</span>
+    </div>
+    <div class="settings-note">"투자/연금 평가·기타"에는 계좌 평가손익 외에 퇴직연금 회사 기여금처럼 가계부에 안 잡히는 유입도 섞여있을 수 있어 추정치예요.</div>
+  `;
+  const ctx = document.getElementById('chart-decomp');
+  state.charts.decomp = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: series.map(s => s.label),
+      datasets: [
+        { label: '저축 유입', data: series.map(s => s.netSavings), backgroundColor: 'rgba(76,140,107,0.8)', stack: 's', borderRadius: 3 },
+        { label: '투자/연금 평가·기타', data: series.map(s => s.marketOther), backgroundColor: 'rgba(201,162,39,0.8)', stack: 's', borderRadius: 3 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` ${c.dataset.label}: ${formatWon(c.raw)}` } } },
+      scales: {
+        x: { ticks: { color: '#9aa3b6', font: { family: 'IBM Plex Mono', size: 10 } }, grid: { display: false } },
+        y: { ticks: { color: '#9aa3b6', font: { family: 'IBM Plex Mono', size: 10 }, callback: (v) => formatCompactWon(v) }, grid: { color: 'rgba(255,255,255,0.05)' } }
+      }
+    }
+  });
+}
+
+function renderSavingsGauge(data, d) {
+  const panel = document.getElementById('panel-gauge');
+  const latestCf = d.cashflow[d.cashflow.length - 1];
+  const rate = latestCf ? latestCf.savingsRate : 0;
+  const target = state.goals.savingsRateTarget;
+  const pct = Math.max(0, Math.min(rate, 100));
+  const ok = rate >= target;
+  panel.innerHTML = `
+    <div class="panel-title"><div><span class="eyebrow">GOAL</span>저축률 목표 진행</div></div>
+    <div class="gauge-wrap">
+      <canvas id="chart-gauge"></canvas>
+      <div class="gauge-label">
+        <div class="gauge-value" style="color:${ok ? 'var(--green)' : 'var(--red)'}">${rate.toFixed(1)}%</div>
+        <div class="gauge-target">목표 ${target}%</div>
+      </div>
+    </div>
+  `;
+  const ctx = document.getElementById('chart-gauge');
+  state.charts.gauge = new Chart(ctx, {
+    type: 'doughnut',
+    data: { datasets: [{ data: [pct, Math.max(100 - pct, 0)], backgroundColor: [ok ? '#4c8c6b' : '#c1483f', '#232b3b'], borderWidth: 0 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      circumference: 180, rotation: 270, cutout: '75%',
+      plugins: { legend: { display: false }, tooltip: { enabled: false } }
+    }
+  });
 }
 
 function renderHero(d) {
@@ -1189,6 +1388,8 @@ function renderCashflow(data, d) {
   });
 }
 
+const CAT_PIE_PALETTE = ['#c9a227', '#4c8c6b', '#5b8fc7', '#9b7fc2', '#c1483f', '#e0c766', '#6fa88a', '#7c9bc9', '#b592cf', '#d97757'];
+
 function renderCategory(d) {
   const panel = document.getElementById('panel-category');
   const rows = d.catNames
@@ -1196,26 +1397,43 @@ function renderCategory(d) {
     .filter(r => r.latest > 0 || r.avg > 0)
     .sort((a, b) => b.latest - a.latest);
   const maxVal = Math.max(...rows.map(r => Math.max(r.latest, r.avg)), 1);
+  const pieRows = rows.filter(r => r.latest > 0);
   panel.innerHTML = `
     <div class="panel-title"><div><span class="eyebrow">SPENDING</span>카테고리별 지출 패턴 (이번 달 vs 최근 3개월 평균)</div></div>
-    ${rows.map(r => {
-      const over = r.avg > 0 && r.latest > r.avg * 1.3;
-      const pct = (r.latest / maxVal) * 100;
-      return `<div class="cat-row ${over ? 'over' : ''}">
-        <div class="cat-row-top"><span>${r.name}${over ? '<span class="cat-tag">평균 초과</span>' : ''}</span>
-        <span class="amt">${formatCompactWon(r.latest)}원 <span style="color:var(--text-faint)">/ 평균 ${formatCompactWon(r.avg)}원</span></span></div>
-        <div class="cat-bar-track"><div class="cat-bar-fill" style="width:${pct}%"></div></div>
-      </div>`;
-    }).join('') || '<div class="empty-state">지출 카테고리 데이터가 없어요.</div>'}
+    <div class="cat-flex">
+      <div class="pie-col"><div class="chart-wrap" style="height:200px;"><canvas id="chart-cat-pie"></canvas></div></div>
+      <div class="bars-col">
+        ${rows.map(r => {
+          const over = r.avg > 0 && r.latest > r.avg * 1.3;
+          const pct = (r.latest / maxVal) * 100;
+          return `<div class="cat-row ${over ? 'over' : ''}">
+            <div class="cat-row-top"><span>${r.name}${over ? '<span class="cat-tag">평균 초과</span>' : ''}</span>
+            <span class="amt">${formatCompactWon(r.latest)}원 <span style="color:var(--text-faint)">/ 평균 ${formatCompactWon(r.avg)}원</span></span></div>
+            <div class="cat-bar-track"><div class="cat-bar-fill" style="width:${pct}%"></div></div>
+          </div>`;
+        }).join('') || '<div class="empty-state">지출 카테고리 데이터가 없어요.</div>'}
+      </div>
+    </div>
   `;
+  if (pieRows.length) {
+    const ctx = document.getElementById('chart-cat-pie');
+    state.charts.catPie = new Chart(ctx, {
+      type: 'doughnut',
+      data: { labels: pieRows.map(r => r.name), datasets: [{ data: pieRows.map(r => r.latest), backgroundColor: pieRows.map((_, i) => CAT_PIE_PALETTE[i % CAT_PIE_PALETTE.length]), borderColor: '#171e2b', borderWidth: 2 }] },
+      options: { responsive: true, maintainAspectRatio: false, cutout: '55%', plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` ${c.label}: ${formatCompactWon(c.raw)}원` } } } }
+    });
+  }
 }
 
-function renderSettings() {
+function renderSettings(data, d) {
   const panel = document.getElementById('panel-settings');
+  const sug = computeSuggestedGoals(data, d);
   panel.innerHTML = `
     <div class="panel-title"><div><span class="eyebrow">GOALS</span>내 목표 설정</div></div>
     <div class="settings-row"><label>저축률 목표 (%)</label><input type="number" id="goal-savings" value="${state.goals.savingsRateTarget}" min="0" max="100" /></div>
+    <div class="settings-note" style="margin-top:-6px;">최근 12개월 평균 저축률은 <b style="color:var(--gold-soft)">${sug.avgRate.toFixed(1)}%</b>예요. <button class="btn small" id="apply-savings-sug" style="margin-left:4px;">추천값(${sug.suggestedSavings}%) 적용</button></div>
     <div class="settings-row"><label>비상금(현금성자산) 목표</label><input type="number" id="goal-emergency" value="${state.goals.emergencyFundTarget}" step="100000" /></div>
+    <div class="settings-note" style="margin-top:-6px;">최근 3개월 평균 지출 × 3개월 기준 추천값은 <b style="color:var(--gold-soft)">${formatCompactWon(sug.suggestedEmergency)}원</b>이에요. <button class="btn small" id="apply-emergency-sug" style="margin-left:4px;">추천값 적용</button></div>
     <div class="settings-note">여기서 설정한 목표는 위 가이드 문구 계산에만 쓰이고, 이 브라우저에만 저장돼요. 시트 자체의 Monthly Review 목표값은 그대로 시트에서 관리돼요.</div>
   `;
   const savingsInput = document.getElementById('goal-savings');
@@ -1223,11 +1441,15 @@ function renderSettings() {
   const commit = () => {
     state.goals.savingsRateTarget = parseFloat(savingsInput.value) || 0;
     state.goals.emergencyFundTarget = parseFloat(emergencyInput.value) || 0;
+    state.goalsAreSuggested = false;
     saveGoals();
     renderInsights(state.data, computeDerived(state.data));
+    renderSavingsGauge(state.data, computeDerived(state.data));
   };
   savingsInput.addEventListener('change', commit);
   emergencyInput.addEventListener('change', commit);
+  document.getElementById('apply-savings-sug').addEventListener('click', () => { savingsInput.value = sug.suggestedSavings; commit(); renderSettings(data, d); });
+  document.getElementById('apply-emergency-sug').addEventListener('click', () => { emergencyInput.value = sug.suggestedEmergency; commit(); renderSettings(data, d); });
 }
 
 function renderAbout() {
@@ -1345,6 +1567,8 @@ function renderExpensePage(container, data, d) {
     .filter(r => r.latest > 0 || r.avg > 0)
     .sort((a, b) => b.latest - a.latest);
   const maxVal = Math.max(...rows.map(r => Math.max(r.latest, r.avg)), 1);
+  const pieRows = rows.filter(r => r.latest > 0);
+  const pacing = computePacing(data.review);
 
   container.innerHTML = `
     <div class="stat-grid">
@@ -1353,6 +1577,18 @@ function renderExpensePage(container, data, d) {
       <div class="stat-card"><div class="label">이번 달 저축률</div><div class="value">${latest ? latest.savingsRate.toFixed(1) : '—'}%</div></div>
       <div class="stat-card"><div class="label">지출 카테고리 수</div><div class="value">${rows.length}개</div></div>
     </div>
+    ${pacing.length ? `
+    <div class="panel full">
+      <div class="panel-title"><div><span class="eyebrow">PACING</span>공략 지출 · 하루 예산 가이드</div></div>
+      ${pacing.map(p => {
+        const over = p.over > 0;
+        return `<div class="cat-row ${over ? 'over' : ''}">
+          <div class="cat-row-top"><span>${p.item}${over ? '<span class="cat-tag">하루 ' + formatCompactWon(p.over) + '원 초과</span>' : ''}</span>
+          <span class="amt">목표 하루 ${formatCompactWon(p.dailyTarget)}원 <span style="color:var(--text-faint)">/ 실제 하루 ${formatCompactWon(p.dailyActual)}원</span></span></div>
+          <div class="cat-bar-track"><div class="cat-bar-fill" style="width:${Math.min((p.dailyActual / (p.dailyTarget || 1)) * 100, 100)}%"></div></div>
+        </div>`;
+      }).join('')}
+    </div>` : ''}
     <div class="grid">
       <div class="panel">
         <div class="panel-title"><div><span class="eyebrow">TREND</span>월별 총지출 추이</div></div>
@@ -1360,6 +1596,7 @@ function renderExpensePage(container, data, d) {
       </div>
       <div class="panel">
         <div class="panel-title"><div><span class="eyebrow">CATEGORIES</span>전체 카테고리 (이번 달 vs 3개월 평균)</div></div>
+        <div class="chart-wrap" style="height:170px;"><canvas id="chart-expense-pie"></canvas></div>
         ${rows.map(r => {
           const over = r.avg > 0 && r.latest > r.avg * 1.3;
           const pct = (r.latest / maxVal) * 100;
@@ -1376,6 +1613,15 @@ function renderExpensePage(container, data, d) {
       ${buildMiniLedgerTable(expenseLedger, 100)}
     </div>
   `;
+
+  if (pieRows.length) {
+    const pieCtx = document.getElementById('chart-expense-pie');
+    state.charts.expensePie = new Chart(pieCtx, {
+      type: 'doughnut',
+      data: { labels: pieRows.map(r => r.name), datasets: [{ data: pieRows.map(r => r.latest), backgroundColor: pieRows.map((_, i) => CAT_PIE_PALETTE[i % CAT_PIE_PALETTE.length]), borderColor: '#171e2b', borderWidth: 2 }] },
+      options: { responsive: true, maintainAspectRatio: false, cutout: '55%', plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` ${c.label}: ${formatCompactWon(c.raw)}원` } } } }
+    });
+  }
 
   const series = cf.slice(-12);
   const ctx = document.getElementById('chart-expense-trend');
@@ -1582,8 +1828,11 @@ async function loadGoals() {
     if (res && res.value) {
       const g = JSON.parse(res.value);
       state.goals = { ...state.goals, ...g };
+      state.goalsAreSuggested = false;
+      return true;
     }
   } catch (e) { /* no saved goals yet */ }
+  return false;
 }
 
 async function saveGoals() {
@@ -1604,6 +1853,12 @@ async function fetchLive(manual) {
     state.source = 'live';
     state.lastError = null;
     state.lastSync = new Date();
+    if (state.goalsAreSuggested) {
+      const d0 = computeDerived(state.data);
+      const sug = computeSuggestedGoals(state.data, d0);
+      state.goals.savingsRateTarget = sug.suggestedSavings;
+      state.goals.emergencyFundTarget = sug.suggestedEmergency;
+    }
     renderAll();
   } catch (e) {
     console.error('live sync failed', e);
@@ -1618,9 +1873,15 @@ async function fetchLive(manual) {
 
 async function init() {
   renderShell();
-  await loadGoals();
+  const hadSavedGoals = await loadGoals();
   state.data = SNAPSHOT_DATA;
   state.source = 'snapshot';
+  if (!hadSavedGoals) {
+    const d0 = computeDerived(state.data);
+    const sug = computeSuggestedGoals(state.data, d0);
+    state.goals.savingsRateTarget = sug.suggestedSavings;
+    state.goals.emergencyFundTarget = sug.suggestedEmergency;
+  }
   renderAll();
   fetchLive(false);
 }
