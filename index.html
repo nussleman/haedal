@@ -47,11 +47,29 @@ body{
   -webkit-font-smoothing:antialiased;
 }
 #app{
-  max-width:1080px;
+  max-width:none;
+  width:100%;
   margin:0 auto;
-  padding:28px 20px 80px;
+  padding:0 clamp(16px, 2.5vw, 40px) 80px;
+  box-sizing:border-box;
 }
 ::selection{background:var(--gold);color:#1a1508;}
+
+/* ---------- sticky header ---------- */
+.site-header{
+  position:sticky;
+  top:0;
+  z-index:100;
+  background:
+    radial-gradient(ellipse 900px 500px at 15% -10%, rgba(201,162,39,0.08), transparent 60%),
+    var(--bg);
+  padding-top:28px;
+  margin:0 calc(-1 * clamp(16px, 2.5vw, 40px));
+  padding-left:clamp(16px, 2.5vw, 40px);
+  padding-right:clamp(16px, 2.5vw, 40px);
+  border-bottom:1px solid var(--border);
+}
+#page-content{padding-top:22px;}
 
 /* ---------- top bar ---------- */
 .topbar{
@@ -377,9 +395,7 @@ body{
 
 /* ---------- nav ---------- */
 .navbar{
-  display:flex;gap:6px;margin:16px 0 18px;
-  border-bottom:1px solid var(--border);
-  padding-bottom:0;
+  display:flex;gap:6px;margin:16px 0 0;
   overflow-x:auto;
 }
 .nav-btn{
@@ -1109,21 +1125,23 @@ const NAV_ITEMS = [
 function renderShell() {
   const app = document.getElementById('app');
   app.innerHTML = `
-    <div class="topbar">
-      <div class="brand">
-        <span class="mark">LEDGER</span>
-        <h1>MY 자산 통장</h1>
+    <div class="site-header" id="site-header">
+      <div class="topbar">
+        <div class="brand">
+          <span class="mark">LEDGER</span>
+          <h1>MY 자산 통장</h1>
+        </div>
+        <div class="sync-box">
+          <span class="sync-dot" id="sync-dot"></span>
+          <span id="sync-label">불러오는 중…</span>
+          <button class="btn small" id="refresh-btn">↻ 새로고침</button>
+        </div>
       </div>
-      <div class="sync-box">
-        <span class="sync-dot" id="sync-dot"></span>
-        <span id="sync-label">불러오는 중…</span>
-        <button class="btn small" id="refresh-btn">↻ 새로고침</button>
-      </div>
+      <div id="banner-slot"></div>
+      <nav class="navbar" id="navbar">
+        ${NAV_ITEMS.map(n => `<button class="nav-btn${n.id === state.page ? ' active' : ''}" data-page="${n.id}">${n.label}</button>`).join('')}
+      </nav>
     </div>
-    <div id="banner-slot"></div>
-    <nav class="navbar" id="navbar">
-      ${NAV_ITEMS.map(n => `<button class="nav-btn${n.id === state.page ? ' active' : ''}" data-page="${n.id}">${n.label}</button>`).join('')}
-    </nav>
     <div id="page-content"></div>
     <div class="footer">
       원본 시트 · <a href="${SHEET_URL}" target="_blank" rel="noopener">Google Sheets에서 열기</a><br/>
@@ -1144,11 +1162,20 @@ function renderBanner() {
   const slot = document.getElementById('banner-slot');
   if (!slot) return;
   if (state.source === 'snapshot' && state.lastError) {
+    const isNetworkFail = /failed to fetch/i.test(state.lastError);
     slot.innerHTML = `
-      <div class="banner err">
-        <span>⚠ 실시간 데이터를 불러오지 못해 저장된 스냅샷을 보여주고 있어요. (${state.lastError})<br/>
-        시트 공유 설정이 "링크가 있는 모든 사용자 - 뷰어"인지 확인해보세요.</span>
-        <button class="btn small" id="retry-btn">다시 시도</button>
+      <div class="banner err" style="align-items:flex-start;">
+        <span>
+          ⚠ 실시간 데이터를 불러오지 못해 저장된 스냅샷을 보여주고 있어요. (${state.lastError})
+          ${isNetworkFail ? `
+          <div style="margin-top:8px;font-size:12px;line-height:1.7;">
+            1) 시트 우측 상단 <b>공유</b> → 일반 액세스를 <b>"링크가 있는 모든 사용자"</b> + 권한 <b>"뷰어"</b>로 설정<br/>
+            2) 시크릿 창(로그인 안 한 상태)에서 아래 링크가 로그인 없이 바로 CSV로 다운로드되는지 확인:<br/>
+            <a href="${CSV_URL}" target="_blank" rel="noopener" style="color:var(--gold-soft);word-break:break-all;">${CSV_URL}</a><br/>
+            로그인 화면이 뜨면 아직 공유 설정이 비공개라는 뜻이에요.
+          </div>` : ''}
+        </span>
+        <button class="btn small" id="retry-btn" style="margin-left:auto;flex-shrink:0;">다시 시도</button>
       </div>`;
     document.getElementById('retry-btn').addEventListener('click', () => fetchLive(true));
   } else {
