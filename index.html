@@ -536,6 +536,18 @@ body{
 .at-group-summary::-webkit-details-marker{display:none;}
 .at-group-summary span:first-child{font-family:var(--sans);color:var(--text-dim);}
 
+/* ---------- goal cards ---------- */
+.goal-card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;}
+.goal-card{background:var(--panel-2);border:1px solid var(--border);border-radius:10px;padding:13px 15px;}
+.goal-card.ok{border-color:rgba(76,140,107,0.4);}
+.goal-card.no{border-color:rgba(193,72,63,0.4);}
+.goal-card-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;}
+.goal-card-group{font-family:var(--mono);font-size:9.5px;color:var(--text-faint);letter-spacing:.05em;}
+.goal-card-verdict{font-size:13px;}
+.goal-card-item{font-size:12.5px;color:var(--text-dim);margin-bottom:4px;}
+.goal-card-current{font-family:var(--mono);font-size:16px;font-weight:700;color:var(--text);}
+.goal-card-target{font-family:var(--mono);font-size:11px;color:var(--text-faint);margin-top:3px;}
+
 </style>
 </head>
 <body>
@@ -1472,6 +1484,7 @@ function setSyncState(status) {
 
 const NAV_ITEMS = [
   { id: 'home', label: '홈' },
+  { id: 'assets', label: '자산' },
   { id: 'income', label: '수입' },
   { id: 'expense', label: '지출' },
   { id: 'investment', label: '투자' },
@@ -1559,7 +1572,8 @@ function renderPage() {
   const d = computeDerived(data);
   destroyPageCharts();
   const container = document.getElementById('page-content');
-  if (state.page === 'income') renderIncomePage(container, data, d);
+  if (state.page === 'assets') renderAssetsPage(container, data, d);
+  else if (state.page === 'income') renderIncomePage(container, data, d);
   else if (state.page === 'expense') renderExpensePage(container, data, d);
   else if (state.page === 'investment') renderInvestmentPage(container, data, d);
   else if (state.page === 'savings') renderSavingsPage(container, data, d);
@@ -1582,15 +1596,9 @@ function renderHomePage(container, data, d) {
       <div id="summary-stats"></div>
       <div class="panel" id="panel-insights"></div>
     </div>
-    <div class="panel full" id="panel-decomp"></div>
-    <div class="grid grid-3">
-      <div class="panel" id="panel-allocation"></div>
-      <div class="panel" id="panel-trend"></div>
-      <div class="panel" id="panel-gauge"></div>
-    </div>
+    <div class="panel full" id="panel-review"></div>
     <div class="panel full" id="panel-category"></div>
     <div class="panel full" id="panel-cashflow"></div>
-    <div class="panel full" id="panel-review"></div>
     <div class="grid">
       <div class="panel" id="panel-settings"></div>
       <div class="panel" id="panel-about"></div>
@@ -1598,11 +1606,7 @@ function renderHomePage(container, data, d) {
   `;
   renderGoalsHero(data, d);
   renderSummaryStats(data, d);
-  renderDecomposition(d);
   renderInsights(data, d);
-  renderAllocation(d);
-  renderTrend(d);
-  renderSavingsGauge(data, d);
   renderCategory(d);
   renderCashflow(data, d);
   renderReview(data);
@@ -1726,6 +1730,17 @@ function renderSavingsGauge(data, d) {
   });
 }
 
+function parseValueGeneric(s) {
+  if (s === null || s === undefined) return null;
+  const str = String(s).trim();
+  if (str === '') return null;
+  if (str.endsWith('%')) {
+    const n = parseFloat(str);
+    return isNaN(n) ? null : n;
+  }
+  return parseWon(str);
+}
+
 function renderReview(data) {
   const panel = document.getElementById('panel-review');
   const review = data.review;
@@ -1733,25 +1748,25 @@ function renderReview(data) {
     panel.innerHTML = `<div class="panel-title">이번 달 목표 리뷰</div><div class="empty-state">리뷰 데이터를 찾을 수 없어요.</div>`;
     return;
   }
-  const groups = {};
-  review.items.forEach(it => { (groups[it.group] = groups[it.group] || []).push(it); });
-  let rowsHtml = '';
-  Object.entries(groups).forEach(([g, items]) => {
-    rowsHtml += `<div class="ledger-group-name">${g}</div>`;
-    items.forEach(it => {
-      const vClass = it.verdict === '✅' ? 'ok' : it.verdict === '❌' ? 'no' : '';
-      rowsHtml += `
-        <div class="ledger-row">
-          <div class="ledger-item">${it.item}</div>
-          <div class="ledger-current">${it.current || ''}</div>
-          <div class="ledger-target">${it.target ? '목표 ' + it.target : ''}</div>
-          <div class="ledger-verdict ${vClass}">${it.verdict || ''}</div>
-        </div>`;
-    });
-  });
   panel.innerHTML = `
-    <div class="panel-title"><div><span class="eyebrow">${review.reviewMonth || ''} REVIEW</span>이번 달 목표 리뷰 (시트 원본)</div>${review.achievement ? `<span style="font-family:var(--mono);font-size:12px;color:var(--text-dim)">달성 ${review.achievement}</span>` : ''}</div>
-    ${rowsHtml}
+    <div class="panel-title"><div><span class="eyebrow">${review.reviewMonth || ''} REVIEW</span>이번 달 목표 카드 (월간 리뷰 탭 원본)</div>${review.achievement ? `<span style="font-family:var(--mono);font-size:12px;color:var(--text-dim)">달성 ${review.achievement}</span>` : ''}</div>
+    <div class="goal-card-grid">
+      ${review.items.map(it => {
+        const cur = parseValueGeneric(it.current);
+        const tgt = parseValueGeneric(it.target);
+        let pct = null;
+        if (cur !== null && tgt !== null && tgt !== 0) pct = Math.min(Math.abs(cur / tgt) * 100, 130);
+        const ok = it.verdict === '✅';
+        const vClass = it.verdict === '✅' ? 'ok' : it.verdict === '❌' ? 'no' : '';
+        return `<div class="goal-card ${vClass}">
+          <div class="goal-card-top"><span class="goal-card-group">${it.group}</span>${it.verdict ? `<span class="goal-card-verdict">${it.verdict}</span>` : ''}</div>
+          <div class="goal-card-item">${it.item}</div>
+          <div class="goal-card-current">${it.current || '—'}</div>
+          ${it.target ? `<div class="goal-card-target">목표 ${it.target}</div>` : ''}
+          ${pct !== null ? `<div class="cat-bar-track" style="margin-top:8px;"><div class="cat-bar-fill" style="width:${Math.min(pct, 100)}%;background:${ok ? 'var(--green)' : 'var(--red)'}"></div></div>` : ''}
+        </div>`;
+      }).join('')}
+    </div>
   `;
 }
 
@@ -2074,6 +2089,41 @@ function renderAdvancedTableBody(key, allRows, opts) {
       el.addEventListener('toggle', () => { ts.openGroups[el.dataset.gkey] = el.open; });
     });
   }
+}
+
+/* ---------------- page: 자산 ---------------- */
+
+function renderAssetsPage(container, data, d) {
+  container.innerHTML = `
+    <div id="asset-stats"></div>
+    <div class="panel full" id="panel-decomp"></div>
+    <div class="grid grid-3">
+      <div class="panel" id="panel-allocation"></div>
+      <div class="panel" id="panel-trend"></div>
+      <div class="panel" id="panel-gauge"></div>
+    </div>
+  `;
+  renderAssetStats(data, d);
+  renderDecomposition(d);
+  renderAllocation(d);
+  renderTrend(d);
+  renderSavingsGauge(data, d);
+}
+
+function renderAssetStats(data, d) {
+  const box = document.getElementById('asset-stats');
+  const topGroup = DISPLAY_ORDER.filter(c => d.displayAllocation[c] !== undefined)
+    .map(c => [c, d.displayAllocation[c]]).sort((a, b) => b[1] - a[1])[0];
+  const topPct = topGroup && d.totalAssets ? (topGroup[1] / d.totalAssets) * 100 : 0;
+  box.innerHTML = `
+    <div class="stat-grid">
+      <div class="stat-card"><div class="label">${d.latestMonth || ''} 총자산</div><div class="value">${formatCompactWon(d.totalAssets)}원</div></div>
+      <div class="stat-card"><div class="label">전월 대비</div><div class="value" style="color:${d.deltaAssets >= 0 ? 'var(--green)' : 'var(--red)'}">${d.deltaAssets !== null ? (d.deltaAssets >= 0 ? '+' : '') + formatCompactWon(d.deltaAssets) + '원' : '—'}</div>
+        ${d.deltaPct !== null ? `<div class="sub ${d.deltaAssets >= 0 ? 'up' : 'down'}">${d.deltaAssets >= 0 ? '▲' : '▼'} ${Math.abs(d.deltaPct).toFixed(1)}%</div>` : ''}</div>
+      <div class="stat-card"><div class="label">최대 비중 자산군</div><div class="value" style="font-size:16px;">${topGroup ? topGroup[0] : '—'}</div><div class="sub">${topGroup ? amtPct(topGroup[1], topPct) : ''}</div></div>
+      <div class="stat-card"><div class="label">비상금 (NH-CMA)</div><div class="value">${formatCompactWon(d.emergencyFund)}원</div></div>
+    </div>
+  `;
 }
 
 /* ---------------- page: 수입 ---------------- */
@@ -2769,8 +2819,12 @@ async function fetchAllTabsAndMerge() {
     } catch (e) {}
   }
 
-  if (!pivot) throw new Error('카테고리 요약표를 찾지 못했습니다 (가계부(M) 탭 확인 필요)');
-  if (assetRows.length < 5) throw new Error('자산 현황표를 찾지 못했습니다 (자산 스냅샷 탭 확인 필요)');
+  const tabLabelMap = { [GID_LEDGER_D]: '가계부(D)', [GID_LEDGER_M]: '가계부(M)', [GID_ASSETS]: '자산 스냅샷', [GID_REVIEW]: '월간 리뷰' };
+  const fetchFailNote = failures.length
+    ? ` (${failures.length}개 탭 fetch 실패: ${failures.map(f => f.reason.message).join(', ')})`
+    : ' (4개 탭 모두 불러왔지만 그 안에서 못 찾음)';
+  if (!pivot) throw new Error('카테고리 요약표를 찾지 못했습니다' + fetchFailNote);
+  if (assetRows.length < 5) throw new Error('자산 현황표를 찾지 못했습니다' + fetchFailNote);
 
   const data = {
     months: pivot.months, incomeTotal: pivot.incomeTotal, expenseTotal: pivot.expenseTotal,
