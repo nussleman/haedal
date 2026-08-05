@@ -839,6 +839,54 @@ function parseLedgerFromRows(rows) {
   return ledger;
 }
 
+/* 가계부(M) 피벗 탭은 Google Sheets 병합 셀이 gviz CSV export에서
+   깨져 나오는 문제가 있어(월 헤더 행이 빈 문자열로 export됨),
+   parsePivotFromRows가 못 찾을 때가 있다. 이미 정상 파싱되는
+   가계부(D) 일별 원장(ledger)에서 동일한 모양의 요약을 직접
+   집계해서 그 자리를 대체한다. */
+function buildPivotFromLedger(ledger) {
+  if (!ledger || !ledger.length) return null;
+
+  const monthOf = (dateCell) => {
+    const m = dateCell.match(/(\d{4})\.\s*(\d{1,2})\.\s*(\d{1,2})/);
+    if (!m) return null;
+    return `${m[1]}-${parseInt(m[2], 10)}월`;
+  };
+
+  const monthSet = new Set();
+  ledger.forEach(r => { const mk = monthOf(r.date); if (mk) monthSet.add(mk); });
+  const months = Array.from(monthSet).sort((a, b) => pivotMonthKey(a) - pivotMonthKey(b));
+  if (months.length === 0) return null;
+  const monthIdx = {};
+  months.forEach((m, i) => { monthIdx[m] = i; });
+  const zeros = () => months.map(() => 0);
+
+  const incomeTotal = zeros(), expenseTotal = zeros();
+  const expenseCategories = {}, incomeCategories = {}, transferCategories = {};
+
+  ledger.forEach(r => {
+    const mk = monthOf(r.date);
+    if (!mk) return;
+    const idx = monthIdx[mk];
+    if (idx === undefined) return;
+    const amt = r.amount || 0;
+    if (r.major === '지출') {
+      if (!expenseCategories[r.minor]) expenseCategories[r.minor] = zeros();
+      expenseCategories[r.minor][idx] += amt;
+      expenseTotal[idx] += amt;
+    } else if (r.major === '수입') {
+      if (!incomeCategories[r.minor]) incomeCategories[r.minor] = zeros();
+      incomeCategories[r.minor][idx] += amt;
+      incomeTotal[idx] += amt;
+    } else if (r.major === '이체') {
+      if (!transferCategories[r.minor]) transferCategories[r.minor] = zeros();
+      transferCategories[r.minor][idx] += amt;
+    }
+  });
+
+  return { months, incomeTotal, expenseTotal, expenseCategories, incomeCategories, transferCategories };
+}
+
 function parseInvestmentTagsFromRows(rows) {
   let r0 = -1, c0 = -1;
   for (let r = 0; r < rows.length; r++) {
@@ -890,12 +938,14 @@ function aggregateByTag(tagRows) {
 function parseAllFromCsv(csvText) {
   const parsed = Papa.parse(csvText, { skipEmptyLines: false });
   const rows = parsed.data.map(r => r.map(c => (c === null || c === undefined) ? '' : String(c)));
-  const pivot = parsePivotFromRows(rows);
   const assetRows = parseAssetsFromRows(rows);
   const review = parseReviewFromRows(rows);
   const ledger = parseLedgerFromRows(rows);
   const investmentTags = parseInvestmentTagsFromRows(rows);
-  if (!pivot.incomeTotal || !pivot.expenseTotal) throw new Error('수입/지출 합계를 찾지 못했습니다');
+  let pivot;
+  try { pivot = parsePivotFromRows(rows); } catch (e) { pivot = null; }
+  if (!pivot || !pivot.incomeTotal || !pivot.expenseTotal) pivot = buildPivotFromLedger(ledger);
+  if (!pivot || !pivot.incomeTotal || !pivot.expenseTotal) throw new Error('수입/지출 합계를 찾지 못했습니다');
   if (assetRows.length < 5) throw new Error('자산 현황표를 찾지 못했습니다');
   return {
     months: pivot.months,
@@ -2823,6 +2873,14 @@ async function fetchAllTabsAndMerge() {
   const fetchFailNote = failures.length
     ? ` (${failures.length}개 탭 fetch 실패: ${failures.map(f => f.reason.message).join(', ')})`
     : ' (4개 탭 모두 불러왔지만 그 안에서 못 찾음)';
+
+  let pivotFromLedger = false;
+  if (!pivot) {
+    // 가계부(M) 피벗을 못 찾았으면(병합 셀이 CSV export에서 깨지는 문제),
+    // 이미 정상 파싱된 가계부(D) 원장에서 동일한 요약을 직접 집계한다.
+    pivot = buildPivotFromLedger(ledger);
+    pivotFromLedger = !!pivot;
+  }
   if (!pivot) throw new Error('카테고리 요약표를 찾지 못했습니다' + fetchFailNote);
   if (assetRows.length < 5) throw new Error('자산 현황표를 찾지 못했습니다' + fetchFailNote);
 
@@ -2834,6 +2892,8 @@ async function fetchAllTabsAndMerge() {
 
   if (failures.length) {
     data._partialWarning = `${failures.length}개 탭을 못 불러왔지만(${failures.map(f => f.reason.message).join(', ')}), 나머지 데이터로 표시 중이에요.`;
+  } else if (pivotFromLedger) {
+    data._partialWarning = '가계부(M) 요약표 형식이 바뀌어(병합 셀 이슈) 가계부(D) 원장에서 카테고리 요약을 직접 계산했어요. 금액은 동일하게 정확합니다.';
   }
   return data;
 }
