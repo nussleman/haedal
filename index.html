@@ -362,10 +362,21 @@ body{
 .cat-row.over .cat-bar-fill{background:linear-gradient(90deg,var(--red),#d9756c);}
 .cat-tag{font-family:var(--mono);font-size:10px;color:var(--red);margin-left:6px;}
 .budget-input{
-  width:88px;background:var(--panel-2);border:1px solid var(--border-strong);
+  width:96px;background:var(--panel-2);border:1px solid var(--border-strong);
   color:var(--text);font-family:var(--mono);font-size:11.5px;
-  border-radius:5px;padding:3px 6px;text-align:right;margin-left:4px;
+  border-radius:5px;padding:3px 6px;text-align:right;margin:0 2px;
 }
+.budget-row{padding:10px 0;border-bottom:1px dotted var(--border);}
+.budget-row:last-child{border-bottom:none;}
+.budget-row-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;}
+.budget-row-name{font-size:13px;color:var(--text);}
+.budget-row-remaining{font-family:var(--mono);font-size:11.5px;white-space:nowrap;}
+.budget-bar-row{display:flex;align-items:center;gap:8px;}
+.budget-bar-track{flex:1;height:14px;background:var(--panel-2);border-radius:7px;overflow:hidden;}
+.budget-bar-fill{height:100%;border-radius:7px;background:linear-gradient(90deg,var(--gold),var(--gold-soft));transition:width .3s;}
+.budget-bar-fill.over{background:linear-gradient(90deg,var(--red),#d9756c);}
+.budget-bar-pct{font-family:var(--mono);font-size:11px;color:var(--text-dim);width:36px;text-align:right;flex-shrink:0;}
+.budget-row-figures{font-family:var(--mono);font-size:11px;color:var(--text-dim);margin-top:6px;}
 .month-nav select{
   background:var(--panel-2);border:1px solid var(--border-strong);color:var(--text);
   font-family:var(--mono);font-size:12.5px;border-radius:6px;padding:5px 8px;
@@ -609,11 +620,13 @@ const state = {
   budgets: {},          // 카테고리별 사용자 지정 예산 (window.storage에 저장)
   budgetsLoaded: false,
   incomeRange: 12,
-  incomeCompRange: 12,
+  incomeTotalMode: 'total',
   expenseRange: 12,
   fixedRange: 12,
   vendorRange: 12,
-  invRange: 12
+  invRange: 12,
+  assetTrendRange: 12,
+  assetTrendMode: 'total'
 };
 
 /* ---------------- helpers ---------------- */
@@ -653,6 +666,11 @@ function formatCompactWon(n) {
   else if (abs >= 10000) out = Math.round(abs / 10000).toLocaleString() + '만';
   else out = Math.round(abs).toLocaleString();
   return (neg ? '-' : '') + out;
+}
+
+function wonComma(n) {
+  if (n === null || n === undefined || isNaN(n)) return '0';
+  return Math.round(Math.abs(n)).toLocaleString('ko-KR');
 }
 
 function pivotMonthKey(s) {
@@ -1551,7 +1569,7 @@ function renderGoalCards(data) {
   if (!goals.length) {
     panel.innerHTML = `
       <div class="panel-title"><div><span class="eyebrow">GOALS</span>목표</div></div>
-      <div class="empty-state">목표 탭에서 아직 목표 데이터를 찾지 못했어요. 시트의 "목표" 탭에 시기·구분·목표·상태·메모 같은 컬럼이 있는지 확인해주세요.</div>
+      <div class="empty-state">목표 탭에서 아직 목표 데이터를 찾지 못했어요. <a href="${csvUrlFor(GID_GOALS)}" target="_blank" rel="noopener" style="color:var(--gold-soft);">이 링크</a>를 눌러 실제로 어떤 데이터가 불러와지는지 확인해보세요 — "목표" 탭이 아닌 다른 탭 내용이 보인다면 시트의 gid가 바뀐 것일 수 있어요.</div>
     `;
     return;
   }
@@ -1701,25 +1719,101 @@ function renderAllocation(d) {
   });
 }
 
-function renderTrend(d) {
+function buildAssetMonthlySeries(assetRows) {
+  const catByMonth = {};
+  const catTotals = {};
+  const accByMonth = {};
+  const accTotals = {};
+  assetRows.forEach(r => {
+    if (r.amount === null) return;
+    catByMonth[r.date] = catByMonth[r.date] || {};
+    catByMonth[r.date][r.category] = (catByMonth[r.date][r.category] || 0) + r.amount;
+    catTotals[r.category] = (catTotals[r.category] || 0) + r.amount;
+    accByMonth[r.date] = accByMonth[r.date] || {};
+    accByMonth[r.date][r.account] = (accByMonth[r.date][r.account] || 0) + r.amount;
+    accTotals[r.account] = (accTotals[r.account] || 0) + r.amount;
+  });
+  const accounts = Object.entries(accTotals).sort((a, b) => b[1] - a[1]).slice(0, 10).map(e => e[0]);
+  return { catByMonth, catTotals, accByMonth, accounts };
+}
+
+function renderTrend(data, d) {
   const panel = document.getElementById('panel-trend');
   panel.innerHTML = `
-    <div class="panel-title"><div><span class="eyebrow">HISTORY</span>총자산 추이</div></div>
-    <div class="chart-wrap"><canvas id="chart-trend"></canvas></div>
+    <div class="panel-title">
+      <div><span class="eyebrow">HISTORY</span>총자산 추이</div>
+      <div class="range-toggle" id="asset-trend-range-toggle"></div>
+    </div>
+    <div class="range-toggle" id="asset-trend-mode-toggle" style="margin-bottom:10px;">
+      <button data-mode="total" class="active">총액</button>
+      <button data-mode="category">카테고리별</button>
+      <button data-mode="account">계좌별</button>
+    </div>
+    <div class="chart-wrap tall"><canvas id="chart-trend"></canvas></div>
+    <div class="chart-legend" id="asset-trend-legend"></div>
   `;
   const months = d.assetMonths;
-  const values = months.map(m => d.byMonth[m]);
-  const ctx = document.getElementById('chart-trend');
-  state.charts.trend = new Chart(ctx, {
-    type: 'line',
-    data: { labels: months.map(assetMonthLabel), datasets: [{ data: values, borderColor: '#c9a227', backgroundColor: 'rgba(201,162,39,0.12)', fill: true, tension: 0.35, pointRadius: 2, pointBackgroundColor: '#c9a227', borderWidth: 2 }] },
-    options: {
-      responsive: true, maintainAspectRatio: false, layout: { padding: { top: 18 } },
-      plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` ${formatWon(c.raw)}` } } },
-      scales: { x: { ticks: MONO_TICK, grid: { display: false } }, y: { ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT } }
-    },
-    plugins: [valueLabelPlugin]
+  const series = buildAssetMonthlySeries(data.assetRows);
+
+  const drawTrend = () => {
+    const monthsSlice = sliceByRange(months, state.assetTrendRange);
+    const mode = state.assetTrendMode;
+    if (state.charts.trend) state.charts.trend.destroy();
+    const ctx = document.getElementById('chart-trend');
+    let datasets = [];
+    let legendHtml = '';
+
+    if (mode === 'total') {
+      datasets = [{ label: '총자산', data: monthsSlice.map(m => d.byMonth[m] || 0), borderColor: '#c9a227', backgroundColor: 'rgba(201,162,39,0.12)', fill: true, tension: 0.35, pointRadius: 2, pointBackgroundColor: '#c9a227', borderWidth: 2, labelColor: '#e9dba8' }];
+    } else if (mode === 'category') {
+      const cats = CAT_ORDER.filter(c => series.catTotals[c] > 0);
+      datasets = cats.map(cat => ({
+        label: cat, data: monthsSlice.map(m => (series.catByMonth[m] && series.catByMonth[m][cat]) || 0),
+        borderColor: CAT_COLORS[cat] || '#888', backgroundColor: (CAT_COLORS[cat] || '#888') + '33',
+        fill: true, tension: 0.3, pointRadius: 0, stack: 's'
+      }));
+      legendHtml = cats.map(c => `<span><i style="background:${CAT_COLORS[c] || '#888'}"></i>${c}</span>`).join('');
+    } else {
+      datasets = series.accounts.map((acc, i) => ({
+        label: acc, data: monthsSlice.map(m => (series.accByMonth[m] && series.accByMonth[m][acc]) || 0),
+        borderColor: CAT_PIE_PALETTE_INV[i % CAT_PIE_PALETTE_INV.length], backgroundColor: CAT_PIE_PALETTE_INV[i % CAT_PIE_PALETTE_INV.length] + '33',
+        fill: true, tension: 0.3, pointRadius: 0, stack: 's'
+      }));
+      legendHtml = series.accounts.map((acc, i) => `<span><i style="background:${CAT_PIE_PALETTE_INV[i % CAT_PIE_PALETTE_INV.length]}"></i>${acc}</span>`).join('');
+    }
+
+    state.charts.trend = new Chart(ctx, {
+      type: 'line',
+      data: { labels: monthsSlice.map(assetMonthLabel), datasets },
+      options: {
+        responsive: true, maintainAspectRatio: false, layout: { padding: { top: 18 } },
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` ${c.dataset.label}: ${formatWon(c.raw)}` } } },
+        scales: {
+          x: { stacked: mode !== 'total', ticks: MONO_TICK, grid: { display: false } },
+          y: { stacked: mode !== 'total', ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT }
+        }
+      },
+      plugins: mode === 'total' ? [valueLabelPlugin] : []
+    });
+    document.getElementById('asset-trend-legend').innerHTML = legendHtml;
+  };
+
+  function onAssetTrendRangePick(v) {
+    state.assetTrendRange = v === 'all' ? 'all' : parseInt(v, 10);
+    bindRangeToggle('asset-trend-range-toggle', RANGE_OPTIONS, state.assetTrendRange, onAssetTrendRangePick);
+    drawTrend();
+  }
+  bindRangeToggle('asset-trend-range-toggle', RANGE_OPTIONS, state.assetTrendRange, onAssetTrendRangePick);
+
+  document.getElementById('asset-trend-mode-toggle').addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    state.assetTrendMode = btn.dataset.mode;
+    document.querySelectorAll('#asset-trend-mode-toggle button').forEach(b => b.classList.toggle('active', b === btn));
+    drawTrend();
   });
+
+  drawTrend();
 }
 
 /* ---------------- shared: ledger table helpers ---------------- */
@@ -1869,8 +1963,10 @@ function renderAdvancedTableBody(key, allRows, opts) {
 
 function renderAssetsPage(container, data, d) {
   container.innerHTML = `
-    <div class="panel" id="panel-assets-insights"></div>
-    <div id="asset-stats"></div>
+    <div class="grid-top">
+      <div class="panel" id="panel-assets-insights"></div>
+      <div id="asset-stats"></div>
+    </div>
     <div class="panel full" id="panel-trend"></div>
     <div class="grid">
       <div class="panel" id="panel-accounts"></div>
@@ -1880,14 +1976,14 @@ function renderAssetsPage(container, data, d) {
   renderWeeklyInsights('panel-assets-insights', 'weekly-insights-assets', '자산 인사이트', () => computeAssetsInsights(data, d));
   renderAssetStats(data, d);
   renderAccountsPanel(data, d);
-  renderTrend(d);
+  renderTrend(data, d);
   renderAllocation(d);
 }
 
 function renderAssetStats(data, d) {
   const box = document.getElementById('asset-stats');
   box.innerHTML = `
-    <div class="stat-grid">
+    <div class="stat-grid" style="grid-template-columns:1fr;">
       <div class="stat-card"><div class="label">${d.latestMonth || ''} 총자산</div><div class="value">${formatCompactWon(d.totalAssets)}원</div></div>
       <div class="stat-card"><div class="label">비상금 (NH-CMA)</div><div class="value">${formatCompactWon(d.emergencyFund)}원</div></div>
     </div>
@@ -1945,28 +2041,28 @@ function renderIncomePage(container, data, d) {
   const incomeSeries = data.months.map((m, i) => ({ month: m, total: data.incomeTotal[i] })).filter(x => x.total > 0);
   const latest = incomeSeries[incomeSeries.length - 1];
   const incomeLedger = data.ledger.filter(r => r.major.includes('수입'));
+  const catNames = Object.keys(data.incomeCategories);
+  const palette = ['#4c8c6b', '#c9a227', '#5b8fc7', '#9b7fc2', '#c1483f'];
 
   container.innerHTML = `
-    <div class="panel" id="panel-income-insights"></div>
+    <div class="grid-top">
+      <div class="panel" id="panel-income-insights"></div>
+      <div class="panel">
+        <div class="panel-title"><div><span class="eyebrow">${latest ? latest.month : ''}</span>수입처 비중</div></div>
+        <div class="chart-wrap tall"><canvas id="chart-income-pie"></canvas></div>
+      </div>
+    </div>
     <div class="panel full">
       <div class="panel-title">
         <div><span class="eyebrow">TOTAL</span>월별 총수입 추이</div>
         <div class="range-toggle" id="income-range-toggle"></div>
       </div>
-      <div class="chart-wrap tall"><canvas id="chart-income-total"></canvas></div>
-      <div class="chart-legend"><span><i style="background:#c9a227"></i>이번 달</span><span><i style="background:#4c8c6b"></i>그 외</span></div>
-    </div>
-    <div class="panel full">
-      <div class="panel-title">
-        <div><span class="eyebrow">COMPOSITION</span>수입 구성 추이</div>
-        <div class="range-toggle" id="income-comp-range-toggle"></div>
+      <div class="range-toggle" id="income-total-mode-toggle" style="margin-bottom:10px;">
+        <button data-mode="total" class="active">총액</button>
+        <button data-mode="category">카테고리별</button>
       </div>
-      <div class="chart-wrap tall"><canvas id="chart-income-comp"></canvas></div>
-      <div class="chart-legend" id="income-legend"></div>
-    </div>
-    <div class="panel" style="max-width:480px;margin:0 auto;">
-      <div class="panel-title"><div><span class="eyebrow">${latest ? latest.month : ''}</span>수입처 비중</div></div>
-      <div class="chart-wrap tall"><canvas id="chart-income-pie"></canvas></div>
+      <div class="chart-wrap tall"><canvas id="chart-income-total"></canvas></div>
+      <div class="chart-legend" id="income-total-legend"><span><i style="background:#c9a227"></i>이번 달</span><span><i style="background:#4c8c6b"></i>그 외</span></div>
     </div>
     <div class="panel full">
       <div class="panel-title"><div><span class="eyebrow">RECORDS</span>수입 내역</div></div>
@@ -1979,22 +2075,45 @@ function renderIncomePage(container, data, d) {
   const drawIncomeTotal = () => {
     const totalSeries = sliceByRange(incomeSeries, state.incomeRange);
     const curKey = currentPivotMonthKeyString();
+    const mode = state.incomeTotalMode;
     if (state.charts.incomeTotal) state.charts.incomeTotal.destroy();
     const totalCtx = document.getElementById('chart-income-total');
-    state.charts.incomeTotal = new Chart(totalCtx, {
-      data: {
-        labels: totalSeries.map(s => pivotMonthLabel(s.month)),
-        datasets: [
-          { type: 'bar', label: '수입', data: totalSeries.map(s => s.total), backgroundColor: totalSeries.map(s => s.month === curKey ? 'rgba(201,162,39,0.9)' : 'rgba(76,140,107,0.75)'), borderRadius: 3, labelColor: '#c7e4d4' }
-        ]
-      },
-      options: {
-        responsive: true, maintainAspectRatio: false, layout: { padding: { top: 18 } },
-        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` ${formatWon(c.raw)}` } } },
-        scales: { x: { ticks: MONO_TICK, grid: { display: false } }, y: { ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT } }
-      },
-      plugins: [valueLabelPlugin, avgLinePlugin(totalSeries.map(s => s.total))]
-    });
+    const legendBox = document.getElementById('income-total-legend');
+
+    if (mode === 'total') {
+      legendBox.innerHTML = `<span><i style="background:#c9a227"></i>이번 달</span><span><i style="background:#4c8c6b"></i>그 외</span>`;
+      state.charts.incomeTotal = new Chart(totalCtx, {
+        data: {
+          labels: totalSeries.map(s => pivotMonthLabel(s.month)),
+          datasets: [
+            { type: 'bar', label: '수입', data: totalSeries.map(s => s.total), backgroundColor: totalSeries.map(s => s.month === curKey ? 'rgba(201,162,39,0.9)' : 'rgba(76,140,107,0.75)'), borderRadius: 3, labelColor: '#c7e4d4' }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false, layout: { padding: { top: 18 } },
+          plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` ${formatWon(c.raw)}` } } },
+          scales: { x: { ticks: MONO_TICK, grid: { display: false } }, y: { ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT } }
+        },
+        plugins: [valueLabelPlugin, avgLinePlugin(totalSeries.map(s => s.total))]
+      });
+    } else {
+      const monthsSlice = sliceByRange(data.months, state.incomeRange);
+      const n = monthsSlice.length;
+      legendBox.innerHTML = catNames.map((n2, i) => `<span><i style="background:${palette[i % palette.length]}"></i>${n2}</span>`).join('');
+      state.charts.incomeTotal = new Chart(totalCtx, {
+        type: 'bar',
+        data: {
+          labels: monthsSlice.map(pivotMonthLabel),
+          datasets: catNames.map((name, i) => ({ label: name, data: data.incomeCategories[name].slice(-n).map(v => v || 0), backgroundColor: palette[i % palette.length], stack: 's' }))
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false, layout: { padding: { top: 18 } },
+          plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` ${c.dataset.label}: ${formatWon(c.raw)}` } } },
+          scales: { x: { stacked: true, ticks: MONO_TICK, grid: { display: false } }, y: { stacked: true, ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT } }
+        },
+        plugins: [stackTotalLabelPlugin]
+      });
+    }
   };
   function onIncomeRangePick(v) {
     state.incomeRange = v === 'all' ? 'all' : parseInt(v, 10);
@@ -2002,39 +2121,14 @@ function renderIncomePage(container, data, d) {
     drawIncomeTotal();
   }
   bindRangeToggle('income-range-toggle', RANGE_OPTIONS, state.incomeRange, onIncomeRangePick);
+  document.getElementById('income-total-mode-toggle').addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    state.incomeTotalMode = btn.dataset.mode;
+    document.querySelectorAll('#income-total-mode-toggle button').forEach(b => b.classList.toggle('active', b === btn));
+    drawIncomeTotal();
+  });
   drawIncomeTotal();
-
-  const catNames = Object.keys(data.incomeCategories);
-  const palette = ['#4c8c6b', '#c9a227', '#5b8fc7', '#9b7fc2', '#c1483f'];
-  const legend = document.getElementById('income-legend');
-  legend.innerHTML = catNames.map((n, i) => `<span><i style="background:${palette[i % palette.length]}"></i>${n}</span>`).join('');
-
-  const drawIncomeComp = () => {
-    const monthsSlice = sliceByRange(data.months, state.incomeCompRange);
-    const n = monthsSlice.length;
-    if (state.charts.incomeComp) state.charts.incomeComp.destroy();
-    const ctx = document.getElementById('chart-income-comp');
-    state.charts.incomeComp = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: monthsSlice.map(pivotMonthLabel),
-        datasets: catNames.map((name, i) => ({ label: name, data: data.incomeCategories[name].slice(-n).map(v => v || 0), backgroundColor: palette[i % palette.length], stack: 's' }))
-      },
-      options: {
-        responsive: true, maintainAspectRatio: false, layout: { padding: { top: 18 } },
-        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` ${c.dataset.label}: ${formatWon(c.raw)}` } } },
-        scales: { x: { stacked: true, ticks: MONO_TICK, grid: { display: false } }, y: { stacked: true, ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT } }
-      },
-      plugins: [stackTotalLabelPlugin]
-    });
-  };
-  function onIncomeCompRangePick(v) {
-    state.incomeCompRange = v === 'all' ? 'all' : parseInt(v, 10);
-    bindRangeToggle('income-comp-range-toggle', RANGE_OPTIONS, state.incomeCompRange, onIncomeCompRangePick);
-    drawIncomeComp();
-  }
-  bindRangeToggle('income-comp-range-toggle', RANGE_OPTIONS, state.incomeCompRange, onIncomeCompRangePick);
-  drawIncomeComp();
 
   const pieIdx = d.latestPivotIdx;
   const pieRows = catNames.map(name => ({ name, v: (data.incomeCategories[name] || [])[pieIdx] || 0 })).filter(r => r.v > 0);
@@ -2065,35 +2159,9 @@ function filterLedgerByRange(ledger, months, range) {
   return ledger.filter(r => keep.has(ledgerMonthKey(r.date)));
 }
 
-function pctLabelPlugin(getLabel) {
-  return {
-    id: 'pctLabelPlugin_' + Math.random().toString(36).slice(2),
-    afterDatasetsDraw(chart) {
-      const meta = chart.getDatasetMeta(0);
-      if (!meta) return;
-      const ctx = chart.ctx;
-      meta.data.forEach((el, i) => {
-        const label = getLabel(i);
-        if (label === null || label === undefined) return;
-        const pos = el.tooltipPosition ? el.tooltipPosition() : el;
-        ctx.save();
-        ctx.font = "600 10px 'IBM Plex Mono', monospace";
-        ctx.fillStyle = '#eae8e0';
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(label, pos.x + 6, pos.y);
-        ctx.restore();
-      });
-    }
-  };
-}
-
 function renderExpensePage(container, data, d) {
   const cf = d.cashflow;
   const expenseLedger = data.ledger.filter(r => r.major.includes('지출'));
-
-  const latestKey = pivotMonthToLedgerKey(data.months[d.latestPivotIdx]);
-  const topExpenses = expenseLedger.filter(r => ledgerMonthKey(r.date) === latestKey).sort((a, b) => b.amount - a.amount).slice(0, 10);
 
   container.innerHTML = `
     <div class="panel" id="panel-expense-insights"></div>
@@ -2104,22 +2172,16 @@ function renderExpensePage(container, data, d) {
       </div>
       <div class="chart-wrap tall"><canvas id="chart-expense-trend"></canvas></div>
     </div>
-    <div class="panel full">
+    <div class="panel" style="max-width:420px;" id="panel-top-vendors">
       <div class="panel-title">
         <div><span class="eyebrow">TOP VENDORS</span>주요 지출처</div>
         <div class="range-toggle" id="vendor-range-toggle"></div>
       </div>
       <div id="top-vendors-list"></div>
     </div>
-    <div class="panel full" id="panel-cat-budget"></div>
-    <div class="panel full">
-      <div class="panel-title"><div><span class="eyebrow">TOP 10</span>이번 달 주요 지출 내역</div></div>
-      <div class="table-scroll">
-        <table class="data-table">
-          <thead><tr><th>날짜</th><th>소분류</th><th>항목</th><th>사용처</th><th style="text-align:right">금액</th></tr></thead>
-          <tbody>${topExpenses.length ? topExpenses.map(r => `<tr><td>${r.date}</td><td>${r.minor}</td><td>${r.item}</td><td>${r.vendor || ''}</td><td class="amt expense">${formatWon(r.amount)}</td></tr>`).join('') : '<tr><td colspan="5" style="text-align:center;color:var(--text-faint);padding:20px;">이번 달 지출 내역이 없어요.</td></tr>'}</tbody>
-        </table>
-      </div>
+    <div class="grid" id="panel-budget-month-section">
+      <div class="panel" id="panel-cat-budget"></div>
+      <div class="panel" id="panel-top-expenses"></div>
     </div>
     <div class="panel full">
       <div class="panel-title"><div><span class="eyebrow">RECORDS</span>지출 내역</div></div>
@@ -2177,30 +2239,68 @@ function renderExpensePage(container, data, d) {
   bindRangeToggle('vendor-range-toggle', RANGE_OPTIONS, state.vendorRange, onVendorRangePick);
   drawTopVendors();
 
-  renderCategoryBudgetPanel(data, d);
+  renderExpenseMonthSection(data, d);
   renderAdvancedTable('expense-table', expenseLedger, { majorOptions: [['지출', '전체']], defaultGroup: 'none' });
   renderFixedCostsPanel(data);
 }
 
-/* ---------------- 카테고리별 예산 (사용자 편집 가능) ---------------- */
+/* ---------------- 카테고리별 예산 가이드 + 이번 달 주요 지출 (같은 연월 기준, 동시 업데이트) ---------------- */
 
 function pivotYearMonth(m) {
   const match = (m || '').match(/(\d{4})-(\d{1,2})월/);
   return match ? { year: match[1], month: parseInt(match[2], 10) } : { year: '', month: 0 };
 }
 
-function renderCategoryBudgetPanel(data, d) {
-  const panel = document.getElementById('panel-cat-budget');
-  const catNames = Object.keys(data.expenseCategories);
+function renderExpenseMonthSection(data, d) {
   if (state.expenseMonthIdx === undefined || state.expenseMonthIdx === null) {
     state.expenseMonthIdx = d.latestPivotIdx;
   }
-  const idx = state.expenseMonthIdx;
+  renderCategoryBudgetPanel(data, d);
+  renderTopExpensesPanel(data, d);
+}
+
+function setExpenseMonthIdx(idx, data, d) {
+  state.expenseMonthIdx = idx;
+  renderExpenseMonthSection(data, d);
+}
+
+function renderMonthNavControls(idx, data, d) {
   const curYM = pivotYearMonth(data.months[idx]);
   const years = [...new Set(data.months.map(m => pivotYearMonth(m).year))];
   const monthsInYear = data.months.map((m, i) => ({ i, ...pivotYearMonth(m) })).filter(x => x.year === curYM.year);
   const yearOptions = years.map(y => `<option value="${y}" ${y === curYM.year ? 'selected' : ''}>${y}</option>`).join('');
   const monthOptions = monthsInYear.map(x => `<option value="${x.i}" ${x.i === idx ? 'selected' : ''}>${x.month}월</option>`).join('');
+  return `
+    <div class="month-nav">
+      <select id="expense-month-year">${yearOptions}</select>
+      <select id="expense-month-month">${monthOptions}</select>
+      <button class="btn small" id="expense-month-thismonth">이번달</button>
+    </div>
+  `;
+}
+
+function bindMonthNavControls(data, d) {
+  const yearSel = document.getElementById('expense-month-year');
+  const monthSel = document.getElementById('expense-month-month');
+  const thisBtn = document.getElementById('expense-month-thismonth');
+  if (yearSel) yearSel.addEventListener('change', () => {
+    const y = yearSel.value;
+    const firstInYear = data.months.map((m, i) => ({ i, ...pivotYearMonth(m) })).filter(x => x.year === y)[0];
+    if (firstInYear) setExpenseMonthIdx(firstInYear.i, data, d);
+  });
+  if (monthSel) monthSel.addEventListener('change', () => setExpenseMonthIdx(parseInt(monthSel.value, 10), data, d));
+  if (thisBtn) thisBtn.addEventListener('click', () => {
+    const curKey = currentPivotMonthKeyString();
+    let targetIdx = data.months.indexOf(curKey);
+    if (targetIdx === -1) targetIdx = d.latestPivotIdx;
+    setExpenseMonthIdx(targetIdx, data, d);
+  });
+}
+
+function renderCategoryBudgetPanel(data, d) {
+  const panel = document.getElementById('panel-cat-budget');
+  const catNames = Object.keys(data.expenseCategories);
+  const idx = state.expenseMonthIdx;
 
   const rows = catNames.map(name => {
     const vals = data.expenseCategories[name];
@@ -2215,74 +2315,57 @@ function renderCategoryBudgetPanel(data, d) {
   panel.innerHTML = `
     <div class="panel-title">
       <div><span class="eyebrow">BUDGET</span>카테고리별 예산 가이드</div>
-      <div class="month-nav">
-        <select id="cat-budget-year">${yearOptions}</select>
-        <select id="cat-budget-month">${monthOptions}</select>
-        <button class="btn small" id="cat-budget-thismonth">이번달</button>
-      </div>
+      ${renderMonthNavControls(idx, data, d)}
     </div>
-    ${rows.length ? `<div class="chart-wrap" style="height:${Math.max(160, rows.length * 34)}px;"><canvas id="chart-cat-budget"></canvas></div>` : ''}
-    <div id="cat-budget-list"></div>
-    ${!rows.length ? '<div class="empty-state">해당 월 데이터가 없어요.</div>' : ''}
+    <div id="cat-budget-list">
+      ${rows.map(r => {
+        const remaining = r.budget - r.cur;
+        const over = remaining < 0;
+        const pct = r.budget > 0 ? (r.cur / r.budget) * 100 : 0;
+        return `<div class="budget-row ${over ? 'over' : ''}">
+          <div class="budget-row-head">
+            <span class="budget-row-name">${r.name}${over ? '<span class="cat-tag">예산 초과</span>' : ''}</span>
+            <span class="budget-row-remaining" style="color:${over ? 'var(--red)' : 'var(--green)'}">${over ? wonComma(Math.abs(remaining)) + '원 초과' : wonComma(remaining) + '원 남음'}</span>
+          </div>
+          <div class="budget-bar-row">
+            <div class="budget-bar-track"><div class="budget-bar-fill ${over ? 'over' : ''}" style="width:${Math.min(pct, 100)}%"></div></div>
+            <span class="budget-bar-pct">${pct.toFixed(0)}%</span>
+          </div>
+          <div class="budget-row-figures">${wonComma(r.cur)}원 지출 / 예산 <input type="text" inputmode="numeric" class="budget-input" data-cat="${r.name}" value="${wonComma(r.budget)}" />원</div>
+        </div>`;
+      }).join('') || '<div class="empty-state">해당 월 데이터가 없어요.</div>'}
+    </div>
   `;
 
-  if (rows.length) {
-    const pcts = rows.map(r => r.budget > 0 ? (r.cur / r.budget) * 100 : 0);
-    const maxPct = Math.max(...pcts, 100);
-    const ctx = document.getElementById('chart-cat-budget');
-    state.charts.catBudget = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: rows.map(r => r.name),
-        datasets: [{ data: pcts.map(p => Math.min(p, maxPct)), backgroundColor: pcts.map(p => p > 100 ? 'rgba(193,72,63,0.85)' : 'rgba(201,162,39,0.85)'), borderRadius: 3 }]
-      },
-      options: {
-        indexAxis: 'y', responsive: true, maintainAspectRatio: false, layout: { padding: { right: 50 } },
-        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` ${rows[c.dataIndex].name}: ${pcts[c.dataIndex].toFixed(0)}% (${formatCompactWon(rows[c.dataIndex].cur)}원 / 예산 ${formatCompactWon(rows[c.dataIndex].budget)}원)` } } },
-        scales: {
-          x: { min: 0, max: maxPct * 1.15, ticks: { ...MONO_TICK, callback: (v) => v + '%' }, grid: GRID_FAINT },
-          y: { ticks: MONO_TICK, grid: { display: false } }
-        }
-      },
-      plugins: [pctLabelPlugin((i) => pcts[i] !== undefined ? pcts[i].toFixed(0) + '%' : null)]
-    });
-  }
-
-  document.getElementById('cat-budget-list').innerHTML = rows.map(r => {
-    const remaining = r.budget - r.cur;
-    const over = remaining < 0;
-    return `<div class="acct-row">
-      <span class="acct-name">${r.name}${over ? '<span class="cat-tag">예산 초과</span>' : ''}</span>
-      <span class="acct-amt" style="color:${over ? 'var(--red)' : 'var(--green)'}">${over ? formatCompactWon(Math.abs(remaining)) + '원 초과' : formatCompactWon(remaining) + '원 남음'}</span>
-      <input type="number" class="budget-input" data-cat="${r.name}" value="${Math.round(r.budget)}" step="10000" />
-    </div>`;
-  }).join('');
-
-  const yearSel = document.getElementById('cat-budget-year');
-  const monthSel = document.getElementById('cat-budget-month');
-  yearSel.addEventListener('change', () => {
-    const y = yearSel.value;
-    const firstInYear = data.months.map((m, i) => ({ i, ...pivotYearMonth(m) })).filter(x => x.year === y)[0];
-    if (firstInYear) state.expenseMonthIdx = firstInYear.i;
-    renderCategoryBudgetPanel(data, d);
-  });
-  monthSel.addEventListener('change', () => { state.expenseMonthIdx = parseInt(monthSel.value, 10); renderCategoryBudgetPanel(data, d); });
-  document.getElementById('cat-budget-thismonth').addEventListener('click', () => {
-    const curKey = currentPivotMonthKeyString();
-    let targetIdx = data.months.indexOf(curKey);
-    if (targetIdx === -1) targetIdx = d.latestPivotIdx;
-    state.expenseMonthIdx = targetIdx;
-    renderCategoryBudgetPanel(data, d);
-  });
+  bindMonthNavControls(data, d);
   panel.querySelectorAll('.budget-input').forEach(inp => {
     inp.addEventListener('change', () => {
       const cat = inp.dataset.cat;
-      const val = parseFloat(inp.value);
-      state.budgets[cat] = isNaN(val) ? undefined : val;
+      const raw = inp.value.replace(/[^0-9]/g, '');
+      const val = raw === '' ? undefined : parseFloat(raw);
+      state.budgets[cat] = val;
       saveBudgets();
       renderCategoryBudgetPanel(data, d);
     });
   });
+}
+
+function renderTopExpensesPanel(data, d) {
+  const panel = document.getElementById('panel-top-expenses');
+  const idx = state.expenseMonthIdx;
+  const monthKey = pivotMonthToLedgerKey(data.months[idx]);
+  const expenseLedger = data.ledger.filter(r => r.major.includes('지출'));
+  const topExpenses = expenseLedger.filter(r => ledgerMonthKey(r.date) === monthKey).sort((a, b) => b.amount - a.amount).slice(0, 10);
+
+  panel.innerHTML = `
+    <div class="panel-title"><div><span class="eyebrow">TOP 10</span>${pivotMonthLabel(data.months[idx])} 주요 지출 내역</div></div>
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead><tr><th>날짜</th><th>소분류</th><th>항목</th><th>사용처</th><th style="text-align:right">금액</th></tr></thead>
+        <tbody>${topExpenses.length ? topExpenses.map(r => `<tr><td>${r.date}</td><td>${r.minor}</td><td>${r.item}</td><td>${r.vendor || ''}</td><td class="amt expense">${formatWon(r.amount)}</td></tr>`).join('') : '<tr><td colspan="5" style="text-align:center;color:var(--text-faint);padding:20px;">해당 월 지출 내역이 없어요.</td></tr>'}</tbody>
+      </table>
+    </div>
+  `;
 }
 
 /* ---------------- 고정비 관리 ---------------- */
@@ -2751,10 +2834,11 @@ async function saveBudgets() {
 async function fetchCsvRows(gid) {
   const res = await fetch(csvUrlFor(gid), { cache: 'no-store' });
   if (!res.ok) throw new Error(`HTTP ${res.status} (gid ${gid})`);
-  const text = await res.text();
+  let text = await res.text();
+  if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1); // gviz/tq 응답 맨 앞의 UTF-8 BOM 제거
   if (text.trim().startsWith('<')) throw new Error(`시트 접근 권한이 없어요 (gid ${gid})`);
   const parsed = Papa.parse(text, { skipEmptyLines: false });
-  return parsed.data.map(r => r.map(c => (c === null || c === undefined) ? '' : String(c)));
+  return parsed.data.map(r => r.map(c => (c === null || c === undefined) ? '' : String(c).replace(/^\uFEFF/, '')));
 }
 
 async function fetchAllTabsAndMerge() {
