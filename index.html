@@ -70,7 +70,8 @@ body{
   border-bottom:1px solid var(--border);
 }
 #page-content{padding-top:22px;display:flex;flex-direction:column;gap:16px;}
-.grid-top{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;align-items:start;}
+.grid-top{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;align-items:stretch;}
+.col-stack{display:flex;flex-direction:column;gap:16px;}
 @media (max-width:820px){.grid-top{grid-template-columns:1fr;}}
 
 /* ---------- top bar ---------- */
@@ -361,25 +362,27 @@ body{
 .cat-bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--gold),var(--gold-soft));}
 .cat-row.over .cat-bar-fill{background:linear-gradient(90deg,var(--red),#d9756c);}
 .cat-tag{font-family:var(--mono);font-size:10px;color:var(--red);margin-left:6px;}
-.budget-input{
-  width:96px;background:var(--panel-2);border:1px solid var(--border-strong);
-  color:var(--text);font-family:var(--mono);font-size:11.5px;
-  border-radius:5px;padding:3px 6px;text-align:right;margin:0 2px;
+.budget-input-compact{
+  width:66px;background:var(--panel-2);border:1px solid var(--border-strong);
+  color:var(--text);font-family:var(--mono);font-size:10px;
+  border-radius:4px;padding:1px 4px;text-align:right;
 }
-.budget-row{padding:10px 0;border-bottom:1px dotted var(--border);}
-.budget-row:last-child{border-bottom:none;}
-.budget-row-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;}
-.budget-row-name{font-size:13px;color:var(--text);}
-.budget-row-remaining{font-family:var(--mono);font-size:11.5px;white-space:nowrap;}
-.budget-bar-row{display:flex;align-items:center;gap:8px;}
-.budget-bar-track{flex:1;height:14px;background:var(--panel-2);border-radius:7px;overflow:hidden;}
-.budget-bar-fill{height:100%;border-radius:7px;background:linear-gradient(90deg,var(--gold),var(--gold-soft));transition:width .3s;}
-.budget-bar-fill.over{background:linear-gradient(90deg,var(--red),#d9756c);}
-.budget-bar-pct{font-family:var(--mono);font-size:11px;color:var(--text-dim);width:36px;text-align:right;flex-shrink:0;}
-.budget-row-figures{font-family:var(--mono);font-size:11px;color:var(--text-dim);margin-top:6px;}
+.budget-row-compact{display:flex;align-items:center;gap:7px;padding:6px 0;border-bottom:1px dotted var(--border);flex-wrap:nowrap;}
+.budget-row-compact:last-child{border-bottom:none;}
+.b-name{flex:0 0 auto;max-width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--text);}
+.b-bar-track{flex:1 1 auto;min-width:24px;height:10px;background:var(--panel-2);border-radius:5px;overflow:hidden;}
+.b-bar-fill{height:100%;border-radius:5px;background:linear-gradient(90deg,var(--gold),var(--gold-soft));transition:width .3s;}
+.b-bar-fill.over{background:linear-gradient(90deg,var(--red),#d9756c);}
+.b-pct{flex:0 0 auto;width:30px;text-align:right;font-family:var(--mono);font-size:10px;color:var(--text-dim);}
+.b-figures{flex:0 0 auto;font-family:var(--mono);font-size:10px;color:var(--text-dim);white-space:nowrap;display:flex;align-items:center;gap:2px;}
+.b-remaining{flex:0 0 auto;font-family:var(--mono);font-size:10.5px;white-space:nowrap;text-align:right;min-width:56px;}
 .month-nav select{
   background:var(--panel-2);border:1px solid var(--border-strong);color:var(--text);
   font-family:var(--mono);font-size:12.5px;border-radius:6px;padding:5px 8px;
+}
+@media (max-width:520px){
+  .b-name{max-width:44px;}
+  .b-figures{display:none;}
 }
 
 /* ---------- banner ---------- */
@@ -573,6 +576,12 @@ body{
 .goal-card-item{font-size:12.5px;color:var(--text-dim);margin-bottom:4px;}
 .goal-card-current{font-family:var(--mono);font-size:16px;font-weight:700;color:var(--text);}
 .goal-card-target{font-family:var(--mono);font-size:11px;color:var(--text-faint);margin-top:3px;}
+.goal-progress{margin-top:8px;}
+.goal-progress-track{height:8px;background:var(--panel-2);border-radius:4px;overflow:hidden;}
+.goal-progress-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--gold),var(--gold-soft));transition:width .3s;}
+.goal-progress-fill.good{background:linear-gradient(90deg,var(--green),#6fb08c);}
+.goal-progress-fill.bad{background:linear-gradient(90deg,var(--red),#d9756c);}
+.goal-progress-figures{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10.5px;color:var(--text-dim);margin-top:4px;}
 
 </style>
 </head>
@@ -622,11 +631,16 @@ const state = {
   incomeRange: 12,
   incomeTotalMode: 'total',
   expenseRange: 12,
-  fixedRange: 12,
+  expenseTrendMode: 'total',
   vendorRange: 12,
   invRange: 12,
+  invContribRange: 12,
+  invReturnsRange: 12,
   assetTrendRange: 12,
-  assetTrendMode: 'total'
+  assetTrendMode: 'total',
+  assetNetRange: 12,
+  savTrendRange: 12,
+  savContribRange: 12
 };
 
 /* ---------------- helpers ---------------- */
@@ -779,6 +793,53 @@ function goalStatusClass(status) {
   if (/(완료|달성|✅|done|complete)/i.test(s)) return 'ok';
   if (/(지연|실패|❌|미달|보류)/i.test(s)) return 'no';
   return '';
+}
+
+/* 목표 문구에서 흔한 패턴(총자산 N억, 비상금 N만원, 월 지출/고정비 N만원, 현금비율 N%)을
+   인식해서 실제 데이터(d)의 현재 값과 비교해 진행 상황을 계산한다.
+   invert:true 인 항목(지출/고정비처럼 "적을수록 좋음")은 "초과/여유"로 표시하고,
+   나머지(자산 쌓기, 비상금 모으기 등)는 0~100% 진행 바로 표시한다. */
+const GOAL_METRIC_MATCHERS = [
+  { re: /비상금\s*([\d,]+)\s*만원/, target: (m) => parseFloat(m[1].replace(/,/g, '')) * 10000, current: (d) => d.emergencyFund, invert: false },
+  { re: /총자산\s*([\d.]+)\s*억/, target: (m) => parseFloat(m[1]) * 100000000, current: (d) => d.totalAssets, invert: false },
+  { re: /고정비\s*([\d,]+)\s*만원/, target: (m) => parseFloat(m[1].replace(/,/g, '')) * 10000, current: (d, extra) => extra.latestFixed, invert: true },
+  { re: /(?:월\s*)?지출\s*([\d,]+)\s*만원/, target: (m) => parseFloat(m[1].replace(/,/g, '')) * 10000, current: (d) => (d.cashflow.length ? d.cashflow[d.cashflow.length - 1].expense : 0), invert: true },
+  { re: /현금\s*비율.*?(\d+(?:\.\d+)?)\s*%/, target: (m) => parseFloat(m[1]), current: (d) => (d.totalAssets ? (d.emergencyFund / d.totalAssets) * 100 : 0), invert: false, isPct: true }
+];
+
+function computeGoalProgress(title, d, extra) {
+  if (!title) return null;
+  for (const m of GOAL_METRIC_MATCHERS) {
+    const match = title.match(m.re);
+    if (!match) continue;
+    const target = m.target(match);
+    const current = m.current(d, extra || {});
+    if (target === null || target === undefined || isNaN(target)) continue;
+    return { current, target, invert: !!m.invert, isPct: !!m.isPct };
+  }
+  return null;
+}
+
+function renderGoalProgressLine(p) {
+  const fmt = (v) => p.isPct ? `${v.toFixed(1)}%` : `${formatCompactWon(v)}원`;
+  const pct = p.target ? Math.min((p.current / p.target) * 100, 999) : 0;
+  const good = p.invert ? p.current <= p.target : p.current >= p.target;
+  const remaining = p.target - p.current;
+  let remainLabel;
+  if (p.invert) {
+    remainLabel = remaining >= 0 ? `${fmt(remaining)} 여유` : `${fmt(Math.abs(remaining))} 초과`;
+  } else {
+    remainLabel = remaining > 0 ? `${fmt(remaining)} 남음` : '달성!';
+  }
+  return `
+    <div class="goal-progress">
+      <div class="goal-progress-track"><div class="goal-progress-fill ${good ? 'good' : 'bad'}" style="width:${Math.min(Math.max(pct, 0), 100)}%"></div></div>
+      <div class="goal-progress-figures">
+        <span>${fmt(p.current)} / ${fmt(p.target)}</span>
+        <span style="color:${good ? 'var(--green)' : 'var(--red)'}">${remainLabel}</span>
+      </div>
+    </div>
+  `;
 }
 
 function parseLedgerFromRows(rows) {
@@ -1556,13 +1617,13 @@ function renderHomePage(container, data, d) {
     <div class="panel full" id="panel-priority-insights"></div>
     <div class="panel full" id="panel-goal-cards"></div>
   `;
-  renderGoalCards(data);
+  renderGoalCards(data, d);
   renderPriorityInsights(data, d);
 }
 
 /* ---------------- 목표 탭 카드 ---------------- */
 
-function renderGoalCards(data) {
+function renderGoalCards(data, d) {
   const panel = document.getElementById('panel-goal-cards');
   const allGoals = data.goals || [];
   const goals = allGoals.filter(g => pickGoalField(g, 'title'));
@@ -1573,10 +1634,42 @@ function renderGoalCards(data) {
     `;
     return;
   }
+
+  const fixedTrend = getFixedMonthlyTrend(data.ledger);
+  const extra = { latestFixed: fixedTrend.length ? fixedTrend[fixedTrend.length - 1].total : 0 };
+
+  const statuses = [...new Set(goals.map(g => pickGoalField(g, 'status')).filter(Boolean))];
+  if (!state.goalFilter) state.goalFilter = { status: 'all', sort: 'default' };
+
+  let filtered = goals;
+  if (state.goalFilter.status !== 'all') {
+    filtered = filtered.filter(g => pickGoalField(g, 'status') === state.goalFilter.status);
+  }
+  if (state.goalFilter.sort === 'status') {
+    const order = { '진행중': 0, '진행': 0, '대기': 1, '완료': 2, '달성': 2 };
+    filtered = [...filtered].sort((a, b) => {
+      const sa = pickGoalField(a, 'status') || '';
+      const sb = pickGoalField(b, 'status') || '';
+      return (order[sa] !== undefined ? order[sa] : 9) - (order[sb] !== undefined ? order[sb] : 9);
+    });
+  }
+
   panel.innerHTML = `
-    <div class="panel-title"><div><span class="eyebrow">ROADMAP</span>목표</div></div>
+    <div class="panel-title">
+      <div><span class="eyebrow">ROADMAP</span>목표</div>
+      <div class="month-nav">
+        <select id="goal-status-filter">
+          <option value="all" ${state.goalFilter.status === 'all' ? 'selected' : ''}>전체 상태</option>
+          ${statuses.map(s => `<option value="${s}" ${state.goalFilter.status === s ? 'selected' : ''}>${s}</option>`).join('')}
+        </select>
+        <select id="goal-sort">
+          <option value="default" ${state.goalFilter.sort === 'default' ? 'selected' : ''}>기본순</option>
+          <option value="status" ${state.goalFilter.sort === 'status' ? 'selected' : ''}>상태순</option>
+        </select>
+      </div>
+    </div>
     <div class="goal-card-grid">
-      ${goals.map(g => {
+      ${filtered.map(g => {
         const period = pickGoalField(g, 'period');
         const category = pickGoalField(g, 'category');
         const title = pickGoalField(g, 'title');
@@ -1584,18 +1677,29 @@ function renderGoalCards(data) {
         const doneDate = pickGoalField(g, 'doneDate');
         const memo = pickGoalField(g, 'memo');
         const vClass = goalStatusClass(status);
+        const progress = computeGoalProgress(title, d, extra);
         return `<div class="goal-card ${vClass}">
           <div class="goal-card-top">
             <span class="goal-card-group">${[period, category].filter(Boolean).join(' · ') || '&nbsp;'}</span>
             ${status ? `<span class="goal-card-verdict">${status}</span>` : ''}
           </div>
           <div class="goal-card-item">${title || '—'}</div>
+          ${progress ? renderGoalProgressLine(progress) : ''}
           ${doneDate ? `<div class="goal-card-target">달성 ${doneDate}</div>` : ''}
           ${memo ? `<div class="goal-card-target">${memo}</div>` : ''}
         </div>`;
-      }).join('')}
+      }).join('') || '<div class="empty-state">해당 상태의 목표가 없어요.</div>'}
     </div>
   `;
+
+  document.getElementById('goal-status-filter').addEventListener('change', (e) => {
+    state.goalFilter.status = e.target.value;
+    renderGoalCards(data, d);
+  });
+  document.getElementById('goal-sort').addEventListener('change', (e) => {
+    state.goalFilter.sort = e.target.value;
+    renderGoalCards(data, d);
+  });
 }
 
 /* ---------------- 홈 인사이트 (매주 월요일 갱신) ---------------- */
@@ -1793,7 +1897,7 @@ function renderTrend(data, d) {
           y: { stacked: mode !== 'total', ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT }
         }
       },
-      plugins: mode === 'total' ? [valueLabelPlugin] : []
+      plugins: mode === 'total' ? [valueLabelPlugin] : [stackTotalLabelPlugin]
     });
     document.getElementById('asset-trend-legend').innerHTML = legendHtml;
   };
@@ -1965,19 +2069,59 @@ function renderAssetsPage(container, data, d) {
   container.innerHTML = `
     <div class="grid-top">
       <div class="panel" id="panel-assets-insights"></div>
-      <div id="asset-stats"></div>
+      <div class="col-stack">
+        <div id="asset-stats"></div>
+        <div class="panel" id="panel-allocation"></div>
+      </div>
     </div>
     <div class="panel full" id="panel-trend"></div>
-    <div class="grid">
-      <div class="panel" id="panel-accounts"></div>
-      <div class="panel" id="panel-allocation"></div>
-    </div>
+    <div class="panel full" id="panel-net"></div>
+    <div class="panel full" id="panel-accounts"></div>
   `;
   renderWeeklyInsights('panel-assets-insights', 'weekly-insights-assets', '자산 인사이트', () => computeAssetsInsights(data, d));
   renderAssetStats(data, d);
   renderAccountsPanel(data, d);
   renderTrend(data, d);
   renderAllocation(d);
+  renderNetIncomeChart(data, d);
+}
+
+function renderNetIncomeChart(data, d) {
+  const panel = document.getElementById('panel-net');
+  const netSeries = data.months.map((m, i) => ({ month: m, net: (data.incomeTotal[i] || 0) - (data.expenseTotal[i] || 0) })).filter((s, i) => data.incomeTotal[i] > 0 || data.expenseTotal[i] > 0);
+  panel.innerHTML = `
+    <div class="panel-title">
+      <div><span class="eyebrow">NET</span>연월별 순익 (수입 − 지출)</div>
+      <div class="range-toggle" id="asset-net-range-toggle"></div>
+    </div>
+    <div class="chart-wrap tall"><canvas id="chart-asset-net"></canvas></div>
+  `;
+  const drawNet = () => {
+    const series = sliceByRange(netSeries, state.assetNetRange);
+    if (state.charts.assetNet) state.charts.assetNet.destroy();
+    const ctx = document.getElementById('chart-asset-net');
+    state.charts.assetNet = new Chart(ctx, {
+      data: {
+        labels: series.map(s => pivotMonthLabel(s.month)),
+        datasets: [
+          { type: 'bar', label: '순익', data: series.map(s => s.net), backgroundColor: series.map(s => s.net >= 0 ? 'rgba(76,140,107,0.75)' : 'rgba(193,72,63,0.75)'), borderRadius: 3, labelColor: '#c7cddb' }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, layout: { padding: { top: 18 } },
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` ${formatWon(c.raw)}` } } },
+        scales: { x: { ticks: MONO_TICK, grid: { display: false } }, y: { ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT } }
+      },
+      plugins: [valueLabelPlugin, avgLinePlugin(series.map(s => s.net))]
+    });
+  };
+  function onAssetNetRangePick(v) {
+    state.assetNetRange = v === 'all' ? 'all' : parseInt(v, 10);
+    bindRangeToggle('asset-net-range-toggle', RANGE_OPTIONS, state.assetNetRange, onAssetNetRangePick);
+    drawNet();
+  }
+  bindRangeToggle('asset-net-range-toggle', RANGE_OPTIONS, state.assetNetRange, onAssetNetRangePick);
+  drawNet();
 }
 
 function renderAssetStats(data, d) {
@@ -2159,18 +2303,37 @@ function filterLedgerByRange(ledger, months, range) {
   return ledger.filter(r => keep.has(ledgerMonthKey(r.date)));
 }
 
+function getFixedByPivotMonth(ledger, series) {
+  const fixedByKey = {};
+  ledger.filter(r => r.fixed && r.major.includes('지출')).forEach(r => {
+    const k = ledgerMonthKey(r.date);
+    fixedByKey[k] = (fixedByKey[k] || 0) + r.amount;
+  });
+  return series.map(s => ({ month: s.month, expense: fixedByKey[pivotMonthToLedgerKey(s.month)] || 0 }));
+}
+
 function renderExpensePage(container, data, d) {
   const cf = d.cashflow;
   const expenseLedger = data.ledger.filter(r => r.major.includes('지출'));
+  const fixedSeries = getFixedByPivotMonth(data.ledger, cf);
+  const hasFixed = fixedSeries.some(s => s.expense > 0);
 
   container.innerHTML = `
     <div class="panel" id="panel-expense-insights"></div>
     <div class="panel full">
       <div class="panel-title">
         <div><span class="eyebrow">TREND</span>월별 총지출 추이</div>
-        <div class="range-toggle" id="expense-range-toggle"></div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          ${hasFixed ? `<div class="range-toggle" id="expense-trend-mode-toggle">
+            <button data-mode="total" class="active">전체</button>
+            <button data-mode="fixed">고정비만</button>
+          </div>` : ''}
+          <div class="range-toggle" id="expense-range-toggle"></div>
+        </div>
       </div>
       <div class="chart-wrap tall"><canvas id="chart-expense-trend"></canvas></div>
+      <div class="settings-note" id="expense-trend-hint" style="display:none;">막대를 클릭하면 해당 월 고정비 항목을 볼 수 있어요.</div>
+      <div id="fixed-breakdown"></div>
     </div>
     <div class="panel" style="max-width:420px;" id="panel-top-vendors">
       <div class="panel-title">
@@ -2179,37 +2342,52 @@ function renderExpensePage(container, data, d) {
       </div>
       <div id="top-vendors-list"></div>
     </div>
-    <div class="grid" id="panel-budget-month-section">
-      <div class="panel" id="panel-cat-budget"></div>
-      <div class="panel" id="panel-top-expenses"></div>
+    <div class="panel full" id="panel-budget-month-section">
+      <div class="panel-title">
+        <div><span class="eyebrow">BUDGET &amp; TOP 10</span>카테고리별 예산 &amp; 주요 지출</div>
+        <div id="expense-month-nav-slot"></div>
+      </div>
+      <div class="grid">
+        <div id="cat-budget-body"></div>
+        <div id="top-expenses-body"></div>
+      </div>
     </div>
     <div class="panel full">
       <div class="panel-title"><div><span class="eyebrow">RECORDS</span>지출 내역</div></div>
       <div id="expense-table"></div>
     </div>
-    <div class="panel full" id="panel-fixed-costs"></div>
   `;
 
   renderWeeklyInsights('panel-expense-insights', 'weekly-insights-expense', '지출 인사이트', () => computeExpenseInsights(data, d));
 
   const drawExpenseTrend = () => {
-    const series = sliceByRange(cf, state.expenseRange);
+    const mode = hasFixed ? state.expenseTrendMode : 'total';
+    const baseSeries = mode === 'fixed' ? fixedSeries : cf;
+    const series = sliceByRange(baseSeries, state.expenseRange);
     if (state.charts.expenseTrend) state.charts.expenseTrend.destroy();
     const ctx = document.getElementById('chart-expense-trend');
+    const color = mode === 'fixed' ? 'rgba(201,162,39,0.75)' : 'rgba(193,72,63,0.75)';
     state.charts.expenseTrend = new Chart(ctx, {
       data: {
         labels: series.map(s => pivotMonthLabel(s.month)),
         datasets: [
-          { type: 'bar', label: '지출', data: series.map(s => s.expense), backgroundColor: 'rgba(193,72,63,0.75)', borderRadius: 3, labelColor: '#f0c4c0' }
+          { type: 'bar', label: mode === 'fixed' ? '고정비' : '지출', data: series.map(s => s.expense), backgroundColor: color, borderRadius: 3, labelColor: mode === 'fixed' ? '#e9dba8' : '#f0c4c0' }
         ]
       },
       options: {
         responsive: true, maintainAspectRatio: false, layout: { padding: { top: 18 } },
+        onClick: (evt, elements) => {
+          if (mode !== 'fixed' || !elements.length) return;
+          const s = series[elements[0].index];
+          if (s) renderFixedBreakdown(data.ledger, pivotMonthToLedgerKey(s.month), pivotMonthLabel(s.month));
+        },
         plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` ${formatWon(c.raw)}` } } },
         scales: { x: { ticks: MONO_TICK, grid: { display: false } }, y: { ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT } }
       },
       plugins: [valueLabelPlugin, avgLinePlugin(series.map(s => s.expense))]
     });
+    document.getElementById('expense-trend-hint').style.display = mode === 'fixed' ? '' : 'none';
+    if (mode !== 'fixed') document.getElementById('fixed-breakdown').innerHTML = '';
   };
   function onExpenseRangePick(v) {
     state.expenseRange = v === 'all' ? 'all' : parseInt(v, 10);
@@ -2217,6 +2395,15 @@ function renderExpensePage(container, data, d) {
     drawExpenseTrend();
   }
   bindRangeToggle('expense-range-toggle', RANGE_OPTIONS, state.expenseRange, onExpenseRangePick);
+  if (hasFixed) {
+    document.getElementById('expense-trend-mode-toggle').addEventListener('click', (e) => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      state.expenseTrendMode = btn.dataset.mode;
+      document.querySelectorAll('#expense-trend-mode-toggle button').forEach(b => b.classList.toggle('active', b === btn));
+      drawExpenseTrend();
+    });
+  }
   drawExpenseTrend();
 
   const drawTopVendors = () => {
@@ -2241,7 +2428,6 @@ function renderExpensePage(container, data, d) {
 
   renderExpenseMonthSection(data, d);
   renderAdvancedTable('expense-table', expenseLedger, { majorOptions: [['지출', '전체']], defaultGroup: 'none' });
-  renderFixedCostsPanel(data);
 }
 
 /* ---------------- 카테고리별 예산 가이드 + 이번 달 주요 지출 (같은 연월 기준, 동시 업데이트) ---------------- */
@@ -2255,6 +2441,10 @@ function renderExpenseMonthSection(data, d) {
   if (state.expenseMonthIdx === undefined || state.expenseMonthIdx === null) {
     state.expenseMonthIdx = d.latestPivotIdx;
   }
+  const idx = state.expenseMonthIdx;
+  const navSlot = document.getElementById('expense-month-nav-slot');
+  if (navSlot) navSlot.innerHTML = renderMonthNavControls(idx, data, d);
+  bindMonthNavControls(data, d);
   renderCategoryBudgetPanel(data, d);
   renderTopExpensesPanel(data, d);
 }
@@ -2298,7 +2488,8 @@ function bindMonthNavControls(data, d) {
 }
 
 function renderCategoryBudgetPanel(data, d) {
-  const panel = document.getElementById('panel-cat-budget');
+  const body = document.getElementById('cat-budget-body');
+  if (!body) return;
   const catNames = Object.keys(data.expenseCategories);
   const idx = state.expenseMonthIdx;
 
@@ -2312,33 +2503,24 @@ function renderCategoryBudgetPanel(data, d) {
     return { name, cur, guide, budget };
   }).filter(r => r.cur > 0 || r.guide > 0 || r.budget > 0).sort((a, b) => b.cur - a.cur);
 
-  panel.innerHTML = `
-    <div class="panel-title">
-      <div><span class="eyebrow">BUDGET</span>카테고리별 예산 가이드</div>
-      ${renderMonthNavControls(idx, data, d)}
-    </div>
-    <div id="cat-budget-list">
-      ${rows.map(r => {
-        const remaining = r.budget - r.cur;
-        const over = remaining < 0;
-        const pct = r.budget > 0 ? (r.cur / r.budget) * 100 : 0;
-        return `<div class="budget-row ${over ? 'over' : ''}">
-          <div class="budget-row-head">
-            <span class="budget-row-name">${r.name}${over ? '<span class="cat-tag">예산 초과</span>' : ''}</span>
-            <span class="budget-row-remaining" style="color:${over ? 'var(--red)' : 'var(--green)'}">${over ? wonComma(Math.abs(remaining)) + '원 초과' : wonComma(remaining) + '원 남음'}</span>
-          </div>
-          <div class="budget-bar-row">
-            <div class="budget-bar-track"><div class="budget-bar-fill ${over ? 'over' : ''}" style="width:${Math.min(pct, 100)}%"></div></div>
-            <span class="budget-bar-pct">${pct.toFixed(0)}%</span>
-          </div>
-          <div class="budget-row-figures">${wonComma(r.cur)}원 지출 / 예산 <input type="text" inputmode="numeric" class="budget-input" data-cat="${r.name}" value="${wonComma(r.budget)}" />원</div>
-        </div>`;
-      }).join('') || '<div class="empty-state">해당 월 데이터가 없어요.</div>'}
-    </div>
+  body.innerHTML = `
+    <div class="eyebrow" style="margin-bottom:8px;">BUDGET · 카테고리별 예산 가이드</div>
+    ${rows.map(r => {
+      const remaining = r.budget - r.cur;
+      const over = remaining < 0;
+      const pct = r.budget > 0 ? (r.cur / r.budget) * 100 : 0;
+      return `<div class="budget-row-compact ${over ? 'over' : ''}" title="${r.name}">
+        <span class="b-name">${r.name}</span>
+        <div class="b-bar-track"><div class="b-bar-fill ${over ? 'over' : ''}" style="width:${Math.min(pct, 100)}%"></div></div>
+        <span class="b-pct">${pct.toFixed(0)}%</span>
+        <span class="b-figures">${wonComma(r.cur)}/<input type="text" inputmode="numeric" class="budget-input-compact" data-cat="${r.name}" value="${wonComma(r.budget)}" />원</span>
+        <span class="b-remaining" style="color:${over ? 'var(--red)' : 'var(--green)'}">${over ? '-' + wonComma(Math.abs(remaining)) : wonComma(remaining)}</span>
+      </div>`;
+    }).join('') || '<div class="empty-state">해당 월 데이터가 없어요.</div>'}
   `;
 
-  bindMonthNavControls(data, d);
-  panel.querySelectorAll('.budget-input').forEach(inp => {
+  body.querySelectorAll('.budget-input-compact').forEach(inp => {
+    inp.addEventListener('click', (e) => e.stopPropagation());
     inp.addEventListener('change', () => {
       const cat = inp.dataset.cat;
       const raw = inp.value.replace(/[^0-9]/g, '');
@@ -2351,14 +2533,15 @@ function renderCategoryBudgetPanel(data, d) {
 }
 
 function renderTopExpensesPanel(data, d) {
-  const panel = document.getElementById('panel-top-expenses');
+  const body = document.getElementById('top-expenses-body');
+  if (!body) return;
   const idx = state.expenseMonthIdx;
   const monthKey = pivotMonthToLedgerKey(data.months[idx]);
   const expenseLedger = data.ledger.filter(r => r.major.includes('지출'));
   const topExpenses = expenseLedger.filter(r => ledgerMonthKey(r.date) === monthKey).sort((a, b) => b.amount - a.amount).slice(0, 10);
 
-  panel.innerHTML = `
-    <div class="panel-title"><div><span class="eyebrow">TOP 10</span>${pivotMonthLabel(data.months[idx])} 주요 지출 내역</div></div>
+  body.innerHTML = `
+    <div class="eyebrow" style="margin-bottom:8px;">TOP 10 · ${pivotMonthLabel(data.months[idx])} 주요 지출</div>
     <div class="table-scroll">
       <table class="data-table">
         <thead><tr><th>날짜</th><th>소분류</th><th>항목</th><th>사용처</th><th style="text-align:right">금액</th></tr></thead>
@@ -2387,59 +2570,6 @@ function renderFixedBreakdown(ledger, monthKey, monthLabel) {
       <span class="acct-amt">${formatWon(r.amount)}</span>
     </div>`).join('') || '<div class="empty-state">해당 월 고정비 내역이 없어요.</div>'}
   `;
-}
-
-function renderFixedCostsPanel(data) {
-  const panel = document.getElementById('panel-fixed-costs');
-  const trend = getFixedMonthlyTrend(data.ledger);
-  const totalMonthly = trend.length ? trend[trend.length - 1].total : 0;
-
-  panel.innerHTML = `
-    <div class="panel-title">
-      <div><span class="eyebrow">FIXED COSTS</span>고정비 추이</div>
-      <div style="display:flex;align-items:center;gap:10px;">
-        <span style="font-family:var(--mono);font-size:12px;color:var(--text-dim)">최근 월 합계 ${formatCompactWon(totalMonthly)}원</span>
-        <div class="range-toggle" id="fixed-range-toggle"></div>
-      </div>
-    </div>
-    ${trend.length ? `<div class="chart-wrap tall"><canvas id="chart-fixed-trend"></canvas></div><div class="settings-note">막대를 클릭하면 해당 월 고정비 항목을 볼 수 있어요.</div><div id="fixed-breakdown"></div>` : '<div class="empty-state">"고정비" 태그가 붙은 지출이 아직 없어요.</div>'}
-  `;
-
-  if (!trend.length) return;
-
-  let currentSeries = [];
-  const drawFixedTrend = () => {
-    currentSeries = sliceByRange(trend, state.fixedRange);
-    if (state.charts.fixedTrend) state.charts.fixedTrend.destroy();
-    const ctx = document.getElementById('chart-fixed-trend');
-    state.charts.fixedTrend = new Chart(ctx, {
-      data: {
-        labels: currentSeries.map(s => s.month),
-        datasets: [
-          { type: 'bar', data: currentSeries.map(s => s.total), backgroundColor: 'rgba(201,162,39,0.75)', borderRadius: 3, labelColor: '#e9dba8' }
-        ]
-      },
-      options: {
-        responsive: true, maintainAspectRatio: false, layout: { padding: { top: 18 } },
-        onClick: (evt, elements) => {
-          if (!elements.length) return;
-          const i = elements[0].index;
-          const s = currentSeries[i];
-          if (s) renderFixedBreakdown(data.ledger, s.month, s.month);
-        },
-        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` ${formatWon(c.raw)}` } } },
-        scales: { x: { ticks: MONO_TICK, grid: { display: false } }, y: { ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT } }
-      },
-      plugins: [valueLabelPlugin, avgLinePlugin(currentSeries.map(s => s.total))]
-    });
-  };
-  function onFixedRangePick(v) {
-    state.fixedRange = v === 'all' ? 'all' : parseInt(v, 10);
-    bindRangeToggle('fixed-range-toggle', RANGE_OPTIONS, state.fixedRange, onFixedRangePick);
-    drawFixedTrend();
-  }
-  bindRangeToggle('fixed-range-toggle', RANGE_OPTIONS, state.fixedRange, onFixedRangePick);
-  drawFixedTrend();
 }
 
 /* ---------------- page: 투자 ---------------- */
@@ -2515,13 +2645,15 @@ function renderInvestmentPage(container, data, d) {
 
 
   container.innerHTML = `
-    <div class="stat-grid">
-      <div class="stat-card"><div class="label">투자 자산 총액</div><div class="value">${formatCompactWon(latestInv)}원</div></div>
-      <div class="stat-card"><div class="label">누적 투자 원금(이체)</div><div class="value">${formatCompactWon(cum)}원</div></div>
-      <div class="stat-card"><div class="label">누적 평가손익 (추정)</div><div class="value" style="color:${latestGain >= 0 ? 'var(--green)' : 'var(--red)'}">${latestGain >= 0 ? '+' : ''}${formatCompactWon(latestGain)}원</div></div>
-      <div class="stat-card"><div class="label">이번 달 투자 이체</div><div class="value">${formatCompactWon(investTransfer)}원</div></div>
+    <div class="grid-top">
+      <div class="panel" id="panel-investment-insights"></div>
+      <div class="stat-grid" style="grid-template-columns:1fr;">
+        <div class="stat-card"><div class="label">투자 자산 총액</div><div class="value">${formatCompactWon(latestInv)}원</div></div>
+        <div class="stat-card"><div class="label">누적 투자 원금(이체)</div><div class="value">${formatCompactWon(cum)}원</div></div>
+        <div class="stat-card"><div class="label">누적 평가손익 (추정)</div><div class="value" style="color:${latestGain >= 0 ? 'var(--green)' : 'var(--red)'}">${latestGain >= 0 ? '+' : ''}${formatCompactWon(latestGain)}원</div></div>
+        <div class="stat-card"><div class="label">이번 달 투자 이체</div><div class="value">${formatCompactWon(investTransfer)}원</div></div>
+      </div>
     </div>
-    <div class="panel" id="panel-investment-insights"></div>
     <div class="panel full">
       <div class="panel-title">
         <div><span class="eyebrow">CONTRIBUTION VS VALUE</span>누적 투자 원금 vs 투자자산 평가액</div>
@@ -2535,11 +2667,17 @@ function renderInvestmentPage(container, data, d) {
       <div class="settings-note">두 선의 차이(평가액 − 누적 원금)가 곧 대략적인 누적 손익이에요.</div>
     </div>
     <div class="panel full">
-      <div class="panel-title"><div><span class="eyebrow">CONTRIBUTIONS</span>월별 투자 이체 금액</div></div>
+      <div class="panel-title">
+        <div><span class="eyebrow">CONTRIBUTIONS</span>월별 투자 이체 금액</div>
+        <div class="range-toggle" id="inv-contrib-range-toggle"></div>
+      </div>
       <div class="chart-wrap"><canvas id="chart-inv-contrib"></canvas></div>
     </div>
     <div class="panel full">
-      <div class="panel-title"><div><span class="eyebrow">RETURNS</span>투자 수익 이력 (배당·매매·이자)</div></div>
+      <div class="panel-title">
+        <div><span class="eyebrow">RETURNS</span>투자 수익 이력 (배당·매매·이자)</div>
+        <div class="range-toggle" id="inv-returns-range-toggle"></div>
+      </div>
       <div class="chart-wrap"><canvas id="chart-inv-returns"></canvas></div>
       <div class="chart-legend" id="inv-returns-legend"></div>
     </div>
@@ -2583,7 +2721,7 @@ function renderInvestmentPage(container, data, d) {
 
   renderWeeklyInsights('panel-investment-insights', 'weekly-insights-investment', '투자 인사이트', () => computeInvestmentInsights(data, d, cumSeries, tagAgg));
 
-  const drawCumAndContrib = () => {
+  const drawCum = () => {
     const cumSlice = sliceByRange(cumSeries, state.invRange);
     const monthsSliceLabels = sliceByRange(months, state.invRange).map(assetMonthLabel);
     if (state.charts.invCum) state.charts.invCum.destroy();
@@ -2604,9 +2742,18 @@ function renderInvestmentPage(container, data, d) {
       },
       plugins: [valueLabelPlugin]
     });
+  };
+  function onInvRangePick(v) {
+    state.invRange = v === 'all' ? 'all' : parseInt(v, 10);
+    bindRangeToggle('inv-range-toggle', RANGE_OPTIONS, state.invRange, onInvRangePick);
+    drawCum();
+  }
+  bindRangeToggle('inv-range-toggle', RANGE_OPTIONS, state.invRange, onInvRangePick);
+  drawCum();
 
-    const monthsSlice = sliceByRange(data.months, state.invRange);
-    const contribValues = sliceByRange(data.transferCategories['투자 자산'] || [], state.invRange).map(v => v || 0);
+  const drawContrib = () => {
+    const monthsSlice = sliceByRange(data.months, state.invContribRange);
+    const contribValues = sliceByRange(data.transferCategories['투자 자산'] || [], state.invContribRange).map(v => v || 0);
     if (state.charts.invContrib) state.charts.invContrib.destroy();
     const contribCtx = document.getElementById('chart-inv-contrib');
     state.charts.invContrib = new Chart(contribCtx, {
@@ -2623,11 +2770,20 @@ function renderInvestmentPage(container, data, d) {
       },
       plugins: [valueLabelPlugin, avgLinePlugin(contribValues)]
     });
+  };
+  function onInvContribRangePick(v) {
+    state.invContribRange = v === 'all' ? 'all' : parseInt(v, 10);
+    bindRangeToggle('inv-contrib-range-toggle', RANGE_OPTIONS, state.invContribRange, onInvContribRangePick);
+    drawContrib();
+  }
+  bindRangeToggle('inv-contrib-range-toggle', RANGE_OPTIONS, state.invContribRange, onInvContribRangePick);
+  drawContrib();
 
-    const returnsDataFull = getInvestmentIncomeMonthly(data.ledger);
-    const returnsPalette = ['#e0c766', '#4c8c6b', '#5b8fc7', '#9b7fc2', '#c1483f'];
-    document.getElementById('inv-returns-legend').innerHTML = returnsDataFull.items.map((n, i) => `<span><i style="background:${returnsPalette[i % returnsPalette.length]}"></i>${n}</span>`).join('');
-    const returnsMonths = sliceByRange(returnsDataFull.months, state.invRange);
+  const returnsDataFull = getInvestmentIncomeMonthly(data.ledger);
+  const returnsPalette = ['#e0c766', '#4c8c6b', '#5b8fc7', '#9b7fc2', '#c1483f'];
+  document.getElementById('inv-returns-legend').innerHTML = returnsDataFull.items.map((n, i) => `<span><i style="background:${returnsPalette[i % returnsPalette.length]}"></i>${n}</span>`).join('');
+  const drawReturns = () => {
+    const returnsMonths = sliceByRange(returnsDataFull.months, state.invReturnsRange);
     if (state.charts.invReturns) state.charts.invReturns.destroy();
     const returnsCtx = document.getElementById('chart-inv-returns');
     state.charts.invReturns = new Chart(returnsCtx, {
@@ -2644,13 +2800,13 @@ function renderInvestmentPage(container, data, d) {
       plugins: [stackTotalLabelPlugin]
     });
   };
-  function onInvRangePick(v) {
-    state.invRange = v === 'all' ? 'all' : parseInt(v, 10);
-    bindRangeToggle('inv-range-toggle', RANGE_OPTIONS, state.invRange, onInvRangePick);
-    drawCumAndContrib();
+  function onInvReturnsRangePick(v) {
+    state.invReturnsRange = v === 'all' ? 'all' : parseInt(v, 10);
+    bindRangeToggle('inv-returns-range-toggle', RANGE_OPTIONS, state.invReturnsRange, onInvReturnsRangePick);
+    drawReturns();
   }
-  bindRangeToggle('inv-range-toggle', RANGE_OPTIONS, state.invRange, onInvRangePick);
-  drawCumAndContrib();
+  bindRangeToggle('inv-returns-range-toggle', RANGE_OPTIONS, state.invReturnsRange, onInvReturnsRangePick);
+  drawReturns();
 
   if (hasTags) {
     const tagCtx = document.getElementById('chart-tag-profit');
@@ -2742,15 +2898,20 @@ function renderSavingsPage(container, data, d) {
   const total = latestSaving + latestPension;
 
   container.innerHTML = `
-    <div class="stat-grid">
-      <div class="stat-card"><div class="label">저축 자산 (CMA·청약 등)</div><div class="value">${formatCompactWon(latestSaving)}원</div></div>
-      <div class="stat-card"><div class="label">연금 자산</div><div class="value">${formatCompactWon(latestPension)}원</div></div>
-      <div class="stat-card"><div class="label">합계</div><div class="value" style="color:#5b8fc7">${formatCompactWon(total)}원</div></div>
-      ${cmaAmount !== null ? `<div class="stat-card"><div class="label">비상금 (NH-CMA)</div><div class="value">${formatCompactWon(cmaAmount)}원</div></div>` : ''}
+    <div class="grid-top">
+      <div class="panel" id="panel-savings-insights"></div>
+      <div class="stat-grid" style="grid-template-columns:1fr;">
+        <div class="stat-card"><div class="label">저축 자산 (CMA·청약 등)</div><div class="value">${formatCompactWon(latestSaving)}원</div></div>
+        <div class="stat-card"><div class="label">연금 자산</div><div class="value">${formatCompactWon(latestPension)}원</div></div>
+        <div class="stat-card"><div class="label">합계</div><div class="value" style="color:#5b8fc7">${formatCompactWon(total)}원</div></div>
+        ${cmaAmount !== null ? `<div class="stat-card"><div class="label">비상금 (NH-CMA)</div><div class="value">${formatCompactWon(cmaAmount)}원</div></div>` : ''}
+      </div>
     </div>
-    <div class="panel" id="panel-savings-insights"></div>
     <div class="panel full">
-      <div class="panel-title"><div><span class="eyebrow">HISTORY</span>저축·연금 자산 추이</div></div>
+      <div class="panel-title">
+        <div><span class="eyebrow">HISTORY</span>저축·연금 자산 추이</div>
+        <div class="range-toggle" id="sav-trend-range-toggle"></div>
+      </div>
       <div class="chart-wrap tall"><canvas id="chart-sav-trend"></canvas></div>
       <div class="chart-legend">
         <span><i style="background:#5b8fc7"></i>저축 자산</span>
@@ -2758,7 +2919,10 @@ function renderSavingsPage(container, data, d) {
       </div>
     </div>
     <div class="panel full">
-      <div class="panel-title"><div><span class="eyebrow">CONTRIBUTIONS</span>월별 저축·연금 이체 금액</div></div>
+      <div class="panel-title">
+        <div><span class="eyebrow">CONTRIBUTIONS</span>월별 저축·연금 이체 금액</div>
+        <div class="range-toggle" id="sav-contrib-range-toggle"></div>
+      </div>
       <div class="chart-wrap"><canvas id="chart-sav-contrib"></canvas></div>
     </div>
     <div class="panel full">
@@ -2780,39 +2944,61 @@ function renderSavingsPage(container, data, d) {
 
   renderWeeklyInsights('panel-savings-insights', 'weekly-insights-savings', '저축 인사이트', () => computeSavingsInsights(data, d, latestSaving, latestPension, months, byMonthCat));
 
-  const trendCtx = document.getElementById('chart-sav-trend');
-  state.charts.savTrend = new Chart(trendCtx, {
-    type: 'line',
-    data: {
-      labels: months.map(assetMonthLabel),
-      datasets: [
-        { label: '저축 자산', data: months.map(m => (byMonthCat[m] && byMonthCat[m]['저축 자산']) || 0), borderColor: '#5b8fc7', backgroundColor: 'transparent', tension: 0.3, pointRadius: 2, labelColor: '#a9c3e0' },
-        { label: '연금 자산', data: months.map(m => (byMonthCat[m] && byMonthCat[m]['연금 자산']) || 0), borderColor: '#9b7fc2', backgroundColor: 'transparent', tension: 0.3, pointRadius: 2, labelColor: '#cbb8e0' }
-      ]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false, layout: { padding: { top: 18 } },
-      plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` ${c.dataset.label}: ${formatWon(c.raw)}` } } },
-      scales: { x: { ticks: MONO_TICK, grid: { display: false } }, y: { ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT } }
-    },
-    plugins: [valueLabelPlugin]
-  });
+  const drawSavTrend = () => {
+    const monthsSlice = sliceByRange(months, state.savTrendRange);
+    if (state.charts.savTrend) state.charts.savTrend.destroy();
+    const trendCtx = document.getElementById('chart-sav-trend');
+    state.charts.savTrend = new Chart(trendCtx, {
+      type: 'line',
+      data: {
+        labels: monthsSlice.map(assetMonthLabel),
+        datasets: [
+          { label: '저축 자산', data: monthsSlice.map(m => (byMonthCat[m] && byMonthCat[m]['저축 자산']) || 0), borderColor: '#5b8fc7', backgroundColor: 'transparent', tension: 0.3, pointRadius: 2, labelColor: '#a9c3e0' },
+          { label: '연금 자산', data: monthsSlice.map(m => (byMonthCat[m] && byMonthCat[m]['연금 자산']) || 0), borderColor: '#9b7fc2', backgroundColor: 'transparent', tension: 0.3, pointRadius: 2, labelColor: '#cbb8e0' }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, layout: { padding: { top: 18 } },
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` ${c.dataset.label}: ${formatWon(c.raw)}` } } },
+        scales: { x: { ticks: MONO_TICK, grid: { display: false } }, y: { ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT } }
+      },
+      plugins: [valueLabelPlugin]
+    });
+  };
+  function onSavTrendRangePick(v) {
+    state.savTrendRange = v === 'all' ? 'all' : parseInt(v, 10);
+    bindRangeToggle('sav-trend-range-toggle', RANGE_OPTIONS, state.savTrendRange, onSavTrendRangePick);
+    drawSavTrend();
+  }
+  bindRangeToggle('sav-trend-range-toggle', RANGE_OPTIONS, state.savTrendRange, onSavTrendRangePick);
+  drawSavTrend();
 
-  const monthsSlice = data.months.slice(-12);
-  const contribCtx = document.getElementById('chart-sav-contrib');
-  state.charts.savContrib = new Chart(contribCtx, {
-    type: 'bar',
-    data: {
-      labels: monthsSlice.map(pivotMonthLabel),
-      datasets: transferNames.map((name, i) => ({ label: name === '비상금' ? '저축(CMA 등)' : name, data: data.transferCategories[name].slice(-12).map(v => v || 0), backgroundColor: ['#5b8fc7', '#9b7fc2'][i % 2], stack: 's' }))
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false, layout: { padding: { top: 16 } },
-      plugins: { legend: { position: 'bottom', labels: { color: '#9aa3b6', font: { family: 'IBM Plex Mono', size: 10 } } }, tooltip: { callbacks: { label: (c) => ` ${c.dataset.label}: ${formatWon(c.raw)}` } } },
-      scales: { x: { stacked: true, ticks: MONO_TICK, grid: { display: false } }, y: { stacked: true, ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT } }
-    },
-    plugins: [stackTotalLabelPlugin]
-  });
+  const drawSavContrib = () => {
+    const monthsSlice = sliceByRange(data.months, state.savContribRange);
+    const n = monthsSlice.length;
+    if (state.charts.savContrib) state.charts.savContrib.destroy();
+    const contribCtx = document.getElementById('chart-sav-contrib');
+    state.charts.savContrib = new Chart(contribCtx, {
+      type: 'bar',
+      data: {
+        labels: monthsSlice.map(pivotMonthLabel),
+        datasets: transferNames.map((name, i) => ({ label: name === '비상금' ? '저축(CMA 등)' : name, data: data.transferCategories[name].slice(-n).map(v => v || 0), backgroundColor: ['#5b8fc7', '#9b7fc2'][i % 2], stack: 's' }))
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, layout: { padding: { top: 16 } },
+        plugins: { legend: { position: 'bottom', labels: { color: '#9aa3b6', font: { family: 'IBM Plex Mono', size: 10 } } }, tooltip: { callbacks: { label: (c) => ` ${c.dataset.label}: ${formatWon(c.raw)}` } } },
+        scales: { x: { stacked: true, ticks: MONO_TICK, grid: { display: false } }, y: { stacked: true, ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT } }
+      },
+      plugins: [stackTotalLabelPlugin]
+    });
+  };
+  function onSavContribRangePick(v) {
+    state.savContribRange = v === 'all' ? 'all' : parseInt(v, 10);
+    bindRangeToggle('sav-contrib-range-toggle', RANGE_OPTIONS, state.savContribRange, onSavContribRangePick);
+    drawSavContrib();
+  }
+  bindRangeToggle('sav-contrib-range-toggle', RANGE_OPTIONS, state.savContribRange, onSavContribRangePick);
+  drawSavContrib();
 
   renderAdvancedTable('savings-table', savingsLedger, { majorOptions: [['all', '전체'], ['이체', '이체']], defaultGroup: 'none' });
 }
