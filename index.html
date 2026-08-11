@@ -367,15 +367,19 @@ body{
   color:var(--text);font-family:var(--mono);font-size:10px;
   border-radius:4px;padding:1px 4px;text-align:right;
 }
-.budget-row-compact{display:flex;align-items:center;gap:7px;padding:5px 0;flex-wrap:nowrap;}
+.budget-row-compact{display:flex;align-items:center;gap:10px;padding:5px 0;flex-wrap:nowrap;}
 .b-name{flex:0 0 auto;width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--text);}
-.b-bar-track{flex:1 1 auto;min-width:24px;height:10px;background:var(--panel-2);border-radius:5px;overflow:hidden;}
+.b-bar-track{flex:1 1 auto;min-width:20px;height:10px;background:var(--panel-2);border-radius:5px;overflow:hidden;}
 .b-bar-fill{height:100%;border-radius:5px;background:linear-gradient(90deg,var(--gold),var(--gold-soft));transition:width .3s;}
 .b-bar-fill.over{background:linear-gradient(90deg,var(--red),#d9756c);}
 .b-pct{flex:0 0 auto;width:30px;text-align:right;font-family:var(--mono);font-size:10px;color:var(--text-dim);}
 .b-figures{flex:0 0 auto;font-family:var(--mono);font-size:10px;color:var(--text-dim);white-space:nowrap;display:flex;align-items:center;gap:2px;}
-.b-remaining{flex:0 0 auto;font-family:var(--mono);font-size:10.5px;white-space:nowrap;text-align:right;min-width:56px;}
+.b-remaining{flex:0 0 auto;font-family:var(--mono);font-size:10.5px;white-space:nowrap;text-align:right;min-width:56px;margin-left:8px;}
 .subhead{font-family:var(--mono);font-size:10.5px;color:var(--text-faint);letter-spacing:.06em;margin-bottom:8px;}
+.pie-legend-row{display:flex;align-items:center;gap:7px;padding:4px 0;font-size:11.5px;}
+.pie-legend-swatch{width:9px;height:9px;border-radius:2px;flex-shrink:0;}
+.pie-legend-name{flex:1;color:var(--text);}
+.pie-legend-val{font-family:var(--mono);font-size:11px;color:var(--text-dim);white-space:nowrap;}
 .month-nav select{
   background:var(--panel-2);border:1px solid var(--border-strong);color:var(--text);
   font-family:var(--mono);font-size:12.5px;border-radius:6px;padding:5px 8px;
@@ -583,7 +587,7 @@ body{
 .goal-chip-status.ok{background:rgba(76,140,107,0.18);color:#8fd0ac;}
 .goal-chip-status.no{background:rgba(193,72,63,0.18);color:#eb9891;}
 .goal-chip-status.neutral{background:rgba(154,163,182,0.14);color:var(--text-dim);}
-.goal-card-item{font-size:12.5px;color:var(--text-dim);margin-bottom:4px;}
+.goal-card-item{font-size:15px;font-weight:600;color:var(--text);margin-bottom:6px;line-height:1.35;}
 .goal-card-target{font-family:var(--mono);font-size:11px;color:var(--text-faint);margin-top:3px;}
 
 .goal-progress{margin-top:8px;}
@@ -657,6 +661,7 @@ const state = {
   incomeCatFilter: 'all',
   expenseRange: 12,
   expenseTrendMode: 'total',
+  expenseAvgRange: 12,
   vendorRange: 12,
   invRange: 12,
   invContribRange: 12,
@@ -2260,7 +2265,8 @@ function renderIncomePage(container, data, d) {
       <div class="panel" id="panel-income-insights"></div>
       <div class="panel">
         <div class="panel-title"><div><span class="eyebrow">${latest ? latest.month : ''}</span>수입처 비중</div></div>
-        <div class="chart-wrap tall"><canvas id="chart-income-pie"></canvas></div>
+        <div class="chart-wrap" style="max-width:220px;height:220px;margin:0 auto;"><canvas id="chart-income-pie"></canvas></div>
+        <div id="income-pie-legend"></div>
       </div>
     </div>
     <div class="panel full">
@@ -2377,8 +2383,17 @@ function renderIncomePage(container, data, d) {
   state.charts.incomePie = new Chart(pieCtx, {
     type: 'doughnut',
     data: { labels: pieRows.map(r => r.name), datasets: [{ data: pieRows.map(r => r.v), backgroundColor: pieRows.map((_, i) => palette[i % palette.length]), borderColor: '#171e2b', borderWidth: 2 }] },
-    options: { responsive: true, maintainAspectRatio: false, cutout: '55%', plugins: { legend: legendWithValues(), tooltip: { callbacks: { label: (c) => ` ${c.label}: ${formatCompactWon(c.raw)}원` } } } }
+    options: { responsive: true, maintainAspectRatio: false, cutout: '55%', plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` ${c.label}: ${formatCompactWon(c.raw)}원` } } } }
   });
+  const pieTotal = pieRows.reduce((a, r) => a + r.v, 0);
+  document.getElementById('income-pie-legend').innerHTML = pieRows.map((r, i) => {
+    const pct = pieTotal ? ((r.v / pieTotal) * 100).toFixed(1) : '0.0';
+    return `<div class="pie-legend-row">
+      <span class="pie-legend-swatch" style="background:${palette[i % palette.length]}"></span>
+      <span class="pie-legend-name">${r.name}</span>
+      <span class="pie-legend-val">${formatCompactWon(r.v)}원 · ${pct}%</span>
+    </div>`;
+  }).join('') || '<div class="empty-state">데이터가 없어요.</div>';
 
   renderAdvancedTable('income-table', incomeLedger, { majorOptions: [['수입', '전체']], defaultGroup: 'none' });
 }
@@ -2409,6 +2424,33 @@ function getFixedByPivotMonth(ledger, series) {
   return series.map(s => ({ month: s.month, expense: fixedByKey[pivotMonthToLedgerKey(s.month)] || 0 }));
 }
 
+function renderExpenseAvgStats(cf, fixedSeries) {
+  const panel = document.getElementById('panel-expense-avg-stats');
+  const draw = () => {
+    const range = state.expenseAvgRange;
+    const cfSlice = sliceByRange(cf, range);
+    const fixedSlice = sliceByRange(fixedSeries, range);
+    const avgExpense = avgOf(cfSlice.map(s => s.expense));
+    const avgFixed = avgOf(fixedSlice.map(s => s.expense));
+    panel.innerHTML = `
+      <div class="panel-title">
+        <div><span class="eyebrow">AVERAGE</span>평균 지표</div>
+        <div class="range-toggle" id="expense-avg-range-toggle"></div>
+      </div>
+      <div class="stat-grid" style="grid-template-columns:1fr;">
+        <div class="stat-card"><div class="label">평균 월 지출</div><div class="value">${formatCompactWon(avgExpense)}원</div></div>
+        <div class="stat-card"><div class="label">평균 월 고정비</div><div class="value">${formatCompactWon(avgFixed)}원</div></div>
+      </div>
+    `;
+    bindRangeToggle('expense-avg-range-toggle', RANGE_OPTIONS, state.expenseAvgRange, onPick);
+  };
+  function onPick(v) {
+    state.expenseAvgRange = v === 'all' ? 'all' : parseInt(v, 10);
+    draw();
+  }
+  draw();
+}
+
 function renderExpensePage(container, data, d) {
   const cf = d.cashflow;
   const expenseLedger = data.ledger.filter(r => r.major.includes('지출'));
@@ -2416,7 +2458,17 @@ function renderExpensePage(container, data, d) {
   const hasFixed = fixedSeries.some(s => s.expense > 0);
 
   container.innerHTML = `
-    <div class="panel" id="panel-expense-insights"></div>
+    <div class="grid grid-3">
+      <div class="panel" id="panel-expense-insights"></div>
+      <div class="panel" id="panel-expense-avg-stats"></div>
+      <div class="panel" id="panel-top-vendors">
+        <div class="panel-title">
+          <div><span class="eyebrow">TOP VENDORS</span>주요 지출처</div>
+          <div class="range-toggle" id="vendor-range-toggle"></div>
+        </div>
+        <div id="top-vendors-list"></div>
+      </div>
+    </div>
     <div class="panel full">
       <div class="panel-title">
         <div><span class="eyebrow">TREND</span>월별 총지출 추이</div>
@@ -2431,13 +2483,6 @@ function renderExpensePage(container, data, d) {
       <div class="chart-wrap tall"><canvas id="chart-expense-trend"></canvas></div>
       <div class="settings-note" id="expense-trend-hint" style="display:none;">막대를 클릭하면 해당 월 고정비 항목을 볼 수 있어요.</div>
       <div id="fixed-breakdown"></div>
-    </div>
-    <div class="panel" style="max-width:420px;" id="panel-top-vendors">
-      <div class="panel-title">
-        <div><span class="eyebrow">TOP VENDORS</span>주요 지출처</div>
-        <div class="range-toggle" id="vendor-range-toggle"></div>
-      </div>
-      <div id="top-vendors-list"></div>
     </div>
     <div class="panel full" id="panel-budget-month-section">
       <div class="panel-title">
@@ -2456,6 +2501,7 @@ function renderExpensePage(container, data, d) {
   `;
 
   renderWeeklyInsights('panel-expense-insights', 'weekly-insights-expense', '지출 인사이트', () => computeExpenseInsights(data, d));
+  renderExpenseAvgStats(cf, fixedSeries);
 
   const drawExpenseTrend = () => {
     const mode = hasFixed ? state.expenseTrendMode : 'total';
