@@ -706,19 +706,15 @@ function parseAssetsFromRows(rows) {
   return assetRows;
 }
 
-/* 목표 탭: 시기/구분/항목/상태/메모 등 컬럼 구성이 자유로운 로드맵 표.
-   정확한 컬럼 이름을 가정하지 않고, 흔히 쓰이는 이름들을 넓게 인식해서
-   헤더 행을 찾고 그 아래 행들을 {헤더명: 값} 객체로 변환한다. */
-const GOAL_HEADER_HINTS = ['시기', '연도', '분기', '기간', '일정', '구분', '분류', '카테고리', '항목', '목표', '내용', '제목', '상태', '진행', '진행상태', '메모', '비고', '노트', '우선순위'];
-
+/* 목표 탭: 시기 / 구분 / 목표 / 상태 / 달성한 날 / 메모 컬럼 구조.
+   "시기"와 "상태"가 함께 있는 행만 헤더로 인정한다 — 가계부(D)의
+   헤더(날짜,대분류,소분류,항목,사용처,금액,메모,재분류,고정비)에는
+   이 두 단어가 없어서, 다른 탭을 잘못 목표로 오인할 위험이 없다. */
 function parseGoalsFromRows(rows) {
   let headerRowIdx = -1, headerCols = [];
   for (let r = 0; r < rows.length; r++) {
     const row = (rows[r] || []).map(c => cleanLabel(c || ''));
-    const nonEmpty = row.filter(c => c !== '');
-    if (nonEmpty.length < 2) continue;
-    const hintHits = nonEmpty.filter(c => GOAL_HEADER_HINTS.includes(c)).length;
-    if (hintHits >= 2) { headerRowIdx = r; headerCols = row; break; }
+    if (row.includes('시기') && row.includes('상태')) { headerRowIdx = r; headerCols = row; break; }
   }
   if (headerRowIdx === -1) return [];
 
@@ -726,7 +722,7 @@ function parseGoalsFromRows(rows) {
   headerCols.forEach((name, i) => { if (name) colIdxs.push({ name, i }); });
 
   const goals = [];
-  for (let r = headerRowIdx + 1; r < rows.length && r < headerRowIdx + 200; r++) {
+  for (let r = headerRowIdx + 1; r < rows.length && r < headerRowIdx + 500; r++) {
     const row = rows[r] || [];
     const obj = {};
     let hasAny = false;
@@ -746,6 +742,7 @@ const GOAL_FIELD_ALIASES = {
   category: ['구분', '분류', '카테고리'],
   title: ['목표', '항목', '내용', '제목'],
   status: ['상태', '진행상태', '진행'],
+  doneDate: ['달성한 날', '달성일'],
   memo: ['메모', '비고', '노트'],
   priority: ['우선순위']
 };
@@ -1549,7 +1546,8 @@ function renderHomePage(container, data, d) {
 
 function renderGoalCards(data) {
   const panel = document.getElementById('panel-goal-cards');
-  const goals = data.goals || [];
+  const allGoals = data.goals || [];
+  const goals = allGoals.filter(g => pickGoalField(g, 'title'));
   if (!goals.length) {
     panel.innerHTML = `
       <div class="panel-title"><div><span class="eyebrow">GOALS</span>목표</div></div>
@@ -1565,6 +1563,7 @@ function renderGoalCards(data) {
         const category = pickGoalField(g, 'category');
         const title = pickGoalField(g, 'title');
         const status = pickGoalField(g, 'status');
+        const doneDate = pickGoalField(g, 'doneDate');
         const memo = pickGoalField(g, 'memo');
         const vClass = goalStatusClass(status);
         return `<div class="goal-card ${vClass}">
@@ -1573,6 +1572,7 @@ function renderGoalCards(data) {
             ${status ? `<span class="goal-card-verdict">${status}</span>` : ''}
           </div>
           <div class="goal-card-item">${title || '—'}</div>
+          ${doneDate ? `<div class="goal-card-target">달성 ${doneDate}</div>` : ''}
           ${memo ? `<div class="goal-card-target">${memo}</div>` : ''}
         </div>`;
       }).join('')}
