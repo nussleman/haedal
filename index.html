@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>MY 자산 통장</title>
+<title>해달 — 당신의 자산관리 파트너</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;700;900&family=Noto+Sans+KR:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -89,14 +89,8 @@ body{
   gap:10px;
 }
 .brand .mark{
-  font-family:var(--serif);
-  font-weight:900;
-  font-size:15px;
-  letter-spacing:0.14em;
-  color:var(--gold-soft);
-  border:1px solid var(--border-strong);
-  padding:3px 8px;
-  border-radius:3px;
+  font-size:22px;
+  line-height:1;
 }
 .brand h1{
   font-family:var(--serif);
@@ -104,6 +98,13 @@ body{
   font-size:22px;
   margin:0;
   letter-spacing:-0.01em;
+}
+.brand .tagline{
+  font-family:var(--sans);
+  font-size:11.5px;
+  color:var(--text-faint);
+  font-weight:400;
+  letter-spacing:0.01em;
 }
 .sync-box{
   display:flex;
@@ -367,14 +368,14 @@ body{
   color:var(--text);font-family:var(--mono);font-size:10px;
   border-radius:4px;padding:1px 4px;text-align:right;
 }
-.budget-row-compact{display:flex;align-items:center;gap:10px;padding:5px 0;flex-wrap:nowrap;}
+.budget-row-compact{display:flex;align-items:center;gap:16px;padding:5px 0;flex-wrap:nowrap;}
 .b-name{flex:0 0 auto;width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--text);}
 .b-bar-track{flex:1 1 auto;min-width:20px;height:10px;background:var(--panel-2);border-radius:5px;overflow:hidden;}
 .b-bar-fill{height:100%;border-radius:5px;background:linear-gradient(90deg,var(--gold),var(--gold-soft));transition:width .3s;}
 .b-bar-fill.over{background:linear-gradient(90deg,var(--red),#d9756c);}
 .b-pct{flex:0 0 auto;width:30px;text-align:right;font-family:var(--mono);font-size:10px;color:var(--text-dim);}
 .b-figures{flex:0 0 auto;font-family:var(--mono);font-size:10px;color:var(--text-dim);white-space:nowrap;display:flex;align-items:center;gap:2px;}
-.b-remaining{flex:0 0 auto;font-family:var(--mono);font-size:10.5px;white-space:nowrap;text-align:right;min-width:56px;margin-left:8px;}
+.b-remaining{flex:0 0 auto;font-family:var(--mono);font-size:10.5px;white-space:nowrap;text-align:right;min-width:56px;margin-left:18px;}
 .subhead{font-family:var(--mono);font-size:10.5px;color:var(--text-faint);letter-spacing:.06em;margin-bottom:8px;}
 .pie-legend-row{display:flex;align-items:center;gap:7px;padding:4px 0;font-size:11.5px;}
 .pie-legend-swatch{width:9px;height:9px;border-radius:2px;flex-shrink:0;}
@@ -388,6 +389,17 @@ body{
   background:var(--panel-2);border:1px solid var(--border-strong);color:var(--text);
   font-family:var(--mono);font-size:12px;border-radius:6px;padding:5px 8px;margin-bottom:10px;
 }
+.income-cat-btns{
+  display:flex;flex-wrap:wrap;gap:5px;margin:0 0 12px;padding:8px 8px 0;
+  border-top:1px dashed var(--border);
+}
+.income-cat-btn{
+  background:transparent;border:1px solid var(--border);color:var(--text-dim);
+  font-family:var(--sans);font-size:11px;border-radius:20px;padding:4px 11px;cursor:pointer;
+  transition:all .15s;
+}
+.income-cat-btn:hover{border-color:var(--border-strong);color:var(--text);}
+.income-cat-btn.active{background:var(--gold-soft);border-color:var(--gold-soft);color:#1a1408;font-weight:600;}
 @media (max-width:520px){
   .b-name{width:44px;}
   .b-figures{display:none;}
@@ -528,6 +540,10 @@ body{
 @media (max-width:820px){
   .grid-3{grid-template-columns:1fr;}
 }
+.grid-4{grid-template-columns:1.3fr 1fr 1fr 1fr;}
+@media (max-width:820px){
+  .grid-4{grid-template-columns:1fr;}
+}
 
 /* ---------- checklist checkbox accent ---------- */
 .fixed-check{accent-color:var(--gold);}
@@ -576,8 +592,10 @@ body{
 /* ---------- goal cards ---------- */
 .goal-card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;}
 .goal-card{background:var(--panel-2);border:1px solid var(--border);border-radius:10px;padding:13px 15px;}
-.goal-card.ok{border-color:rgba(76,140,107,0.4);}
-.goal-card.no{border-color:rgba(193,72,63,0.4);}
+.goal-card.ok{background:rgba(76,140,107,0.10);border-color:rgba(76,140,107,0.45);}
+.goal-card.no{background:rgba(193,72,63,0.10);border-color:rgba(193,72,63,0.45);}
+.goal-card.active{background:rgba(201,162,39,0.08);border-color:rgba(201,162,39,0.4);}
+.goal-card.pending{background:var(--panel-2);border-color:var(--border);opacity:0.85;}
 .goal-card-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;flex-wrap:wrap;gap:5px;}
 .goal-card-chips{display:flex;gap:5px;flex-wrap:wrap;}
 .goal-chip{font-family:var(--mono);font-size:9.5px;letter-spacing:.03em;padding:2px 7px;border-radius:20px;white-space:nowrap;}
@@ -586,6 +604,8 @@ body{
 .goal-chip-status{font-weight:600;}
 .goal-chip-status.ok{background:rgba(76,140,107,0.18);color:#8fd0ac;}
 .goal-chip-status.no{background:rgba(193,72,63,0.18);color:#eb9891;}
+.goal-chip-status.active{background:rgba(201,162,39,0.2);color:var(--gold-soft);}
+.goal-chip-status.pending{background:rgba(154,163,182,0.14);color:var(--text-dim);}
 .goal-chip-status.neutral{background:rgba(154,163,182,0.14);color:var(--text-dim);}
 .goal-card-item{font-size:15px;font-weight:600;color:var(--text);margin-bottom:6px;line-height:1.35;}
 .goal-card-target{font-family:var(--mono);font-size:11px;color:var(--text-faint);margin-top:3px;}
@@ -596,6 +616,23 @@ body{
 .goal-progress-fill.good{background:linear-gradient(90deg,var(--green),#6fb08c);}
 .goal-progress-fill.bad{background:linear-gradient(90deg,var(--red),#d9756c);}
 .goal-progress-figures{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10.5px;color:var(--text-dim);margin-top:4px;}
+.mini-goal-head{font-family:var(--mono);font-size:10px;color:var(--text-faint);letter-spacing:.05em;margin-top:14px;padding-top:12px;border-top:1px solid var(--border);}
+.mini-goal-list{margin-top:6px;}
+.mini-goal-row{display:flex;align-items:center;gap:7px;padding:4px 0;font-size:12px;}
+.mini-goal-dot{width:6px;height:6px;border-radius:50%;background:var(--gold-soft);flex-shrink:0;}
+.mini-goal-text{flex:1;color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.mini-goal-period{font-family:var(--mono);font-size:10px;color:var(--text-faint);flex-shrink:0;}
+.vendor-hover-tip{
+  display:none;position:fixed;z-index:999;background:var(--panel);border:1px solid var(--border-strong);
+  border-radius:8px;padding:10px 12px;box-shadow:0 8px 24px rgba(0,0,0,0.4);pointer-events:none;
+  max-width:280px;font-size:11.5px;
+}
+.vtip-title{font-family:var(--serif);font-weight:700;font-size:12.5px;color:var(--text);margin-bottom:6px;}
+.vtip-row{display:flex;gap:8px;padding:3px 0;color:var(--text-dim);white-space:nowrap;}
+.vtip-date{font-family:var(--mono);font-size:10px;color:var(--text-faint);flex-shrink:0;}
+.vtip-item{flex:1;overflow:hidden;text-overflow:ellipsis;}
+.vtip-amt{font-family:var(--mono);font-size:10.5px;color:var(--red);flex-shrink:0;}
+.vtip-empty{color:var(--text-faint);font-size:11px;}
 
 /* 한도형(지출/고정비): 얇은 사용률 바 + 인라인 텍스트 */
 .goal-cap{margin-top:8px;display:flex;align-items:center;gap:8px;}
@@ -661,13 +698,15 @@ const state = {
   incomeCatFilter: 'all',
   expenseRange: 12,
   expenseTrendMode: 'total',
-  expenseAvgRange: 12,
+  expenseAvgExpenseRange: 12,
+  expenseAvgFixedRange: 12,
   vendorRange: 12,
   invRange: 12,
   invContribRange: 12,
   invReturnsRange: 12,
   assetTrendRange: 12,
   assetTrendMode: 'total',
+  assetTrendFilter: 'all',
   assetNetRange: 12,
   savTrendRange: 12,
   savContribRange: 12
@@ -736,6 +775,10 @@ function pivotMonthLabel(s) {
   const m = s.match(/(\d{4})-(\d{1,2})월/);
   if (!m) return s;
   return `'${m[1].slice(2)}.${String(m[2]).padStart(2, '0')}`;
+}
+function assetMonthYear(s) {
+  const m = (s || '').match(/(\d{2})년/);
+  return m ? String(2000 + parseInt(m[1])) : '';
 }
 function ledgerDateKey(s) {
   const m = s.match(/(\d{4})\.\s*(\d{1,2})\.\s*(\d{1,2})/);
@@ -822,6 +865,8 @@ function goalStatusClass(status) {
   const s = String(status);
   if (/(완료|달성|✅|done|complete)/i.test(s)) return 'ok';
   if (/(지연|실패|❌|미달|보류)/i.test(s)) return 'no';
+  if (/(진행)/i.test(s)) return 'active';
+  if (/(대기|예정)/i.test(s)) return 'pending';
   return '';
 }
 
@@ -1245,12 +1290,12 @@ function generateInsights(data, d, goals) {
     if (srRounded < goals.savingsRateTarget) {
       insights.push({
         type: 'warn',
-        html: `이번 달 저축률이 <b>${latestCf.savingsRate.toFixed(1)}%</b>로 목표(${goals.savingsRateTarget}%)보다 ${(goals.savingsRateTarget - latestCf.savingsRate).toFixed(1)}%p 낮아요. 지출 상위 항목을 먼저 점검해보세요.`
+        html: `이번 달 저축률이 <b>${latestCf.savingsRate.toFixed(1)}%</b>로 최근 평균 기반 추정 목표(${goals.savingsRateTarget}%)보다 ${(goals.savingsRateTarget - latestCf.savingsRate).toFixed(1)}%p 낮아요. 지출 상위 항목을 먼저 점검해보세요.`
       });
     } else {
       insights.push({
         type: 'good',
-        html: `이번 달 저축률 <b>${latestCf.savingsRate.toFixed(1)}%</b>로 목표(${goals.savingsRateTarget}%)를 달성했어요.`
+        html: `이번 달 저축률 <b>${latestCf.savingsRate.toFixed(1)}%</b>로 최근 평균 기반 추정 목표(${goals.savingsRateTarget}%)를 달성했어요.`
       });
     }
   }
@@ -1593,8 +1638,9 @@ function renderShell() {
     <div class="site-header" id="site-header">
       <div class="topbar">
         <div class="brand">
-          <span class="mark">LEDGER</span>
-          <h1>MY 자산 통장</h1>
+          <span class="mark">🦦</span>
+          <h1>해달</h1>
+          <span class="tagline">당신의 자산관리 파트너</span>
         </div>
         <div class="sync-box">
           <span class="sync-dot" id="sync-dot"></span>
@@ -1810,7 +1856,7 @@ function computeSavingsHomeInsights(data, d) {
   return insights;
 }
 
-async function renderWeeklyInsights(panelId, cacheKey, title, computeFn) {
+async function renderWeeklyInsights(panelId, cacheKey, title, computeFn, goalsData) {
   const panel = document.getElementById(panelId);
   if (!panel) return;
   panel.innerHTML = `
@@ -1834,6 +1880,23 @@ async function renderWeeklyInsights(panelId, cacheKey, title, computeFn) {
   panel.innerHTML = `
     <div class="panel-title"><div><span class="eyebrow">INSIGHTS</span>${title}</div></div>
     ${insights.map(i => `<div class="insight ${i.type}"><span class="dot"></span><span>${i.html}</span></div>`).join('') || '<div class="empty-state">표시할 인사이트가 없어요.</div>'}
+    ${goalsData ? activeGoalsMiniHtml(goalsData) : ''}
+  `;
+}
+
+function activeGoalsMiniHtml(data) {
+  const goals = (data.goals || []).filter(g => pickGoalField(g, 'title'));
+  const active = goals.filter(g => goalStatusClass(pickGoalField(g, 'status')) === 'active');
+  if (!active.length) return '';
+  return `
+    <div class="mini-goal-head">진행중인 목표</div>
+    <div class="mini-goal-list">
+      ${active.map(g => {
+        const title = pickGoalField(g, 'title');
+        const period = pickGoalField(g, 'period');
+        return `<div class="mini-goal-row"><span class="mini-goal-dot"></span><span class="mini-goal-text">${title}</span>${period ? `<span class="mini-goal-period">${period}</span>` : ''}</div>`;
+      }).join('')}
+    </div>
   `;
 }
 
@@ -1927,11 +1990,13 @@ function renderTrend(data, d) {
       <button data-mode="category">카테고리별</button>
       <button data-mode="account">계좌별</button>
     </div>
+    <select id="asset-trend-filter" class="income-cat-select" style="display:none;"></select>
     <div class="chart-wrap tall"><canvas id="chart-trend"></canvas></div>
     <div class="chart-legend" id="asset-trend-legend"></div>
   `;
   const months = d.assetMonths;
   const series = buildAssetMonthlySeries(data.assetRows);
+  const filterSelect = document.getElementById('asset-trend-filter');
 
   const drawTrend = () => {
     const monthsSlice = sliceByRange(months, state.assetTrendRange);
@@ -1942,21 +2007,42 @@ function renderTrend(data, d) {
     let legendHtml = '';
 
     if (mode === 'total') {
+      filterSelect.style.display = 'none';
       datasets = [{ label: '총자산', data: monthsSlice.map(m => d.byMonth[m] || 0), borderColor: '#c9a227', backgroundColor: 'rgba(201,162,39,0.12)', fill: true, tension: 0.35, pointRadius: 2, pointBackgroundColor: '#c9a227', borderWidth: 2, labelColor: '#e9dba8' }];
     } else if (mode === 'category') {
       const cats = CAT_ORDER.filter(c => series.catTotals[c] > 0);
-      datasets = cats.map(cat => ({
-        type: 'bar', label: cat, data: monthsSlice.map(m => (series.catByMonth[m] && series.catByMonth[m][cat]) || 0),
-        backgroundColor: CAT_COLORS[cat] || '#888', stack: 's'
-      }));
-      legendHtml = cats.map(c => `<span><i style="background:${CAT_COLORS[c] || '#888'}"></i>${c}</span>`).join('');
+      filterSelect.style.display = '';
+      filterSelect.innerHTML = `<option value="all">전체 카테고리</option>${cats.map(c => `<option value="${c}">${c}</option>`).join('')}`;
+      filterSelect.value = cats.includes(state.assetTrendFilter) ? state.assetTrendFilter : 'all';
+      if (filterSelect.value !== 'all') {
+        const cat = filterSelect.value;
+        datasets = [{ type: 'bar', label: cat, data: monthsSlice.map(m => (series.catByMonth[m] && series.catByMonth[m][cat]) || 0), backgroundColor: CAT_COLORS[cat] || '#888', labelColor: '#eae8e0' }];
+      } else {
+        datasets = cats.map(cat => ({
+          type: 'bar', label: cat, data: monthsSlice.map(m => (series.catByMonth[m] && series.catByMonth[m][cat]) || 0),
+          backgroundColor: CAT_COLORS[cat] || '#888', stack: 's'
+        }));
+        legendHtml = cats.map(c => `<span><i style="background:${CAT_COLORS[c] || '#888'}"></i>${c}</span>`).join('');
+      }
     } else {
-      datasets = series.accounts.map((acc, i) => ({
-        type: 'bar', label: acc, data: monthsSlice.map(m => (series.accByMonth[m] && series.accByMonth[m][acc]) || 0),
-        backgroundColor: CAT_PIE_PALETTE_INV[i % CAT_PIE_PALETTE_INV.length], stack: 's'
-      }));
-      legendHtml = series.accounts.map((acc, i) => `<span><i style="background:${CAT_PIE_PALETTE_INV[i % CAT_PIE_PALETTE_INV.length]}"></i>${acc}</span>`).join('');
+      filterSelect.style.display = '';
+      filterSelect.innerHTML = `<option value="all">전체 계좌</option>${series.accounts.map(a => `<option value="${a}">${a}</option>`).join('')}`;
+      filterSelect.value = series.accounts.includes(state.assetTrendFilter) ? state.assetTrendFilter : 'all';
+      if (filterSelect.value !== 'all') {
+        const acc = filterSelect.value;
+        const i = series.accounts.indexOf(acc);
+        datasets = [{ type: 'bar', label: acc, data: monthsSlice.map(m => (series.accByMonth[m] && series.accByMonth[m][acc]) || 0), backgroundColor: CAT_PIE_PALETTE_INV[i % CAT_PIE_PALETTE_INV.length], labelColor: '#eae8e0' }];
+      } else {
+        datasets = series.accounts.map((acc, i) => ({
+          type: 'bar', label: acc, data: monthsSlice.map(m => (series.accByMonth[m] && series.accByMonth[m][acc]) || 0),
+          backgroundColor: CAT_PIE_PALETTE_INV[i % CAT_PIE_PALETTE_INV.length], stack: 's'
+        }));
+        legendHtml = series.accounts.map((acc, i) => `<span><i style="background:${CAT_PIE_PALETTE_INV[i % CAT_PIE_PALETTE_INV.length]}"></i>${acc}</span>`).join('');
+      }
     }
+
+    const isolated = mode !== 'total' && filterSelect.value !== 'all';
+    const stacked = mode !== 'total' && !isolated;
 
     state.charts.trend = new Chart(ctx, {
       type: mode === 'total' ? 'line' : 'bar',
@@ -1965,11 +2051,11 @@ function renderTrend(data, d) {
         responsive: true, maintainAspectRatio: false, layout: { padding: { top: 18 } },
         plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` ${c.dataset.label}: ${formatWon(c.raw)}` } } },
         scales: {
-          x: { stacked: mode !== 'total', ticks: MONO_TICK, grid: { display: false } },
-          y: { stacked: mode !== 'total', ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT }
+          x: { stacked, ticks: MONO_TICK, grid: { display: false } },
+          y: { stacked, ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT }
         }
       },
-      plugins: mode === 'total' ? [valueLabelPlugin] : [stackTotalLabelPlugin]
+      plugins: (mode === 'total' || isolated) ? [valueLabelPlugin] : [stackTotalLabelPlugin]
     });
     document.getElementById('asset-trend-legend').innerHTML = legendHtml;
   };
@@ -1985,7 +2071,13 @@ function renderTrend(data, d) {
     const btn = e.target.closest('button');
     if (!btn) return;
     state.assetTrendMode = btn.dataset.mode;
+    state.assetTrendFilter = 'all';
     document.querySelectorAll('#asset-trend-mode-toggle button').forEach(b => b.classList.toggle('active', b === btn));
+    drawTrend();
+  });
+
+  filterSelect.addEventListener('change', () => {
+    state.assetTrendFilter = filterSelect.value;
     drawTrend();
   });
 
@@ -2150,7 +2242,7 @@ function renderAssetsPage(container, data, d) {
     <div class="panel full" id="panel-trend"></div>
     <div class="panel full" id="panel-net"></div>
   `;
-  renderWeeklyInsights('panel-assets-insights', 'weekly-insights-assets', '자산 인사이트', () => computeAssetsInsights(data, d));
+  renderWeeklyInsights('panel-assets-insights', 'weekly-insights-assets', '자산 인사이트', () => computeAssetsInsights(data, d), data);
   renderAssetStats(data, d);
   renderAccountsPanel(data, d);
   renderTrend(data, d);
@@ -2160,13 +2252,19 @@ function renderAssetsPage(container, data, d) {
 
 function renderNetIncomeChart(data, d) {
   const panel = document.getElementById('panel-net');
-  const netSeries = data.months.map((m, i) => ({ month: m, net: (data.incomeTotal[i] || 0) - (data.expenseTotal[i] || 0) })).filter((s, i) => data.incomeTotal[i] > 0 || data.expenseTotal[i] > 0);
+  const netSeriesRaw = data.months.map((m, i) => ({ month: m, net: (data.incomeTotal[i] || 0) - (data.expenseTotal[i] || 0) })).filter((s, i) => data.incomeTotal[i] > 0 || data.expenseTotal[i] > 0);
+  let cumAcc = 0;
+  const netSeries = netSeriesRaw.map(s => { cumAcc += s.net; return { ...s, cum: cumAcc }; });
   panel.innerHTML = `
     <div class="panel-title">
       <div><span class="eyebrow">NET</span>연월별 순익 (수입 − 지출)</div>
       <div class="range-toggle" id="asset-net-range-toggle"></div>
     </div>
     <div class="chart-wrap tall"><canvas id="chart-asset-net"></canvas></div>
+    <div class="chart-legend">
+      <span><i style="background:#4c8c6b"></i>월별 순익</span>
+      <span><i style="background:#c9a227"></i>누적 순익</span>
+    </div>
   `;
   const drawNet = () => {
     const series = sliceByRange(netSeries, state.assetNetRange);
@@ -2176,15 +2274,20 @@ function renderNetIncomeChart(data, d) {
       data: {
         labels: series.map(s => pivotMonthLabel(s.month)),
         datasets: [
-          { type: 'bar', label: '순익', data: series.map(s => s.net), backgroundColor: series.map(s => s.net >= 0 ? 'rgba(76,140,107,0.75)' : 'rgba(193,72,63,0.75)'), borderRadius: 3, labelColor: '#c7cddb' }
+          { type: 'bar', label: '순익', data: series.map(s => s.net), backgroundColor: series.map(s => s.net >= 0 ? 'rgba(76,140,107,0.75)' : 'rgba(193,72,63,0.75)'), borderRadius: 3, labelColor: '#c7cddb', yAxisID: 'y' },
+          { type: 'line', label: '누적 순익', data: series.map(s => s.cum), borderColor: '#c9a227', backgroundColor: 'transparent', tension: 0.3, pointRadius: 2, borderWidth: 2, yAxisID: 'y1', labelColor: '#e9dba8', labelOffset: -18 }
         ]
       },
       options: {
         responsive: true, maintainAspectRatio: false, layout: { padding: { top: 18 } },
-        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` ${formatWon(c.raw)}` } } },
-        scales: { x: { ticks: MONO_TICK, grid: { display: false } }, y: { ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT } }
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` ${c.dataset.label}: ${formatWon(c.raw)}` } } },
+        scales: {
+          x: { ticks: MONO_TICK, grid: { display: false } },
+          y: { position: 'left', ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT },
+          y1: { position: 'right', ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: { display: false } }
+        }
       },
-      plugins: [valueLabelPlugin, avgLinePlugin(series.map(s => s.net))]
+      plugins: [valueLabelPlugin]
     });
   };
   function onAssetNetRangePick(v) {
@@ -2278,7 +2381,7 @@ function renderIncomePage(container, data, d) {
         <button data-mode="total" class="active">총액</button>
         <button data-mode="category">카테고리별</button>
       </div>
-      <select id="income-cat-select" class="income-cat-select" style="display:none;"></select>
+      <div class="income-cat-btns" id="income-cat-btns" style="display:none;"></div>
       <div class="chart-wrap tall"><canvas id="chart-income-total"></canvas></div>
       <div class="chart-legend" id="income-total-legend"><span><i style="background:#c9a227"></i>이번 달</span><span><i style="background:#4c8c6b"></i>그 외</span></div>
     </div>
@@ -2288,11 +2391,24 @@ function renderIncomePage(container, data, d) {
     </div>
   `;
 
-  renderWeeklyInsights('panel-income-insights', 'weekly-insights-income', '수입 인사이트', () => computeIncomeInsights(data, d));
+  renderWeeklyInsights('panel-income-insights', 'weekly-insights-income', '수입 인사이트', () => computeIncomeInsights(data, d), data);
 
-  const catSelect = document.getElementById('income-cat-select');
-  catSelect.innerHTML = `<option value="all">전체 카테고리</option>${catNames.map(n => `<option value="${n}">${n}</option>`).join('')}`;
-  catSelect.value = state.incomeCatFilter || 'all';
+  const catBtnsBox = document.getElementById('income-cat-btns');
+  const renderCatBtns = () => {
+    const cur = state.incomeCatFilter || 'all';
+    catBtnsBox.innerHTML = `
+      <button data-cat="all" class="income-cat-btn ${cur === 'all' ? 'active' : ''}">전체</button>
+      ${catNames.map(n => `<button data-cat="${n}" class="income-cat-btn ${cur === n ? 'active' : ''}">${n}</button>`).join('')}
+    `;
+    catBtnsBox.querySelectorAll('.income-cat-btn').forEach(b => {
+      b.addEventListener('click', () => {
+        state.incomeCatFilter = b.dataset.cat;
+        renderCatBtns();
+        drawIncomeTotal();
+      });
+    });
+  };
+  renderCatBtns();
 
   const drawIncomeTotal = () => {
     const totalSeries = sliceByRange(incomeSeries, state.incomeRange);
@@ -2301,7 +2417,7 @@ function renderIncomePage(container, data, d) {
     if (state.charts.incomeTotal) state.charts.incomeTotal.destroy();
     const totalCtx = document.getElementById('chart-income-total');
     const legendBox = document.getElementById('income-total-legend');
-    catSelect.style.display = mode === 'category' ? '' : 'none';
+    catBtnsBox.style.display = mode === 'category' ? '' : 'none';
 
     if (mode === 'total') {
       legendBox.innerHTML = `<span><i style="background:#c9a227"></i>이번 달</span><span><i style="background:#4c8c6b"></i>그 외</span>`;
@@ -2371,10 +2487,6 @@ function renderIncomePage(container, data, d) {
     document.querySelectorAll('#income-total-mode-toggle button').forEach(b => b.classList.toggle('active', b === btn));
     drawIncomeTotal();
   });
-  catSelect.addEventListener('change', () => {
-    state.incomeCatFilter = catSelect.value;
-    drawIncomeTotal();
-  });
   drawIncomeTotal();
 
   const pieIdx = d.latestPivotIdx;
@@ -2400,6 +2512,46 @@ function renderIncomePage(container, data, d) {
 
 /* ---------------- page: 지출 ---------------- */
 
+function ledgerDateSortKey(dateStr) {
+  const m = (dateStr || '').match(/(\d{4})\.\s*(\d{1,2})\.\s*(\d{1,2})/);
+  if (!m) return '';
+  return `${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}`;
+}
+
+function getVendorTipEl() {
+  let el = document.getElementById('vendor-hover-tip');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'vendor-hover-tip';
+    el.className = 'vendor-hover-tip';
+    document.body.appendChild(el);
+  }
+  return el;
+}
+function showVendorTip(name, txs) {
+  const el = getVendorTipEl();
+  el.innerHTML = `
+    <div class="vtip-title">${name}</div>
+    ${txs.slice(0, 5).map(t => `<div class="vtip-row"><span class="vtip-date">${t.date}</span><span class="vtip-item">${t.item || ''}</span><span class="vtip-amt">${formatWon(t.amount)}</span></div>`).join('') || '<div class="vtip-empty">최근 내역이 없어요.</div>'}
+  `;
+  el.style.display = 'block';
+}
+function hideVendorTip() {
+  const el = document.getElementById('vendor-hover-tip');
+  if (el) el.style.display = 'none';
+}
+function positionVendorTip(e) {
+  const el = document.getElementById('vendor-hover-tip');
+  if (!el || el.style.display === 'none') return;
+  const pad = 14;
+  const rect = el.getBoundingClientRect();
+  let x = e.clientX + pad, y = e.clientY + pad;
+  if (x + rect.width > window.innerWidth) x = e.clientX - rect.width - pad;
+  if (y + rect.height > window.innerHeight) y = e.clientY - rect.height - pad;
+  el.style.left = x + 'px';
+  el.style.top = y + 'px';
+}
+
 function computeTopVendors(expenseLedger, limit) {
   const map = {};
   expenseLedger.forEach(r => {
@@ -2424,28 +2576,25 @@ function getFixedByPivotMonth(ledger, series) {
   return series.map(s => ({ month: s.month, expense: fixedByKey[pivotMonthToLedgerKey(s.month)] || 0 }));
 }
 
-function renderExpenseAvgStats(cf, fixedSeries) {
-  const panel = document.getElementById('panel-expense-avg-stats');
+function renderExpenseAvgCard(panelId, series, label, rangeKey) {
+  const panel = document.getElementById(panelId);
   const draw = () => {
-    const range = state.expenseAvgRange;
-    const cfSlice = sliceByRange(cf, range);
-    const fixedSlice = sliceByRange(fixedSeries, range);
-    const avgExpense = avgOf(cfSlice.map(s => s.expense));
-    const avgFixed = avgOf(fixedSlice.map(s => s.expense));
+    const range = state[rangeKey];
+    const slice = sliceByRange(series, range);
+    const avg = avgOf(slice.map(s => s.expense));
     panel.innerHTML = `
       <div class="panel-title">
-        <div><span class="eyebrow">AVERAGE</span>평균 지표</div>
-        <div class="range-toggle" id="expense-avg-range-toggle"></div>
+        <div><span class="eyebrow">AVERAGE</span>${label}</div>
+        <div class="range-toggle" id="${panelId}-toggle"></div>
       </div>
       <div class="stat-grid" style="grid-template-columns:1fr;">
-        <div class="stat-card"><div class="label">평균 월 지출</div><div class="value">${formatCompactWon(avgExpense)}원</div></div>
-        <div class="stat-card"><div class="label">평균 월 고정비</div><div class="value">${formatCompactWon(avgFixed)}원</div></div>
+        <div class="stat-card"><div class="value" style="font-size:24px;">${formatCompactWon(avg)}원</div></div>
       </div>
     `;
-    bindRangeToggle('expense-avg-range-toggle', RANGE_OPTIONS, state.expenseAvgRange, onPick);
+    bindRangeToggle(`${panelId}-toggle`, RANGE_OPTIONS, state[rangeKey], onPick);
   };
   function onPick(v) {
-    state.expenseAvgRange = v === 'all' ? 'all' : parseInt(v, 10);
+    state[rangeKey] = v === 'all' ? 'all' : parseInt(v, 10);
     draw();
   }
   draw();
@@ -2458,9 +2607,10 @@ function renderExpensePage(container, data, d) {
   const hasFixed = fixedSeries.some(s => s.expense > 0);
 
   container.innerHTML = `
-    <div class="grid grid-3">
+    <div class="grid grid-4">
       <div class="panel" id="panel-expense-insights"></div>
-      <div class="panel" id="panel-expense-avg-stats"></div>
+      <div class="panel" id="panel-avg-expense"></div>
+      <div class="panel" id="panel-avg-fixed"></div>
       <div class="panel" id="panel-top-vendors">
         <div class="panel-title">
           <div><span class="eyebrow">TOP VENDORS</span>주요 지출처</div>
@@ -2500,8 +2650,9 @@ function renderExpensePage(container, data, d) {
     </div>
   `;
 
-  renderWeeklyInsights('panel-expense-insights', 'weekly-insights-expense', '지출 인사이트', () => computeExpenseInsights(data, d));
-  renderExpenseAvgStats(cf, fixedSeries);
+  renderWeeklyInsights('panel-expense-insights', 'weekly-insights-expense', '지출 인사이트', () => computeExpenseInsights(data, d), data);
+  renderExpenseAvgCard('panel-avg-expense', cf, '평균 월 지출', 'expenseAvgExpenseRange');
+  renderExpenseAvgCard('panel-avg-fixed', fixedSeries, '평균 월 고정비', 'expenseAvgFixedRange');
 
   const drawExpenseTrend = () => {
     const mode = hasFixed ? state.expenseTrendMode : 'total';
@@ -2553,13 +2704,25 @@ function renderExpensePage(container, data, d) {
     const filtered = filterLedgerByRange(expenseLedger, data.months, state.vendorRange);
     const topVendors = computeTopVendors(filtered, 10);
     const topVendorMax = Math.max(...topVendors.map(v => v[1]), 1);
+    const vendorTxMap = {};
+    filtered.forEach(r => {
+      const name = r.vendor || r.item || '기타';
+      (vendorTxMap[name] = vendorTxMap[name] || []).push(r);
+    });
+    Object.keys(vendorTxMap).forEach(k => vendorTxMap[k].sort((a, b) => ledgerDateSortKey(b.date).localeCompare(ledgerDateSortKey(a.date))));
     document.getElementById('top-vendors-list').innerHTML = topVendors.map(([name, amt]) => {
       const pct = (amt / topVendorMax) * 100;
-      return `<div class="cat-row">
+      return `<div class="cat-row" data-vendor="${encodeURIComponent(name)}">
         <div class="cat-row-top"><span>${name}</span><span class="amt">${formatCompactWon(amt)}원</span></div>
         <div class="cat-bar-track"><div class="cat-bar-fill" style="width:${pct}%"></div></div>
       </div>`;
     }).join('') || '<div class="empty-state">지출 내역이 없어요.</div>';
+    document.querySelectorAll('#top-vendors-list .cat-row').forEach(row => {
+      const name = decodeURIComponent(row.dataset.vendor);
+      row.addEventListener('mouseenter', () => showVendorTip(name, vendorTxMap[name] || []));
+      row.addEventListener('mousemove', positionVendorTip);
+      row.addEventListener('mouseleave', hideVendorTip);
+    });
   };
   function onVendorRangePick(v) {
     state.vendorRange = v === 'all' ? 'all' : parseInt(v, 10);
@@ -2889,7 +3052,7 @@ function renderInvestmentPage(container, data, d) {
     </div>
   `;
 
-  renderWeeklyInsights('panel-investment-insights', 'weekly-insights-investment', '투자 인사이트', () => computeInvestmentInsights(data, d, cumSeries, tagAgg));
+  renderWeeklyInsights('panel-investment-insights', 'weekly-insights-investment', '투자 인사이트', () => computeInvestmentInsights(data, d, cumSeries, tagAgg), data);
 
   const drawCum = () => {
     const cumSlice = sliceByRange(cumSeries, state.invRange);
@@ -3112,7 +3275,7 @@ function renderSavingsPage(container, data, d) {
     </div>
   `;
 
-  renderWeeklyInsights('panel-savings-insights', 'weekly-insights-savings', '저축 인사이트', () => computeSavingsInsights(data, d, latestSaving, latestPension, months, byMonthCat));
+  renderWeeklyInsights('panel-savings-insights', 'weekly-insights-savings', '저축 인사이트', () => computeSavingsInsights(data, d, latestSaving, latestPension, months, byMonthCat), data);
 
   const drawSavTrend = () => {
     const monthsSlice = sliceByRange(months, state.savTrendRange);
@@ -3258,8 +3421,18 @@ function applySuggestedGoals(data) {
   state.goals.emergencyFundTarget = sug.suggestedEmergency;
 }
 
+async function clearInsightCaches() {
+  try {
+    const res = await window.storage.list('weekly-insights', false);
+    if (res && res.keys) {
+      await Promise.all(res.keys.map(k => window.storage.delete(k, false).catch(() => {})));
+    }
+  } catch (e) { /* nothing cached yet */ }
+}
+
 async function fetchLive(manual) {
   setSyncState('loading');
+  if (manual) await clearInsightCaches();
   try {
     const data = await fetchAllTabsAndMerge();
     state.data = data;
