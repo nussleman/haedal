@@ -446,6 +446,26 @@ body{
 }
 @keyframes sk{0%{background-position:100% 50%}100%{background-position:0 50%}}
 
+/* ---------- 지금(now) 페이지 ---------- */
+.now-progress{display:flex;align-items:center;gap:12px;margin-top:2px;}
+.now-progress-track{flex:1;height:6px;background:var(--panel-2);border-radius:3px;overflow:hidden;}
+.now-progress-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--gold),var(--gold-soft));transition:width .3s;}
+.now-progress-text{font-family:var(--mono);font-size:11px;color:var(--text-dim);white-space:nowrap;}
+.now-kv{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:8px 0;border-bottom:1px dotted var(--border);font-size:12.5px;color:var(--text-dim);}
+.now-kv:last-child{border-bottom:none;}
+.now-kv b{font-family:var(--mono);color:var(--text);font-weight:600;}
+.now-chip-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;}
+.now-chip{background:var(--panel-2);border:1px solid var(--border-strong);color:var(--text-dim);border-radius:9px;padding:7px 11px;cursor:pointer;font-family:var(--sans);font-size:12px;text-align:left;line-height:1.35;transition:border-color .15s,color .15s;}
+.now-chip em{display:block;font-style:normal;font-family:var(--mono);font-size:9.5px;color:var(--text-faint);}
+.now-chip span{display:block;font-family:var(--mono);font-size:11px;color:var(--text);margin-top:2px;}
+.now-chip:hover{border-color:var(--gold-soft);color:var(--text);}
+.now-chip.active{border-color:var(--gold);color:var(--gold-soft);background:rgba(201,162,39,0.10);}
+.now-chip.future{opacity:.4;}
+@media (max-width:600px){
+  .now-progress{flex-wrap:wrap;}
+  .now-chip{flex:1 1 calc(50% - 8px);}
+}
+
 /* ---------- nav ---------- */
 .navbar{
   display:flex;gap:6px;margin:16px 0 0;
@@ -721,7 +741,10 @@ const state = {
   assetTrendMode: 'total',
   assetTrendFilter: 'all',
   savTrendRange: 12,
-  savContribRange: 12
+  savContribRange: 12,
+  nowMonthKey: null,       // '지금' 탭에서 보고 있는 달 (YYYY-MM)
+  nowWeekIdx: null,        // null = 그 달 전체, 0.. = 해당 주차만
+  nowGranularity: 'week'   // 'week' | 'day'
 };
 
 /* ---------------- helpers ---------------- */
@@ -1637,6 +1660,7 @@ function setSyncState(status) {
 
 const NAV_ITEMS = [
   { id: 'home', label: '홈' },
+  { id: 'now', label: '지금' },
   { id: 'assets', label: '자산' },
   { id: 'income', label: '수입' },
   { id: 'expense', label: '지출' },
@@ -1725,7 +1749,8 @@ function renderPage() {
   const d = computeDerived(data);
   destroyPageCharts();
   const container = document.getElementById('page-content');
-  if (state.page === 'assets') renderAssetsPage(container, data, d);
+  if (state.page === 'now') renderNowPage(container, data, d);
+  else if (state.page === 'assets') renderAssetsPage(container, data, d);
   else if (state.page === 'income') renderIncomePage(container, data, d);
   else if (state.page === 'expense') renderExpensePage(container, data, d);
   else if (state.page === 'investment') renderInvestmentPage(container, data, d);
@@ -2286,6 +2311,487 @@ function renderAdvancedTableBody(key, allRows, opts) {
       el.addEventListener('toggle', () => { ts.openGroups[el.dataset.gkey] = el.open; });
     });
   }
+}
+
+/* ---------------- page: 지금 (이번 달 종합) ---------------- */
+
+function parseLedgerDateParts(s) {
+  const m = (s || '').match(/(\d{4})\.\s*(\d{1,2})\.\s*(\d{1,2})/);
+  return m ? { y: +m[1], mo: +m[2], d: +m[3] } : null;
+}
+
+function makeMonthKey(y, mo) { return `${y}-${String(mo).padStart(2, '0')}`; }
+
+function shiftMonthKey(key, delta) {
+  const [y, m] = key.split('-').map(Number);
+  const dt = new Date(y, m - 1 + delta, 1);
+  return makeMonthKey(dt.getFullYear(), dt.getMonth() + 1);
+}
+
+function monthKeyLabel(key) {
+  const [y, m] = key.split('-').map(Number);
+  return `${y}년 ${m}월`;
+}
+
+function daysInMonthKey(key) {
+  const [y, m] = key.split('-').map(Number);
+  return new Date(y, m, 0).getDate();
+}
+
+function thisMonthKey() {
+  const n = new Date();
+  return makeMonthKey(n.getFullYear(), n.getMonth() + 1);
+}
+
+/* 이번 달이면 오늘 날짜, 과거 달이면 말일, 미래 달이면 0 */
+function elapsedDaysOf(monthKey) {
+  const cur = thisMonthKey();
+  if (monthKey === cur) return new Date().getDate();
+  return monthKey < cur ? daysInMonthKey(monthKey) : 0;
+}
+
+function buildNowMonth(ledger, monthKey) {
+  const [y, mo] = monthKey.split('-').map(Number);
+  const days = daysInMonthKey(monthKey);
+  const rows = ledger.filter(r => ledgerMonthKey(r.date) === monthKey);
+  const daily = [];
+  for (let i = 1; i <= days; i++) {
+    daily.push({ day: i, dow: new Date(y, mo - 1, i).getDay(), income: 0, expense: 0, transfer: 0, rows: [] });
+  }
+  rows.forEach(r => {
+    const p = parseLedgerDateParts(r.date);
+    if (!p) return;
+    const b = daily[p.d - 1];
+    if (!b) return;
+    b.rows.push(r);
+    if (r.major.includes('수입')) b.income += r.amount;
+    else if (r.major.includes('지출')) b.expense += r.amount;
+    else if (r.major.includes('이체')) b.transfer += r.amount;
+  });
+
+  const weeks = [];
+  let cur = null;
+  daily.forEach(b => {
+    if (!cur || b.dow === 1) { cur = { idx: weeks.length, days: [] }; weeks.push(cur); }
+    cur.days.push(b);
+  });
+  weeks.forEach(w => {
+    w.income = w.days.reduce((a, b) => a + b.income, 0);
+    w.expense = w.days.reduce((a, b) => a + b.expense, 0);
+    w.transfer = w.days.reduce((a, b) => a + b.transfer, 0);
+    w.from = w.days[0].day;
+    w.to = w.days[w.days.length - 1].day;
+    w.label = `${w.idx + 1}주차`;
+    w.range = `${mo}/${w.from}–${mo}/${w.to}`;
+    w.rows = w.days.reduce((a, b) => a.concat(b.rows), []);
+  });
+
+  const income = rows.filter(r => r.major.includes('수입')).reduce((a, r) => a + r.amount, 0);
+  const expense = rows.filter(r => r.major.includes('지출')).reduce((a, r) => a + r.amount, 0);
+  return { monthKey, y, mo, days, daily, weeks, rows, income, expense };
+}
+
+function cumExpenseThroughDay(ledger, monthKey, dayLimit) {
+  let sum = 0;
+  ledger.forEach(r => {
+    if (!r.major.includes('지출')) return;
+    if (ledgerMonthKey(r.date) !== monthKey) return;
+    const p = parseLedgerDateParts(r.date);
+    if (p && p.d <= dayLimit) sum += r.amount;
+  });
+  return sum;
+}
+
+function cumThroughDay(ledger, monthKey, dayLimit, keyword) {
+  let sum = 0;
+  ledger.forEach(r => {
+    if (!r.major.includes(keyword)) return;
+    if (ledgerMonthKey(r.date) !== monthKey) return;
+    const p = parseLedgerDateParts(r.date);
+    if (p && p.d <= dayLimit) sum += r.amount;
+  });
+  return sum;
+}
+
+/* 최근 N개월, 같은 일자까지의 누적 지출 평균 (같은 페이스인지 비교용) */
+function pacePeerAverage(ledger, monthKey, dayLimit, lookback) {
+  const vals = [];
+  for (let i = 1; i <= lookback; i++) {
+    const k = shiftMonthKey(monthKey, -i);
+    const hasData = ledger.some(r => ledgerMonthKey(r.date) === k && r.major.includes('지출'));
+    if (hasData) vals.push(cumExpenseThroughDay(ledger, k, dayLimit));
+  }
+  return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
+}
+
+/* 고정비 체크리스트: 최근 3개월에 등장한 고정비 항목 대비 이번 달 결제 여부 */
+function nowFixedStatus(ledger, monthKey) {
+  const prevKeys = [1, 2, 3].map(i => shiftMonthKey(monthKey, -i));
+  const tpl = {};
+  ledger.filter(r => r.fixed && r.major.includes('지출')).forEach(r => {
+    const k = ledgerMonthKey(r.date);
+    if (!prevKeys.includes(k)) return;
+    const id = `${r.item}|${r.vendor}`;
+    if (!tpl[id]) tpl[id] = { item: r.item, vendor: r.vendor, minor: r.minor, amounts: [], months: new Set() };
+    tpl[id].amounts.push(r.amount);
+    tpl[id].months.add(k);
+  });
+  const paid = {};
+  ledger.filter(r => r.fixed && r.major.includes('지출') && ledgerMonthKey(r.date) === monthKey).forEach(r => {
+    const id = `${r.item}|${r.vendor}`;
+    paid[id] = (paid[id] || 0) + r.amount;
+    if (!tpl[id]) tpl[id] = { item: r.item, vendor: r.vendor, minor: r.minor, amounts: [r.amount], months: new Set() };
+  });
+  return Object.keys(tpl).map(id => {
+    const t = tpl[id];
+    return {
+      item: t.item, vendor: t.vendor, minor: t.minor,
+      expected: t.amounts.length ? Math.round(t.amounts.reduce((a, b) => a + b, 0) / t.amounts.length) : 0,
+      paid: paid[id] !== undefined ? paid[id] : null,
+      recur: t.months.size
+    };
+  }).sort((a, b) => (a.paid === null ? 0 : 1) - (b.paid === null ? 0 : 1) || b.expected - a.expected);
+}
+
+function nowCategoryRows(ledger, monthKey, scopeRows, cmpDay) {
+  const prevKey = shiftMonthKey(monthKey, -1);
+  const curMap = {}, prevMap = {};
+  scopeRows.filter(r => r.major.includes('지출')).forEach(r => {
+    curMap[r.minor || '기타'] = (curMap[r.minor || '기타'] || 0) + r.amount;
+  });
+  const limit = (cmpDay === null || cmpDay === undefined) ? null : cmpDay;
+  if (limit !== null) {
+    ledger.filter(r => r.major.includes('지출') && ledgerMonthKey(r.date) === prevKey).forEach(r => {
+      const p = parseLedgerDateParts(r.date);
+      if (!p || p.d > limit) return;
+      prevMap[r.minor || '기타'] = (prevMap[r.minor || '기타'] || 0) + r.amount;
+    });
+  }
+  const names = [...new Set([...Object.keys(curMap), ...Object.keys(prevMap)])];
+  const total = Object.values(curMap).reduce((a, b) => a + b, 0);
+  return names.map(n => ({
+    name: n, cur: curMap[n] || 0, prev: prevMap[n] || 0,
+    pct: total > 0 ? ((curMap[n] || 0) / total) * 100 : 0
+  })).filter(r => r.cur > 0 || r.prev > 0).sort((a, b) => b.cur - a.cur);
+}
+
+function nowTransferRows(scopeRows) {
+  const map = {};
+  scopeRows.filter(r => r.major.includes('이체')).forEach(r => {
+    const k = r.minor || '기타';
+    if (!map[k]) map[k] = { name: k, total: 0, detail: {} };
+    map[k].total += r.amount;
+    map[k].detail[r.item || '-'] = (map[k].detail[r.item || '-'] || 0) + r.amount;
+  });
+  return Object.values(map).sort((a, b) => b.total - a.total);
+}
+
+function nowDeltaSub(cur, prev, invert, note) {
+  if (prev === null || prev === undefined || prev === 0) return '<div class="sub">전월 비교 데이터 없음</div>';
+  const diff = cur - prev;
+  const pct = (diff / Math.abs(prev)) * 100;
+  const good = invert ? diff < 0 : diff > 0;
+  const cls = diff === 0 ? '' : (good ? 'up' : 'down');
+  const sign = diff > 0 ? '+' : diff < 0 ? '−' : '';
+  return `<div class="sub ${cls}">${note || '전월 대비'} ${sign}${wonComma(diff)}원 (${sign}${Math.abs(pct).toFixed(1)}%)</div>`;
+}
+
+function renderNowPage(container, data, d) {
+  const ledger = data.ledger || [];
+  if (!ledger.length) {
+    container.innerHTML = '<div class="panel full"><div class="empty-state">가계부(D) 데이터를 불러오지 못해 이번 달을 계산할 수 없어요.</div></div>';
+    return;
+  }
+
+  const availableKeys = [...new Set(ledger.map(r => ledgerMonthKey(r.date)).filter(Boolean))].sort();
+  if (!state.nowMonthKey) {
+    const t = thisMonthKey();
+    state.nowMonthKey = availableKeys.includes(t) ? t : availableKeys[availableKeys.length - 1];
+  }
+  const monthKey = state.nowMonthKey;
+  const M = buildNowMonth(ledger, monthKey);
+
+  const isThisMonth = monthKey === thisMonthKey();
+  const elapsed = Math.max(elapsedDaysOf(monthKey), 0);
+  const progressPct = M.days ? Math.min((elapsed / M.days) * 100, 100) : 0;
+
+  const week = (state.nowWeekIdx !== null && M.weeks[state.nowWeekIdx]) ? M.weeks[state.nowWeekIdx] : null;
+  const scopeRows = week ? week.rows : M.rows;
+  const scopeLabel = week ? `${monthKeyLabel(monthKey)} ${week.label} (${week.range})` : monthKeyLabel(monthKey);
+
+  const sIncome = scopeRows.filter(r => r.major.includes('수입')).reduce((a, r) => a + r.amount, 0);
+  const sExpense = scopeRows.filter(r => r.major.includes('지출')).reduce((a, r) => a + r.amount, 0);
+  const sNet = sIncome - sExpense;
+  const sRate = sIncome > 0 ? (sNet / sIncome) * 100 : null;
+
+  const prevKey = shiftMonthKey(monthKey, -1);
+  const cmpDay = isThisMonth ? elapsed : daysInMonthKey(prevKey);
+  const cmpRange = isThisMonth ? `${Number(prevKey.split('-')[1])}/1–${cmpDay}` : monthKeyLabel(prevKey);
+  const cmpNote = isThisMonth ? `전월 ${cmpRange} 대비` : '전월 대비';
+  const prevIncomeSame = week ? null : cumThroughDay(ledger, prevKey, cmpDay, '수입');
+  const prevExpenseSame = week ? null : cumThroughDay(ledger, prevKey, cmpDay, '지출');
+
+  const peerAvg = pacePeerAverage(ledger, monthKey, elapsed || M.days, 3);
+  const paceDiff = peerAvg !== null ? M.expense - peerAvg : null;
+  const projected = (isThisMonth && elapsed > 0) ? Math.round(M.expense / elapsed * M.days) : null;
+
+  const fixedRows = nowFixedStatus(ledger, monthKey);
+  const fixedPending = fixedRows.filter(f => f.paid === null);
+  const fixedPendingSum = fixedPending.reduce((a, f) => a + f.expected, 0);
+  const fixedPaidSum = fixedRows.filter(f => f.paid !== null).reduce((a, f) => a + f.paid, 0);
+
+  const catRows = nowCategoryRows(ledger, monthKey, scopeRows, week ? null : cmpDay);
+  const transferRows = nowTransferRows(scopeRows);
+  const transferTotal = transferRows.reduce((a, t) => a + t.total, 0);
+  const topExpenses = scopeRows.filter(r => r.major.includes('지출')).sort((a, b) => b.amount - a.amount).slice(0, 8);
+
+  const monthOptions = availableKeys.slice().reverse().map(k => `<option value="${k}" ${k === monthKey ? 'selected' : ''}>${monthKeyLabel(k)}</option>`).join('');
+
+  container.innerHTML = `
+    <div class="panel full">
+      <div class="panel-title">
+        <div><span class="eyebrow">NOW</span>${scopeLabel}</div>
+        <div class="month-nav">
+          <button id="now-prev" ${availableKeys.indexOf(monthKey) <= 0 ? 'disabled' : ''}>◀</button>
+          <select id="now-month-select">${monthOptions}</select>
+          <button id="now-next" ${availableKeys.indexOf(monthKey) >= availableKeys.length - 1 ? 'disabled' : ''}>▶</button>
+          <button class="btn small" id="now-thismonth">이번달</button>
+        </div>
+      </div>
+
+      <div class="now-progress">
+        <div class="now-progress-track"><div class="now-progress-fill" style="width:${progressPct}%"></div></div>
+        <span class="now-progress-text">${isThisMonth ? `D+${elapsed} / ${M.days}일 · ${progressPct.toFixed(0)}% 경과 · 남은 ${M.days - elapsed}일` : `${M.days}일 · 마감된 달`}</span>
+      </div>
+
+      <div class="stat-grid" style="margin-top:16px;margin-bottom:0;">
+        <div class="stat-card">
+          <div class="label">수입</div>
+          <div class="value" style="color:var(--green)">${formatWon(sIncome)}</div>
+          ${week ? `<div class="sub">${week.label} 기준</div>` : nowDeltaSub(sIncome, prevIncomeSame, false, cmpNote)}
+        </div>
+        <div class="stat-card">
+          <div class="label">지출</div>
+          <div class="value" style="color:var(--red)">${formatWon(sExpense)}</div>
+          ${week ? `<div class="sub">${week.label} 기준</div>` : nowDeltaSub(sExpense, prevExpenseSame, true, cmpNote)}
+        </div>
+        <div class="stat-card">
+          <div class="label">순저축 (수입−지출)</div>
+          <div class="value" style="color:${sNet >= 0 ? 'var(--green)' : 'var(--red)'}">${formatWon(sNet)}</div>
+          <div class="sub">이체 실행액 ${formatWon(transferTotal)}</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">저축률</div>
+          <div class="value">${sRate === null ? '—' : sRate.toFixed(1) + '%'}</div>
+          <div class="sub ${sRate !== null && sRate >= state.goals.savingsRateTarget ? 'up' : 'down'}">목표 ${state.goals.savingsRateTarget}%</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-3">
+      <div class="panel" id="panel-now-pace">
+        <div class="panel-title"><div><span class="eyebrow">PACE</span>지출 페이스</div></div>
+        <div id="now-pace-body"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title"><div><span class="eyebrow">FIXED</span>고정비 체크</div></div>
+        <div id="now-fixed-body"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title"><div><span class="eyebrow">TRANSFERS</span>이번 달 이체</div></div>
+        <div id="now-transfer-body"></div>
+      </div>
+    </div>
+
+    <div class="panel full">
+      <div class="panel-title">
+        <div><span class="eyebrow">FLOW</span>${monthKeyLabel(monthKey)} 흐름</div>
+        <div class="range-toggle" id="now-granularity">
+          <button data-g="week" class="${state.nowGranularity === 'week' ? 'active' : ''}">주별</button>
+          <button data-g="day" class="${state.nowGranularity === 'day' ? 'active' : ''}">일별</button>
+        </div>
+      </div>
+      <div class="chart-wrap tall"><canvas id="chart-now-flow"></canvas></div>
+      <div class="chart-legend">
+        <span><i style="background:rgba(76,140,107,0.8)"></i>수입</span>
+        <span><i style="background:rgba(193,72,63,0.8)"></i>지출</span>
+        <span><i style="background:#c9a227"></i>누적 지출</span>
+      </div>
+      <div id="now-week-chips"></div>
+    </div>
+
+    <div class="grid">
+      <div class="panel">
+        <div class="panel-title"><div><span class="eyebrow">CATEGORIES</span>카테고리별 지출</div></div>
+        <div id="now-cat-body"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title"><div><span class="eyebrow">TOP SPEND</span>큰 지출 TOP 8</div></div>
+        <div id="now-top-body"></div>
+      </div>
+    </div>
+
+    <div class="panel full">
+      <div class="panel-title"><div><span class="eyebrow">RECORDS</span>${scopeLabel} 전체 내역 <span style="color:var(--text-faint);font-family:var(--mono);font-size:11px;">${scopeRows.length}건</span></div></div>
+      <div id="now-ledger-table"></div>
+    </div>
+  `;
+
+  /* --- 페이스 --- */
+  const paceBody = document.getElementById('now-pace-body');
+  const remainingDays = Math.max(M.days - elapsed, 0);
+  const dailyAvg = elapsed > 0 ? M.expense / elapsed : 0;
+  paceBody.innerHTML = `
+    <div class="now-kv"><span>하루 평균 지출</span><b>${formatWon(Math.round(dailyAvg))}</b></div>
+    ${peerAvg !== null ? `<div class="now-kv"><span>최근 3개월 같은 시점 평균</span><b>${formatWon(Math.round(peerAvg))}</b></div>` : ''}
+    ${paceDiff !== null ? `<div class="insight ${paceDiff > 0 ? 'warn' : 'good'}"><span class="dot"></span><span>
+        평소보다 <b>${wonComma(Math.abs(paceDiff))}원 ${paceDiff > 0 ? '더 쓰는' : '덜 쓰는'}</b> 페이스예요.
+      </span></div>` : ''}
+    ${projected !== null ? `<div class="now-kv"><span>이 속도면 월말 예상</span><b style="color:var(--red)">${formatWon(projected)}</b></div>` : ''}
+    ${fixedPendingSum > 0 ? `<div class="now-kv"><span>아직 안 나간 고정비</span><b style="color:var(--red)">${formatWon(fixedPendingSum)}</b></div>` : ''}
+    ${isThisMonth && remainingDays > 0 ? `<div class="settings-note">남은 <b style="color:var(--gold-soft)">${remainingDays}일</b> 동안 지금 페이스를 유지하면 월말에 ${projected !== null ? formatWon(projected) : '—'}, 미결제 고정비까지 더하면 약 <b style="color:var(--gold-soft)">${formatWon((projected || M.expense) + fixedPendingSum)}</b>가 됩니다.</div>` : ''}
+  `;
+
+  /* --- 고정비 --- */
+  const fixedBody = document.getElementById('now-fixed-body');
+  fixedBody.innerHTML = `
+    <div class="now-kv"><span>결제 완료 ${fixedRows.length - fixedPending.length}건</span><b>${formatWon(fixedPaidSum)}</b></div>
+    <div class="now-kv"><span>미결제 ${fixedPending.length}건 (예상)</span><b style="color:${fixedPending.length ? 'var(--red)' : 'var(--green)'}">${formatWon(fixedPendingSum)}</b></div>
+    <div style="max-height:220px;overflow-y:auto;margin-top:10px;">
+      ${fixedRows.length ? fixedRows.map(f => `
+        <div class="acct-row">
+          <span style="width:16px;flex-shrink:0;">${f.paid !== null ? '✅' : '⬜'}</span>
+          <span class="acct-name" style="${f.paid === null ? 'color:var(--text-dim)' : ''}">${f.item}${f.vendor ? `<div class="acct-cat">${f.vendor}</div>` : ''}</span>
+          <span class="acct-amt" style="${f.paid === null ? 'color:var(--text-faint)' : ''}">${formatWon(f.paid !== null ? f.paid : f.expected)}</span>
+        </div>`).join('') : '<div class="empty-state">고정비로 표시된 항목이 없어요.</div>'}
+    </div>
+  `;
+
+  /* --- 이체 --- */
+  const trBody = document.getElementById('now-transfer-body');
+  trBody.innerHTML = `
+    <div class="now-kv"><span>합계</span><b style="color:var(--gold-soft)">${formatWon(transferTotal)}</b></div>
+    <div style="margin-top:8px;">
+      ${transferRows.length ? transferRows.map(t => `
+        <div class="acct-row">
+          <span class="acct-name">${t.name}<div class="acct-cat">${Object.keys(t.detail).join(' · ')}</div></span>
+          <span class="acct-amt">${formatWon(t.total)}</span>
+        </div>`).join('') : '<div class="empty-state">이 기간 이체 내역이 없어요.</div>'}
+    </div>
+  `;
+
+  /* --- 카테고리 --- */
+  const catBody = document.getElementById('now-cat-body');
+  const catMax = Math.max(...catRows.map(r => Math.max(r.cur, r.prev)), 1);
+  const showCatDelta = !week;
+  catBody.innerHTML = (catRows.length ? catRows.map(r => {
+    const diff = r.cur - r.prev;
+    let deltaHtml = '';
+    if (showCatDelta) {
+      const txt = r.prev === 0 ? '신규' : diff === 0 ? '동일' : `${diff > 0 ? '+' : '−'}${wonComma(diff)}`;
+      const col = r.prev === 0 ? 'var(--text-faint)' : diff > 0 ? 'var(--red)' : diff < 0 ? 'var(--green)' : 'var(--text-faint)';
+      deltaHtml = ` · <span style="color:${col}">${cmpNote} ${txt}</span>`;
+    }
+    return `<div class="budget-row-compact">
+      <span class="b-name" title="${r.name}">${r.name}</span>
+      <div class="b-bar-track"><div class="b-bar-fill ${showCatDelta && diff > 0 && r.prev > 0 ? 'over' : ''}" style="width:${(r.cur / catMax) * 100}%"></div></div>
+      <span class="b-figures">${wonComma(r.cur)}원 · ${r.pct.toFixed(0)}%${deltaHtml}</span>
+    </div>`;
+  }).join('') : '<div class="empty-state">이 기간 지출 내역이 없어요.</div>')
+  + (showCatDelta ? `<div class="settings-note">비교 기준: ${isThisMonth ? `전월 같은 기간(${cmpRange})까지의 누적 지출` : `${cmpRange} 전체 지출`}</div>` : '');
+
+  /* --- TOP 지출 --- */
+  document.getElementById('now-top-body').innerHTML = `
+    <div class="table-scroll" style="max-height:320px;">
+      <table class="data-table">
+        <thead><tr><th>날짜</th><th>항목</th><th>사용처</th><th style="text-align:right">금액</th></tr></thead>
+        <tbody>${topExpenses.length ? topExpenses.map(r => `<tr><td>${r.date}</td><td>${r.item}</td><td>${r.vendor || ''}</td><td class="amt expense">${formatWon(r.amount)}</td></tr>`).join('')
+          : '<tr><td colspan="4" style="text-align:center;color:var(--text-faint);padding:20px;">지출 내역이 없어요.</td></tr>'}</tbody>
+      </table>
+    </div>
+  `;
+
+  /* --- 주차 칩 --- */
+  const chips = document.getElementById('now-week-chips');
+  chips.innerHTML = `
+    <div class="now-chip-row">
+      <button class="now-chip ${state.nowWeekIdx === null ? 'active' : ''}" data-w="all">전체 월</button>
+      ${M.weeks.map(w => `<button class="now-chip ${state.nowWeekIdx === w.idx ? 'active' : ''} ${isThisMonth && w.from > elapsed ? 'future' : ''}" data-w="${w.idx}">
+        ${w.label} <em>${w.range}</em><span>${formatCompactWon(w.expense)}</span>
+      </button>`).join('')}
+    </div>
+    <div class="settings-note">주차를 누르면 아래 카테고리 · TOP 지출 · 내역이 그 주 기준으로 바뀝니다.</div>
+  `;
+  chips.querySelector('.now-chip-row').addEventListener('click', (e) => {
+    const btn = e.target.closest('.now-chip');
+    if (!btn) return;
+    state.nowWeekIdx = btn.dataset.w === 'all' ? null : parseInt(btn.dataset.w, 10);
+    renderPage();
+  });
+
+  /* --- 내역 테이블 --- */
+  renderAdvancedTable('now-ledger-table', scopeRows, {
+    defaultSort: 'date-desc',
+    groupOptions: [['none', '그룹 없음'], ['category', '카테고리별']],
+    pageSize: 30
+  });
+
+  /* --- 차트 --- */
+  const drawNowFlow = () => {
+    if (state.charts.nowFlow) state.charts.nowFlow.destroy();
+    const byWeek = state.nowGranularity === 'week';
+    const buckets = byWeek ? M.weeks : M.daily;
+    const labels = byWeek ? buckets.map(w => [w.label, w.range]) : buckets.map(b => `${b.day}`);
+    let run = 0;
+    const cum = buckets.map(b => (run += b.expense));
+    state.charts.nowFlow = new Chart(document.getElementById('chart-now-flow'), {
+      data: {
+        labels,
+        datasets: [
+          { type: 'bar', label: '수입', data: buckets.map(b => b.income), backgroundColor: 'rgba(76,140,107,0.75)', borderRadius: 3, order: 2 },
+          { type: 'bar', label: '지출', data: buckets.map(b => b.expense), backgroundColor: 'rgba(193,72,63,0.75)', borderRadius: 3, order: 2 },
+          { type: 'line', label: '누적 지출', data: cum, borderColor: '#c9a227', backgroundColor: 'rgba(201,162,39,0.1)', borderWidth: 2, pointRadius: 0, tension: 0.25, yAxisID: 'y1', order: 1 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, layout: { padding: { top: 14 } },
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: (c) => ` ${c.dataset.label}: ${formatWon(c.raw)}` } }
+        },
+        scales: {
+          x: { ticks: { ...MONO_TICK, autoSkip: !byWeek, maxRotation: 0 }, grid: { display: false } },
+          y: { ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT },
+          y1: { position: 'right', ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: { display: false } }
+        }
+      }
+    });
+  };
+  document.getElementById('now-granularity').addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    state.nowGranularity = btn.dataset.g;
+    document.querySelectorAll('#now-granularity button').forEach(b => b.classList.toggle('active', b === btn));
+    drawNowFlow();
+  });
+  drawNowFlow();
+
+  /* --- 월 이동 --- */
+  const setMonth = (k) => { state.nowMonthKey = k; state.nowWeekIdx = null; renderPage(); };
+  document.getElementById('now-month-select').addEventListener('change', (e) => setMonth(e.target.value));
+  document.getElementById('now-prev').addEventListener('click', () => {
+    const i = availableKeys.indexOf(monthKey);
+    if (i > 0) setMonth(availableKeys[i - 1]);
+  });
+  document.getElementById('now-next').addEventListener('click', () => {
+    const i = availableKeys.indexOf(monthKey);
+    if (i < availableKeys.length - 1) setMonth(availableKeys[i + 1]);
+  });
+  document.getElementById('now-thismonth').addEventListener('click', () => {
+    const t = thisMonthKey();
+    setMonth(availableKeys.includes(t) ? t : availableKeys[availableKeys.length - 1]);
+  });
 }
 
 /* ---------------- page: 자산 ---------------- */
