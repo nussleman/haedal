@@ -728,6 +728,7 @@ const state = {
   expenseTrendMode: 'total',
   expenseAvgExpenseRange: 12,
   expenseAvgFixedRange: 12,
+  fixedMonthKey: null,
   vendorRange: 12,
   invRange: 12,
   invContribRange: 12,
@@ -761,11 +762,14 @@ function parseWon(s) {
   s = String(s).trim();
   if (s === '' || s === '-' || s === '₩ -' || s === '₩-') return 0;
   if (!/[\d]/.test(s)) return null;
-  const neg = s.includes('(');
-  const digits = s.replace(/[^\d]/g, '');
-  if (digits === '') return null;
-  const v = parseInt(digits, 10);
-  return neg ? -v : v;
+  const neg = s.includes('(') || /^-/.test(s.replace(/[₩\s]/g, ''));
+  /* 통화기호·공백·천단위 콤마만 제거하고 소수점은 남긴다.
+     예전에는 [^\d]를 전부 제거해서 "17857.14286"이 1,785,714,286원이 됐다. */
+  const cleaned = s.replace(/[^\d.]/g, '');
+  if (cleaned === '' || cleaned === '.') return null;
+  const v = parseFloat(cleaned);
+  if (isNaN(v)) return null;
+  return Math.round(neg ? -v : v);
 }
 
 function formatWon(n) {
@@ -972,18 +976,48 @@ function renderGoalProgressLine(p) {
   `;
 }
 
+/* 시트의 불리언 열은 "TRUE"/"FALSE" 문자열로 export된다.
+   !!"FALSE" === true 이므로 반드시 값으로 판정해야 한다. */
+function isTruthyFlag(v) {
+  return /^(true|1|y|yes|참|o|on|v|✓)$/i.test(String(v === null || v === undefined ? '' : v).trim());
+}
+
 function parseLedgerFromRows(rows) {
-  let r0 = -1, c0 = -1;
+  let r0 = -1, c0 = -1, header = null;
   for (let r = 0; r < rows.length; r++) {
-    const row = rows[r];
+    const row = rows[r] || [];
     for (let c = 0; c < row.length - 3; c++) {
-      if (row[c] === '날짜' && row[c + 1] === '대분류' && row[c + 2] === '소분류' && row[c + 3] === '항목') {
-        r0 = r; c0 = c; break;
+      if ((row[c] || '').trim() === '날짜' && (row[c + 1] || '').trim() === '대분류'
+        && (row[c + 2] || '').trim() === '소분류' && (row[c + 3] || '').trim() === '항목') {
+        r0 = r; c0 = c; header = row; break;
       }
     }
     if (r0 !== -1) break;
   }
   if (r0 === -1) return [];
+
+  /* 열 위치를 고정 오프셋이 아니라 헤더 이름으로 찾는다.
+     (기존에는 고정비를 c0+9에서 읽었는데 시트에 '후회하는 소비'·'회사 환급' 열이
+      추가되면서 실제 고정비는 c0+10으로 밀려 있었고, 그 결과 고정비가 항상 false였다.) */
+  const norm = (s) => String(s || '').replace(/\s+/g, '').trim();
+  const findCol = (matchers, fallback) => {
+    for (const m of matchers) {
+      for (let c = c0; c < header.length; c++) {
+        const h = norm(header[c]);
+        if (!h) continue;
+        if (typeof m === 'string' ? h === m : m.test(h)) return c;
+      }
+    }
+    return fallback;
+  };
+  const COL = {
+    amount: findCol(['금액'], c0 + 5),
+    vendor: findCol([/^사용처/, /브랜드/], c0 + 6),
+    memo: findCol(['내용', '메모'], c0 + 7),
+    reclass: findCol(['재분류', '후회하는소비'], c0 + 8),
+    refund: findCol([/^회사환급/], -1),
+    fixed: findCol([/^고정비/], -1)
+  };
 
   const dateRe = /^\d{4}\.\s*\d{1,2}\.\s*\d{1,2}$/;
   const ledger = [];
@@ -1000,13 +1034,14 @@ function parseLedgerFromRows(rows) {
     const major = cleanLabel(row[c0 + 1] || '');
     const minor = cleanLabel(row[c0 + 2] || '');
     const item = (row[c0 + 3] || '').trim();
-    const amount = parseWon(row[c0 + 5]);
-    const vendor = cleanLabel(row[c0 + 6] || '');
-    const memo = (row[c0 + 7] || '').trim();
-    const reclass = (row[c0 + 8] || '').trim();
-    const fixed = !!(row[c0 + 9] || '').trim();
+    const amount = parseWon(row[COL.amount]);
+    const vendor = cleanLabel(row[COL.vendor] || '');
+    const memo = (row[COL.memo] || '').trim();
+    const reclass = (row[COL.reclass] || '').trim();
+    const fixed = COL.fixed >= 0 ? isTruthyFlag(row[COL.fixed]) : false;
+    const refund = COL.refund >= 0 ? (parseWon(row[COL.refund]) || 0) : 0;
     if (amount === null || amount === 0) continue;
-    ledger.push({ date: dateCell, major, minor, item, amount, vendor, memo, reclass, fixed });
+    ledger.push({ date: dateCell, major, minor, item, amount, vendor, memo, reclass, fixed, refund });
   }
   return ledger;
 }
@@ -3195,6 +3230,8 @@ function renderExpensePage(container, data, d) {
       <div class="settings-note" id="expense-trend-hint" style="display:none;">막대를 클릭하면 해당 월 고정비 항목을 볼 수 있어요.</div>
       <div id="fixed-breakdown"></div>
     </div>
+    <div class="panel full" id="panel-fixed-detail"></div>
+    <div class="panel full" id="panel-invest-cost"></div>
     <div class="panel full" id="panel-budget-month-section">
       <div class="panel-title">
         <div><span class="eyebrow">BUDGET &amp; TOP 10</span>카테고리별 예산 &amp; 주요 지출</div>
@@ -3214,6 +3251,8 @@ function renderExpensePage(container, data, d) {
   renderWeeklyInsights('panel-expense-insights', 'weekly-insights-expense', '지출 인사이트', () => computeExpenseInsights(data, d), data, ['지출']);
   renderExpenseAvgCard('panel-avg-expense', cf, '평균 월 지출', 'expenseAvgExpenseRange');
   renderExpenseAvgCard('panel-avg-fixed', fixedSeries, '평균 월 고정비', 'expenseAvgFixedRange');
+  renderFixedDetailSection(data, cf, fixedSeries);
+  renderInvestCostPanel('panel-invest-cost', data.ledger, cf);
 
   const drawExpenseTrend = () => {
     const mode = hasFixed ? state.expenseTrendMode : 'total';
@@ -3436,6 +3475,332 @@ function renderFixedBreakdown(ledger, monthKey, monthLabel) {
       <span class="acct-name">${r.item}${r.vendor ? `<div class="acct-cat">${r.vendor}</div>` : ''}</span>
       <span class="acct-amt">${formatWon(r.amount)}</span>
     </div>`).join('') || '<div class="empty-state">해당 월 고정비 내역이 없어요.</div>'}
+  `;
+}
+
+/* 고정비를 "항목 단위"로 추적한다.
+   같은 사용처가 매달 반복 결제되는 것을 하나의 계약으로 보고,
+   직전 3개월 평균 대비 이번 달 금액이 어떻게 달라졌는지로 상태를 판정한다. */
+function analyzeFixedCosts(ledger, monthKey) {
+  const fixedRows = ledger.filter(r => r.fixed && r.major.includes('지출'));
+  const prevKeys = [1, 2, 3].map(i => shiftMonthKey(monthKey, -i));
+  const groups = {};
+  fixedRows.forEach(r => {
+    const mk = ledgerMonthKey(r.date);
+    if (!mk) return;
+    const name = r.vendor || r.item || '기타';
+    if (!groups[name]) groups[name] = { name, item: r.item, minor: r.minor, byMonth: {}, lastMonth: '' };
+    const g = groups[name];
+    g.byMonth[mk] = (g.byMonth[mk] || 0) + r.amount;
+    if (mk >= g.lastMonth) { g.lastMonth = mk; g.item = r.item; g.minor = r.minor; }
+  });
+
+  const last12Keys = Array.from({ length: 12 }, (_, i) => shiftMonthKey(monthKey, -i));
+  const items = Object.values(groups).map(g => {
+    const cur = g.byMonth[monthKey] || 0;
+    const prevVals = prevKeys.map(k => g.byMonth[k]).filter(v => v !== undefined);
+    const avg3 = prevVals.length ? prevVals.reduce((a, b) => a + b, 0) / prevVals.length : 0;
+    /* 연 1회 결제되는 구독을 월 구독처럼 12배 하면 안 되므로,
+       연환산은 추정이 아니라 "최근 12개월 실제 합계"를 쓴다. */
+    const last12 = last12Keys.reduce((s, k) => s + (g.byMonth[k] || 0), 0);
+    const hits12 = last12Keys.filter(k => g.byMonth[k] !== undefined).length;
+    const monthly = hits12 >= 2 && prevVals.length >= 2;   // 매달 반복되는 계약인가
+
+    let status = '유지', tone = 'muted';
+    if (cur > 0 && prevVals.length === 0) { status = '신규'; tone = 'gold'; }
+    else if (!monthly) { status = cur > 0 ? '비정기' : '연/비정기'; tone = 'muted'; }
+    else if (cur === 0) { status = '미결제'; tone = 'red'; }
+    else if (avg3 > 0 && cur > avg3 * 1.05) { status = '인상'; tone = 'red'; }
+    else if (avg3 > 0 && cur < avg3 * 0.95) { status = '인하'; tone = 'green'; }
+
+    const expected = cur > 0 ? cur : (monthly ? avg3 : 0);
+    return {
+      name: g.name, item: g.item, minor: g.minor, cur, avg3, last12, hits12, monthly,
+      diff: avg3 > 0 && cur > 0 ? cur - avg3 : null,
+      status, tone, expected
+    };
+  }).filter(x => x.cur > 0 || x.last12 > 0).sort((a, b) => b.last12 - a.last12);
+
+  const paidTotal = items.reduce((a, x) => a + x.cur, 0);
+  const missingTotal = items.filter(x => x.status === '미결제').reduce((a, x) => a + x.expected, 0);
+  const runRate = items.filter(x => x.monthly).reduce((a, x) => a + x.expected, 0);
+  const annual = items.reduce((a, x) => a + x.last12, 0);
+  return { items, paidTotal, missingTotal, runRate, annual };
+}
+
+const FIXED_TONE_COLOR = { red: 'var(--red)', green: 'var(--green)', gold: 'var(--gold-soft)', muted: 'var(--text-faint)' };
+
+function renderFixedDetailSection(data, cf, fixedSeries) {
+  const host = document.getElementById('panel-fixed-detail');
+  if (!host) return;
+  const expenseMonthKeys = Array.from(new Set(
+    data.ledger.filter(r => r.major.includes('지출')).map(r => ledgerMonthKey(r.date)).filter(Boolean)
+  )).sort();
+  if (!expenseMonthKeys.length) { host.innerHTML = ''; return; }
+  if (!state.fixedMonthKey || !expenseMonthKeys.includes(state.fixedMonthKey)) {
+    state.fixedMonthKey = expenseMonthKeys[expenseMonthKeys.length - 1];
+  }
+
+  const draw = () => {
+    const monthKey = state.fixedMonthKey;
+    const a = analyzeFixedCosts(data.ledger, monthKey);
+    const totalExpense = data.ledger
+      .filter(r => r.major.includes('지출') && ledgerMonthKey(r.date) === monthKey)
+      .reduce((s, r) => s + r.amount, 0);
+    const share = totalExpense ? (a.paidTotal / totalExpense) * 100 : 0;
+    const recent12 = sliceByRange(fixedSeries, 12).map(s => s.expense).filter(v => v > 0);
+    const avg12 = avgOf(recent12);
+    const vsAvg = avg12 ? ((a.paidTotal - avg12) / avg12) * 100 : 0;
+    const options = expenseMonthKeys.slice().reverse()
+      .map(k => `<option value="${k}" ${k === monthKey ? 'selected' : ''}>${monthKeyLabel(k)}</option>`).join('');
+
+    host.innerHTML = `
+      <div class="panel-title">
+        <div><span class="eyebrow">FIXED COSTS</span>고정비 정밀 분석</div>
+        <select id="fixed-month-select" class="month-nav-select-standalone">${options}</select>
+      </div>
+      <div class="stat-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:16px;">
+        <div class="stat-card">
+          <div class="label">이번 달 결제된 고정비</div>
+          <div class="value">${formatCompactWon(a.paidTotal)}원</div>
+          <div class="sub ${vsAvg > 0 ? 'down' : 'up'}">12개월 평균 대비 ${vsAvg >= 0 ? '+' : ''}${vsAvg.toFixed(1)}%</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">총지출 대비 비중</div>
+          <div class="value">${share.toFixed(1)}%</div>
+          <div class="sub">총지출 ${formatCompactWon(totalExpense)}원</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">아직 안 나간 고정비</div>
+          <div class="value" style="color:${a.missingTotal > 0 ? 'var(--red)' : 'var(--green)'}">${formatCompactWon(a.missingTotal)}원</div>
+          <div class="sub">${a.items.filter(x => x.status === '미결제').length}건 미결제</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">최근 12개월 고정비</div>
+          <div class="value">${formatCompactWon(a.annual)}원</div>
+          <div class="sub">매달 반복분 월 ${formatCompactWon(a.runRate)}원</div>
+        </div>
+      </div>
+      <div class="chart-wrap"><canvas id="chart-fixed-stack"></canvas></div>
+      <div class="settings-note" style="margin:10px 0 6px;">고정비(금색) vs 변동비(붉은색). 고정비는 줄이기 어렵지만 한 번 줄이면 매달 효과가 납니다.</div>
+      <div class="table-scroll" style="margin-top:14px;">
+        <table class="data-table">
+          <thead><tr>
+            <th>항목</th><th>분류</th><th style="text-align:right">이번 달</th>
+            <th style="text-align:right">직전 3개월 평균</th><th style="text-align:right">차이</th>
+            <th style="text-align:right">최근 12개월</th><th style="text-align:center">주기</th><th>상태</th>
+          </tr></thead>
+          <tbody>
+            ${a.items.map(x => `<tr>
+              <td>${x.name}</td>
+              <td style="color:var(--text-faint)">${x.minor || ''} · ${x.item || ''}</td>
+              <td class="amt">${x.cur ? formatWon(x.cur) : '—'}</td>
+              <td class="amt">${x.avg3 ? formatWon(Math.round(x.avg3)) : '—'}</td>
+              <td class="amt" style="color:${x.diff === null ? 'var(--text-faint)' : (x.diff > 0 ? 'var(--red)' : (x.diff < 0 ? 'var(--green)' : 'var(--text-faint)'))}">${x.diff === null ? '—' : (x.diff > 0 ? '+' : '') + formatWon(Math.round(x.diff))}</td>
+              <td class="amt">${formatCompactWon(x.last12)}원</td>
+              <td class="amt" style="text-align:center;color:var(--text-faint)">${x.hits12}/12</td>
+              <td style="color:${FIXED_TONE_COLOR[x.tone]}">${x.status}</td>
+            </tr>`).join('') || '<tr><td colspan="8"><div class="empty-state">고정비로 표시된 항목이 없어요. 가계부(D) 시트의 <b>고정비</b> 열을 TRUE로 채워주세요.</div></td></tr>'}
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    if (state.charts.fixedStack) state.charts.fixedStack.destroy();
+    const stackSlice = sliceByRange(cf, 12);
+    const fixedMap = {};
+    fixedSeries.forEach(s => { fixedMap[s.month] = s.expense; });
+    state.charts.fixedStack = new Chart(document.getElementById('chart-fixed-stack'), {
+      type: 'bar',
+      data: {
+        labels: stackSlice.map(s => pivotMonthLabel(s.month)),
+        datasets: [
+          { label: '고정비', data: stackSlice.map(s => fixedMap[s.month] || 0), backgroundColor: 'rgba(201,162,39,0.8)', borderRadius: 3 },
+          { label: '변동비', data: stackSlice.map(s => Math.max(0, s.expense - (fixedMap[s.month] || 0))), backgroundColor: 'rgba(193,72,63,0.55)', borderRadius: 3 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: true, labels: { boxWidth: 10, font: { size: 11 } } },
+          tooltip: { callbacks: { label: (c) => ` ${c.dataset.label}: ${formatWon(c.raw)}` } }
+        },
+        scales: {
+          x: { stacked: true, ticks: MONO_TICK, grid: { display: false } },
+          y: { stacked: true, ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT }
+        }
+      }
+    });
+
+    const sel = document.getElementById('fixed-month-select');
+    if (sel) sel.addEventListener('change', (e) => { state.fixedMonthKey = e.target.value; draw(); });
+  };
+  draw();
+}
+
+/* ---------------- 해외주식 양도소득세 ---------------- */
+/* 실현손익(판매수익)은 '수입'으로, 그에 대한 양도소득세는 이듬해 5월에 '지출'로 잡힌다.
+   두 흐름이 서로 다른 해에 서로 다른 대분류로 흩어져 있어서,
+   여기서 과세연도 기준으로 다시 붙여준다. */
+const CGT_DEDUCTION = 2500000;   // 기본공제 250만원
+const CGT_RATE = 0.22;           // 양도소득세 20% + 지방소득세 2%
+const CGT_RE = /양도소득세|양도세/;
+
+function analyzeCapitalGainsTax(ledger) {
+  const gain = {}, div = {}, paid = {}, paidRows = [];
+  ledger.forEach(r => {
+    const mk = ledgerMonthKey(r.date);
+    if (!mk) return;
+    const y = mk.slice(0, 4);
+    if (r.major.includes('수입') && (r.minor || '').includes('투자 수익')) {
+      if ((r.item || '').includes('판매수익')) gain[y] = (gain[y] || 0) + r.amount;
+      else if ((r.item || '').includes('배당')) div[y] = (div[y] || 0) + r.amount;
+    }
+    if (r.major.includes('지출') && CGT_RE.test(`${r.item} ${r.memo} ${r.vendor}`)) {
+      paid[y] = (paid[y] || 0) + r.amount;
+      paidRows.push({ date: r.date, monthKey: mk, amount: r.amount, label: r.memo || r.item });
+    }
+  });
+
+  const years = Array.from(new Set(Object.keys(gain).concat(Object.keys(paid)))).sort();
+  const rows = years.filter(y => (gain[y] || 0) !== 0).map(y => {
+    const g = gain[y] || 0;
+    const est = Math.max(0, g - CGT_DEDUCTION) * CGT_RATE;
+    const payYear = String(Number(y) + 1);
+    const actual = paid[payYear] || 0;
+    const settled = actual > 0;
+    const burden = settled ? actual : est;
+    return {
+      year: y, payYear, gain: g, dividend: div[y] || 0,
+      est, actual, settled, burden, net: g - burden,
+      rate: g > 0 ? (burden / g) * 100 : 0
+    };
+  });
+  const totalPaid = Object.values(paid).reduce((a, b) => a + b, 0);
+  const totalGain = Object.values(gain).reduce((a, b) => a + b, 0);
+  return { rows, paid, paidRows, totalPaid, totalGain };
+}
+
+function renderCapitalGainsPanel(hostId, ledger) {
+  const host = document.getElementById(hostId);
+  if (!host) return;
+  const t = analyzeCapitalGainsTax(ledger);
+  if (!t.rows.length) { host.innerHTML = ''; return; }
+
+  const pending = t.rows.filter(r => !r.settled);
+  const upcoming = pending.length ? pending[pending.length - 1] : null;
+  const settledRows = t.rows.filter(r => r.settled);
+  const accuracy = settledRows.length
+    ? avgOf(settledRows.map(r => (r.est > 0 ? (r.actual / r.est) * 100 : 100)))
+    : null;
+
+  host.innerHTML = `
+    <div class="panel-title"><div><span class="eyebrow">TAX</span>양도소득세 · 세후 실현수익</div></div>
+    <div class="stat-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-bottom:16px;">
+      <div class="stat-card">
+        <div class="label">지금까지 낸 양도세</div>
+        <div class="value" style="color:var(--red)">${formatCompactWon(t.totalPaid)}원</div>
+        <div class="sub">누적 실현손익 ${formatCompactWon(t.totalGain)}원</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">${upcoming ? `${upcoming.payYear}년 5월 예상 납부액` : '미납 예정 세액'}</div>
+        <div class="value" style="color:var(--gold-soft)">${upcoming ? formatCompactWon(Math.round(upcoming.est)) + '원' : '없음'}</div>
+        <div class="sub">${upcoming ? `${upcoming.year}년 실현손익 ${formatCompactWon(upcoming.gain)}원 기준` : '모두 정산 완료'}</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">누적 세후 실현수익</div>
+        <div class="value" style="color:var(--green)">${formatCompactWon(t.rows.reduce((a, r) => a + r.net, 0))}원</div>
+        <div class="sub">배당 제외, 판매수익 기준</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">추정 정확도</div>
+        <div class="value">${accuracy === null ? '—' : accuracy.toFixed(0) + '%'}</div>
+        <div class="sub">실제 납부 ÷ 22% 추정</div>
+      </div>
+    </div>
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead><tr>
+          <th>과세연도</th><th style="text-align:right">실현손익</th><th style="text-align:right">과세표준</th>
+          <th style="text-align:right">추정 세액</th><th style="text-align:right">실제 납부</th>
+          <th style="text-align:right">세후 실현수익</th><th style="text-align:right">실효세율</th><th>상태</th>
+        </tr></thead>
+        <tbody>
+          ${t.rows.slice().reverse().map(r => `<tr>
+            <td>${r.year}년</td>
+            <td class="amt income">${formatWon(r.gain)}</td>
+            <td class="amt">${formatWon(Math.max(0, r.gain - CGT_DEDUCTION))}</td>
+            <td class="amt">${formatWon(Math.round(r.est))}</td>
+            <td class="amt expense">${r.settled ? formatWon(r.actual) : '—'}</td>
+            <td class="amt" style="color:var(--green)">${formatWon(Math.round(r.net))}</td>
+            <td class="amt">${r.rate.toFixed(1)}%</td>
+            <td style="color:${r.settled ? 'var(--text-faint)' : 'var(--gold-soft)'}">${r.settled ? `${r.payYear}.05 납부` : `${r.payYear}.05 예정`}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+    <div class="settings-note" style="margin-top:12px;">
+      추정 세액 = (실현손익 − 기본공제 250만원) × 22%. 국내 상장주식은 대주주가 아니면 비과세이므로
+      <b>실제 세액은 추정보다 낮게 나옵니다</b> — 위 표의 추정치는 상한선으로 보세요.
+      양도세는 가계부에서 <b>지출 › 기타 › 그 외 지출</b>로 잡히지만 성격상 생활비가 아니라
+      <b>투자 비용</b>입니다. 지출 탭에서도 이 금액은 따로 분리해 표시합니다.
+    </div>
+  `;
+}
+
+/* 지출 탭에서 "생활비"와 "투자 비용(양도세)"을 분리해서 보여준다.
+   양도세가 잡힌 달은 지출이 튀어 보이는데, 그건 소비를 못 참아서가 아니라
+   투자가 잘 됐다는 뜻이므로 예산 평가에서 빼고 봐야 한다. */
+function renderInvestCostPanel(hostId, ledger, cf) {
+  const host = document.getElementById(hostId);
+  if (!host) return;
+  const expenseRows = ledger.filter(r => r.major.includes('지출'));
+  const byYear = {};
+  const taxMonths = {};
+  expenseRows.forEach(r => {
+    const mk = ledgerMonthKey(r.date);
+    if (!mk) return;
+    const y = mk.slice(0, 4);
+    if (!byYear[y]) byYear[y] = { total: 0, tax: 0 };
+    byYear[y].total += r.amount;
+    if (CGT_RE.test(`${r.item} ${r.memo} ${r.vendor}`)) {
+      byYear[y].tax += r.amount;
+      taxMonths[mk] = (taxMonths[mk] || 0) + r.amount;
+    }
+  });
+  const years = Object.keys(byYear).filter(y => byYear[y].tax > 0).sort();
+  if (!years.length) { host.innerHTML = ''; return; }
+
+  const monthList = Object.keys(taxMonths).sort().reverse();
+  host.innerHTML = `
+    <div class="panel-title"><div><span class="eyebrow">NOT CONSUMPTION</span>소비가 아닌 지출 · 양도소득세</div></div>
+    <div class="table-scroll" style="max-height:none;">
+      <table class="data-table">
+        <thead><tr>
+          <th>연도</th><th style="text-align:right">총지출</th>
+          <th style="text-align:right">양도소득세</th><th style="text-align:right">순수 소비지출</th>
+          <th style="text-align:right">월평균 소비지출</th>
+        </tr></thead>
+        <tbody>
+          ${years.slice().reverse().map(y => {
+            const v = byYear[y];
+            const months = new Set(expenseRows.map(r => ledgerMonthKey(r.date)).filter(k => k && k.slice(0, 4) === y)).size || 1;
+            return `<tr>
+              <td>${y}년</td>
+              <td class="amt">${formatWon(v.total)}</td>
+              <td class="amt expense">${formatWon(v.tax)}</td>
+              <td class="amt">${formatWon(v.total - v.tax)}</td>
+              <td class="amt">${formatWon(Math.round((v.total - v.tax) / months))}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+    <div class="settings-note" style="margin-top:12px;">
+      양도세가 빠져나간 달: ${monthList.map(k => `<b>${monthKeyLabel(k)}</b> ${formatCompactWon(taxMonths[k])}원`).join(' · ')}.
+      이 달들의 지출 급증은 소비 실패가 아니라 <b>실현이익에 대한 정산</b>입니다.
+      예산 대비 평가나 월간 리뷰를 볼 때는 이 금액을 빼고 판단하세요. 세부 계산은 <b>투자 탭</b>에 있습니다.
+    </div>
   `;
 }
 
@@ -3667,6 +4032,7 @@ function renderInvestmentPage(container, data, d) {
         <div id="stock-profit-list"></div>
       </div>
     </div>
+    <div class="panel full" id="panel-cgt"></div>
     <div class="panel full">
       <div class="panel-title"><div><span class="eyebrow">RECORDS</span>투자 관련 내역</div></div>
       <div id="investment-table"></div>
@@ -3674,6 +4040,7 @@ function renderInvestmentPage(container, data, d) {
   `;
 
   renderWeeklyInsights('panel-investment-insights', 'weekly-insights-investment', '투자 인사이트', () => computeInvestmentInsights(data, d, cumSeries, tagAgg), data, ['투자']);
+  renderCapitalGainsPanel('panel-cgt', data.ledger);
 
   const drawCum = () => {
     const period = state.invCumPeriod || 'month';
