@@ -916,9 +916,7 @@ body{font-variant-numeric:tabular-nums;}
 #asset-stats .stat-grid{flex:1;width:100%;}
 @media (max-width:1240px){
   .g>.s2,.g>.s3{grid-column:span 4}
-  .g>.s5{grid-column:span 6}
-  .g>.s7{grid-column:span 6}
-  .g>.s8{grid-column:span 6}
+  .g>.s4,.g>.s5,.g>.s7,.g>.s8{grid-column:span 6}
 }
 @media (max-width:900px){
   .g>.s2,.g>.s3,.g>.s4,.g>.s5,.g>.s6,.g>.s7,.g>.s8,.g>.s9{grid-column:1 / -1}
@@ -1053,6 +1051,24 @@ body{font-variant-numeric:tabular-nums;}
 .mininote>summary::-webkit-details-marker{display:none;}
 .mininote>summary::before{content:'ⓘ ';}
 .mininote>summary:hover{color:var(--text-dim);}
+
+/* ---------- 세부 탭 ---------- */
+.subnav{display:flex;gap:4px;flex-wrap:wrap;}
+.subnav button{
+  font-family:var(--sans);font-weight:500;font-size:12.5px;
+  background:var(--panel);border:1px solid var(--border);color:var(--text-dim);
+  padding:7px 15px;border-radius:8px;cursor:pointer;transition:all .15s;
+}
+.subnav button:hover{color:var(--text);border-color:var(--border-strong);}
+.subnav button.active{background:var(--gold);border-color:var(--gold);color:#1a1508;font-weight:700;}
+
+/* 홈에 편입된 구조 섹션 */
+#home-structure{display:flex;flex-direction:column;gap:var(--gap);}
+#home-structure:empty{display:none;}
+
+/* 캘린더 우측 내역 패널 */
+#panel-cal-day .stat-grid{grid-template-columns:1fr 1fr;}
+#panel-cal-day .table-scroll{overflow-y:auto;}
 </style>
 </head>
 <body>
@@ -2141,7 +2157,6 @@ function setSyncState(status) {
 
 const NAV_ITEMS = [
   { id: 'home', label: '홈' },
-  { id: 'structure', label: '구조' },
   { id: 'today', label: '오늘' },
   { id: 'calendar', label: '캘린더' },
   { id: 'now', label: '이번달' },
@@ -2232,8 +2247,7 @@ function renderPage() {
   const d = computeDerived(data);
   destroyPageCharts();
   const container = document.getElementById('page-content');
-  if (state.page === 'structure') renderStructurePage(container, data, d);
-  else if (state.page === 'today') renderTodayPage(container, data, d);
+  if (state.page === 'today') renderTodayPage(container, data, d);
   else if (state.page === 'calendar') renderCalendarPage(container, data, d);
   else if (state.page === 'now') renderNowPage(container, data, d);
   else if (state.page === 'assets') renderAssetsPage(container, data, d);
@@ -2259,10 +2273,12 @@ function renderHomePage(container, data, d) {
       <div class="panel s5" id="panel-priority-insights"></div>
       <div class="panel s7" id="panel-goal-cards"></div>
     </div>
+    <div id="home-structure"></div>
   `;
   renderHomeStatus(data, d);
   renderGoalCards(data, d);
   renderPriorityInsights(data, d);
+  renderStructurePage(document.getElementById('home-structure'), data, d);
 }
 
 /* ---------------- 홈: 현 상태 요약 ---------------- */
@@ -3125,13 +3141,13 @@ function renderNowPage(container, data, d) {
         <div id="now-transfer-body"></div>
       </div>
       <div class="panel s3">
-        <div class="panel-title"><div>카테고리별 지출</div></div>
-        <div id="now-cat-body"></div>
+        <div class="panel-title"><div>요일별 평균 지출</div></div>
+        <div id="now-dow-body"></div>
       </div>
     </div>
 
     <div class="g">
-      <div class="panel s8">
+      <div class="panel s6">
         <div class="panel-title">
           <div>${monthKeyLabel(monthKey)} 흐름</div>
           <div class="range-toggle" id="now-granularity">
@@ -3147,7 +3163,18 @@ function renderNowPage(container, data, d) {
         </div>
         <div id="now-week-chips"></div>
       </div>
-      <div class="panel s4">
+      <div class="panel s6">
+        <div class="panel-title"><div>주차별 요약</div></div>
+        <div id="now-week-body"></div>
+      </div>
+    </div>
+
+    <div class="g">
+      <div class="panel s6">
+        <div class="panel-title"><div>카테고리별 지출</div></div>
+        <div id="now-cat-body"></div>
+      </div>
+      <div class="panel s6">
         <div class="panel-title"><div>큰 지출 TOP 8</div></div>
         <div id="now-top-body"></div>
       </div>
@@ -3231,6 +3258,46 @@ function renderNowPage(container, data, d) {
           : '<tr><td colspan="4" style="text-align:center;color:var(--text-faint);padding:20px;">지출 내역이 없어요.</td></tr>'}</tbody>
       </table>
     </div>
+  `;
+
+  /* --- 주차별 요약 --- */
+  const weekMax = Math.max(...M.weeks.map(w => w.expense), 1);
+  document.getElementById('now-week-body').innerHTML = `
+    <div class="table-scroll" style="max-height:none;">
+      <table class="data-table">
+        <thead><tr><th>주차</th><th>기간</th><th style="text-align:right">수입</th><th style="text-align:right">지출</th><th style="text-align:right">순액</th></tr></thead>
+        <tbody>${M.weeks.map(w => `
+          <tr>
+            <td>${w.label}</td>
+            <td style="color:var(--text-faint);">${w.range}</td>
+            <td class="amt income">${w.income ? formatWon(w.income) : '—'}</td>
+            <td class="amt expense">${w.expense ? formatWon(w.expense) : '—'}</td>
+            <td class="amt" style="color:${w.income - w.expense >= 0 ? 'var(--green)' : 'var(--red)'}">${formatWon(w.income - w.expense)}</td>
+          </tr>`).join('')}</tbody>
+      </table>
+    </div>
+    ${M.weeks.length ? `<div class="settings-note">최다 지출 주 · <b style="color:var(--gold-soft)">${M.weeks.reduce((a, b) => b.expense > a.expense ? b : a).label}</b> ${formatWon(weekMax)}</div>` : ''}
+  `;
+
+  /* --- 요일별 평균 지출 --- */
+  const dowAgg = Array.from({ length: 7 }, () => ({ sum: 0, n: 0 }));
+  M.daily.forEach(b => {
+    if (isThisMonth && b.day > elapsed) return;
+    const di = b.dow === 0 ? 6 : b.dow - 1;   // 월=0 … 일=6
+    dowAgg[di].sum += b.expense;
+    dowAgg[di].n += 1;
+  });
+  const dowAvg = dowAgg.map((a, i) => ({ name: ['월', '화', '수', '목', '금', '토', '일'][i], avg: a.n ? a.sum / a.n : 0 }));
+  const dowMax = Math.max(...dowAvg.map(x => x.avg), 1);
+  const dowTop = dowAvg.reduce((a, b) => b.avg > a.avg ? b : a, dowAvg[0]);
+  document.getElementById('now-dow-body').innerHTML = `
+    ${dowAvg.map(x => `
+      <div class="dow-avg-row">
+        <span class="nm">${x.name}</span>
+        <div class="b-bar-track"><div class="b-bar-fill" style="width:${(x.avg / dowMax) * 100}%"></div></div>
+        <span class="fig">${x.avg ? formatWon(Math.round(x.avg)) : '—'}</span>
+      </div>`).join('')}
+    <div class="settings-note">${dowTop && dowTop.avg > 0 ? `최다 · <b style="color:var(--gold-soft)">${dowTop.name}요일</b> 평균 ${formatWon(Math.round(dowTop.avg))}` : '계산할 지출이 없어요.'}</div>
   `;
 
   /* --- 주차 칩 --- */
@@ -3845,18 +3912,6 @@ function renderCalendarPage(container, data, d) {
   const metricOf = (b) => mode === 'income' ? b.income : mode === 'transfer' ? b.transfer : b.expense;
   const maxMetric = Math.max(...M.daily.map(b => Math.abs(metricOf(b))), 1);
 
-  /* 요일별 평균 지출 (미래 날짜 제외) */
-  const dowAgg = Array.from({ length: 7 }, () => ({ sum: 0, n: 0 }));
-  M.daily.forEach(b => {
-    const k = dayKeyFor(b.day);
-    if (k > realToday) return;
-    const idx = b.dow === 0 ? 6 : b.dow - 1;   // 월=0 … 일=6
-    dowAgg[idx].sum += b.expense;
-    dowAgg[idx].n += 1;
-  });
-  const dowAvg = dowAgg.map((a, i) => ({ name: ['월', '화', '수', '목', '금', '토', '일'][i], avg: a.n ? a.sum / a.n : 0 }));
-  const dowMax = Math.max(...dowAvg.map(x => x.avg), 1);
-
   const monthOptions = availableKeys.slice().reverse()
     .map(k => `<option value="${k}" ${k === monthKey ? 'selected' : ''}>${monthKeyLabel(k)}</option>`).join('');
 
@@ -3885,7 +3940,8 @@ function renderCalendarPage(container, data, d) {
   });
 
   container.innerHTML = `
-    <div class="panel full">
+    <div class="g">
+    <div class="panel s8">
       <div class="panel-title">
         <div>${monthKeyLabel(monthKey)}</div>
         <div class="month-nav">
@@ -3931,20 +3987,10 @@ function renderCalendarPage(container, data, d) {
         <span><i style="background:#e08a82"></i>지출</span>
         <span><i style="background:var(--gold-soft)"></i>이체</span>
         <span><i style="background:var(--panel-2);border:1px dashed var(--gold-soft)"></i>오늘</span>
-        <span style="color:var(--text-faint)">진하기 = ${mode === 'income' ? '수입' : mode === 'transfer' ? '이체' : '지출'} 규모 · 날짜 클릭 → 상세</span>
+        <span style="color:var(--text-faint)">진하기 = ${mode === 'income' ? '수입' : mode === 'transfer' ? '이체' : '지출'} 규모 · 날짜 클릭 → 오른쪽 내역</span>
       </div>
     </div>
-
-    <div class="g">
-      <div class="panel s4" id="panel-cal-day"></div>
-      <div class="panel s4">
-        <div class="panel-title"><div>주차별 요약</div></div>
-        <div id="cal-week-body"></div>
-      </div>
-      <div class="panel s4">
-        <div class="panel-title"><div>요일별 평균 지출</div></div>
-        <div id="cal-dow-body"></div>
-      </div>
+    <div class="panel s4" id="panel-cal-day"></div>
     </div>
   `;
 
@@ -3967,19 +4013,18 @@ function renderCalendarPage(container, data, d) {
       <div class="stat-card"><div class="label">이체</div><div class="value" style="color:var(--gold-soft)">${formatWon(selBucket.transfer)}</div></div>
       <div class="stat-card"><div class="label">순액</div><div class="value" style="color:${selBucket.income - selBucket.expense >= 0 ? 'var(--green)' : 'var(--red)'}">${formatWon(selBucket.income - selBucket.expense)}</div></div>
     </div>
-    <div class="table-scroll" style="max-height:340px;">
+    <div class="table-scroll" style="max-height:none;flex:1;">
       <table class="data-table">
-        <thead><tr><th>분류</th><th>소분류</th><th>항목</th><th>사용처 / 메모</th><th style="text-align:right">금액</th></tr></thead>
+        <thead><tr><th style="width:52px">분류</th><th>항목</th><th style="text-align:right;width:88px">금액</th></tr></thead>
         <tbody>${selRows.length ? selRows.map(r => {
           const cls = majorTagClass(r.major);
+          const sub = [r.minor, r.vendor, r.memo].filter(Boolean).join(' · ');
           return `<tr>
             <td><span class="tag-pill ${cls}">${r.major || '-'}</span></td>
-            <td>${r.minor || '-'}</td>
-            <td>${r.item || '-'}</td>
-            <td>${r.vendor || ''}${r.memo ? `<div style="color:var(--text-faint);font-size:11px;">${r.memo}</div>` : ''}</td>
+            <td style="white-space:normal;">${r.item || '-'}${sub ? `<div style="color:var(--text-faint);font-size:10.5px;">${sub}</div>` : ''}</td>
             <td class="amt ${cls}">${formatWon(r.amount)}</td>
           </tr>`;
-        }).join('') : '<tr><td colspan="5" style="text-align:center;color:var(--text-faint);padding:20px;">이 날 기록이 없어요.</td></tr>'}</tbody>
+        }).join('') : '<tr><td colspan="3" style="text-align:center;color:var(--text-faint);padding:20px;">이 날 기록이 없어요.</td></tr>'}</tbody>
       </table>
     </div>
   `;
@@ -4008,37 +4053,6 @@ function renderCalendarPage(container, data, d) {
     state.calSelDay = cell.dataset.k;
     renderPage();
   });
-
-  /* --- 주차별 요약 --- */
-  const weekMax = Math.max(...M.weeks.map(w => w.expense), 1);
-  document.getElementById('cal-week-body').innerHTML = `
-    <div class="table-scroll">
-      <table class="data-table">
-        <thead><tr><th>주차</th><th>기간</th><th style="text-align:right">수입</th><th style="text-align:right">지출</th><th style="text-align:right">순액</th></tr></thead>
-        <tbody>${M.weeks.map(w => `
-          <tr>
-            <td>${w.label}</td>
-            <td style="color:var(--text-faint);">${w.range}</td>
-            <td class="amt income">${w.income ? formatWon(w.income) : '—'}</td>
-            <td class="amt expense">${w.expense ? formatWon(w.expense) : '—'}</td>
-            <td class="amt" style="color:${w.income - w.expense >= 0 ? 'var(--green)' : 'var(--red)'}">${formatWon(w.income - w.expense)}</td>
-          </tr>`).join('')}</tbody>
-      </table>
-    </div>
-    ${M.weeks.length ? `<div class="settings-note">지출이 가장 큰 주: <b style="color:var(--gold-soft)">${M.weeks.reduce((a, b) => b.expense > a.expense ? b : a).label}</b> (${formatWon(weekMax)})</div>` : ''}
-  `;
-
-  /* --- 요일별 평균 지출 --- */
-  const dowTop = dowAvg.reduce((a, b) => b.avg > a.avg ? b : a, dowAvg[0]);
-  document.getElementById('cal-dow-body').innerHTML = `
-    ${dowAvg.map(x => `
-      <div class="dow-avg-row">
-        <span class="nm">${x.name}</span>
-        <div class="b-bar-track"><div class="b-bar-fill" style="width:${(x.avg / dowMax) * 100}%"></div></div>
-        <span class="fig">${x.avg ? formatWon(Math.round(x.avg)) : '—'}</span>
-      </div>`).join('')}
-    <div class="settings-note">${dowTop && dowTop.avg > 0 ? `이 달에는 <b style="color:var(--gold-soft)">${dowTop.name}요일</b>에 평균 ${formatWon(Math.round(dowTop.avg))}으로 가장 많이 썼어요.` : '아직 계산할 지출이 없어요.'}</div>
-  `;
 
   /* --- 월 이동 / 모드 --- */
   const setMonth = (k) => { state.calMonthKey = k; state.calSelDay = null; renderPage(); };
@@ -4396,13 +4410,6 @@ function renderStructurePage(container, data, d) {
         ${loopHtml}
       </div>
 
-      <div class="eng-cross">
-        <span class="lb">투자성 자산 ${formatCompactWon(m.riskAssets)} / 연수입 ${formatCompactWon(annIncome)}</span>
-        <div class="tr"><i style="width:${Math.min(crossPct, 100)}%"></i></div>
-        <span class="lb">${crossPct.toFixed(0)}%</span>
-      </div>
-      <div class="settings-note">
-        이 게이지가 <b>100%</b>를 넘는 순간부터 <b>수익률 1%p</b>가 <b>저축률 1%p</b>보다 큰 돈이 됩니다.
       <div class="eng-cross">
         <span class="lb">투자성 자산 ${formatCompactWon(m.riskAssets)} / 연수입 ${formatCompactWon(annIncome)}</span>
         <div class="tr"><i style="width:${Math.min(crossPct, 100)}%"></i></div>
@@ -6133,7 +6140,17 @@ function getCategoryMonthlyProfit(stockMonthly, stockCategoryMap) {
   return { categories: [...cats].sort(), byCatMonth };
 }
 
+const INV_SUBS = [
+  ['overview', '요약'],
+  ['holdings', '종목·테마'],
+  ['perf', '벤치마크·세금'],
+  ['toss', '토스 실시간']
+];
+
 function renderInvestmentPage(container, data, d) {
+  const SUB = INV_SUBS.some(s => s[0] === state.invSub) ? state.invSub : 'overview';
+  const subnav = `<div class="subnav" id="inv-subnav">${INV_SUBS.map(([v, l]) =>
+    `<button data-sub="${v}" class="${v === SUB ? 'active' : ''}">${l}</button>`).join('')}</div>`;
   const invCategories = ['투자 자산'];
   const byMonthCat = {};
   data.assetRows.forEach(r => {
@@ -6208,7 +6225,8 @@ function renderInvestmentPage(container, data, d) {
     });
   });
 
-  container.innerHTML = `
+  container.innerHTML = subnav + `
+    ${SUB === 'overview' ? `
     <div class="g">
       <div class="panel s4" id="panel-investment-insights"></div>
       <div class="stat-grid s4" style="grid-template-columns:1fr 1fr;">
@@ -6283,15 +6301,16 @@ function renderInvestmentPage(container, data, d) {
         <div class="chart-wrap tall"><canvas id="chart-inv-returns"></canvas></div>
         <div class="chart-legend" id="inv-returns-legend"></div>
       </div>
-    </div>
+    </div>` : ''}
 
+    ${SUB === 'holdings' ? `
     <div class="g">
       <div class="panel s6">
         <div class="panel-title">
           <div>종목·카테고리별 월간 수익</div>
           <div class="income-cat-btns" id="inv-pick-type-btns" style="margin:0;">
-            <button data-type="stock" class="income-cat-btn active">종목</button>
-            <button data-type="category" class="income-cat-btn">카테고리</button>
+            <button data-type="stock" class="income-cat-btn ${state.invPickType !== 'category' ? 'active' : ''}">종목</button>
+            <button data-type="category" class="income-cat-btn ${state.invPickType === 'category' ? 'active' : ''}">카테고리</button>
           </div>
         </div>
         <select id="inv-pick-name" class="month-nav-select-standalone"></select>
@@ -6325,13 +6344,15 @@ function renderInvestmentPage(container, data, d) {
         <div class="panel-title"><div>종목별 누적 수익</div></div>
         <div id="stock-profit-list"></div>
       </div>
-    </div>
+    </div>` : ''}
 
+    ${SUB === 'perf' ? `
     <div class="g">
-      <div class="panel s6" id="panel-bench"></div>
-      <div class="panel s6" id="panel-cgt"></div>
-      <div class="panel s12" id="panel-toss-live"></div>
-    </div>
+      <div class="panel s7" id="panel-bench"></div>
+      <div class="panel s5" id="panel-cgt"></div>
+    </div>` : ''}
+
+    ${SUB === 'toss' ? `<div class="panel full" id="panel-toss-live"></div>` : ''}
 
     <details class="rawbox">
       <summary>투자 관련 내역</summary>
@@ -6339,10 +6360,21 @@ function renderInvestmentPage(container, data, d) {
     </details>
   `;
 
+  document.getElementById('inv-subnav').addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    state.invSub = btn.dataset.sub;
+    renderPage();
+  });
+
+  if (SUB === 'perf') {
+    renderBenchmarkPanel('panel-bench', data, d);
+    renderCapitalGainsPanel('panel-cgt', data.ledger);
+  }
+  if (SUB === 'toss') renderTossPanel('panel-toss-live', data);
+
+  if (SUB === 'overview') {
   renderWeeklyInsights('panel-investment-insights', 'weekly-insights-investment', '투자 인사이트', () => computeInvestmentInsights(data, d, cumSeries, tagAgg), data, ['투자']);
-  renderBenchmarkPanel('panel-bench', data, d);
-  renderTossPanel('panel-toss-live', data);
-  renderCapitalGainsPanel('panel-cgt', data.ledger);
 
   const drawCum = () => {
     const period = state.invCumPeriod || 'month';
@@ -6545,7 +6577,9 @@ function renderInvestmentPage(container, data, d) {
     drawReturns();
   });
   drawReturns();
+  }
 
+  if (SUB === 'holdings') {
   const stockMonthly = getStockMonthlyProfit(data.ledger);
   const categoryMonthly = getCategoryMonthlyProfit(stockMonthly, stockCategoryMap);
   const pickTypeBtns = document.getElementById('inv-pick-type-btns');
@@ -6624,6 +6658,7 @@ function renderInvestmentPage(container, data, d) {
   document.getElementById('stock-profit-list').innerHTML = stockProfit.filter(([, v]) => v !== 0).map(([name, amt]) => `
     <div class="acct-row"><span class="acct-name">${name}</span><span class="acct-amt" style="color:${amt >= 0 ? 'var(--green)' : 'var(--red)'}">${formatWon(amt)}</span></div>
   `).join('') || '<div class="empty-state">종목별 수익 데이터가 없어요.</div>';
+  }
 
   renderAdvancedTable('investment-table', investLedger, { majorOptions: [['all', '전체'], ['이체', '이체'], ['수입', '투자수익']], defaultGroup: 'none' });
 }
