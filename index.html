@@ -446,7 +446,7 @@ body{
 }
 @keyframes sk{0%{background-position:100% 50%}100%{background-position:0 50%}}
 
-/* ---------- 지금(now) 페이지 ---------- */
+/* ---------- 이번달(now) 페이지 ---------- */
 .now-progress{display:flex;align-items:center;gap:12px;margin-top:2px;}
 .now-progress-track{flex:1;height:6px;background:var(--panel-2);border-radius:3px;overflow:hidden;}
 .now-progress-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--gold),var(--gold-soft));transition:width .3s;}
@@ -464,6 +464,173 @@ body{
 @media (max-width:600px){
   .now-progress{flex-wrap:wrap;}
   .now-chip{flex:1 1 calc(50% - 8px);}
+}
+
+/* ---------- 오늘(today) 페이지 ---------- */
+.month-nav input[type="date"]{
+  background:var(--panel-2);border:1px solid var(--border-strong);color:var(--text);
+  border-radius:6px;padding:4px 8px;font-family:var(--mono);font-size:12px;color-scheme:dark;
+}
+.cal-cell.real{border-style:dashed;border-color:var(--gold-soft);}
+.today-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+.today-date{font-family:var(--serif);font-weight:800;font-size:25px;line-height:1.2;color:var(--text);}
+.today-date .today-dow{color:var(--gold-soft);}
+.today-date small{display:block;font-family:var(--mono);font-size:11px;font-weight:400;color:var(--text-faint);letter-spacing:.04em;margin-top:6px;}
+.today-verdict{font-family:var(--serif);font-weight:700;font-size:15px;line-height:1.55;margin-top:2px;}
+.today-verdict.good{color:var(--green);}
+.today-verdict.warn{color:var(--red);}
+.today-verdict.neutral{color:var(--gold-soft);}
+.allow-track{height:9px;border-radius:5px;background:var(--panel-2);overflow:hidden;margin-top:10px;}
+.allow-fill{height:100%;border-radius:5px;background:linear-gradient(90deg,var(--green),#6fa88a);transition:width .3s;}
+.allow-fill.over{background:linear-gradient(90deg,var(--red),#d9756c);}
+.allow-legend{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10.5px;color:var(--text-faint);margin-top:6px;}
+.streak-badge{display:inline-block;font-family:var(--mono);font-size:10.5px;padding:3px 9px;border-radius:20px;border:1px solid var(--border-strong);color:var(--text-dim);margin-top:10px;}
+.streak-badge.on{border-color:rgba(76,140,107,0.45);color:var(--green);background:var(--green-soft);}
+.dow-row{display:flex;gap:5px;margin-top:12px;}
+.dow-cell{flex:1;text-align:center;border:1px solid var(--border);border-radius:8px;padding:7px 2px;background:var(--panel-2);}
+.dow-cell.sel{border-color:var(--gold);}
+.dow-cell.future{opacity:.35;}
+.dow-cell em{display:block;font-style:normal;font-family:var(--mono);font-size:9.5px;color:var(--text-faint);}
+.dow-cell span{display:block;font-family:var(--mono);font-size:10.5px;color:var(--text);margin-top:3px;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:12px;}
+.cal-dow{font-family:var(--mono);font-size:10px;color:var(--text-faint);text-align:center;padding-bottom:2px;}
+.cal-cell{min-height:52px;border:1px solid var(--border);border-radius:8px;background:var(--panel-2);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:3px;
+  cursor:pointer;transition:border-color .15s;font:inherit;}
+.cal-cell.blank{border-color:transparent;background:transparent;cursor:default;}
+.cal-cell.future{opacity:.3;cursor:default;}
+.cal-cell:hover:not(.blank):not(.future){border-color:var(--gold-soft);}
+.cal-cell.sel{border-color:var(--gold);background:rgba(201,162,39,0.12);}
+.cal-day{font-family:var(--mono);font-size:11px;color:var(--text-dim);}
+.cal-cell.sel .cal-day{color:var(--gold-soft);}
+.cal-amt{font-family:var(--mono);font-size:9px;color:var(--text-faint);line-height:1.2;}
+.cal-amt.zero{color:var(--green);}
+.fixed-due{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px dotted var(--border);font-size:12.5px;}
+.fixed-due:last-child{border-bottom:none;}
+.fixed-due .dday{font-family:var(--mono);font-size:10px;flex-shrink:0;width:46px;text-align:center;padding:3px 0;border-radius:5px;background:var(--panel-2);color:var(--text-dim);}
+.fixed-due .dday.soon{background:rgba(201,162,39,0.18);color:var(--gold-soft);}
+.fixed-due .dday.late{background:var(--red-soft);color:#d9756c;}
+.fixed-due .nm{flex:1;color:var(--text);}
+.fixed-due .nm small{display:block;font-family:var(--mono);font-size:10px;color:var(--text-faint);}
+.fixed-due .amt2{font-family:var(--mono);color:var(--text);}
+@media (max-width:600px){
+  .today-date{font-size:21px;}
+  .cal-cell{min-height:44px;}
+  .cal-amt{font-size:8px;}
+}
+
+/* ---------- 캘린더 페이지 ---------- */
+.mcal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
+.mcal-head{margin-top:14px;margin-bottom:6px;}
+.mcal-dow{font-family:var(--mono);font-size:12px;color:var(--text-faint);text-align:center;}
+.mcal-dow.sat{color:#7c9bc9;}
+.mcal-dow.sun{color:#c1483f;}
+.mcal-cell{
+  min-height:106px;border:1px solid var(--border);border-radius:9px;background:var(--panel-2);
+  padding:8px 8px 9px;display:flex;flex-direction:column;gap:3px;cursor:pointer;
+  transition:border-color .15s;text-align:left;overflow:hidden;
+}
+.mcal-cell.blank{border-color:transparent;background:transparent;cursor:default;}
+.mcal-cell.future{opacity:.35;cursor:default;}
+.mcal-cell:hover:not(.blank):not(.future){border-color:var(--gold-soft);}
+.mcal-cell.sel{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);}
+.mcal-cell.real{border-style:dashed;border-color:var(--gold-soft);}
+.mcal-daynum{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--mono);font-size:17px;font-weight:600;color:var(--text);margin-bottom:4px;}
+.mcal-daynum.sat{color:#7c9bc9;}
+.mcal-daynum.sun{color:#c1483f;}
+.mcal-daynum .cnt{font-size:10.5px;font-weight:400;color:var(--text-faint);}
+.mcal-line{display:flex;justify-content:space-between;gap:5px;font-family:var(--mono);font-size:13px;line-height:1.55;white-space:nowrap;font-variant-numeric:tabular-nums;}
+.mcal-line i{font-style:normal;opacity:.75;}
+.mcal-line.inc{color:#7fbf9c;}
+.mcal-line.exp{color:#e08a82;}
+.mcal-line.trf{color:var(--gold-soft);}
+.mcal-none{font-family:var(--mono);font-size:11.5px;color:var(--text-faint);}
+.mcal-legend{display:flex;gap:14px;flex-wrap:wrap;font-family:var(--mono);font-size:10.5px;color:var(--text-dim);margin-top:12px;}
+.mcal-legend span{display:flex;align-items:center;gap:5px;}
+.mcal-legend i{width:9px;height:9px;border-radius:2px;display:inline-block;font-style:normal;}
+.dow-avg-row{display:flex;align-items:center;gap:10px;padding:6px 0;font-size:12.5px;}
+.dow-avg-row .nm{width:22px;font-family:var(--mono);font-size:11px;color:var(--text-dim);flex-shrink:0;}
+.dow-avg-row .fig{font-family:var(--mono);font-size:10.5px;color:var(--text-dim);width:86px;text-align:right;flex-shrink:0;}
+@media (max-width:1180px){
+  .mcal-line{font-size:12px;}
+  .mcal-line i{display:none;}
+}
+@media (max-width:820px){
+  .mcal-cell{min-height:92px;padding:6px 5px;}
+  .mcal-line{font-size:11px;}
+  .mcal-daynum{font-size:15px;}
+  .mcal-daynum .cnt{display:none;}
+}
+@media (max-width:600px){
+  .mcal-grid{gap:4px;}
+  .mcal-cell{min-height:80px;padding:5px 4px;}
+  .mcal-line{font-size:10px;}
+  .mcal-daynum{font-size:13.5px;}
+}
+
+/* ---------- 구조 페이지 (자산 증식 엔진) ---------- */
+.eng-board{display:flex;align-items:stretch;gap:9px;margin-top:16px;}
+.eng-stage{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:7px;}
+.eng-stage-head{display:flex;align-items:baseline;gap:7px;padding-bottom:5px;border-bottom:1px solid var(--border-strong);}
+.eng-stage-head span{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;color:var(--text-faint);}
+.eng-stage-head b{font-family:var(--serif);font-size:13.5px;font-weight:700;color:var(--text);}
+.eng-arrow{flex:0 0 12px;display:flex;align-items:center;justify-content:center;color:var(--gold-soft);font-size:14px;opacity:.65;padding-top:26px;}
+.eng-node{border:1px solid var(--border);border-radius:10px;background:var(--panel-2);padding:8px 9px 9px;display:flex;flex-direction:column;gap:4px;}
+.eng-node.leak{border-color:rgba(193,72,63,.3);}
+.eng-node.zero{opacity:.55;}
+.eng-node-top{display:flex;justify-content:space-between;align-items:baseline;gap:6px;}
+.eng-node-top .nm{font-size:12.5px;font-weight:600;color:var(--text);}
+.eng-node-top .pct{font-family:var(--mono);font-size:10px;color:var(--text-faint);flex-shrink:0;}
+.eng-amt{font-family:var(--mono);font-size:15px;font-weight:600;letter-spacing:-.01em;color:var(--text);}
+.eng-amt.inc{color:#7fbf9c;}
+.eng-amt.exp{color:#e08a82;}
+.eng-amt.trf{color:var(--gold-soft);}
+.eng-amt.stk{color:#8fb4dd;}
+.eng-bar{height:5px;border-radius:3px;background:rgba(255,255,255,.05);overflow:hidden;}
+.eng-bar i{display:block;height:100%;border-radius:3px;background:var(--gold-soft);}
+.eng-bar i.exp{background:#e08a82;}
+.eng-bar i.inc{background:#7fbf9c;}
+.eng-bar i.stk{background:#8fb4dd;}
+.eng-sub{font-family:var(--mono);font-size:10px;color:var(--text-faint);line-height:1.5;}
+.eng-act{margin-top:3px;border-radius:7px;padding:6px 7px;font-size:11px;line-height:1.55;
+  border:1px dashed rgba(201,162,39,.42);background:rgba(201,162,39,.07);color:var(--gold-soft);}
+.eng-act b{color:var(--text);}
+.eng-act .rk{display:inline-block;font-family:var(--mono);font-size:9px;letter-spacing:.05em;
+  background:rgba(201,162,39,.22);color:var(--gold-soft);border-radius:4px;padding:1px 4px;margin-right:5px;}
+.eng-act.p1{border-style:solid;border-color:var(--gold);background:rgba(201,162,39,.17);}
+.eng-act.p1 .rk{background:var(--gold);color:#1a1508;font-weight:600;}
+.eng-act.risk{border-color:rgba(193,72,63,.45);background:rgba(193,72,63,.10);color:#e39a93;}
+.eng-act.risk .rk{background:rgba(193,72,63,.3);color:#f0b8b2;}
+.eng-loop{margin-top:16px;border:1px solid var(--border);border-radius:11px;
+  background:linear-gradient(90deg,rgba(201,162,39,.11),rgba(76,140,107,.07));padding:12px 14px;
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+.eng-loop .ic{font-size:18px;color:var(--gold-soft);flex-shrink:0;}
+.eng-loop .tx{flex:1 1 320px;font-size:12.5px;line-height:1.75;color:var(--text-dim);}
+.eng-loop .tx b{color:var(--text);}
+.eng-split{display:flex;height:10px;border-radius:5px;overflow:hidden;flex:1 1 180px;min-width:140px;background:rgba(255,255,255,.05);}
+.eng-split i{display:block;height:100%;}
+.eng-cross{display:flex;align-items:center;gap:9px;margin-top:12px;flex-wrap:wrap;}
+.eng-cross .lb{font-family:var(--mono);font-size:10.5px;color:var(--text-faint);flex:0 0 auto;}
+.eng-cross .tr{flex:1 1 200px;height:8px;border-radius:4px;background:rgba(255,255,255,.05);overflow:hidden;position:relative;}
+.eng-cross .tr i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,var(--green),var(--gold-soft));}
+.act-imp{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--gold-soft);}
+.act-ctrl{font-family:var(--mono);font-size:10px;border-radius:5px;padding:2px 6px;}
+.act-ctrl.hi{background:var(--green-soft);color:#8fd0ac;}
+.act-ctrl.mid{background:rgba(201,162,39,.18);color:var(--gold-soft);}
+.act-ctrl.lo{background:rgba(255,255,255,.05);color:var(--text-faint);}
+.chk-row{display:flex;align-items:flex-start;gap:11px;padding:9px 0;border-bottom:1px solid var(--border);font-size:12.5px;}
+.chk-row:last-child{border-bottom:none;}
+.chk-row .mk{flex:0 0 46px;font-family:var(--mono);font-size:10px;text-align:center;border-radius:5px;padding:3px 0;margin-top:1px;}
+.chk-row .mk.ok{background:var(--green-soft);color:#8fd0ac;}
+.chk-row .mk.no{background:var(--red-soft);color:#e39a93;}
+.chk-row .mk.na{background:rgba(255,255,255,.05);color:var(--text-faint);}
+.chk-row .nm{flex:1 1 auto;min-width:0;line-height:1.5;}
+.chk-row .nm i{display:block;font-style:normal;font-family:var(--mono);font-size:10.5px;color:var(--text-faint);margin-top:3px;}
+.chk-row .fig{flex:0 0 auto;text-align:right;font-family:var(--mono);font-size:12px;color:var(--text);line-height:1.5;}
+.chk-row .fig em{display:block;font-style:normal;font-size:10px;color:var(--text-faint);margin-top:2px;}
+@media (max-width:1000px){
+  .eng-board{flex-direction:column;}
+  .eng-arrow{padding-top:0;transform:rotate(90deg);}
 }
 
 /* ---------- nav ---------- */
@@ -567,10 +734,6 @@ body{
   .grid-3{grid-template-columns:1fr;}
 }
 .grid-4{grid-template-columns:1.3fr 1fr 1fr 1fr;}
-@media (max-width:820px){
-  .grid-4{grid-template-columns:1fr;}
-}
-
 /* ---------- 토스 실시간 패널 ---------- */
 .grid-2{grid-template-columns:1fr 1fr;}
 @media (max-width:820px){
@@ -584,8 +747,9 @@ body{
   border-radius:6px;padding:6px 14px;cursor:pointer;
 }
 .ghost-btn:hover{color:var(--text);border-color:var(--gold-soft);}
-.toss-stale{color:var(--red);}
-.toss-fresh{color:var(--green);}
+@media (max-width:820px){
+  .grid-4{grid-template-columns:1fr;}
+}
 
 /* ---------- checklist checkbox accent ---------- */
 .fixed-check{accent-color:var(--gold);}
@@ -708,7 +872,25 @@ const GID_LEDGER_D = '1990449957';   // 가계부(D) - raw daily transaction led
 const GID_ASSETS = '1458451221';     // 자산 스냅샷 - monthly asset balances
 const GID_GOALS = '384376571';       // 목표 - goals / roadmap
 const GID_CLASSIFY = '701072426';    // 분류 - 사용처/종목 분류표 (주식_카테고리 매핑 포함)
-const TAB_GIDS = [GID_LEDGER_D, GID_ASSETS, GID_GOALS, GID_CLASSIFY];
+const GID_INDEX = '772931342';       // 지수_S&P500 - 월별 지수 종가 (벤치마크 반사실 계산용)
+const TAB_GIDS = [GID_LEDGER_D, GID_ASSETS, GID_GOALS, GID_CLASSIFY, GID_INDEX];
+
+/* 지수_S&P500 탭을 못 불러왔을 때만 쓰는 씨앗 데이터.
+   시트가 단일 소스이고, 이 상수는 오프라인/권한오류 시 패널이 빈 화면이
+   되지 않게 하는 백업일 뿐이다. 시트에 값이 있으면 항상 시트가 이긴다. */
+const INDEX_SEED = {
+  '2023-03': 3968.56, '2023-04': 4121.47, '2023-05': 4146.17, '2023-06': 4345.37,
+  '2023-07': 4508.08, '2023-08': 4426.24, '2023-09': 4409.10, '2023-10': 4258.98,
+  '2023-11': 4460.06, '2023-12': 4685.05, '2024-01': 4804.49, '2024-02': 5011.96,
+  '2024-03': 5170.57, '2024-04': 5095.46, '2024-05': 5235.23, '2024-06': 5415.14,
+  '2024-07': 5542.89, '2024-08': 5502.17, '2024-09': 5626.12, '2024-10': 5792.32,
+  '2024-11': 5929.92, '2024-12': 6010.91, '2025-01': 5979.52, '2025-02': 6038.69,
+  '2025-03': 5683.98, '2025-04': 5369.50, '2025-05': 5810.92, '2025-06': 6029.95,
+  '2025-07': 6296.50, '2025-08': 6408.95, '2025-09': 6584.02, '2025-10': 6735.69,
+  '2025-11': 6740.89, '2025-12': 6853.03, '2026-01': 6929.12, '2026-02': 6893.81,
+  '2026-03': 6654.42, '2026-04': 6957.01, '2026-05': 7412.55, '2026-06': 7450.03,
+  '2026-07': 7513.50, '2026-08': 7851.30
+};
 const csvUrlFor = (gid) => `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&gid=${gid}`;
 /* 토스 탭은 수집기가 자동 생성하므로 gid를 미리 알 수 없다.
    gviz는 sheet= 파라미터로 탭 이름 조회도 지원하니 그걸 쓴다. */
@@ -751,9 +933,12 @@ const state = {
   fixedMonthKey: null,
   vendorRange: 12,
   invRange: 12,
+  benchRange: 'all',
+  benchMode: 'amount',   // 'amount' | 'excess'
   invContribRange: 12,
   invReturnsRange: 12,
   invCumPeriod: 'month',
+  invCumMode: 'amount',    // 'amount' | 'roi' (원금 대비 수익률)
   invContribPeriod: 'month',
   invReturnsPeriod: 'month',
   invPickType: 'stock',
@@ -763,9 +948,14 @@ const state = {
   assetTrendFilter: 'all',
   savTrendRange: 12,
   savContribRange: 12,
-  nowMonthKey: null,       // '지금' 탭에서 보고 있는 달 (YYYY-MM)
+  nowMonthKey: null,       // '이번달' 탭에서 보고 있는 달 (YYYY-MM)
   nowWeekIdx: null,        // null = 그 달 전체, 0.. = 해당 주차만
-  nowGranularity: 'week'   // 'week' | 'day'
+  nowGranularity: 'week',  // 'week' | 'day'
+  todayDayKey: null,       // '오늘' 탭에서 보고 있는 날 (YYYY-MM-DD), null = 실제 오늘
+  todayTrendRange: 14,     // '오늘' 탭 일별 추이 기간 (일)
+  calMonthKey: null,       // '캘린더' 탭에서 보고 있는 달 (YYYY-MM)
+  calMode: 'all',          // 'all' | 'expense' | 'income' | 'transfer'
+  calSelDay: null          // 캘린더에서 선택한 날 (YYYY-MM-DD)
 };
 
 /* ---------------- helpers ---------------- */
@@ -868,6 +1058,42 @@ function parseAssetsFromRows(rows) {
     }
   }
   return assetRows;
+}
+
+/* 지수_S&P500 탭: 년월 / 종가 두 컬럼.
+   구글 시트가 "2023-03"을 날짜로 해석해버리므로 gviz/tq CSV에서는
+   "2023. 3. 1" 형태로 내려온다. 원문 문자열/날짜/한글표기 모두 받는다.
+   컬럼은 항상 헤더명으로 찾는다 — 컬럼이 추가돼도 안 깨지게. */
+function normIndexMonthKey(raw) {
+  const s = String(raw || '').trim();
+  if (!s) return null;
+  let m = s.match(/^(\d{4})[.\-/년]\s*(\d{1,2})/);          // 2023-03 / 2023. 3. 1 / 2023년 3월
+  if (m) return `${m[1]}-${String(parseInt(m[2], 10)).padStart(2, '0')}`;
+  m = s.match(/^(\d{2})년\s*(\d{1,2})월/);                   // 23년 03월
+  if (m) return `${2000 + parseInt(m[1], 10)}-${String(parseInt(m[2], 10)).padStart(2, '0')}`;
+  return null;
+}
+
+function parseIndexFromRows(rows) {
+  let headerRowIdx = -1, monthCol = -1, closeCol = -1;
+  for (let r = 0; r < rows.length && r < 30; r++) {
+    const row = (rows[r] || []).map(c => cleanLabel(c || ''));
+    const mi = row.findIndex(c => c === '년월' || c === '월' || c === '기준월');
+    const ci = row.findIndex(c => c === '종가' || c === '지수' || c === '가격');
+    if (mi !== -1 && ci !== -1) { headerRowIdx = r; monthCol = mi; closeCol = ci; break; }
+  }
+  if (headerRowIdx === -1) return {};
+
+  const out = {};
+  for (let r = headerRowIdx + 1; r < rows.length; r++) {
+    const row = rows[r] || [];
+    const key = normIndexMonthKey(row[monthCol]);
+    if (!key) continue;
+    const v = parseFloat(String(row[closeCol] || '').replace(/[^0-9.\-]/g, ''));
+    if (!isFinite(v) || v <= 0) continue;
+    out[key] = v;
+  }
+  return out;
 }
 
 /* 목표 탭: 시기 / 구분 / 목표 / 상태 / 달성한 날 / 메모 컬럼 구조.
@@ -1589,16 +1815,17 @@ const valueLabelPlugin = {
         ctx.save();
         ctx.font = "600 10px 'IBM Plex Mono', monospace";
         ctx.fillStyle = dataset.labelColor || '#c7cddb';
+        const fmtLabel = dataset.labelFormatter || formatCompactWon;
         if (horizontal) {
           ctx.textAlign = value >= 0 ? 'left' : 'right';
           ctx.textBaseline = 'middle';
           const offsetX = dataset.labelOffset !== undefined ? dataset.labelOffset : (value >= 0 ? 6 : -6);
-          ctx.fillText(formatCompactWon(value), pos.x + offsetX, pos.y);
+          ctx.fillText(fmtLabel(value), pos.x + offsetX, pos.y);
         } else {
           ctx.textAlign = 'center';
           const isLine = chart.config.type === 'line' || dataset.type === 'line';
           const offset = dataset.labelOffset !== undefined ? dataset.labelOffset : (isLine ? -8 : (value >= 0 ? -6 : 14));
-          ctx.fillText(formatCompactWon(value), pos.x, pos.y + offset);
+          ctx.fillText(fmtLabel(value), pos.x, pos.y + offset);
         }
         ctx.restore();
       });
@@ -1715,7 +1942,10 @@ function setSyncState(status) {
 
 const NAV_ITEMS = [
   { id: 'home', label: '홈' },
-  { id: 'now', label: '지금' },
+  { id: 'structure', label: '구조' },
+  { id: 'today', label: '오늘' },
+  { id: 'calendar', label: '캘린더' },
+  { id: 'now', label: '이번달' },
   { id: 'assets', label: '자산' },
   { id: 'income', label: '수입' },
   { id: 'expense', label: '지출' },
@@ -1763,7 +1993,7 @@ function renderShell() {
 function renderBanner() {
   const slot = document.getElementById('banner-slot');
   if (!slot) return;
-  const tabLabels = { [GID_LEDGER_D]: '가계부(D)', [GID_ASSETS]: '자산 스냅샷', [GID_GOALS]: '목표', [GID_CLASSIFY]: '분류' };
+  const tabLabels = { [GID_LEDGER_D]: '가계부(D)', [GID_ASSETS]: '자산 스냅샷', [GID_GOALS]: '목표', [GID_CLASSIFY]: '분류', [GID_INDEX]: '지수_S&P500' };
   const testLinks = TAB_GIDS.map(g => `<a href="${csvUrlFor(g)}" target="_blank" rel="noopener" style="color:var(--gold-soft);">${tabLabels[g]}</a>`).join(' · ');
 
   if (state.source === 'snapshot' && state.lastError) {
@@ -1804,7 +2034,10 @@ function renderPage() {
   const d = computeDerived(data);
   destroyPageCharts();
   const container = document.getElementById('page-content');
-  if (state.page === 'now') renderNowPage(container, data, d);
+  if (state.page === 'structure') renderStructurePage(container, data, d);
+  else if (state.page === 'today') renderTodayPage(container, data, d);
+  else if (state.page === 'calendar') renderCalendarPage(container, data, d);
+  else if (state.page === 'now') renderNowPage(container, data, d);
   else if (state.page === 'assets') renderAssetsPage(container, data, d);
   else if (state.page === 'income') renderIncomePage(container, data, d);
   else if (state.page === 'expense') renderExpensePage(container, data, d);
@@ -2368,7 +2601,7 @@ function renderAdvancedTableBody(key, allRows, opts) {
   }
 }
 
-/* ---------------- page: 지금 (이번 달 종합) ---------------- */
+/* ---------------- page: 이번달 (월 종합) ---------------- */
 
 function parseLedgerDateParts(s) {
   const m = (s || '').match(/(\d{4})\.\s*(\d{1,2})\.\s*(\d{1,2})/);
@@ -2605,12 +2838,12 @@ function renderNowPage(container, data, d) {
   container.innerHTML = `
     <div class="panel full">
       <div class="panel-title">
-        <div><span class="eyebrow">NOW</span>${scopeLabel}</div>
+        <div><span class="eyebrow">THIS MONTH</span>${scopeLabel}</div>
         <div class="month-nav">
           <button id="now-prev" ${availableKeys.indexOf(monthKey) <= 0 ? 'disabled' : ''}>◀</button>
           <select id="now-month-select">${monthOptions}</select>
           <button id="now-next" ${availableKeys.indexOf(monthKey) >= availableKeys.length - 1 ? 'disabled' : ''}>▶</button>
-          <button class="btn small" id="now-thismonth">이번달</button>
+          <button class="btn small" id="now-thismonth">이번 달로</button>
         </div>
       </div>
 
@@ -2653,7 +2886,7 @@ function renderNowPage(container, data, d) {
         <div id="now-fixed-body"></div>
       </div>
       <div class="panel">
-        <div class="panel-title"><div><span class="eyebrow">TRANSFERS</span>이번 달 이체</div></div>
+        <div class="panel-title"><div><span class="eyebrow">TRANSFERS</span>${week ? week.label : monthKeyLabel(monthKey)} 이체</div></div>
         <div id="now-transfer-body"></div>
       </div>
     </div>
@@ -2849,7 +3082,1198 @@ function renderNowPage(container, data, d) {
   });
 }
 
+/* ---------------- page: 오늘 (하루 단위) ---------------- */
+
+const DOW_KR = ['일', '월', '화', '수', '목', '금', '토'];
+
+function pad2(n) { return String(n).padStart(2, '0'); }
+function dayKeyOfDate(dt) { return `${dt.getFullYear()}-${pad2(dt.getMonth() + 1)}-${pad2(dt.getDate())}`; }
+function todayDayKey() { return dayKeyOfDate(new Date()); }
+
+function ledgerDayKey(dateStr) {
+  const p = parseLedgerDateParts(dateStr);
+  return p ? `${p.y}-${pad2(p.mo)}-${pad2(p.d)}` : null;
+}
+
+function shiftDayKey(key, delta) {
+  const [y, m, d] = key.split('-').map(Number);
+  return dayKeyOfDate(new Date(y, m - 1, d + delta));
+}
+
+function dowOfDayKey(key) {
+  const [y, m, d] = key.split('-').map(Number);
+  return new Date(y, m - 1, d).getDay();
+}
+
+function dayKeyLabel(key) {
+  const [y, m, d] = key.split('-').map(Number);
+  return `${y}년 ${m}월 ${d}일`;
+}
+
+function dayKeyShort(key) {
+  const [, m, d] = key.split('-').map(Number);
+  return `${m}/${d}`;
+}
+
+/* 월요일 시작 주의 시작/끝 날짜 */
+function weekRangeOfDayKey(key) {
+  const dow = dowOfDayKey(key);
+  const offset = dow === 0 ? 6 : dow - 1;
+  const start = shiftDayKey(key, -offset);
+  return { start, end: shiftDayKey(start, 6), offset };
+}
+
+function dayDiff(a, b) {
+  const [y1, m1, d1] = a.split('-').map(Number);
+  const [y2, m2, d2] = b.split('-').map(Number);
+  return Math.round((new Date(y1, m1 - 1, d1) - new Date(y2, m2 - 1, d2)) / 86400000);
+}
+
+/* 월 지출 예산: 목표 탭의 "월 지출 N만원" 우선, 없으면 마감된 최근 3개월 평균 */
+function monthlyExpenseTarget(data, ledger, monthKey) {
+  const goals = data.goals || [];
+  for (const g of goals) {
+    const title = pickGoalField(g, 'title');
+    if (!title) continue;
+    const m = String(title).match(/(?:월\s*)?지출\s*([\d,]+)\s*만원/);
+    if (m) return { amount: parseFloat(m[1].replace(/,/g, '')) * 10000, source: '목표 탭' };
+  }
+  const cur = thisMonthKey();
+  const vals = [];
+  for (let i = 1; i <= 3; i++) {
+    const k = shiftMonthKey(monthKey, -i);
+    if (k >= cur) continue;
+    const sum = ledger.filter(r => ledgerMonthKey(r.date) === k && r.major.includes('지출'))
+      .reduce((a, r) => a + r.amount, 0);
+    if (sum > 0) vals.push(sum);
+  }
+  if (!vals.length) return null;
+  return { amount: Math.round(vals.reduce((a, b) => a + b, 0) / vals.length), source: '최근 3개월 평균' };
+}
+
+/* 고정비 항목별 예상 결제일(최근 3개월 결제일 중앙값)까지 포함한 상태 */
+function fixedScheduleStatus(ledger, monthKey) {
+  const prevKeys = [1, 2, 3].map(i => shiftMonthKey(monthKey, -i));
+  const tpl = {};
+  ledger.filter(r => r.fixed && r.major.includes('지출')).forEach(r => {
+    const k = ledgerMonthKey(r.date);
+    if (!prevKeys.includes(k)) return;
+    const p = parseLedgerDateParts(r.date);
+    const id = `${r.item}|${r.vendor}`;
+    if (!tpl[id]) tpl[id] = { item: r.item, vendor: r.vendor, minor: r.minor, amounts: [], days: [] };
+    tpl[id].amounts.push(r.amount);
+    if (p) tpl[id].days.push(p.d);
+  });
+  const paid = {};
+  ledger.filter(r => r.fixed && r.major.includes('지출') && ledgerMonthKey(r.date) === monthKey).forEach(r => {
+    const id = `${r.item}|${r.vendor}`;
+    const p = parseLedgerDateParts(r.date);
+    if (!paid[id]) paid[id] = { amount: 0, day: p ? p.d : null };
+    paid[id].amount += r.amount;
+  });
+  return Object.keys(tpl).map(id => {
+    const t = tpl[id];
+    const days = t.days.slice().sort((a, b) => a - b);
+    return {
+      item: t.item, vendor: t.vendor, minor: t.minor,
+      expected: Math.round(t.amounts.reduce((a, b) => a + b, 0) / t.amounts.length),
+      expectedDay: days.length ? days[Math.floor(days.length / 2)] : null,
+      paid: paid[id] ? paid[id].amount : null,
+      paidDay: paid[id] ? paid[id].day : null
+    };
+  }).sort((a, b) => (a.expectedDay || 99) - (b.expectedDay || 99));
+}
+
+function renderTodayPage(container, data, d) {
+  const ledger = data.ledger || [];
+  if (!ledger.length) {
+    container.innerHTML = '<div class="panel full"><div class="empty-state">가계부(D) 데이터를 불러오지 못해 오늘을 계산할 수 없어요.</div></div>';
+    return;
+  }
+
+  /* --- 날짜별 집계 --- */
+  const byDay = {};
+  ledger.forEach(r => {
+    const k = ledgerDayKey(r.date);
+    if (!k) return;
+    if (!byDay[k]) byDay[k] = { income: 0, expense: 0, transfer: 0, rows: [] };
+    byDay[k].rows.push(r);
+    if (r.major.includes('수입')) byDay[k].income += r.amount;
+    else if (r.major.includes('지출')) byDay[k].expense += r.amount;
+    else if (r.major.includes('이체')) byDay[k].transfer += r.amount;
+  });
+  const dayOf = (k) => byDay[k] || { income: 0, expense: 0, transfer: 0, rows: [] };
+  const recordedKeys = Object.keys(byDay).sort();
+  const earliestKey = recordedKeys[0];
+  const latestKey = recordedKeys[recordedKeys.length - 1];
+
+  const realToday = todayDayKey();
+  if (!state.todayDayKey) state.todayDayKey = realToday;
+  if (state.todayDayKey > realToday) state.todayDayKey = realToday;
+  const key = state.todayDayKey;
+  const isToday = key === realToday;
+
+  const [Y, MO, DD] = key.split('-').map(Number);
+  const monthKey = key.slice(0, 7);
+  const monthDays = daysInMonthKey(monthKey);
+  const M = buildNowMonth(ledger, monthKey);
+  const today = dayOf(key);
+
+  const cumBefore = M.daily.slice(0, DD - 1).reduce((a, b) => a + b.expense, 0);
+  const cumThrough = cumBefore + today.expense;
+
+  /* --- 예산 / 오늘 허용액 --- */
+  const budget = monthlyExpenseTarget(data, ledger, monthKey);
+  const sched = fixedScheduleStatus(ledger, monthKey);
+  const pending = sched.filter(f => f.paid === null);
+  const pendingSum = pending.reduce((a, f) => a + f.expected, 0);
+  const remainDays = Math.max(monthDays - DD + 1, 1);
+  const remainBudget = budget ? budget.amount - cumBefore - pendingSum : null;
+  const allowance = remainBudget === null ? null : Math.max(Math.round(remainBudget / remainDays), 0);
+  const allowPct = allowance ? Math.min((today.expense / allowance) * 100, 100) : (today.expense > 0 ? 100 : 0);
+  const overToday = allowance !== null && today.expense > allowance;
+
+  /* --- 이번 주 --- */
+  const wk = weekRangeOfDayKey(key);
+  const weekDays = [];
+  for (let i = 0; i < 7; i++) {
+    const k = shiftDayKey(wk.start, i);
+    weekDays.push({ key: k, dow: DOW_KR[dowOfDayKey(k)], ...dayOf(k) });
+  }
+  const weekExpense = weekDays.reduce((a, b) => a + b.expense, 0);
+  const weekToDate = weekDays.slice(0, wk.offset + 1).reduce((a, b) => a + b.expense, 0);
+  const prevWkStart = shiftDayKey(wk.start, -7);
+  let prevWeekToDate = 0;
+  for (let i = 0; i <= wk.offset; i++) prevWeekToDate += dayOf(shiftDayKey(prevWkStart, i)).expense;
+  const weekDelta = prevWeekToDate > 0 ? weekToDate - prevWeekToDate : null;
+
+  /* --- 무지출 스트릭 (기록이 아직 없는 날은 '무지출'로 세지 않는다) --- */
+  const noRecordYet = today.rows.length === 0 && key > latestKey;
+  let streak = 0;
+  if (!noRecordYet) {
+    let cursor = key;
+    while (dayOf(cursor).expense === 0 && cursor >= earliestKey && streak < 90) {
+      streak++;
+      cursor = shiftDayKey(cursor, -1);
+    }
+  }
+  const noSpendInMonth = M.daily.filter(b => b.day <= DD && b.expense === 0).length;
+
+  /* --- 같은 요일 평균 (최근 8주) --- */
+  const sameDowVals = [];
+  for (let i = 1; i <= 8; i++) {
+    const k = shiftDayKey(key, -7 * i);
+    if (k < earliestKey) break;
+    sameDowVals.push(dayOf(k).expense);
+  }
+  const sameDowAvg = sameDowVals.length ? sameDowVals.reduce((a, b) => a + b, 0) / sameDowVals.length : null;
+  const monthDailyAvg = DD > 0 ? cumThrough / DD : 0;
+
+  /* --- 판정 문구 --- */
+  let verdict, verdictCls;
+  if (today.rows.length === 0) {
+    verdictCls = 'neutral';
+    verdict = isToday
+      ? `아직 오늘 기록이 없어요.${latestKey && latestKey < realToday ? ` 마지막 기록은 <b>${dayKeyShort(latestKey)}</b> (${dayDiff(realToday, latestKey)}일 전)이에요.` : ''}`
+      : '이 날은 기록이 없어요.';
+  } else if (allowance === null) {
+    verdictCls = 'neutral';
+    verdict = `${isToday ? '오늘' : '이 날'} <b>${formatWon(today.expense)}</b> 썼어요. 이번 달 하루 평균은 ${formatWon(Math.round(monthDailyAvg))}이에요.`;
+  } else if (overToday) {
+    verdictCls = 'warn';
+    verdict = `${isToday ? '오늘' : '이 날'} 예산 ${formatWon(allowance)}보다 <b>${formatWon(today.expense - allowance)}</b> 더 썼어요.`;
+  } else {
+    verdictCls = 'good';
+    verdict = `${isToday ? '오늘' : '이 날'} 예산 ${formatWon(allowance)} 중 ${formatWon(today.expense)} 사용 · <b>${formatWon(allowance - today.expense)}</b> 여유 있어요.`;
+  }
+
+  /* --- 오늘 카테고리 --- */
+  const catMap = {};
+  today.rows.filter(r => r.major.includes('지출')).forEach(r => {
+    catMap[r.minor || '기타'] = (catMap[r.minor || '기타'] || 0) + r.amount;
+  });
+  const catRows = Object.entries(catMap).map(([name, amt]) => ({ name, amt })).sort((a, b) => b.amt - a.amt);
+  const catMax = Math.max(...catRows.map(r => r.amt), 1);
+
+  /* --- 곧 나갈 고정비 --- */
+  const dueRows = pending.map(f => ({ ...f, dday: f.expectedDay === null ? null : f.expectedDay - DD }))
+    .sort((a, b) => (a.dday === null ? 99 : a.dday) - (b.dday === null ? 99 : b.dday));
+
+  container.innerHTML = `
+    <div class="panel full">
+      <div class="panel-title">
+        <div><span class="eyebrow">TODAY</span>${isToday ? '오늘' : '지난 하루'} 살펴보기</div>
+        <div class="month-nav">
+          <button id="today-prev" ${key <= earliestKey ? 'disabled' : ''}>◀</button>
+          <input type="date" id="today-date" value="${key}" max="${realToday}" />
+          <button id="today-next" ${key >= realToday ? 'disabled' : ''}>▶</button>
+          <button class="btn small" id="today-jump">오늘로</button>
+        </div>
+      </div>
+
+      <div class="today-head">
+        <div class="today-date">
+          ${dayKeyLabel(key)} <span class="today-dow">(${DOW_KR[dowOfDayKey(key)]})</span>
+          <small>${monthKeyLabel(monthKey)} D+${DD} / ${monthDays}일 · 남은 ${monthDays - DD}일${isToday ? ' · 오늘' : ` · ${dayDiff(realToday, key)}일 전`}</small>
+        </div>
+        <div class="today-verdict ${verdictCls}" style="flex:1;min-width:260px;">${verdict}</div>
+      </div>
+
+      <div class="stat-grid" style="margin-top:18px;margin-bottom:0;">
+        <div class="stat-card">
+          <div class="label">${isToday ? '오늘' : '이 날'} 지출</div>
+          <div class="value" style="color:var(--red)">${formatWon(today.expense)}</div>
+          <div class="sub ${sameDowAvg !== null && today.expense <= sameDowAvg ? 'up' : 'down'}">${sameDowAvg !== null ? `최근 ${DOW_KR[dowOfDayKey(key)]}요일 평균 ${formatWon(Math.round(sameDowAvg))}` : '비교 데이터 없음'}</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">${isToday ? '오늘' : '이 날'} 수입</div>
+          <div class="value" style="color:var(--green)">${formatWon(today.income)}</div>
+          <div class="sub">이체 ${formatWon(today.transfer)}</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">이번 달 누적 지출</div>
+          <div class="value">${formatWon(cumThrough)}</div>
+          <div class="sub">하루 평균 ${formatWon(Math.round(monthDailyAvg))}</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">기록 건수</div>
+          <div class="value">${today.rows.length}건</div>
+          <div class="sub">${noSpendInMonth}일 무지출 (이번 달)</div>
+        </div>
+      </div>
+
+      ${allowance !== null ? `
+      <div style="margin-top:18px;">
+        <div class="allow-track"><div class="allow-fill ${overToday ? 'over' : ''}" style="width:${allowPct}%"></div></div>
+        <div class="allow-legend">
+          <span>${isToday ? '오늘' : '이 날'} 사용 ${formatWon(today.expense)}</span>
+          <span>하루 예산 ${formatWon(allowance)}</span>
+        </div>
+      </div>` : ''}
+
+      <div class="streak-badge ${streak > 0 ? 'on' : ''}">${noRecordYet ? '✍️ 아직 기록이 입력되지 않았어요' : streak > 0 ? `🌱 무지출 ${streak}일 연속` : `지출이 있는 날 · 이번 달 무지출 ${noSpendInMonth}일`}</div>
+    </div>
+
+    <div class="grid grid-3">
+      <div class="panel">
+        <div class="panel-title"><div><span class="eyebrow">BUDGET</span>하루 예산 계산</div></div>
+        <div id="today-budget-body"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title"><div><span class="eyebrow">THIS WEEK</span>이번 주 (${dayKeyShort(wk.start)}–${dayKeyShort(wk.end)})</div></div>
+        <div id="today-week-body"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title"><div><span class="eyebrow">UPCOMING</span>곧 나갈 고정비</div></div>
+        <div id="today-due-body"></div>
+      </div>
+    </div>
+
+    <div class="panel full">
+      <div class="panel-title">
+        <div><span class="eyebrow">TREND</span>일별 지출 추이</div>
+        <div class="range-toggle" id="today-trend-range">
+          <button data-n="14" class="${state.todayTrendRange === 14 ? 'active' : ''}">14일</button>
+          <button data-n="30" class="${state.todayTrendRange === 30 ? 'active' : ''}">30일</button>
+          <button data-n="60" class="${state.todayTrendRange === 60 ? 'active' : ''}">60일</button>
+        </div>
+      </div>
+      <div class="chart-wrap tall"><canvas id="chart-today-trend"></canvas></div>
+      <div class="chart-legend">
+        <span><i style="background:rgba(193,72,63,0.8)"></i>일별 지출</span>
+        <span><i style="background:#c9a227"></i>선택한 날</span>
+        <span><i style="background:#e0c766"></i>7일 이동평균</span>
+      </div>
+      <div class="settings-note">막대를 클릭하면 그 날짜로 이동합니다. 달 전체를 한눈에 보려면 <b style="color:var(--gold-soft)">캘린더</b> 탭을 확인하세요.</div>
+    </div>
+
+    <div class="grid">
+      <div class="panel">
+        <div class="panel-title"><div><span class="eyebrow">CATEGORIES</span>${isToday ? '오늘' : '이 날'} 카테고리</div></div>
+        <div id="today-cat-body"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title"><div><span class="eyebrow">RECORDS</span>${isToday ? '오늘' : dayKeyShort(key)} 내역 <span style="color:var(--text-faint);font-family:var(--mono);font-size:11px;">${today.rows.length}건</span></div></div>
+        <div id="today-rows-body"></div>
+      </div>
+    </div>
+  `;
+
+  /* --- 예산 계산 --- */
+  document.getElementById('today-budget-body').innerHTML = budget ? `
+    <div class="now-kv"><span>월 지출 예산 <em style="font-style:normal;color:var(--text-faint);font-size:10.5px;">(${budget.source})</em></span><b>${formatWon(budget.amount)}</b></div>
+    <div class="now-kv"><span>${DD}일 이전까지 쓴 돈</span><b>${formatWon(cumBefore)}</b></div>
+    <div class="now-kv"><span>아직 안 나간 고정비 ${pending.length}건</span><b style="color:${pendingSum ? 'var(--red)' : 'var(--green)'}">${formatWon(pendingSum)}</b></div>
+    <div class="now-kv"><span>남은 예산 ÷ 남은 ${remainDays}일</span><b style="color:${remainBudget < 0 ? 'var(--red)' : 'var(--gold-soft)'}">${formatWon(allowance)}</b></div>
+    ${remainBudget < 0
+      ? `<div class="insight warn"><span class="dot"></span><span>고정비까지 반영하면 이미 예산을 <b>${formatWon(Math.abs(remainBudget))}</b> 넘었어요. 남은 ${remainDays}일은 지출을 최소로 두는 게 좋아요.</span></div>`
+      : `<div class="settings-note">남은 ${remainDays}일 동안 하루 <b style="color:var(--gold-soft)">${formatWon(allowance)}</b>씩 쓰면 예산 안에서 마감돼요.</div>`}
+  ` : `<div class="empty-state">목표 탭에 "월 지출 N만원" 목표가 없고 비교할 과거 3개월 데이터도 부족해서 하루 예산을 계산할 수 없어요.</div>`;
+
+  /* --- 이번 주 --- */
+  const weekMax = Math.max(...weekDays.map(w => w.expense), 1);
+  document.getElementById('today-week-body').innerHTML = `
+    <div class="now-kv"><span>이번 주 누적 (${dayKeyShort(wk.start)}–${dayKeyShort(key)})</span><b>${formatWon(weekToDate)}</b></div>
+    <div class="now-kv"><span>지난주 같은 시점</span><b>${prevWeekToDate > 0 ? formatWon(prevWeekToDate) : '—'}</b></div>
+    ${weekDelta !== null ? `<div class="insight ${weekDelta > 0 ? 'warn' : 'good'}"><span class="dot"></span><span>지난주 같은 시점보다 <b>${wonComma(weekDelta)}원 ${weekDelta > 0 ? '더' : '덜'}</b> 썼어요.</span></div>` : ''}
+    <div class="dow-row">
+      ${weekDays.map(w => `
+        <div class="dow-cell ${w.key === key ? 'sel' : ''} ${w.key > realToday ? 'future' : ''}" data-k="${w.key}" style="${w.expense ? `background:rgba(193,72,63,${(0.10 + 0.30 * (w.expense / weekMax)).toFixed(2)})` : ''};cursor:${w.key > realToday ? 'default' : 'pointer'}">
+          <em>${w.dow}</em>
+          <span>${w.expense ? formatCompactWon(w.expense) : '·'}</span>
+        </div>`).join('')}
+    </div>
+    <div class="settings-note">주간 합계 ${formatWon(weekExpense)} · 요일을 누르면 그 날로 이동해요.</div>
+  `;
+  document.querySelector('#today-week-body .dow-row').addEventListener('click', (e) => {
+    const cell = e.target.closest('.dow-cell');
+    if (!cell || cell.classList.contains('future')) return;
+    state.todayDayKey = cell.dataset.k;
+    renderPage();
+  });
+
+  /* --- 곧 나갈 고정비 --- */
+  document.getElementById('today-due-body').innerHTML = `
+    <div class="now-kv"><span>미결제 ${pending.length}건 예상 합계</span><b style="color:${pendingSum ? 'var(--red)' : 'var(--green)'}">${formatWon(pendingSum)}</b></div>
+    <div style="max-height:240px;overflow-y:auto;margin-top:8px;">
+      ${dueRows.length ? dueRows.map(f => {
+        const cls = f.dday === null ? '' : f.dday < 0 ? 'late' : f.dday <= 3 ? 'soon' : '';
+        const lbl = f.dday === null ? '?' : f.dday === 0 ? '오늘' : f.dday > 0 ? `D-${f.dday}` : `+${-f.dday}일`;
+        return `<div class="fixed-due">
+          <span class="dday ${cls}">${lbl}</span>
+          <span class="nm">${f.item}<small>${f.vendor || f.minor || ''}${f.expectedDay ? ` · 보통 ${f.expectedDay}일` : ''}</small></span>
+          <span class="amt2">${formatWon(f.expected)}</span>
+        </div>`;
+      }).join('') : '<div class="empty-state">이번 달 나갈 고정비는 모두 결제됐어요. 👍</div>'}
+    </div>
+    ${dueRows.some(f => f.dday !== null && f.dday < 0) ? '<div class="settings-note">예상 결제일이 지났는데 기록이 없는 항목은 가계부 입력이 빠졌는지 확인해보세요.</div>' : ''}
+  `;
+
+  /* --- 카테고리 --- */
+  document.getElementById('today-cat-body').innerHTML = catRows.length ? catRows.map(r => `
+    <div class="budget-row-compact">
+      <span class="b-name" title="${r.name}">${r.name}</span>
+      <div class="b-bar-track"><div class="b-bar-fill" style="width:${(r.amt / catMax) * 100}%"></div></div>
+      <span class="b-figures">${wonComma(r.amt)}원 · ${((r.amt / (today.expense || 1)) * 100).toFixed(0)}%</span>
+    </div>`).join('') : '<div class="empty-state">지출 기록이 없어요.</div>';
+
+  /* --- 내역 --- */
+  const sortedRows = today.rows.slice().sort((a, b) => b.amount - a.amount);
+  document.getElementById('today-rows-body').innerHTML = `
+    <div class="table-scroll" style="max-height:340px;">
+      <table class="data-table">
+        <thead><tr><th>분류</th><th>소분류</th><th>항목</th><th>사용처 / 메모</th><th style="text-align:right">금액</th></tr></thead>
+        <tbody>${sortedRows.length ? sortedRows.map(r => {
+          const cls = majorTagClass(r.major);
+          return `<tr>
+            <td><span class="tag-pill ${cls}">${r.major || '-'}</span></td>
+            <td>${r.minor || '-'}</td>
+            <td>${r.item || '-'}</td>
+            <td>${r.vendor || ''}${r.memo ? `<div style="color:var(--text-faint);font-size:11px;">${r.memo}</div>` : ''}</td>
+            <td class="amt ${cls}">${formatWon(r.amount)}</td>
+          </tr>`;
+        }).join('') : '<tr><td colspan="5" style="text-align:center;color:var(--text-faint);padding:20px;">이 날 기록이 없어요.</td></tr>'}</tbody>
+      </table>
+    </div>
+  `;
+
+  /* --- 추이 차트 --- */
+  const drawTodayTrend = () => {
+    if (state.charts.todayTrend) state.charts.todayTrend.destroy();
+    const n = state.todayTrendRange;
+    const keys = [];
+    for (let i = n - 1; i >= 0; i--) keys.push(shiftDayKey(key, -i));
+    const vals = keys.map(k => dayOf(k).expense);
+    const ma = vals.map((_, i) => {
+      const from = Math.max(0, i - 6);
+      const slice = vals.slice(from, i + 1);
+      return slice.reduce((a, b) => a + b, 0) / slice.length;
+    });
+    state.charts.todayTrend = new Chart(document.getElementById('chart-today-trend'), {
+      data: {
+        labels: keys.map(dayKeyShort),
+        datasets: [
+          {
+            type: 'bar', label: '일별 지출', data: vals, borderRadius: 3, order: 2,
+            backgroundColor: keys.map(k => k === key ? '#c9a227' : 'rgba(193,72,63,0.7)')
+          },
+          {
+            type: 'line', label: '7일 이동평균', data: ma, borderColor: '#e0c766',
+            borderWidth: 2, pointRadius: 0, tension: 0.3, order: 1
+          }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, layout: { padding: { top: 14 } },
+        interaction: { mode: 'index', intersect: false },
+        onClick: (evt, els) => {
+          if (!els || !els.length) return;
+          const k = keys[els[0].index];
+          if (k > realToday) return;
+          state.todayDayKey = k;
+          renderPage();
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              title: (items) => dayKeyLabel(keys[items[0].dataIndex]) + ` (${DOW_KR[dowOfDayKey(keys[items[0].dataIndex])]})`,
+              label: (c) => ` ${c.dataset.label}: ${formatWon(c.raw)}`
+            }
+          }
+        },
+        scales: {
+          x: { ticks: { ...MONO_TICK, autoSkip: true, maxRotation: 0 }, grid: { display: false } },
+          y: { ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT }
+        }
+      }
+    });
+  };
+  document.getElementById('today-trend-range').addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    state.todayTrendRange = parseInt(btn.dataset.n, 10);
+    document.querySelectorAll('#today-trend-range button').forEach(b => b.classList.toggle('active', b === btn));
+    drawTodayTrend();
+  });
+  drawTodayTrend();
+
+  /* --- 날짜 이동 --- */
+  const setDay = (k) => {
+    if (!k || k > realToday) return;
+    state.todayDayKey = k;
+    renderPage();
+  };
+  document.getElementById('today-date').addEventListener('change', (e) => setDay(e.target.value));
+  document.getElementById('today-prev').addEventListener('click', () => setDay(shiftDayKey(key, -1)));
+  document.getElementById('today-next').addEventListener('click', () => setDay(shiftDayKey(key, 1)));
+  document.getElementById('today-jump').addEventListener('click', () => setDay(realToday));
+}
+
+/* ---------------- page: 캘린더 (수입·지출·이체 한눈에) ---------------- */
+
+const CAL_MODES = [
+  ['all', '전체'],
+  ['expense', '지출'],
+  ['income', '수입'],
+  ['transfer', '이체']
+];
+
+/* 캘린더 셀: 축약하지 않고 전체 금액을 콤마 표기로 보여준다. */
+function formatCalWon(n) {
+  const neg = n < 0;
+  const abs = Math.round(Math.abs(n));
+  return (neg ? '-' : '') + abs.toLocaleString('ko-KR');
+}
+
+function calHeatColor(mode, ratio) {
+  const a = (0.08 + 0.40 * ratio).toFixed(2);
+  if (mode === 'income') return `rgba(76,140,107,${a})`;
+  if (mode === 'transfer') return `rgba(201,162,39,${a})`;
+  return `rgba(193,72,63,${a})`;
+}
+
+function renderCalendarPage(container, data, d) {
+  const ledger = data.ledger || [];
+  if (!ledger.length) {
+    container.innerHTML = '<div class="panel full"><div class="empty-state">가계부(D) 데이터를 불러오지 못해 캘린더를 만들 수 없어요.</div></div>';
+    return;
+  }
+
+  const availableKeys = [...new Set(ledger.map(r => ledgerMonthKey(r.date)).filter(Boolean))].sort();
+  if (!state.calMonthKey || !availableKeys.includes(state.calMonthKey)) {
+    const t = thisMonthKey();
+    state.calMonthKey = availableKeys.includes(t) ? t : availableKeys[availableKeys.length - 1];
+  }
+  const monthKey = state.calMonthKey;
+  const [Y, MO] = monthKey.split('-').map(Number);
+  const M = buildNowMonth(ledger, monthKey);
+  const mode = CAL_MODES.some(m => m[0] === state.calMode) ? state.calMode : 'all';
+  const realToday = todayDayKey();
+  const isThisMonth = monthKey === thisMonthKey();
+
+  /* 선택된 날: 이 달에 속하지 않으면 오늘(또는 마지막 기록일)로 리셋 */
+  const dayKeyFor = (day) => `${Y}-${pad2(MO)}-${pad2(day)}`;
+  const recordedDays = M.daily.filter(b => b.rows.length).map(b => b.day);
+  if (!state.calSelDay || state.calSelDay.slice(0, 7) !== monthKey) {
+    state.calSelDay = isThisMonth
+      ? realToday
+      : dayKeyFor(recordedDays.length ? recordedDays[recordedDays.length - 1] : 1);
+  }
+  const selDay = state.calSelDay;
+  const selBucket = M.daily[parseInt(selDay.slice(8), 10) - 1] || { income: 0, expense: 0, transfer: 0, rows: [] };
+
+  const mIncome = M.daily.reduce((a, b) => a + b.income, 0);
+  const mExpense = M.daily.reduce((a, b) => a + b.expense, 0);
+  const mTransfer = M.daily.reduce((a, b) => a + b.transfer, 0);
+  const recordDays = recordedDays.length;
+  const elapsed = Math.max(elapsedDaysOf(monthKey), 0);
+  const noSpendDays = M.daily.filter(b => b.day <= (isThisMonth ? elapsed : M.days) && b.expense === 0).length;
+
+  const metricOf = (b) => mode === 'income' ? b.income : mode === 'transfer' ? b.transfer : b.expense;
+  const maxMetric = Math.max(...M.daily.map(b => Math.abs(metricOf(b))), 1);
+
+  /* 요일별 평균 지출 (미래 날짜 제외) */
+  const dowAgg = Array.from({ length: 7 }, () => ({ sum: 0, n: 0 }));
+  M.daily.forEach(b => {
+    const k = dayKeyFor(b.day);
+    if (k > realToday) return;
+    const idx = b.dow === 0 ? 6 : b.dow - 1;   // 월=0 … 일=6
+    dowAgg[idx].sum += b.expense;
+    dowAgg[idx].n += 1;
+  });
+  const dowAvg = dowAgg.map((a, i) => ({ name: ['월', '화', '수', '목', '금', '토', '일'][i], avg: a.n ? a.sum / a.n : 0 }));
+  const dowMax = Math.max(...dowAvg.map(x => x.avg), 1);
+
+  const monthOptions = availableKeys.slice().reverse()
+    .map(k => `<option value="${k}" ${k === monthKey ? 'selected' : ''}>${monthKeyLabel(k)}</option>`).join('');
+
+  /* --- 캘린더 셀 --- */
+  const firstDow = new Date(Y, MO - 1, 1).getDay();
+  const lead = firstDow === 0 ? 6 : firstDow - 1;
+  const cells = [];
+  for (let i = 0; i < lead; i++) cells.push('<div class="mcal-cell blank"></div>');
+  M.daily.forEach(b => {
+    const k = dayKeyFor(b.day);
+    const future = k > realToday;
+    const metric = Math.abs(metricOf(b));
+    const heat = (!future && metric > 0) ? `background:${calHeatColor(mode, metric / maxMetric)};` : '';
+    const dowCls = b.dow === 0 ? 'sun' : b.dow === 6 ? 'sat' : '';
+    const lines = [];
+    if (!future) {
+      if ((mode === 'all' || mode === 'income') && b.income) lines.push(`<span class="mcal-line inc"><i>수입</i>${formatCalWon(b.income)}</span>`);
+      if ((mode === 'all' || mode === 'expense') && b.expense) lines.push(`<span class="mcal-line exp"><i>지출</i>${formatCalWon(b.expense)}</span>`);
+      if ((mode === 'all' || mode === 'transfer') && b.transfer) lines.push(`<span class="mcal-line trf"><i>이체</i>${formatCalWon(b.transfer)}</span>`);
+      if (!lines.length) lines.push(`<span class="mcal-none">${b.rows.length ? '·' : '기록 없음'}</span>`);
+    }
+    cells.push(`<div class="mcal-cell ${k === selDay ? 'sel' : ''} ${future ? 'future' : ''} ${k === realToday && k !== selDay ? 'real' : ''}" data-k="${k}" style="${heat}">
+      <span class="mcal-daynum ${dowCls}">${b.day}${b.rows.length ? `<span class="cnt">${b.rows.length}건</span>` : ''}</span>
+      ${lines.join('')}
+    </div>`);
+  });
+
+  container.innerHTML = `
+    <div class="panel full">
+      <div class="panel-title">
+        <div><span class="eyebrow">CALENDAR</span>${monthKeyLabel(monthKey)}</div>
+        <div class="month-nav">
+          <div class="range-toggle" id="cal-mode-toggle">
+            ${CAL_MODES.map(([v, l]) => `<button data-mode="${v}" class="${mode === v ? 'active' : ''}">${l}</button>`).join('')}
+          </div>
+          <button id="cal-prev" ${availableKeys.indexOf(monthKey) <= 0 ? 'disabled' : ''}>◀</button>
+          <select id="cal-month-select">${monthOptions}</select>
+          <button id="cal-next" ${availableKeys.indexOf(monthKey) >= availableKeys.length - 1 ? 'disabled' : ''}>▶</button>
+          <button class="btn small" id="cal-thismonth">이번 달로</button>
+        </div>
+      </div>
+
+      <div class="stat-grid" style="margin-bottom:0;">
+        <div class="stat-card">
+          <div class="label">수입</div>
+          <div class="value" style="color:var(--green)">${formatWon(mIncome)}</div>
+          <div class="sub">기록 ${M.daily.filter(b => b.income).length}일</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">지출</div>
+          <div class="value" style="color:var(--red)">${formatWon(mExpense)}</div>
+          <div class="sub">무지출 ${noSpendDays}일</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">이체</div>
+          <div class="value" style="color:var(--gold-soft)">${formatWon(mTransfer)}</div>
+          <div class="sub">기록 ${M.daily.filter(b => b.transfer).length}일</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">순액 (수입−지출)</div>
+          <div class="value" style="color:${mIncome - mExpense >= 0 ? 'var(--green)' : 'var(--red)'}">${formatWon(mIncome - mExpense)}</div>
+          <div class="sub">기록된 날 ${recordDays} / ${M.days}일</div>
+        </div>
+      </div>
+
+      <div class="mcal-grid mcal-head">
+        ${['월', '화', '수', '목', '금', '토', '일'].map((x, i) => `<div class="mcal-dow ${i === 5 ? 'sat' : i === 6 ? 'sun' : ''}">${x}</div>`).join('')}
+      </div>
+      <div class="mcal-grid" id="cal-grid">${cells.join('')}</div>
+      <div class="mcal-legend">
+        <span><i style="background:#7fbf9c"></i>수입</span>
+        <span><i style="background:#e08a82"></i>지출</span>
+        <span><i style="background:var(--gold-soft)"></i>이체</span>
+        <span><i style="background:var(--panel-2);border:1px dashed var(--gold-soft)"></i>오늘</span>
+        <span>배경색 진하기 = ${mode === 'income' ? '수입' : mode === 'transfer' ? '이체' : '지출'} 규모</span>
+      </div>
+      <div class="settings-note">날짜를 누르면 아래에 그 날 상세 내역이 나와요.</div>
+    </div>
+
+    <div class="panel full" id="panel-cal-day"></div>
+
+    <div class="grid">
+      <div class="panel">
+        <div class="panel-title"><div><span class="eyebrow">WEEKLY</span>주차별 요약</div></div>
+        <div id="cal-week-body"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title"><div><span class="eyebrow">BY WEEKDAY</span>요일별 평균 지출</div></div>
+        <div id="cal-dow-body"></div>
+      </div>
+    </div>
+  `;
+
+  /* --- 선택한 날 상세 --- */
+  const dayPanel = document.getElementById('panel-cal-day');
+  const selRows = selBucket.rows.slice().sort((a, b) => b.amount - a.amount);
+  const selDow = DOW_KR[dowOfDayKey(selDay)];
+  dayPanel.innerHTML = `
+    <div class="panel-title">
+      <div><span class="eyebrow">SELECTED DAY</span>${dayKeyLabel(selDay)} (${selDow}) <span style="color:var(--text-faint);font-family:var(--mono);font-size:11px;">${selRows.length}건</span></div>
+      <div class="month-nav">
+        <button id="cal-day-prev">◀</button>
+        <button id="cal-day-next" ${selDay >= realToday ? 'disabled' : ''}>▶</button>
+        <button class="btn small" id="cal-day-open">오늘 탭에서 보기</button>
+      </div>
+    </div>
+    <div class="stat-grid" style="margin-bottom:14px;">
+      <div class="stat-card"><div class="label">수입</div><div class="value" style="color:var(--green)">${formatWon(selBucket.income)}</div></div>
+      <div class="stat-card"><div class="label">지출</div><div class="value" style="color:var(--red)">${formatWon(selBucket.expense)}</div></div>
+      <div class="stat-card"><div class="label">이체</div><div class="value" style="color:var(--gold-soft)">${formatWon(selBucket.transfer)}</div></div>
+      <div class="stat-card"><div class="label">순액</div><div class="value" style="color:${selBucket.income - selBucket.expense >= 0 ? 'var(--green)' : 'var(--red)'}">${formatWon(selBucket.income - selBucket.expense)}</div></div>
+    </div>
+    <div class="table-scroll" style="max-height:340px;">
+      <table class="data-table">
+        <thead><tr><th>분류</th><th>소분류</th><th>항목</th><th>사용처 / 메모</th><th style="text-align:right">금액</th></tr></thead>
+        <tbody>${selRows.length ? selRows.map(r => {
+          const cls = majorTagClass(r.major);
+          return `<tr>
+            <td><span class="tag-pill ${cls}">${r.major || '-'}</span></td>
+            <td>${r.minor || '-'}</td>
+            <td>${r.item || '-'}</td>
+            <td>${r.vendor || ''}${r.memo ? `<div style="color:var(--text-faint);font-size:11px;">${r.memo}</div>` : ''}</td>
+            <td class="amt ${cls}">${formatWon(r.amount)}</td>
+          </tr>`;
+        }).join('') : '<tr><td colspan="5" style="text-align:center;color:var(--text-faint);padding:20px;">이 날 기록이 없어요.</td></tr>'}</tbody>
+      </table>
+    </div>
+  `;
+
+  const setSel = (k) => {
+    if (!k || k > realToday) return;
+    if (k.slice(0, 7) !== monthKey) {
+      if (!availableKeys.includes(k.slice(0, 7))) return;
+      state.calMonthKey = k.slice(0, 7);
+    }
+    state.calSelDay = k;
+    renderPage();
+  };
+  document.getElementById('cal-day-prev').addEventListener('click', () => setSel(shiftDayKey(selDay, -1)));
+  document.getElementById('cal-day-next').addEventListener('click', () => setSel(shiftDayKey(selDay, 1)));
+  document.getElementById('cal-day-open').addEventListener('click', () => {
+    state.todayDayKey = selDay > realToday ? realToday : selDay;
+    state.page = 'today';
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.page === 'today'));
+    renderPage();
+  });
+
+  document.getElementById('cal-grid').addEventListener('click', (e) => {
+    const cell = e.target.closest('.mcal-cell');
+    if (!cell || cell.classList.contains('blank') || cell.classList.contains('future')) return;
+    state.calSelDay = cell.dataset.k;
+    renderPage();
+  });
+
+  /* --- 주차별 요약 --- */
+  const weekMax = Math.max(...M.weeks.map(w => w.expense), 1);
+  document.getElementById('cal-week-body').innerHTML = `
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead><tr><th>주차</th><th>기간</th><th style="text-align:right">수입</th><th style="text-align:right">지출</th><th style="text-align:right">순액</th></tr></thead>
+        <tbody>${M.weeks.map(w => `
+          <tr>
+            <td>${w.label}</td>
+            <td style="color:var(--text-faint);">${w.range}</td>
+            <td class="amt income">${w.income ? formatWon(w.income) : '—'}</td>
+            <td class="amt expense">${w.expense ? formatWon(w.expense) : '—'}</td>
+            <td class="amt" style="color:${w.income - w.expense >= 0 ? 'var(--green)' : 'var(--red)'}">${formatWon(w.income - w.expense)}</td>
+          </tr>`).join('')}</tbody>
+      </table>
+    </div>
+    ${M.weeks.length ? `<div class="settings-note">지출이 가장 큰 주: <b style="color:var(--gold-soft)">${M.weeks.reduce((a, b) => b.expense > a.expense ? b : a).label}</b> (${formatWon(weekMax)})</div>` : ''}
+  `;
+
+  /* --- 요일별 평균 지출 --- */
+  const dowTop = dowAvg.reduce((a, b) => b.avg > a.avg ? b : a, dowAvg[0]);
+  document.getElementById('cal-dow-body').innerHTML = `
+    ${dowAvg.map(x => `
+      <div class="dow-avg-row">
+        <span class="nm">${x.name}</span>
+        <div class="b-bar-track"><div class="b-bar-fill" style="width:${(x.avg / dowMax) * 100}%"></div></div>
+        <span class="fig">${x.avg ? formatWon(Math.round(x.avg)) : '—'}</span>
+      </div>`).join('')}
+    <div class="settings-note">${dowTop && dowTop.avg > 0 ? `이 달에는 <b style="color:var(--gold-soft)">${dowTop.name}요일</b>에 평균 ${formatWon(Math.round(dowTop.avg))}으로 가장 많이 썼어요.` : '아직 계산할 지출이 없어요.'}</div>
+  `;
+
+  /* --- 월 이동 / 모드 --- */
+  const setMonth = (k) => { state.calMonthKey = k; state.calSelDay = null; renderPage(); };
+  document.getElementById('cal-month-select').addEventListener('change', (e) => setMonth(e.target.value));
+  document.getElementById('cal-prev').addEventListener('click', () => {
+    const i = availableKeys.indexOf(monthKey);
+    if (i > 0) setMonth(availableKeys[i - 1]);
+  });
+  document.getElementById('cal-next').addEventListener('click', () => {
+    const i = availableKeys.indexOf(monthKey);
+    if (i < availableKeys.length - 1) setMonth(availableKeys[i + 1]);
+  });
+  document.getElementById('cal-thismonth').addEventListener('click', () => {
+    const t = thisMonthKey();
+    setMonth(availableKeys.includes(t) ? t : availableKeys[availableKeys.length - 1]);
+  });
+  document.getElementById('cal-mode-toggle').addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    state.calMode = btn.dataset.mode;
+    renderPage();
+  });
+}
+
+/* ---------------- page: 구조 (자산 증식 엔진) ----------------
+   "돈이 어디로 들어와서 어디로 빠지고 무엇으로 쌓이는가"를 한 화면에 놓고,
+   그 위에 지금 내가 손을 대야 하는 지점을 레버리지 순서로 표시한다.
+   임팩트는 모두 '연 환산 원' 단위로 계산해서 서로 직접 비교할 수 있게 만든다. */
+
+const STRUCT_CTRL_W = { '높음': 1, '중간': 0.6, '낮음': 0.2 };
+const PENSION_LIMIT = 9000000;    /* 연금저축+IRP 합산 세액공제 납입 한도 */
+const PENSION_CREDIT = 0.132;     /* 세액공제율: 총급여 5,500만 초과 13.2% / 이하 16.5% → 보수적으로 13.2% */
+const CGT_FREE = 2500000;         /* 해외주식 양도소득 기본공제 */
+const CGT_TAX_RATE = 0.22;
+
+function structureTargets(goals) {
+  const out = { milestones: [] };
+  (goals || []).forEach(g => {
+    const t = String(pickGoalField(g, 'title') || '');
+    const status = String(pickGoalField(g, 'status') || '');
+    const done = /완료|달성/.test(status);
+    let m;
+    if ((m = t.match(/비상금\s*([\d,]+)\s*만원/))) {
+      const v = parseFloat(m[1].replace(/,/g, '')) * 10000;
+      out.emergency = Math.max(out.emergency || 0, v);
+    }
+    if ((m = t.match(/고정비\s*([\d,]+)\s*만원/))) {
+      const v = parseFloat(m[1].replace(/,/g, '')) * 10000;
+      out.fixed = out.fixed ? Math.min(out.fixed, v) : v;
+    }
+    if ((m = t.match(/현금\s*비율.*?(\d+(?:\.\d+)?)\s*%/))) out.cashPct = parseFloat(m[1]);
+    if ((m = t.match(/총자산\s*([\d.]+)\s*억/)) && !done) out.milestones.push(parseFloat(m[1]) * 100000000);
+  });
+  out.milestones.sort((a, b) => a - b);
+  return out;
+}
+
+function buildStructureModel(data, d) {
+  const ledger = data.ledger || [];
+  const allKeys = [...new Set(ledger.map(r => ledgerMonthKey(r.date)).filter(Boolean))].sort();
+  const cur = thisMonthKey();
+  const closed = allKeys.filter(k => k < cur);            /* 진행 중인 달은 평균을 왜곡하므로 제외 */
+  const win = (closed.length >= 3 ? closed : allKeys).slice(-12);
+  const winSet = new Set(win);
+  const n = win.length || 1;
+  const rows = ledger.filter(r => winSet.has(ledgerMonthKey(r.date)));
+
+  const isInc = r => r.major.includes('수입');
+  const isExp = r => r.major.includes('지출');
+  const isTrf = r => r.major.includes('이체');
+  const isTax = r => CGT_RE.test(`${r.item} ${r.memo} ${r.vendor}`);
+  const absSum = (pred) => rows.filter(pred).reduce((a, r) => a + Math.abs(r.amount), 0);
+  /* 이체는 출금(음수)도 섞여 있으므로 부호를 살려서 순유입으로 본다 */
+  const netSum = (pred) => rows.filter(pred).reduce((a, r) => a + r.amount, 0);
+
+  /* 보너스·퇴직금 같은 일회성 유입이 평균을 끌어올리므로
+     '연봉 +5%'처럼 반복성을 가정하는 계산에는 중앙값을 쓴다. */
+  const monthlySeries = (pred) => {
+    const map = {};
+    win.forEach(k => { map[k] = 0; });
+    rows.filter(pred).forEach(r => {
+      const k = ledgerMonthKey(r.date);
+      if (k in map) map[k] += Math.abs(r.amount);
+    });
+    return win.map(k => map[k]);
+  };
+  const median = (arr) => {
+    const a = arr.slice().sort((x, y) => x - y);
+    if (!a.length) return 0;
+    return a.length % 2 ? a[(a.length - 1) / 2] : (a[a.length / 2 - 1] + a[a.length / 2]) / 2;
+  };
+
+  const inc = {
+    work: absSum(r => isInc(r) && r.minor.includes('근로')),
+    side: absSum(r => isInc(r) && r.minor.includes('부수입')),
+    invest: absSum(r => isInc(r) && r.minor.includes('투자')),
+    etc: absSum(r => isInc(r) && !r.minor.includes('근로') && !r.minor.includes('부수입') && !r.minor.includes('투자'))
+  };
+  inc.total = inc.work + inc.side + inc.invest + inc.etc;
+  const realized = absSum(r => isInc(r) && r.minor.includes('투자') && /판매/.test(r.item));
+
+  const exp = { total: absSum(isExp) };
+  exp.tax = absSum(r => isExp(r) && isTax(r));
+  exp.fixed = absSum(r => isExp(r) && r.fixed && !isTax(r));
+  exp.variable = Math.max(exp.total - exp.tax - exp.fixed, 0);
+
+  const netSave = inc.total - exp.total;
+  const saveRate = inc.total ? (netSave / inc.total) * 100 : 0;
+
+  const trf = {
+    invest: netSum(r => isTrf(r) && r.minor.includes('투자')),
+    pension: netSum(r => isTrf(r) && r.minor.includes('연금')),
+    save: netSum(r => isTrf(r) && r.minor.includes('저축')),
+    emergency: netSum(r => isTrf(r) && r.minor.includes('비상금'))
+  };
+  trf.total = trf.invest + trf.pension + trf.save + trf.emergency;
+
+  const alloc = d.allocation || {};
+  const stock = {
+    invest: alloc['투자 자산'] || 0,
+    pension: alloc['연금 자산'] || 0,
+    save: alloc['저축 자산'] || 0,
+    cash: alloc['현금 자산'] || 0
+  };
+  stock.total = d.totalAssets || (stock.invest + stock.pension + stock.save + stock.cash);
+  const riskAssets = stock.invest + stock.pension;
+
+  /* 복리 루프: 투자 자산만으로 계산한다.
+     전체 자산 증감으로 계산하면 퇴직연금(DC) 회사 부담금처럼
+     가계부에 수입으로 안 잡히는 외부 유입이 전부 '시장 손익'으로 오인된다. */
+  const invByKey = {};
+  (data.assetRows || []).forEach(r => {
+    if (r.category !== '투자 자산' || r.amount === null) return;
+    const k = assetMonthKey(r.date);
+    if (!k) return;
+    invByKey[k] = (invByKey[k] || 0) + r.amount;
+  });
+  const numKey = (k) => parseInt(k.replace('-', ''), 10);
+  const snapKeys = Object.keys(invByKey).map(Number).sort((a, b) => a - b);
+  const endK = snapKeys.filter(k => k <= numKey(win[win.length - 1])).pop();
+  const priorK = snapKeys.filter(k => k < numKey(win[0])).pop();
+  const loop = { covered: !!(endK && priorK) };
+  if (loop.covered) {
+    loop.delta = invByKey[endK] - invByKey[priorK];
+    loop.contribution = trf.invest;
+    loop.market = loop.delta - trf.invest;
+  }
+
+  const medWork = median(monthlySeries(r => isInc(r) && r.minor.includes('근로')));
+  const medIncome = median(monthlySeries(isInc));
+
+  return {
+    win, n, inc, realized, exp, netSave, saveRate, trf, stock, riskAssets, loop,
+    medWork, medIncome,
+    per: (v) => v / n,
+    ann: (v) => (v / n) * 12
+  };
+}
+
+function buildStructureActions(m, tg, d) {
+  const annWork = m.medWork * 12;      /* 중앙값 기준 = 보너스 없는 '평상시' 연 근로소득 */
+  const annFixed = m.ann(m.exp.fixed);
+  const annVar = m.ann(m.exp.variable);
+  const annRealized = m.ann(m.realized);
+  const annPension = m.ann(m.trf.pension);
+  const pensionRoom = Math.max(0, PENSION_LIMIT - annPension);
+  const emgTarget = tg.emergency || state.goals.emergencyFundTarget;
+
+  const A = [];
+  A.push({
+    node: '근로소득', stage: '유입', control: '중간',
+    name: '주 소득 +5% (연봉·직무 이동)', impact: annWork * 0.05,
+    short: '연봉 협상·이동',
+    todo: `전체 유입의 대부분이 여기서 나옵니다. 1년에 한두 번뿐인 기회지만 한 번의 효과가 지출 절감 몇 달치를 넘습니다.`
+  });
+  A.push({
+    node: '부수입', stage: '유입', control: '높음', assumed: true,
+    name: `부수입으로 고정비 덮기 (월 ${formatCompactWon(m.per(m.exp.fixed))}원)`, impact: annFixed,
+    short: '부수입으로 고정비 덮기',
+    todo: m.inc.side > 0
+      ? `현재 부수입 월 ${formatCompactWon(m.per(m.inc.side))}원. 고정비를 부수입으로 덮으면 월급이 흔들려도 구조가 버팁니다.`
+      : `유입 채널이 근로소득 하나뿐입니다. 금액보다 '두 번째 채널의 존재' 자체가 구조를 바꿉니다.`
+  });
+  A.push({
+    node: '고정비', stage: '누수', control: '높음',
+    name: '고정비 10% 절감', impact: annFixed * 0.1,
+    short: '고정비 −10%',
+    todo: `월 ${formatCompactWon(m.per(m.exp.fixed))}원. 한 번 끊으면 매달 자동으로 남습니다. 지출 탭 FIXED COSTS에서 항목별로 확인하세요.`
+  });
+  A.push({
+    node: '변동비', stage: '누수', control: '중간',
+    name: '변동비 10% 절감', impact: annVar * 0.1,
+    short: '변동비 −10%',
+    todo: `월 ${formatCompactWon(m.per(m.exp.variable))}원. 매달 의지로 관리해야 하는 영역이라 고정비보다 유지 비용이 큽니다.`
+  });
+  A.push({
+    node: '연금(코어)', stage: '배분', control: '높음',
+    name: pensionRoom > 0 ? `연금 세액공제 한도 잔여 ${formatCompactWon(pensionRoom)}원 채우기` : '연금 세액공제 한도 소진 완료',
+    impact: pensionRoom * PENSION_CREDIT,
+    short: pensionRoom > 0 ? '연금 한도 채우기' : '한도 소진 완료',
+    todo: pensionRoom > 0
+      ? `연 납입 ${formatCompactWon(annPension)}원 / 한도 900만원. 채우는 만큼 13.2~16.5%가 세금에서 즉시 돌아옵니다. 시장 수익률과 달리 확정된 수익입니다.`
+      : `한도 900만원을 채웠습니다. 이 이상 납입은 절세 효과가 없으니 위성 계좌로 보내세요.`
+  });
+  A.push({
+    node: '양도세', stage: '누수', control: '높음',
+    name: '해외주식 기본공제 250만원 매년 소진', impact: Math.min(annRealized, CGT_FREE) * CGT_TAX_RATE,
+    short: '250만 공제 쓰기',
+    todo: `최근 12개월 실현이익 ${formatCompactWon(annRealized)}원. 연말에 이익을 250만원 안쪽으로 나눠 실현하면 그만큼은 22%가 붙지 않습니다.`
+  });
+  A.push({
+    node: '투자 자산', stage: '축적', control: '낮음',
+    name: '수익률 +1%p', impact: m.riskAssets * 0.01,
+    short: '수익률 +1%p',
+    todo: `투자성 자산 ${formatCompactWon(m.riskAssets)}원 기준. 종목을 잘 고르는 건 통제 밖이고, 실제로 통제되는 건 비용·분산·안 파는 것뿐입니다.`
+  });
+  A.push({
+    node: '비상금', stage: '배분', control: '높음', risk: true,
+    name: '비상금 목표 채우기', impact: null,
+    short: '비상금 방어선',
+    todo: `현재 비상금 ${formatCompactWon(d.emergencyFund)}원 / 목표 ${formatCompactWon(emgTarget)}원. 비상금이 얇으면 하락장에서 투자 자산을 팔아야 하고, 그 순간 이 엔진이 멈춥니다.`
+  });
+
+  A.forEach(a => { a.score = (a.impact || 0) * (STRUCT_CTRL_W[a.control] || 0.5); });
+  A.sort((a, b) => b.score - a.score);
+  A.forEach((a, i) => { a.rank = i + 1; });
+  return { list: A, pensionRoom, annPension, emgTarget, annWork, annFixed, annVar, annRealized };
+}
+
+function renderStructurePage(container, data, d) {
+  if (!data.ledger || !data.ledger.length) {
+    container.innerHTML = '<div class="panel full"><div class="empty-state">가계부(D) 데이터를 불러오지 못해 구조를 계산할 수 없어요.</div></div>';
+    return;
+  }
+
+  const m = buildStructureModel(data, d);
+  const tg = structureTargets(data.goals);
+  const AC = buildStructureActions(m, tg, d);
+  const actByNode = {};
+  AC.list.forEach(a => { if (!actByNode[a.node]) actByNode[a.node] = a; });
+
+  /* 다이어그램 위에 올릴 액션 칩: 상위 4순위 + 리스크 방어 항목만 (나머지는 아래 표에서) */
+  const chip = (nodeName) => {
+    const a = actByNode[nodeName];
+    if (!a) return '';
+    const showIt = a.rank <= 4 || a.risk;
+    if (!showIt) return '';
+    const cls = a.risk ? 'risk' : (a.rank === 1 ? 'p1' : '');
+    const badge = a.risk ? '방어' : `${a.rank}순위`;
+    const gain = a.impact ? ` <b>+연 ${formatCompactWon(a.impact)}원</b>` : '';
+    return `<div class="eng-act ${cls}"><span class="rk">${badge}</span>${a.short}${gain}</div>`;
+  };
+
+  const node = (o) => {
+    const pctTxt = (o.pct === null || o.pct === undefined) ? '' : `<span class="pct">${o.pct.toFixed(0)}%</span>`;
+    const bar = (o.pct === null || o.pct === undefined) ? '' : `<div class="eng-bar"><i class="${o.tone || ''}" style="width:${Math.min(Math.max(o.pct, 0), 100)}%"></i></div>`;
+    const chipHtml = chip(o.nm);
+    return `<div class="eng-node ${o.cls || ''} ${(o.amount || chipHtml) ? '' : 'zero'}" title="${formatWon(o.amount)}">
+      <div class="eng-node-top"><span class="nm">${o.nm}</span>${pctTxt}</div>
+      <div class="eng-amt ${o.tone || ''}">${formatCompactWon(o.amount)}원</div>
+      ${bar}
+      ${o.sub ? `<div class="eng-sub">${o.sub}</div>` : ''}
+      ${chipHtml}
+    </div>`;
+  };
+
+  const pctOf = (v, t) => (t ? (v / t) * 100 : 0);
+  const winLabel = `${monthKeyLabel(m.win[0])} ~ ${monthKeyLabel(m.win[m.win.length - 1])}`;
+
+  /* --- 복리 루프 문구 --- */
+  const annIncome = m.medIncome * 12;   /* 일회성 유입이 낀 달을 빼기 위해 중앙값 사용 */
+  const crossPct = annIncome ? (m.riskAssets / annIncome) * 100 : 0;
+  const loopHtml = (() => {
+    if (!m.loop.covered) {
+      return `<div class="tx">투자 자산 스냅샷이 이 기간을 다 덮지 못해서 투입/시장 분해는 생략했어요.</div>`;
+    }
+    const c = Math.max(m.loop.contribution, 0);
+    const k = m.loop.market;
+    const base = c + Math.abs(k) || 1;
+    const cw = (c / base) * 100;
+    const kw = (Math.abs(k) / base) * 100;
+    return `
+      <div class="tx">
+        최근 ${m.n}개월 투자 자산은 <b>${formatCompactWon(m.loop.delta)}원</b> 늘었고,
+        그중 내가 넣은 돈이 <b>${formatCompactWon(c)}원</b>,
+        시장이 만든 손익이 <b>${k >= 0 ? '+' : '−'}${formatCompactWon(Math.abs(k))}원</b>이에요.
+        ${c > Math.abs(k)
+          ? `아직 <b>투입이 엔진</b>입니다 — 수익률을 고민하는 시간보다 저축률을 지키는 게 성과가 큽니다.`
+          : `이미 <b>시장이 엔진</b>에 더 가깝습니다 — 자산 배분과 변동성 관리의 비중을 높여야 할 구간입니다.`}
+      </div>
+      <div class="eng-split" title="투입 ${formatWon(c)} / 시장 ${formatWon(k)}">
+        <i style="width:${cw}%;background:var(--gold-soft)"></i>
+        <i style="width:${kw}%;background:${k >= 0 ? '#4c8c6b' : '#c1483f'}"></i>
+      </div>`;
+  })();
+
+  container.innerHTML = `
+    <div class="panel full">
+      <div class="panel-title">
+        <div><span class="eyebrow">ENGINE</span>자산 증식 구조</div>
+        <div class="month-nav">
+          <span style="font-family:var(--mono);font-size:11.5px;color:var(--text-faint);">최근 ${m.n}개월 평균 · ${winLabel}</span>
+        </div>
+      </div>
+
+      <div class="eng-board">
+        <div class="eng-stage">
+          <div class="eng-stage-head"><b>유입</b><span>INFLOW / 월</span></div>
+          ${node({ nm: '근로소득', amount: m.per(m.inc.work), pct: pctOf(m.inc.work, m.inc.total), tone: 'inc', sub: '월급 · 월급 외 · 보너스' })}
+          ${node({ nm: '부수입', amount: m.per(m.inc.side), pct: pctOf(m.inc.side, m.inc.total), tone: 'inc', sub: '근로 외 채널' })}
+          ${node({ nm: '투자 수익', amount: m.per(m.inc.invest), pct: pctOf(m.inc.invest, m.inc.total), tone: 'inc', sub: `실현 ${formatCompactWon(m.per(m.realized))} · 배당/이자 ${formatCompactWon(m.per(m.inc.invest - m.realized))}` })}
+        </div>
+        <div class="eng-arrow">▶</div>
+
+        <div class="eng-stage">
+          <div class="eng-stage-head"><b>누수</b><span>OUTFLOW / 월</span></div>
+          ${node({ nm: '고정비', amount: m.per(m.exp.fixed), pct: pctOf(m.exp.fixed, m.exp.total), tone: 'exp', cls: 'leak', sub: '한 번 끊으면 매달 절약' })}
+          ${node({ nm: '변동비', amount: m.per(m.exp.variable), pct: pctOf(m.exp.variable, m.exp.total), tone: 'exp', cls: 'leak', sub: '매달 판단이 필요한 지출' })}
+          ${node({ nm: '양도세', amount: m.per(m.exp.tax), pct: pctOf(m.exp.tax, m.exp.total), tone: 'exp', cls: 'leak', sub: '소비 아님 · 실현이익 정산' })}
+        </div>
+        <div class="eng-arrow">▶</div>
+
+        <div class="eng-stage">
+          <div class="eng-stage-head"><b>연료</b><span>FUEL / 월</span></div>
+          ${node({ nm: '순저축', amount: m.per(m.netSave), pct: null, tone: 'trf', sub: `유입 ${formatCompactWon(m.per(m.inc.total))} − 지출 ${formatCompactWon(m.per(m.exp.total))}` })}
+          <div class="eng-node" title="저축률">
+            <div class="eng-node-top"><span class="nm">저축률</span><span class="pct">목표 ${state.goals.savingsRateTarget}%</span></div>
+            <div class="eng-amt" style="color:${m.saveRate >= state.goals.savingsRateTarget ? 'var(--green)' : 'var(--red)'}">${m.saveRate.toFixed(1)}%</div>
+            <div class="eng-bar"><i style="width:${Math.min(Math.max(m.saveRate, 0), 100)}%;background:${m.saveRate >= state.goals.savingsRateTarget ? '#4c8c6b' : '#e08a82'}"></i></div>
+            <div class="eng-sub">이 엔진의 회전 속도</div>
+          </div>
+        </div>
+        <div class="eng-arrow">▶</div>
+
+        <div class="eng-stage">
+          <div class="eng-stage-head"><b>배분</b><span>ALLOCATION / 월</span></div>
+          ${node({ nm: '연금(코어)', amount: m.per(m.trf.pension), pct: pctOf(m.trf.pension, m.trf.total), tone: 'trf', sub: '연금저축 · IRP' })}
+          ${node({ nm: '투자(위성)', amount: m.per(m.trf.invest), pct: pctOf(m.trf.invest, m.trf.total), tone: 'trf', sub: '토스 · 신한 증권' })}
+          ${node({ nm: '저축', amount: m.per(m.trf.save), pct: pctOf(m.trf.save, m.trf.total), tone: 'trf', sub: '청약통장' })}
+          ${node({ nm: '비상금', amount: m.per(m.trf.emergency), pct: pctOf(m.trf.emergency, m.trf.total), tone: 'trf', sub: 'NH-CMA' })}
+        </div>
+        <div class="eng-arrow">▶</div>
+
+        <div class="eng-stage">
+          <div class="eng-stage-head"><b>축적</b><span>STOCK · ${d.latestMonth || ''}</span></div>
+          ${node({ nm: '투자 자산', amount: m.stock.invest, pct: pctOf(m.stock.invest, m.stock.total), tone: 'stk', sub: '변동성 노출' })}
+          ${node({ nm: '연금 자산', amount: m.stock.pension, pct: pctOf(m.stock.pension, m.stock.total), tone: 'stk', sub: '장기 · 인출 제한' })}
+          ${node({ nm: '저축 자산', amount: m.stock.save, pct: pctOf(m.stock.save, m.stock.total), tone: 'stk', sub: '청약 · CMA' })}
+          ${node({ nm: '현금 자산', amount: m.stock.cash, pct: pctOf(m.stock.cash, m.stock.total), tone: 'stk', sub: '생활 유동성' })}
+        </div>
+      </div>
+
+      <div class="eng-loop">
+        <span class="ic">↻</span>
+        ${loopHtml}
+      </div>
+
+      <div class="eng-cross">
+        <span class="lb">투자성 자산 ${formatCompactWon(m.riskAssets)} / 연수입 ${formatCompactWon(annIncome)}</span>
+        <div class="tr"><i style="width:${Math.min(crossPct, 100)}%"></i></div>
+        <span class="lb">${crossPct.toFixed(0)}%</span>
+      </div>
+      <div class="settings-note">
+        이 게이지가 <b>100%</b>를 넘는 순간부터 <b>수익률 1%p</b>가 <b>저축률 1%p</b>보다 큰 돈이 됩니다.
+        지금은 ${crossPct >= 100 ? '이미 넘었으니 배분·비용 관리의 비중을 올릴 구간' : `아직 ${(100 - crossPct).toFixed(0)}%p 남았으니 유입을 늘리고 누수를 막는 게 우선`}입니다.
+        연수입은 보너스 같은 일회성 입금에 흔들리지 않게 <b>중앙값</b>으로 계산했어요.
+        실현 수익(판매수익)은 계좌 안에 그대로 남기 때문에 <b>유입</b>에도, 위의 <b>시장 손익</b>에도 함께 잡힙니다.
+      </div>
+    </div>
+
+    <div class="panel full" id="panel-struct-actions"></div>
+
+    <div class="grid">
+      <div class="panel" id="panel-struct-check"></div>
+      <div class="panel" id="panel-struct-note"></div>
+    </div>
+  `;
+
+  /* --- 액션 우선순위 표 --- */
+  const ctrlCls = (c) => c === '높음' ? 'hi' : c === '중간' ? 'mid' : 'lo';
+  document.getElementById('panel-struct-actions').innerHTML = `
+    <div class="panel-title">
+      <div><span class="eyebrow">LEVERAGE</span>어디를 눌러야 하는가</div>
+      <div class="month-nav"><span style="font-family:var(--mono);font-size:11.5px;color:var(--text-faint);">연 환산 임팩트 × 통제력 순</span></div>
+    </div>
+    <div class="table-scroll" style="max-height:none;">
+      <table class="data-table">
+        <thead><tr>
+          <th style="width:44px">순위</th><th style="width:60px">지점</th><th>액션</th>
+          <th style="text-align:right;width:120px">연간 임팩트</th><th style="width:64px">통제력</th><th>지금 할 일</th>
+        </tr></thead>
+        <tbody>
+          ${AC.list.map(a => `<tr>
+            <td style="font-family:var(--mono);color:${a.rank <= 2 ? 'var(--gold-soft)' : 'var(--text-dim)'};font-weight:${a.rank <= 2 ? '600' : '400'}">${a.risk ? '방어' : a.rank}</td>
+            <td><span class="tag-pill ${a.stage === '유입' ? 'income' : a.stage === '누수' ? 'expense' : 'transfer'}">${a.stage}</span></td>
+            <td>${a.name}${a.assumed ? '<span style="color:var(--text-faint);font-size:11px;"> (가정)</span>' : ''}</td>
+            <td style="text-align:right"><span class="act-imp">${a.impact ? '+' + formatCompactWon(a.impact) + '원' : '—'}</span></td>
+            <td><span class="act-ctrl ${ctrlCls(a.control)}">${a.control}</span></td>
+            <td style="color:var(--text-dim);font-size:11.5px;line-height:1.6;">${a.todo}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+    <div class="settings-note">
+      임팩트는 최근 ${m.n}개월 실적을 연으로 환산한 값이고, 순위는 <b>임팩트 × 통제력</b>으로 정렬했어요.
+      그래서 금액이 더 커도 내가 못 바꾸는 항목(수익률)은 아래로 밀립니다.
+      근로소득은 보너스·일회성 입금이 평균을 부풀리지 않게 <b>중앙값</b>으로 계산했고,
+      "(가정)" 표시가 붙은 항목은 실적이 아니라 비교를 위한 목표값입니다.
+    </div>
+  `;
+
+  /* --- 구조 체크 --- */
+  const emgTarget = AC.emgTarget;
+  const cashRatio = m.stock.total ? (d.emergencyFund / m.stock.total) * 100 : 0;
+  const workShare = m.inc.total ? (m.inc.work / m.inc.total) * 100 : 0;
+  const coreShare = m.riskAssets ? (m.stock.pension / m.riskAssets) * 100 : 0;
+  const pensionFill = (AC.annPension / PENSION_LIMIT) * 100;
+  const monthlyFixed = m.per(m.exp.fixed);
+
+  const row = (label, sub, cur, tgt, ok) => `
+    <div class="chk-row">
+      <span class="mk ${ok === null ? 'na' : ok ? 'ok' : 'no'}">${ok === null ? '참고' : ok ? '통과' : '미달'}</span>
+      <span class="nm">${label}<i>${sub}</i></span>
+      <span class="fig">${cur}${tgt ? `<em>${tgt}</em>` : ''}</span>
+    </div>`;
+
+  document.getElementById('panel-struct-check').innerHTML = `
+    <div class="panel-title"><div><span class="eyebrow">STRUCTURE CHECK</span>구조 점검</div></div>
+    ${row('저축률', '연료가 충분히 들어오는가', `${m.saveRate.toFixed(1)}%`, `목표 ${state.goals.savingsRateTarget}%`, m.saveRate >= state.goals.savingsRateTarget)}
+    ${row('월 고정비', '자동으로 빠지는 누수', `${formatCompactWon(monthlyFixed)}원`, tg.fixed ? `목표 ${formatCompactWon(tg.fixed)}원` : '목표 미설정', tg.fixed ? monthlyFixed <= tg.fixed : null)}
+    ${row('비상금', '하락장에서 안 팔 수 있는 방어선', `${formatCompactWon(d.emergencyFund)}원`, `목표 ${formatCompactWon(emgTarget)}원`, d.emergencyFund >= emgTarget)}
+    ${row('현금 비율', '총자산 대비 비상금', `${cashRatio.toFixed(1)}%`, tg.cashPct ? `목표 ${tg.cashPct}%` : '목표 미설정', tg.cashPct ? cashRatio >= tg.cashPct : null)}
+    ${row('연금 한도 소진', `연 납입 ${formatCompactWon(AC.annPension)}원 / 900만원`, `${pensionFill.toFixed(0)}%`, '확정 수익 13.2~16.5%', pensionFill >= 100)}
+    ${row('유입 집중도', '근로소득이 전체 유입에서 차지하는 비중', `${workShare.toFixed(0)}%`, '참고 기준 90% 이하', workShare <= 90)}
+    <div class="settings-note">
+      목표값은 <b>목표 탭</b>에서 읽어옵니다. 목표 문구에 숫자가 없으면 "목표 미설정"으로 표시돼요.
+    </div>
+  `;
+
+  /* --- 읽는 법 --- */
+  const nextMile = (tg.milestones || []).find(v => v > m.stock.total);
+  const annNet = m.ann(m.netSave);
+  document.getElementById('panel-struct-note').innerHTML = `
+    <div class="panel-title"><div><span class="eyebrow">HOW TO READ</span>이 구조를 읽는 법</div></div>
+    <div style="font-size:12.5px;line-height:1.9;color:var(--text-dim);">
+      <b style="color:var(--text)">① 유입 → ② 누수 → ③ 연료 → ④ 배분 → ⑤ 축적</b>,
+      그리고 ⑤에서 나온 수익이 다시 ①로 돌아오는 한 바퀴가 자산이 늘어나는 전부예요.
+      순서대로 위에서 볼 때 <b style="color:var(--gold-soft)">앞쪽 단계일수록 내 손이 닿고, 뒤쪽일수록 시장의 몫</b>입니다.
+      <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+        <b style="color:var(--text)">코어 / 위성</b> — 투자성 자산 ${formatCompactWon(m.riskAssets)}원 중 연금(코어)이
+        <b style="color:var(--text)">${coreShare.toFixed(0)}%</b>, 증권(위성)이 <b style="color:var(--text)">${(100 - coreShare).toFixed(0)}%</b>예요.
+        위성이 클수록 자산이 아니라 <b>종목 선택</b>이 성과를 결정합니다.
+      </div>
+      ${nextMile ? `<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+        <b style="color:var(--text)">다음 마일스톤</b> — ${formatCompactWon(nextMile)}원까지 ${formatCompactWon(nextMile - m.stock.total)}원 남았고,
+        지금 순저축 속도(연 ${formatCompactWon(annNet)}원)만으로는
+        <b style="color:var(--gold-soft)">약 ${annNet > 0 ? ((nextMile - m.stock.total) / annNet).toFixed(1) : '—'}년</b>이 걸려요.
+        수익률은 이 숫자를 줄여주지만, 그 전에 <b>연료(순저축)</b>가 멈추면 아무 일도 일어나지 않아요.
+      </div>` : ''}
+    </div>
+  `;
+}
+
 /* ---------------- page: 자산 ---------------- */
+
 
 function renderAssetsPage(container, data, d) {
   container.innerHTML = `
@@ -3701,6 +5125,302 @@ function analyzeCapitalGainsTax(ledger) {
   return { rows, paid, paidRows, totalPaid, totalGain };
 }
 
+/* ---------------- BENCHMARK: 같은 일정으로 지수에 넣었다면 ----------------
+   "내가 고른 종목"과 "아무 생각 없이 지수"를 같은 조건에서 비교한다.
+   조건을 맞추는 방법: 실제 투자 이체가 일어난 달·금액 그대로 지수를 매수했다고
+   가정하고, 매달 누적 좌수 × 그 달 지수 = 반사실 평가액.
+   실제 평가액(자산 스냅샷의 투자 자산)과 같은 시점에서 뺀 값이 초과수익.
+   이 패널이 있어야 "이겼다/졌다"를 기억이 아니라 숫자로 판정할 수 있다. */
+function analyzeBenchmark(data, d) {
+  const hasSheetPrices = data.indexPrices && Object.keys(data.indexPrices).length > 0;
+  const prices = hasSheetPrices ? data.indexPrices : INDEX_SEED;
+  if (!Object.keys(prices).length) return null;
+
+  const sortedPriceKeys = Object.keys(prices).sort();
+  /* 해당 월 가격이 없으면 그 이전 가장 가까운 달 가격으로 대체한다.
+     (시트 갱신이 한 달 밀렸을 때 패널이 죽지 않게) */
+  const priceAt = (key) => {
+    if (prices[key] !== undefined) return prices[key];
+    let found = null;
+    for (const k of sortedPriceKeys) { if (k <= key) found = prices[k]; else break; }
+    return found;
+  };
+
+  /* 1) 납입 스케줄.
+     원장이 충분하면 원장에서 뽑는다 — 계좌별로 나뉘어 있어서
+     "이체 기록이 있는 계좌"만 비교 대상으로 좁힐 수 있다.
+     신한 증권처럼 이체 기록 없이 잔고만 있는 계좌를 실제 평가액에 넣으면
+     그 금액만큼 초과수익이 매달 공짜로 부풀려진다. */
+  const monthKeyOf = (pivotMonth) => {
+    const m = String(pivotMonth).match(/(\d{4})-(\d{1,2})월/);
+    return m ? `${m[1]}-${String(parseInt(m[2], 10)).padStart(2, '0')}` : null;
+  };
+  const ledgerMonthKey = (s) => {
+    const m = String(s || '').match(/(\d{4})\.\s*(\d{1,2})\./);
+    return m ? `${m[1]}-${String(parseInt(m[2], 10)).padStart(2, '0')}` : null;
+  };
+
+  const pivotSeries = data.transferCategories['투자 자산'] || [];
+  const pivotFlow = {};
+  let pivotTotal = 0;
+  data.months.forEach((pm, i) => {
+    const key = monthKeyOf(pm);
+    if (!key) return;
+    pivotFlow[key] = (pivotFlow[key] || 0) + (pivotSeries[i] || 0);
+    pivotTotal += pivotSeries[i] || 0;
+  });
+
+  const invTransfers = (data.ledger || []).filter(r => r.major === '이체' && r.minor === '투자 자산');
+  const ledgerFlow = {};
+  const trackedAccounts = new Set();
+  let ledgerTotal = 0;
+  invTransfers.forEach(r => {
+    const key = ledgerMonthKey(r.date);
+    if (!key) return;
+    ledgerFlow[key] = (ledgerFlow[key] || 0) + (r.amount || 0);
+    ledgerTotal += r.amount || 0;
+    if (r.item) trackedAccounts.add(r.item);
+  });
+
+  /* 원장 쪽이 피벗 총액을 거의 재현할 때만 원장을 신뢰한다.
+     오프라인 스냅샷의 ledger는 앞부분만 잘려 담겨 있어서, 건수만 보고
+     원장을 쓰면 누적 원금이 조용히 과소 집계된다. */
+  const ledgerAgrees = pivotTotal === 0
+    ? invTransfers.length >= 10
+    : Math.abs(ledgerTotal - pivotTotal) <= Math.abs(pivotTotal) * 0.02;
+  const useLedger = invTransfers.length >= 10 && ledgerAgrees;
+
+  const flowByKey = useLedger ? ledgerFlow : pivotFlow;
+  if (!useLedger) trackedAccounts.clear();
+
+  /* 2) 시간순으로 누적 좌수와 누적 원금을 쌓는다 */
+  let units = 0, contrib = 0, missing = 0;
+  const stateByKey = {};
+  const allKeys = Array.from(new Set(Object.keys(flowByKey).concat(sortedPriceKeys))).sort();
+  allKeys.forEach(key => {
+    const flow = flowByKey[key] || 0;
+    if (flow !== 0) {
+      const px = priceAt(key);
+      if (px) { units += flow / px; contrib += flow; }
+      else { missing += 1; contrib += flow; }
+    }
+    stateByKey[key] = { units, contrib };
+  });
+
+  /* 3) 자산 스냅샷이 있는 달마다 실제 vs 반사실을 같은 시점으로 맞춘다.
+     원장을 쓸 수 있으면 이체 기록이 있는 계좌만 합산한다. */
+  const balByMonth = {};
+  const excluded = new Set();
+  data.assetRows.forEach(r => {
+    if (r.category !== '투자 자산' || r.amount === null) return;
+    if (useLedger && trackedAccounts.size && !trackedAccounts.has(r.account)) {
+      excluded.add(r.account);
+      return;
+    }
+    balByMonth[r.date] = (balByMonth[r.date] || 0) + r.amount;
+  });
+
+  const carry = (key) => {
+    if (stateByKey[key]) return stateByKey[key];
+    const keys = Object.keys(stateByKey).filter(k => k <= key).sort();
+    return keys.length ? stateByKey[keys[keys.length - 1]] : { units: 0, contrib: 0 };
+  };
+
+  const rows = [];
+  (d.assetMonths || []).forEach(am => {
+    const mk = assetMonthKey(am);
+    if (!mk) return;
+    const key = `${Math.floor(mk / 100)}-${String(mk % 100).padStart(2, '0')}`;
+    const px = priceAt(key);
+    const st = carry(key);
+    const actual = balByMonth[am];
+    if (px === null || px === undefined || actual === undefined) return;
+    const index = st.units * px;
+    rows.push({
+      month: am, key, contrib: st.contrib, actual, index,
+      diff: actual - index,
+      actualRoi: st.contrib > 0 ? ((actual - st.contrib) / st.contrib) * 100 : null,
+      indexRoi: st.contrib > 0 ? ((index - st.contrib) / st.contrib) * 100 : null
+    });
+  });
+  if (!rows.length) return null;
+
+  const last = rows[rows.length - 1];
+  const best = rows.reduce((a, r) => (r.diff > a.diff ? r : a), rows[0]);
+  const worst = rows.reduce((a, r) => (r.diff < a.diff ? r : a), rows[0]);
+  const wins = rows.filter(r => r.diff > 0).length;
+
+  return {
+    rows, last, best, worst, wins, total: rows.length, missing,
+    source: hasSheetPrices ? (data.indexSource || 'sheet') : 'seed',
+    accounts: Array.from(trackedAccounts), excluded: Array.from(excluded), useLedger
+  };
+}
+
+function renderBenchmarkPanel(hostId, data, d) {
+  const host = document.getElementById(hostId);
+  if (!host) return;
+  const b = analyzeBenchmark(data, d);
+  if (!b) {
+    host.innerHTML = `
+      <div class="panel-title"><div><span class="eyebrow">BENCHMARK</span>지수 대비 초과수익</div></div>
+      <div class="empty-state">지수 데이터를 찾지 못했어요. 시트의 <b>지수_S&amp;P500</b> 탭에
+        <b>년월 / 종가</b> 두 컬럼이 있는지 확인해주세요.
+        <a href="${csvUrlFor(GID_INDEX)}" target="_blank" rel="noopener" style="color:var(--gold-soft);">불러오는 값 확인</a></div>`;
+    return;
+  }
+
+  const { last, best, worst, wins, total } = b;
+  const sign = (v) => (v >= 0 ? '+' : '−');
+  const col = (v) => (v >= 0 ? 'var(--green)' : 'var(--red)');
+  const pct = (v) => (v === null ? '—' : `${v >= 0 ? '+' : '−'}${Math.abs(v).toFixed(1)}%`);
+
+  host.innerHTML = `
+    <div class="panel-title">
+      <div><span class="eyebrow">BENCHMARK</span>지수 대비 초과수익 — 같은 일정으로 S&amp;P500에 넣었다면</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <div class="range-toggle" id="bench-mode-toggle">
+          <button data-mode="amount" class="${state.benchMode !== 'excess' ? 'active' : ''}">금액</button>
+          <button data-mode="excess" class="${state.benchMode === 'excess' ? 'active' : ''}">초과수익</button>
+        </div>
+        <div class="range-toggle" id="bench-range-toggle"></div>
+      </div>
+    </div>
+    <div class="stat-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-bottom:16px;">
+      <div class="stat-card" style="border-color:${last.diff >= 0 ? 'rgba(76,140,107,0.45)' : 'rgba(193,72,63,0.45)'};">
+        <div class="label">${assetMonthLabel(last.month)} 초과수익</div>
+        <div class="value" style="color:${col(last.diff)}">${sign(last.diff)}${formatCompactWon(Math.abs(last.diff))}원</div>
+        <div class="sub">내 ${pct(last.actualRoi)} vs 지수 ${pct(last.indexRoi)}</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">최고 초과수익</div>
+        <div class="value" style="color:${col(best.diff)}">${sign(best.diff)}${formatCompactWon(Math.abs(best.diff))}원</div>
+        <div class="sub">${assetMonthLabel(best.month)} 시점</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">최저 초과수익</div>
+        <div class="value" style="color:${col(worst.diff)}">${sign(worst.diff)}${formatCompactWon(Math.abs(worst.diff))}원</div>
+        <div class="sub">${assetMonthLabel(worst.month)} 시점</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">지수를 이긴 달</div>
+        <div class="value">${wins} / ${total}</div>
+        <div class="sub">스냅샷 기준 승률 ${total ? Math.round((wins / total) * 100) : 0}%</div>
+      </div>
+    </div>
+    <div class="chart-wrap tall"><canvas id="chart-bench"></canvas></div>
+    <div class="chart-legend" id="bench-legend"></div>
+    <div class="table-scroll" style="margin-top:12px;">
+      <table class="data-table">
+        <thead><tr>
+          <th>시점</th><th style="text-align:right">누적 납입</th><th style="text-align:right">내 평가액</th>
+          <th style="text-align:right">지수 반사실</th><th style="text-align:right">초과수익</th>
+          <th style="text-align:right">내 수익률</th><th style="text-align:right">지수 수익률</th><th>판정</th>
+        </tr></thead>
+        <tbody>
+          ${b.rows.slice().reverse().map(r => `<tr>
+            <td>${assetMonthLabel(r.month)}</td>
+            <td class="amt">${formatWon(r.contrib)}</td>
+            <td class="amt">${formatWon(r.actual)}</td>
+            <td class="amt">${formatWon(Math.round(r.index))}</td>
+            <td class="amt" style="color:${col(r.diff)}">${r.diff >= 0 ? '+' : '-'}${wonComma(r.diff)}</td>
+            <td class="amt">${pct(r.actualRoi)}</td>
+            <td class="amt">${pct(r.indexRoi)}</td>
+            <td style="color:${col(r.diff)}">${r.diff >= 0 ? '내가 앞섬' : '지수가 앞섬'}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+    <div class="settings-note" style="margin-top:12px;">
+      실제 투자 이체가 일어난 <b>달과 금액 그대로</b> 지수를 샀다고 가정한 값이에요
+      (누적 좌수 × 그 달 종가). 조건이 같으니 차이는 <b>종목 선택의 결과</b>입니다.
+      한계: 시트의 종가는 <b>월평균</b>이고 <b>배당 재투자가 빠져</b> 있어 지수가 연 약 1.3%p 과소평가돼요.
+      환율은 양쪽에서 상쇄된다고 보고 무시했고, 국내주식이 섞인 만큼은 정확하지 않습니다.
+      실현한 양도세는 여기 반영되지 않으니 <b>TAX 패널과 함께</b> 보세요.
+      ${b.accounts.length ? `<br>비교 대상 계좌: <b>${b.accounts.join(', ')}</b>.` : ''}
+      ${b.excluded.length ? ` 이체 기록이 없는 <b>${b.excluded.join(', ')}</b>은(는) 제외했어요 — 납입 없이 잔고만 있으면 초과수익이 그만큼 부풀려지니까요.` : ''}
+      ${!b.useLedger ? `<br><b style="color:var(--gold-soft)">원장이 얕아 월별 피벗으로 계산 중이라 계좌 분리가 안 됐어요.</b>` : ''}
+      ${b.missing ? `<br><b style="color:var(--red)">${b.missing}개 달의 지수 값이 없어 이전 달 종가로 대체했어요.</b>` : ''}
+      ${b.source === 'seed' ? `<br><b style="color:var(--gold-soft)">지수_S&amp;P500 탭을 못 읽어서 내장 백업값으로 계산 중이에요.</b>` : ''}
+    </div>
+  `;
+
+  const drawBench = () => {
+    if (state.charts.bench) state.charts.bench.destroy();
+    const slice = sliceByRange(b.rows, state.benchRange);
+    const labels = slice.map(r => assetMonthLabel(r.month));
+    const ctx = document.getElementById('chart-bench');
+    if (!ctx) return;
+    const excess = state.benchMode === 'excess';
+
+    document.getElementById('bench-legend').innerHTML = excess
+      ? '<span><i style="background:#c9a227"></i>초과수익 (내 평가액 − 지수 반사실)</span>'
+      : '<span><i style="background:#4c8c6b"></i>내 평가액</span><span><i style="background:#5b8fc7"></i>지수 반사실</span><span><i style="background:#e0c766"></i>누적 납입</span>';
+
+    if (excess) {
+      state.charts.bench = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: '초과수익', data: slice.map(r => Math.round(r.diff)),
+            backgroundColor: slice.map(r => (r.diff >= 0 ? 'rgba(76,140,107,0.65)' : 'rgba(193,72,63,0.65)')),
+            borderColor: slice.map(r => (r.diff >= 0 ? '#4c8c6b' : '#c1483f')), borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` 초과수익: ${formatWon(c.raw)}` } } },
+          scales: {
+            x: { ticks: MONO_TICK, grid: { display: false } },
+            y: { ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT }
+          }
+        }
+      });
+      return;
+    }
+
+    state.charts.bench = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          { label: '내 평가액', data: slice.map(r => r.actual), borderColor: '#4c8c6b', backgroundColor: 'rgba(76,140,107,0.12)', fill: true, tension: 0.3, pointRadius: 2 },
+          { label: '지수 반사실', data: slice.map(r => Math.round(r.index)), borderColor: '#5b8fc7', backgroundColor: 'transparent', borderDash: [6, 4], tension: 0.3, pointRadius: 2 },
+          { label: '누적 납입', data: slice.map(r => r.contrib), borderColor: '#e0c766', backgroundColor: 'transparent', borderDash: [2, 3], borderWidth: 1.5, tension: 0.3, pointRadius: 0 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` ${c.dataset.label}: ${formatWon(c.raw)}` } } },
+        scales: {
+          x: { ticks: MONO_TICK, grid: { display: false } },
+          y: { ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT }
+        }
+      }
+    });
+  };
+
+  function onBenchRangePick(v) {
+    state.benchRange = v === 'all' ? 'all' : parseInt(v, 10);
+    bindRangeToggle('bench-range-toggle', RANGE_OPTIONS, state.benchRange, onBenchRangePick);
+    drawBench();
+  }
+  bindRangeToggle('bench-range-toggle', RANGE_OPTIONS, state.benchRange, onBenchRangePick);
+
+  const modeToggle = document.getElementById('bench-mode-toggle');
+  if (modeToggle) {
+    modeToggle.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.benchMode = btn.dataset.mode;
+        modeToggle.querySelectorAll('button').forEach(x => x.classList.toggle('active', x === btn));
+        drawBench();
+      });
+    });
+  }
+  drawBench();
+}
+
 function renderCapitalGainsPanel(hostId, ledger) {
   const host = document.getElementById(hostId);
   if (!host) return;
@@ -4235,6 +5955,18 @@ function renderInvestmentPage(container, data, d) {
   });
   const latestGain = cumSeries.length ? cumSeries[cumSeries.length - 1].balance - cumSeries[cumSeries.length - 1].cumContribution : 0;
 
+  /* 납입 원금(순 이체 누적) 대비 현재 평가액 — 자산 스냅샷 최신월 기준으로 두 값을 맞춘다 */
+  const latestCumContrib = cumSeries.length ? cumSeries[cumSeries.length - 1].cumContribution : cum;
+  const latestBalance = cumSeries.length ? cumSeries[cumSeries.length - 1].balance : latestInv;
+  const roiPct = latestCumContrib > 0 ? (latestGain / latestCumContrib) * 100 : null;
+  const valueRatioPct = latestCumContrib > 0 ? (latestBalance / latestCumContrib) * 100 : null;
+  /* 월별 수익률 추이 (평가액 / 누적 원금 − 1) */
+  const roiSeries = cumSeries.map(s => ({
+    month: s.month,
+    roi: s.cumContribution > 0 ? ((s.balance - s.cumContribution) / s.cumContribution) * 100 : null
+  }));
+  const fmtPct = (v) => (v === null || v === undefined || isNaN(v) ? '—' : `${v >= 0 ? '+' : '−'}${Math.abs(v).toFixed(1)}%`);
+
   const accounts = {};
   data.assetRows.filter(r => r.date === latestMonth && invCategories.includes(r.category)).forEach(r => {
     accounts[r.account] = { amount: r.amount, category: r.category };
@@ -4272,10 +6004,15 @@ function renderInvestmentPage(container, data, d) {
     <div class="grid grid-3">
       <div class="panel" id="panel-investment-insights"></div>
       <div class="stat-grid" style="grid-template-columns:1fr 1fr;">
-        <div class="stat-card"><div class="label">투자 자산 총액</div><div class="value">${formatCompactWon(latestInv)}원</div></div>
-        <div class="stat-card"><div class="label">누적 원금(이체)</div><div class="value">${formatCompactWon(cum)}원</div></div>
-        <div class="stat-card"><div class="label">누적 평가손익</div><div class="value" style="color:${latestGain >= 0 ? 'var(--green)' : 'var(--red)'}">${latestGain >= 0 ? '+' : ''}${formatCompactWon(latestGain)}원</div></div>
-        <div class="stat-card"><div class="label">누적 투자수익</div><div class="value" style="color:${cumInvestmentIncome >= 0 ? 'var(--green)' : 'var(--red)'}">${cumInvestmentIncome >= 0 ? '+' : ''}${formatCompactWon(cumInvestmentIncome)}원</div></div>
+        <div class="stat-card"><div class="label">투자 자산 총액</div><div class="value">${formatCompactWon(latestInv)}원</div><div class="sub">${latestMonth || ''} 기준</div></div>
+        <div class="stat-card"><div class="label">누적 원금(순 이체)</div><div class="value">${formatCompactWon(latestCumContrib)}원</div><div class="sub">입금 − 출금 누적</div></div>
+        <div class="stat-card" style="border-color:${roiPct === null ? 'var(--border)' : roiPct >= 0 ? 'rgba(76,140,107,0.45)' : 'rgba(193,72,63,0.45)'};">
+          <div class="label">원금 대비 수익률</div>
+          <div class="value" style="color:${roiPct === null ? 'var(--text)' : roiPct >= 0 ? 'var(--green)' : 'var(--red)'}">${roiPct === null ? '—' : fmtPct(roiPct)}</div>
+          <div class="sub">${valueRatioPct === null ? '원금 데이터 없음' : `넣은 돈의 ${valueRatioPct.toFixed(1)}% (${(valueRatioPct / 100).toFixed(3)}배)`}</div>
+        </div>
+        <div class="stat-card"><div class="label">누적 평가손익</div><div class="value" style="color:${latestGain >= 0 ? 'var(--green)' : 'var(--red)'}">${latestGain >= 0 ? '+' : ''}${formatCompactWon(latestGain)}원</div><div class="sub">평가액 − 누적 원금</div></div>
+        <div class="stat-card"><div class="label">누적 투자수익</div><div class="value" style="color:${cumInvestmentIncome >= 0 ? 'var(--green)' : 'var(--red)'}">${cumInvestmentIncome >= 0 ? '+' : ''}${formatCompactWon(cumInvestmentIncome)}원</div><div class="sub">배당·매매·이자 실현분</div></div>
         <div class="stat-card"><div class="label">이번 달 투자 이체</div><div class="value">${formatCompactWon(investTransfer)}원</div></div>
       </div>
       <div class="panel">
@@ -4294,6 +6031,10 @@ function renderInvestmentPage(container, data, d) {
       <div class="panel-title">
         <div><span class="eyebrow">CONTRIBUTION VS VALUE</span>누적 투자 원금 vs 투자자산 평가액</div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <div class="range-toggle" id="inv-cum-mode-toggle">
+            <button data-mode="amount" class="${state.invCumMode !== 'roi' ? 'active' : ''}">금액</button>
+            <button data-mode="roi" class="${state.invCumMode === 'roi' ? 'active' : ''}">수익률</button>
+          </div>
           <div class="range-toggle" id="inv-cum-period-toggle">
             <button data-period="month" class="active">월별</button>
             <button data-period="year">연별</button>
@@ -4302,11 +6043,8 @@ function renderInvestmentPage(container, data, d) {
         </div>
       </div>
       <div class="chart-wrap tall"><canvas id="chart-inv-cum"></canvas></div>
-      <div class="chart-legend">
-        <span><i style="background:#4c8c6b"></i>투자자산 평가액</span>
-        <span><i style="background:#e0c766"></i>누적 이체 원금</span>
-      </div>
-      <div class="settings-note">두 선의 차이(평가액 − 누적 원금)가 곧 대략적인 누적 손익이에요.</div>
+      <div class="chart-legend" id="inv-cum-legend"></div>
+      <div class="settings-note" id="inv-cum-note"></div>
     </div>
     <div class="panel full">
       <div class="panel-title">
@@ -4375,6 +6113,7 @@ function renderInvestmentPage(container, data, d) {
         <div id="stock-profit-list"></div>
       </div>
     </div>
+    <div class="panel full" id="panel-bench"></div>
     <div class="panel full" id="panel-toss-live"></div>
     <div class="panel full" id="panel-cgt"></div>
     <div class="panel full">
@@ -4384,14 +6123,61 @@ function renderInvestmentPage(container, data, d) {
   `;
 
   renderWeeklyInsights('panel-investment-insights', 'weekly-insights-investment', '투자 인사이트', () => computeInvestmentInsights(data, d, cumSeries, tagAgg), data, ['투자']);
+  renderBenchmarkPanel('panel-bench', data, d);
   renderTossPanel('panel-toss-live', data);
   renderCapitalGainsPanel('panel-cgt', data.ledger);
 
   const drawCum = () => {
     const period = state.invCumPeriod || 'month';
+    const mode = state.invCumMode === 'roi' ? 'roi' : 'amount';
     document.getElementById('inv-range-toggle').style.display = period === 'year' ? 'none' : '';
     if (state.charts.invCum) state.charts.invCum.destroy();
     const cumCtx = document.getElementById('chart-inv-cum');
+
+    document.getElementById('inv-cum-legend').innerHTML = mode === 'roi'
+      ? '<span><i style="background:#c9a227"></i>원금 대비 수익률(%)</span>'
+      : '<span><i style="background:#4c8c6b"></i>투자자산 평가액</span><span><i style="background:#e0c766"></i>누적 이체 원금</span>';
+    document.getElementById('inv-cum-note').innerHTML = mode === 'roi'
+      ? `각 시점의 <b>(평가액 − 누적 원금) ÷ 누적 원금</b>이에요. 0% 선 위에 있으면 넣은 돈보다 많이 갖고 있다는 뜻. 현재 <b style="color:${roiPct !== null && roiPct >= 0 ? 'var(--green)' : 'var(--red)'}">${fmtPct(roiPct)}</b>${valueRatioPct !== null ? ` · 넣은 돈의 ${valueRatioPct.toFixed(1)}%` : ''}`
+      : '두 선의 차이(평가액 − 누적 원금)가 곧 대략적인 누적 손익이에요.';
+
+    if (mode === 'roi') {
+      let labels, roiData;
+      if (period === 'year') {
+        const map = {};
+        roiSeries.forEach(s => { map[assetMonthYear(s.month)] = s; });
+        const years = Object.keys(map).sort();
+        labels = years.map(y => y + '년');
+        roiData = years.map(y => map[y].roi);
+      } else {
+        const slice = sliceByRange(roiSeries, state.invRange);
+        labels = slice.map(s => assetMonthLabel(s.month));
+        roiData = slice.map(s => s.roi);
+      }
+      state.charts.invCum = new Chart(cumCtx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label: '원금 대비 수익률', data: roiData, borderColor: '#c9a227',
+            backgroundColor: 'rgba(201,162,39,0.12)', fill: true, tension: 0.3, pointRadius: 2,
+            spanGaps: true, labelColor: '#efdfa0', labelOffset: -10,
+            labelFormatter: (v) => `${v.toFixed(1)}%`
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false, layout: { padding: { top: 26 } },
+          plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` 수익률: ${c.raw === null ? '—' : fmtPct(c.raw)}` } } },
+          scales: {
+            x: { ticks: MONO_TICK, grid: { display: false } },
+            y: { ticks: { ...MONO_TICK, callback: (v) => `${v}%` }, grid: GRID_FAINT }
+          }
+        },
+        plugins: [valueLabelPlugin]
+      });
+      return;
+    }
+
     let labels, balanceData, contribData;
     if (period === 'year') {
       const map = {};
@@ -4429,6 +6215,13 @@ function renderInvestmentPage(container, data, d) {
     drawCum();
   }
   bindRangeToggle('inv-range-toggle', RANGE_OPTIONS, state.invRange, onInvRangePick);
+  document.getElementById('inv-cum-mode-toggle').addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    state.invCumMode = btn.dataset.mode;
+    document.querySelectorAll('#inv-cum-mode-toggle button').forEach(b => b.classList.toggle('active', b === btn));
+    drawCum();
+  });
   document.getElementById('inv-cum-period-toggle').addEventListener('click', (e) => {
     const btn = e.target.closest('button');
     if (!btn) return;
@@ -4814,8 +6607,12 @@ async function fetchAllTabsAndMerge() {
     throw new Error(failures[0] ? failures[0].reason.message : '탭을 하나도 불러오지 못했어요');
   }
 
-  let assetRows = [], ledger = [], investmentTags = [], goals = [], stockCategoryMap = {};
+  let assetRows = [], ledger = [], investmentTags = [], goals = [], stockCategoryMap = {}, indexPrices = {};
   for (const rows of rowSets) {
+    try {
+      const ip = parseIndexFromRows(rows);
+      if (Object.keys(ip).length > Object.keys(indexPrices).length) indexPrices = ip;
+    } catch (e) {}
     try {
       const ar = parseAssetsFromRows(rows);
       if (ar.length > assetRows.length) assetRows = ar;
@@ -4852,7 +6649,9 @@ async function fetchAllTabsAndMerge() {
     months: pivot.months, incomeTotal: pivot.incomeTotal, expenseTotal: pivot.expenseTotal,
     expenseCategories: pivot.expenseCategories, incomeCategories: pivot.incomeCategories, transferCategories: pivot.transferCategories,
     assetRows, ledger, investmentTags, goals, stockCategoryMap,
-    toss: tossResult
+    toss: tossResult,
+    indexPrices: Object.keys(indexPrices).length ? indexPrices : INDEX_SEED,
+    indexSource: Object.keys(indexPrices).length ? 'sheet' : 'seed'
   };
 
   if (failures.length) {
