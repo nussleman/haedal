@@ -522,12 +522,12 @@ body{
 /* ---------- 캘린더 페이지 ---------- */
 .mcal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
 .mcal-head{margin-top:14px;margin-bottom:6px;}
-.mcal-dow{font-family:var(--mono);font-size:10.5px;color:var(--text-faint);text-align:center;}
+.mcal-dow{font-family:var(--mono);font-size:12px;color:var(--text-faint);text-align:center;}
 .mcal-dow.sat{color:#7c9bc9;}
 .mcal-dow.sun{color:#c1483f;}
 .mcal-cell{
-  min-height:80px;border:1px solid var(--border);border-radius:9px;background:var(--panel-2);
-  padding:6px 6px 7px;display:flex;flex-direction:column;gap:2px;cursor:pointer;
+  min-height:106px;border:1px solid var(--border);border-radius:9px;background:var(--panel-2);
+  padding:8px 8px 9px;display:flex;flex-direction:column;gap:3px;cursor:pointer;
   transition:border-color .15s;text-align:left;overflow:hidden;
 }
 .mcal-cell.blank{border-color:transparent;background:transparent;cursor:default;}
@@ -535,32 +535,102 @@ body{
 .mcal-cell:hover:not(.blank):not(.future){border-color:var(--gold-soft);}
 .mcal-cell.sel{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);}
 .mcal-cell.real{border-style:dashed;border-color:var(--gold-soft);}
-.mcal-daynum{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--mono);font-size:11.5px;color:var(--text-dim);margin-bottom:2px;}
+.mcal-daynum{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--mono);font-size:17px;font-weight:600;color:var(--text);margin-bottom:4px;}
 .mcal-daynum.sat{color:#7c9bc9;}
 .mcal-daynum.sun{color:#c1483f;}
-.mcal-daynum .cnt{font-size:9px;color:var(--text-faint);}
-.mcal-line{display:flex;justify-content:space-between;gap:4px;font-family:var(--mono);font-size:9.5px;line-height:1.4;}
+.mcal-daynum .cnt{font-size:10.5px;font-weight:400;color:var(--text-faint);}
+.mcal-line{display:flex;justify-content:space-between;gap:5px;font-family:var(--mono);font-size:13px;line-height:1.55;white-space:nowrap;font-variant-numeric:tabular-nums;}
 .mcal-line i{font-style:normal;opacity:.75;}
 .mcal-line.inc{color:#7fbf9c;}
 .mcal-line.exp{color:#e08a82;}
 .mcal-line.trf{color:var(--gold-soft);}
-.mcal-none{font-family:var(--mono);font-size:9.5px;color:var(--text-faint);}
+.mcal-none{font-family:var(--mono);font-size:11.5px;color:var(--text-faint);}
 .mcal-legend{display:flex;gap:14px;flex-wrap:wrap;font-family:var(--mono);font-size:10.5px;color:var(--text-dim);margin-top:12px;}
 .mcal-legend span{display:flex;align-items:center;gap:5px;}
 .mcal-legend i{width:9px;height:9px;border-radius:2px;display:inline-block;font-style:normal;}
 .dow-avg-row{display:flex;align-items:center;gap:10px;padding:6px 0;font-size:12.5px;}
 .dow-avg-row .nm{width:22px;font-family:var(--mono);font-size:11px;color:var(--text-dim);flex-shrink:0;}
 .dow-avg-row .fig{font-family:var(--mono);font-size:10.5px;color:var(--text-dim);width:86px;text-align:right;flex-shrink:0;}
+@media (max-width:1180px){
+  .mcal-line{font-size:12px;}
+  .mcal-line i{display:none;}
+}
 @media (max-width:820px){
-  .mcal-cell{min-height:70px;padding:5px 4px;}
-  .mcal-line{font-size:8.5px;}
-  .mcal-daynum{font-size:10.5px;}
+  .mcal-cell{min-height:92px;padding:6px 5px;}
+  .mcal-line{font-size:11px;}
+  .mcal-daynum{font-size:15px;}
   .mcal-daynum .cnt{display:none;}
 }
 @media (max-width:600px){
   .mcal-grid{gap:4px;}
-  .mcal-cell{min-height:62px;}
-  .mcal-line i{display:none;}
+  .mcal-cell{min-height:80px;padding:5px 4px;}
+  .mcal-line{font-size:10px;}
+  .mcal-daynum{font-size:13.5px;}
+}
+
+/* ---------- 구조 페이지 (자산 증식 엔진) ---------- */
+.eng-board{display:flex;align-items:stretch;gap:9px;margin-top:16px;}
+.eng-stage{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:7px;}
+.eng-stage-head{display:flex;align-items:baseline;gap:7px;padding-bottom:5px;border-bottom:1px solid var(--border-strong);}
+.eng-stage-head span{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;color:var(--text-faint);}
+.eng-stage-head b{font-family:var(--serif);font-size:13.5px;font-weight:700;color:var(--text);}
+.eng-arrow{flex:0 0 12px;display:flex;align-items:center;justify-content:center;color:var(--gold-soft);font-size:14px;opacity:.65;padding-top:26px;}
+.eng-node{border:1px solid var(--border);border-radius:10px;background:var(--panel-2);padding:8px 9px 9px;display:flex;flex-direction:column;gap:4px;}
+.eng-node.leak{border-color:rgba(193,72,63,.3);}
+.eng-node.zero{opacity:.55;}
+.eng-node-top{display:flex;justify-content:space-between;align-items:baseline;gap:6px;}
+.eng-node-top .nm{font-size:12.5px;font-weight:600;color:var(--text);}
+.eng-node-top .pct{font-family:var(--mono);font-size:10px;color:var(--text-faint);flex-shrink:0;}
+.eng-amt{font-family:var(--mono);font-size:15px;font-weight:600;letter-spacing:-.01em;color:var(--text);}
+.eng-amt.inc{color:#7fbf9c;}
+.eng-amt.exp{color:#e08a82;}
+.eng-amt.trf{color:var(--gold-soft);}
+.eng-amt.stk{color:#8fb4dd;}
+.eng-bar{height:5px;border-radius:3px;background:rgba(255,255,255,.05);overflow:hidden;}
+.eng-bar i{display:block;height:100%;border-radius:3px;background:var(--gold-soft);}
+.eng-bar i.exp{background:#e08a82;}
+.eng-bar i.inc{background:#7fbf9c;}
+.eng-bar i.stk{background:#8fb4dd;}
+.eng-sub{font-family:var(--mono);font-size:10px;color:var(--text-faint);line-height:1.5;}
+.eng-act{margin-top:3px;border-radius:7px;padding:6px 7px;font-size:11px;line-height:1.55;
+  border:1px dashed rgba(201,162,39,.42);background:rgba(201,162,39,.07);color:var(--gold-soft);}
+.eng-act b{color:var(--text);}
+.eng-act .rk{display:inline-block;font-family:var(--mono);font-size:9px;letter-spacing:.05em;
+  background:rgba(201,162,39,.22);color:var(--gold-soft);border-radius:4px;padding:1px 4px;margin-right:5px;}
+.eng-act.p1{border-style:solid;border-color:var(--gold);background:rgba(201,162,39,.17);}
+.eng-act.p1 .rk{background:var(--gold);color:#1a1508;font-weight:600;}
+.eng-act.risk{border-color:rgba(193,72,63,.45);background:rgba(193,72,63,.10);color:#e39a93;}
+.eng-act.risk .rk{background:rgba(193,72,63,.3);color:#f0b8b2;}
+.eng-loop{margin-top:16px;border:1px solid var(--border);border-radius:11px;
+  background:linear-gradient(90deg,rgba(201,162,39,.11),rgba(76,140,107,.07));padding:12px 14px;
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+.eng-loop .ic{font-size:18px;color:var(--gold-soft);flex-shrink:0;}
+.eng-loop .tx{flex:1 1 320px;font-size:12.5px;line-height:1.75;color:var(--text-dim);}
+.eng-loop .tx b{color:var(--text);}
+.eng-split{display:flex;height:10px;border-radius:5px;overflow:hidden;flex:1 1 180px;min-width:140px;background:rgba(255,255,255,.05);}
+.eng-split i{display:block;height:100%;}
+.eng-cross{display:flex;align-items:center;gap:9px;margin-top:12px;flex-wrap:wrap;}
+.eng-cross .lb{font-family:var(--mono);font-size:10.5px;color:var(--text-faint);flex:0 0 auto;}
+.eng-cross .tr{flex:1 1 200px;height:8px;border-radius:4px;background:rgba(255,255,255,.05);overflow:hidden;position:relative;}
+.eng-cross .tr i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,var(--green),var(--gold-soft));}
+.act-imp{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--gold-soft);}
+.act-ctrl{font-family:var(--mono);font-size:10px;border-radius:5px;padding:2px 6px;}
+.act-ctrl.hi{background:var(--green-soft);color:#8fd0ac;}
+.act-ctrl.mid{background:rgba(201,162,39,.18);color:var(--gold-soft);}
+.act-ctrl.lo{background:rgba(255,255,255,.05);color:var(--text-faint);}
+.chk-row{display:flex;align-items:flex-start;gap:11px;padding:9px 0;border-bottom:1px solid var(--border);font-size:12.5px;}
+.chk-row:last-child{border-bottom:none;}
+.chk-row .mk{flex:0 0 46px;font-family:var(--mono);font-size:10px;text-align:center;border-radius:5px;padding:3px 0;margin-top:1px;}
+.chk-row .mk.ok{background:var(--green-soft);color:#8fd0ac;}
+.chk-row .mk.no{background:var(--red-soft);color:#e39a93;}
+.chk-row .mk.na{background:rgba(255,255,255,.05);color:var(--text-faint);}
+.chk-row .nm{flex:1 1 auto;min-width:0;line-height:1.5;}
+.chk-row .nm i{display:block;font-style:normal;font-family:var(--mono);font-size:10.5px;color:var(--text-faint);margin-top:3px;}
+.chk-row .fig{flex:0 0 auto;text-align:right;font-family:var(--mono);font-size:12px;color:var(--text);line-height:1.5;}
+.chk-row .fig em{display:block;font-style:normal;font-size:10px;color:var(--text-faint);margin-top:2px;}
+@media (max-width:1000px){
+  .eng-board{flex-direction:column;}
+  .eng-arrow{padding-top:0;transform:rotate(90deg);}
 }
 
 /* ---------- nav ---------- */
@@ -1799,6 +1869,7 @@ function setSyncState(status) {
 
 const NAV_ITEMS = [
   { id: 'home', label: '홈' },
+  { id: 'structure', label: '구조' },
   { id: 'today', label: '오늘' },
   { id: 'calendar', label: '캘린더' },
   { id: 'now', label: '이번달' },
@@ -1890,7 +1961,8 @@ function renderPage() {
   const d = computeDerived(data);
   destroyPageCharts();
   const container = document.getElementById('page-content');
-  if (state.page === 'today') renderTodayPage(container, data, d);
+  if (state.page === 'structure') renderStructurePage(container, data, d);
+  else if (state.page === 'today') renderTodayPage(container, data, d);
   else if (state.page === 'calendar') renderCalendarPage(container, data, d);
   else if (state.page === 'now') renderNowPage(container, data, d);
   else if (state.page === 'assets') renderAssetsPage(container, data, d);
@@ -3414,16 +3486,11 @@ const CAL_MODES = [
   ['transfer', '이체']
 ];
 
-/* 캘린더 셀용 압축 표기: 만 단위에서 소수 1자리까지 유지 (6.9만 vs 7만) */
+/* 캘린더 셀: 축약하지 않고 전체 금액을 콤마 표기로 보여준다. */
 function formatCalWon(n) {
   const neg = n < 0;
-  const abs = Math.abs(n);
-  let out;
-  if (abs >= 100000000) out = (abs / 100000000).toFixed(2).replace(/\.?0+$/, '') + '억';
-  else if (abs >= 1000000) out = Math.round(abs / 10000).toLocaleString() + '만';
-  else if (abs >= 10000) out = (abs / 10000).toFixed(1).replace(/\.0$/, '') + '만';
-  else out = Math.round(abs).toLocaleString('ko-KR');
-  return (neg ? '-' : '') + out;
+  const abs = Math.round(Math.abs(n));
+  return (neg ? '-' : '') + abs.toLocaleString('ko-KR');
 }
 
 function calHeatColor(mode, ratio) {
@@ -3693,7 +3760,447 @@ function renderCalendarPage(container, data, d) {
   });
 }
 
+/* ---------------- page: 구조 (자산 증식 엔진) ----------------
+   "돈이 어디로 들어와서 어디로 빠지고 무엇으로 쌓이는가"를 한 화면에 놓고,
+   그 위에 지금 내가 손을 대야 하는 지점을 레버리지 순서로 표시한다.
+   임팩트는 모두 '연 환산 원' 단위로 계산해서 서로 직접 비교할 수 있게 만든다. */
+
+const STRUCT_CTRL_W = { '높음': 1, '중간': 0.6, '낮음': 0.2 };
+const PENSION_LIMIT = 9000000;    /* 연금저축+IRP 합산 세액공제 납입 한도 */
+const PENSION_CREDIT = 0.132;     /* 세액공제율: 총급여 5,500만 초과 13.2% / 이하 16.5% → 보수적으로 13.2% */
+const CGT_FREE = 2500000;         /* 해외주식 양도소득 기본공제 */
+const CGT_TAX_RATE = 0.22;
+
+function structureTargets(goals) {
+  const out = { milestones: [] };
+  (goals || []).forEach(g => {
+    const t = String(pickGoalField(g, 'title') || '');
+    const status = String(pickGoalField(g, 'status') || '');
+    const done = /완료|달성/.test(status);
+    let m;
+    if ((m = t.match(/비상금\s*([\d,]+)\s*만원/))) {
+      const v = parseFloat(m[1].replace(/,/g, '')) * 10000;
+      out.emergency = Math.max(out.emergency || 0, v);
+    }
+    if ((m = t.match(/고정비\s*([\d,]+)\s*만원/))) {
+      const v = parseFloat(m[1].replace(/,/g, '')) * 10000;
+      out.fixed = out.fixed ? Math.min(out.fixed, v) : v;
+    }
+    if ((m = t.match(/현금\s*비율.*?(\d+(?:\.\d+)?)\s*%/))) out.cashPct = parseFloat(m[1]);
+    if ((m = t.match(/총자산\s*([\d.]+)\s*억/)) && !done) out.milestones.push(parseFloat(m[1]) * 100000000);
+  });
+  out.milestones.sort((a, b) => a - b);
+  return out;
+}
+
+function buildStructureModel(data, d) {
+  const ledger = data.ledger || [];
+  const allKeys = [...new Set(ledger.map(r => ledgerMonthKey(r.date)).filter(Boolean))].sort();
+  const cur = thisMonthKey();
+  const closed = allKeys.filter(k => k < cur);            /* 진행 중인 달은 평균을 왜곡하므로 제외 */
+  const win = (closed.length >= 3 ? closed : allKeys).slice(-12);
+  const winSet = new Set(win);
+  const n = win.length || 1;
+  const rows = ledger.filter(r => winSet.has(ledgerMonthKey(r.date)));
+
+  const isInc = r => r.major.includes('수입');
+  const isExp = r => r.major.includes('지출');
+  const isTrf = r => r.major.includes('이체');
+  const isTax = r => CGT_RE.test(`${r.item} ${r.memo} ${r.vendor}`);
+  const absSum = (pred) => rows.filter(pred).reduce((a, r) => a + Math.abs(r.amount), 0);
+  /* 이체는 출금(음수)도 섞여 있으므로 부호를 살려서 순유입으로 본다 */
+  const netSum = (pred) => rows.filter(pred).reduce((a, r) => a + r.amount, 0);
+
+  /* 보너스·퇴직금 같은 일회성 유입이 평균을 끌어올리므로
+     '연봉 +5%'처럼 반복성을 가정하는 계산에는 중앙값을 쓴다. */
+  const monthlySeries = (pred) => {
+    const map = {};
+    win.forEach(k => { map[k] = 0; });
+    rows.filter(pred).forEach(r => {
+      const k = ledgerMonthKey(r.date);
+      if (k in map) map[k] += Math.abs(r.amount);
+    });
+    return win.map(k => map[k]);
+  };
+  const median = (arr) => {
+    const a = arr.slice().sort((x, y) => x - y);
+    if (!a.length) return 0;
+    return a.length % 2 ? a[(a.length - 1) / 2] : (a[a.length / 2 - 1] + a[a.length / 2]) / 2;
+  };
+
+  const inc = {
+    work: absSum(r => isInc(r) && r.minor.includes('근로')),
+    side: absSum(r => isInc(r) && r.minor.includes('부수입')),
+    invest: absSum(r => isInc(r) && r.minor.includes('투자')),
+    etc: absSum(r => isInc(r) && !r.minor.includes('근로') && !r.minor.includes('부수입') && !r.minor.includes('투자'))
+  };
+  inc.total = inc.work + inc.side + inc.invest + inc.etc;
+  const realized = absSum(r => isInc(r) && r.minor.includes('투자') && /판매/.test(r.item));
+
+  const exp = { total: absSum(isExp) };
+  exp.tax = absSum(r => isExp(r) && isTax(r));
+  exp.fixed = absSum(r => isExp(r) && r.fixed && !isTax(r));
+  exp.variable = Math.max(exp.total - exp.tax - exp.fixed, 0);
+
+  const netSave = inc.total - exp.total;
+  const saveRate = inc.total ? (netSave / inc.total) * 100 : 0;
+
+  const trf = {
+    invest: netSum(r => isTrf(r) && r.minor.includes('투자')),
+    pension: netSum(r => isTrf(r) && r.minor.includes('연금')),
+    save: netSum(r => isTrf(r) && r.minor.includes('저축')),
+    emergency: netSum(r => isTrf(r) && r.minor.includes('비상금'))
+  };
+  trf.total = trf.invest + trf.pension + trf.save + trf.emergency;
+
+  const alloc = d.allocation || {};
+  const stock = {
+    invest: alloc['투자 자산'] || 0,
+    pension: alloc['연금 자산'] || 0,
+    save: alloc['저축 자산'] || 0,
+    cash: alloc['현금 자산'] || 0
+  };
+  stock.total = d.totalAssets || (stock.invest + stock.pension + stock.save + stock.cash);
+  const riskAssets = stock.invest + stock.pension;
+
+  /* 복리 루프: 투자 자산만으로 계산한다.
+     전체 자산 증감으로 계산하면 퇴직연금(DC) 회사 부담금처럼
+     가계부에 수입으로 안 잡히는 외부 유입이 전부 '시장 손익'으로 오인된다. */
+  const invByKey = {};
+  (data.assetRows || []).forEach(r => {
+    if (r.category !== '투자 자산' || r.amount === null) return;
+    const k = assetMonthKey(r.date);
+    if (!k) return;
+    invByKey[k] = (invByKey[k] || 0) + r.amount;
+  });
+  const numKey = (k) => parseInt(k.replace('-', ''), 10);
+  const snapKeys = Object.keys(invByKey).map(Number).sort((a, b) => a - b);
+  const endK = snapKeys.filter(k => k <= numKey(win[win.length - 1])).pop();
+  const priorK = snapKeys.filter(k => k < numKey(win[0])).pop();
+  const loop = { covered: !!(endK && priorK) };
+  if (loop.covered) {
+    loop.delta = invByKey[endK] - invByKey[priorK];
+    loop.contribution = trf.invest;
+    loop.market = loop.delta - trf.invest;
+  }
+
+  const medWork = median(monthlySeries(r => isInc(r) && r.minor.includes('근로')));
+  const medIncome = median(monthlySeries(isInc));
+
+  return {
+    win, n, inc, realized, exp, netSave, saveRate, trf, stock, riskAssets, loop,
+    medWork, medIncome,
+    per: (v) => v / n,
+    ann: (v) => (v / n) * 12
+  };
+}
+
+function buildStructureActions(m, tg, d) {
+  const annWork = m.medWork * 12;      /* 중앙값 기준 = 보너스 없는 '평상시' 연 근로소득 */
+  const annFixed = m.ann(m.exp.fixed);
+  const annVar = m.ann(m.exp.variable);
+  const annRealized = m.ann(m.realized);
+  const annPension = m.ann(m.trf.pension);
+  const pensionRoom = Math.max(0, PENSION_LIMIT - annPension);
+  const emgTarget = tg.emergency || state.goals.emergencyFundTarget;
+
+  const A = [];
+  A.push({
+    node: '근로소득', stage: '유입', control: '중간',
+    name: '주 소득 +5% (연봉·직무 이동)', impact: annWork * 0.05,
+    short: '연봉 협상·이동',
+    todo: `전체 유입의 대부분이 여기서 나옵니다. 1년에 한두 번뿐인 기회지만 한 번의 효과가 지출 절감 몇 달치를 넘습니다.`
+  });
+  A.push({
+    node: '부수입', stage: '유입', control: '높음', assumed: true,
+    name: `부수입으로 고정비 덮기 (월 ${formatCompactWon(m.per(m.exp.fixed))}원)`, impact: annFixed,
+    short: '부수입으로 고정비 덮기',
+    todo: m.inc.side > 0
+      ? `현재 부수입 월 ${formatCompactWon(m.per(m.inc.side))}원. 고정비를 부수입으로 덮으면 월급이 흔들려도 구조가 버팁니다.`
+      : `유입 채널이 근로소득 하나뿐입니다. 금액보다 '두 번째 채널의 존재' 자체가 구조를 바꿉니다.`
+  });
+  A.push({
+    node: '고정비', stage: '누수', control: '높음',
+    name: '고정비 10% 절감', impact: annFixed * 0.1,
+    short: '고정비 −10%',
+    todo: `월 ${formatCompactWon(m.per(m.exp.fixed))}원. 한 번 끊으면 매달 자동으로 남습니다. 지출 탭 FIXED COSTS에서 항목별로 확인하세요.`
+  });
+  A.push({
+    node: '변동비', stage: '누수', control: '중간',
+    name: '변동비 10% 절감', impact: annVar * 0.1,
+    short: '변동비 −10%',
+    todo: `월 ${formatCompactWon(m.per(m.exp.variable))}원. 매달 의지로 관리해야 하는 영역이라 고정비보다 유지 비용이 큽니다.`
+  });
+  A.push({
+    node: '연금(코어)', stage: '배분', control: '높음',
+    name: pensionRoom > 0 ? `연금 세액공제 한도 잔여 ${formatCompactWon(pensionRoom)}원 채우기` : '연금 세액공제 한도 소진 완료',
+    impact: pensionRoom * PENSION_CREDIT,
+    short: pensionRoom > 0 ? '연금 한도 채우기' : '한도 소진 완료',
+    todo: pensionRoom > 0
+      ? `연 납입 ${formatCompactWon(annPension)}원 / 한도 900만원. 채우는 만큼 13.2~16.5%가 세금에서 즉시 돌아옵니다. 시장 수익률과 달리 확정된 수익입니다.`
+      : `한도 900만원을 채웠습니다. 이 이상 납입은 절세 효과가 없으니 위성 계좌로 보내세요.`
+  });
+  A.push({
+    node: '양도세', stage: '누수', control: '높음',
+    name: '해외주식 기본공제 250만원 매년 소진', impact: Math.min(annRealized, CGT_FREE) * CGT_TAX_RATE,
+    short: '250만 공제 쓰기',
+    todo: `최근 12개월 실현이익 ${formatCompactWon(annRealized)}원. 연말에 이익을 250만원 안쪽으로 나눠 실현하면 그만큼은 22%가 붙지 않습니다.`
+  });
+  A.push({
+    node: '투자 자산', stage: '축적', control: '낮음',
+    name: '수익률 +1%p', impact: m.riskAssets * 0.01,
+    short: '수익률 +1%p',
+    todo: `투자성 자산 ${formatCompactWon(m.riskAssets)}원 기준. 종목을 잘 고르는 건 통제 밖이고, 실제로 통제되는 건 비용·분산·안 파는 것뿐입니다.`
+  });
+  A.push({
+    node: '비상금', stage: '배분', control: '높음', risk: true,
+    name: '비상금 목표 채우기', impact: null,
+    short: '비상금 방어선',
+    todo: `현재 비상금 ${formatCompactWon(d.emergencyFund)}원 / 목표 ${formatCompactWon(emgTarget)}원. 비상금이 얇으면 하락장에서 투자 자산을 팔아야 하고, 그 순간 이 엔진이 멈춥니다.`
+  });
+
+  A.forEach(a => { a.score = (a.impact || 0) * (STRUCT_CTRL_W[a.control] || 0.5); });
+  A.sort((a, b) => b.score - a.score);
+  A.forEach((a, i) => { a.rank = i + 1; });
+  return { list: A, pensionRoom, annPension, emgTarget, annWork, annFixed, annVar, annRealized };
+}
+
+function renderStructurePage(container, data, d) {
+  if (!data.ledger || !data.ledger.length) {
+    container.innerHTML = '<div class="panel full"><div class="empty-state">가계부(D) 데이터를 불러오지 못해 구조를 계산할 수 없어요.</div></div>';
+    return;
+  }
+
+  const m = buildStructureModel(data, d);
+  const tg = structureTargets(data.goals);
+  const AC = buildStructureActions(m, tg, d);
+  const actByNode = {};
+  AC.list.forEach(a => { if (!actByNode[a.node]) actByNode[a.node] = a; });
+
+  /* 다이어그램 위에 올릴 액션 칩: 상위 4순위 + 리스크 방어 항목만 (나머지는 아래 표에서) */
+  const chip = (nodeName) => {
+    const a = actByNode[nodeName];
+    if (!a) return '';
+    const showIt = a.rank <= 4 || a.risk;
+    if (!showIt) return '';
+    const cls = a.risk ? 'risk' : (a.rank === 1 ? 'p1' : '');
+    const badge = a.risk ? '방어' : `${a.rank}순위`;
+    const gain = a.impact ? ` <b>+연 ${formatCompactWon(a.impact)}원</b>` : '';
+    return `<div class="eng-act ${cls}"><span class="rk">${badge}</span>${a.short}${gain}</div>`;
+  };
+
+  const node = (o) => {
+    const pctTxt = (o.pct === null || o.pct === undefined) ? '' : `<span class="pct">${o.pct.toFixed(0)}%</span>`;
+    const bar = (o.pct === null || o.pct === undefined) ? '' : `<div class="eng-bar"><i class="${o.tone || ''}" style="width:${Math.min(Math.max(o.pct, 0), 100)}%"></i></div>`;
+    const chipHtml = chip(o.nm);
+    return `<div class="eng-node ${o.cls || ''} ${(o.amount || chipHtml) ? '' : 'zero'}" title="${formatWon(o.amount)}">
+      <div class="eng-node-top"><span class="nm">${o.nm}</span>${pctTxt}</div>
+      <div class="eng-amt ${o.tone || ''}">${formatCompactWon(o.amount)}원</div>
+      ${bar}
+      ${o.sub ? `<div class="eng-sub">${o.sub}</div>` : ''}
+      ${chipHtml}
+    </div>`;
+  };
+
+  const pctOf = (v, t) => (t ? (v / t) * 100 : 0);
+  const winLabel = `${monthKeyLabel(m.win[0])} ~ ${monthKeyLabel(m.win[m.win.length - 1])}`;
+
+  /* --- 복리 루프 문구 --- */
+  const annIncome = m.medIncome * 12;   /* 일회성 유입이 낀 달을 빼기 위해 중앙값 사용 */
+  const crossPct = annIncome ? (m.riskAssets / annIncome) * 100 : 0;
+  const loopHtml = (() => {
+    if (!m.loop.covered) {
+      return `<div class="tx">투자 자산 스냅샷이 이 기간을 다 덮지 못해서 투입/시장 분해는 생략했어요.</div>`;
+    }
+    const c = Math.max(m.loop.contribution, 0);
+    const k = m.loop.market;
+    const base = c + Math.abs(k) || 1;
+    const cw = (c / base) * 100;
+    const kw = (Math.abs(k) / base) * 100;
+    return `
+      <div class="tx">
+        최근 ${m.n}개월 투자 자산은 <b>${formatCompactWon(m.loop.delta)}원</b> 늘었고,
+        그중 내가 넣은 돈이 <b>${formatCompactWon(c)}원</b>,
+        시장이 만든 손익이 <b>${k >= 0 ? '+' : '−'}${formatCompactWon(Math.abs(k))}원</b>이에요.
+        ${c > Math.abs(k)
+          ? `아직 <b>투입이 엔진</b>입니다 — 수익률을 고민하는 시간보다 저축률을 지키는 게 성과가 큽니다.`
+          : `이미 <b>시장이 엔진</b>에 더 가깝습니다 — 자산 배분과 변동성 관리의 비중을 높여야 할 구간입니다.`}
+      </div>
+      <div class="eng-split" title="투입 ${formatWon(c)} / 시장 ${formatWon(k)}">
+        <i style="width:${cw}%;background:var(--gold-soft)"></i>
+        <i style="width:${kw}%;background:${k >= 0 ? '#4c8c6b' : '#c1483f'}"></i>
+      </div>`;
+  })();
+
+  container.innerHTML = `
+    <div class="panel full">
+      <div class="panel-title">
+        <div><span class="eyebrow">ENGINE</span>자산 증식 구조</div>
+        <div class="month-nav">
+          <span style="font-family:var(--mono);font-size:11.5px;color:var(--text-faint);">최근 ${m.n}개월 평균 · ${winLabel}</span>
+        </div>
+      </div>
+
+      <div class="eng-board">
+        <div class="eng-stage">
+          <div class="eng-stage-head"><b>유입</b><span>INFLOW / 월</span></div>
+          ${node({ nm: '근로소득', amount: m.per(m.inc.work), pct: pctOf(m.inc.work, m.inc.total), tone: 'inc', sub: '월급 · 월급 외 · 보너스' })}
+          ${node({ nm: '부수입', amount: m.per(m.inc.side), pct: pctOf(m.inc.side, m.inc.total), tone: 'inc', sub: '근로 외 채널' })}
+          ${node({ nm: '투자 수익', amount: m.per(m.inc.invest), pct: pctOf(m.inc.invest, m.inc.total), tone: 'inc', sub: `실현 ${formatCompactWon(m.per(m.realized))} · 배당/이자 ${formatCompactWon(m.per(m.inc.invest - m.realized))}` })}
+        </div>
+        <div class="eng-arrow">▶</div>
+
+        <div class="eng-stage">
+          <div class="eng-stage-head"><b>누수</b><span>OUTFLOW / 월</span></div>
+          ${node({ nm: '고정비', amount: m.per(m.exp.fixed), pct: pctOf(m.exp.fixed, m.exp.total), tone: 'exp', cls: 'leak', sub: '한 번 끊으면 매달 절약' })}
+          ${node({ nm: '변동비', amount: m.per(m.exp.variable), pct: pctOf(m.exp.variable, m.exp.total), tone: 'exp', cls: 'leak', sub: '매달 판단이 필요한 지출' })}
+          ${node({ nm: '양도세', amount: m.per(m.exp.tax), pct: pctOf(m.exp.tax, m.exp.total), tone: 'exp', cls: 'leak', sub: '소비 아님 · 실현이익 정산' })}
+        </div>
+        <div class="eng-arrow">▶</div>
+
+        <div class="eng-stage">
+          <div class="eng-stage-head"><b>연료</b><span>FUEL / 월</span></div>
+          ${node({ nm: '순저축', amount: m.per(m.netSave), pct: null, tone: 'trf', sub: `유입 ${formatCompactWon(m.per(m.inc.total))} − 지출 ${formatCompactWon(m.per(m.exp.total))}` })}
+          <div class="eng-node" title="저축률">
+            <div class="eng-node-top"><span class="nm">저축률</span><span class="pct">목표 ${state.goals.savingsRateTarget}%</span></div>
+            <div class="eng-amt" style="color:${m.saveRate >= state.goals.savingsRateTarget ? 'var(--green)' : 'var(--red)'}">${m.saveRate.toFixed(1)}%</div>
+            <div class="eng-bar"><i style="width:${Math.min(Math.max(m.saveRate, 0), 100)}%;background:${m.saveRate >= state.goals.savingsRateTarget ? '#4c8c6b' : '#e08a82'}"></i></div>
+            <div class="eng-sub">이 엔진의 회전 속도</div>
+          </div>
+        </div>
+        <div class="eng-arrow">▶</div>
+
+        <div class="eng-stage">
+          <div class="eng-stage-head"><b>배분</b><span>ALLOCATION / 월</span></div>
+          ${node({ nm: '연금(코어)', amount: m.per(m.trf.pension), pct: pctOf(m.trf.pension, m.trf.total), tone: 'trf', sub: '연금저축 · IRP' })}
+          ${node({ nm: '투자(위성)', amount: m.per(m.trf.invest), pct: pctOf(m.trf.invest, m.trf.total), tone: 'trf', sub: '토스 · 신한 증권' })}
+          ${node({ nm: '저축', amount: m.per(m.trf.save), pct: pctOf(m.trf.save, m.trf.total), tone: 'trf', sub: '청약통장' })}
+          ${node({ nm: '비상금', amount: m.per(m.trf.emergency), pct: pctOf(m.trf.emergency, m.trf.total), tone: 'trf', sub: 'NH-CMA' })}
+        </div>
+        <div class="eng-arrow">▶</div>
+
+        <div class="eng-stage">
+          <div class="eng-stage-head"><b>축적</b><span>STOCK · ${d.latestMonth || ''}</span></div>
+          ${node({ nm: '투자 자산', amount: m.stock.invest, pct: pctOf(m.stock.invest, m.stock.total), tone: 'stk', sub: '변동성 노출' })}
+          ${node({ nm: '연금 자산', amount: m.stock.pension, pct: pctOf(m.stock.pension, m.stock.total), tone: 'stk', sub: '장기 · 인출 제한' })}
+          ${node({ nm: '저축 자산', amount: m.stock.save, pct: pctOf(m.stock.save, m.stock.total), tone: 'stk', sub: '청약 · CMA' })}
+          ${node({ nm: '현금 자산', amount: m.stock.cash, pct: pctOf(m.stock.cash, m.stock.total), tone: 'stk', sub: '생활 유동성' })}
+        </div>
+      </div>
+
+      <div class="eng-loop">
+        <span class="ic">↻</span>
+        ${loopHtml}
+      </div>
+
+      <div class="eng-cross">
+        <span class="lb">투자성 자산 ${formatCompactWon(m.riskAssets)} / 연수입 ${formatCompactWon(annIncome)}</span>
+        <div class="tr"><i style="width:${Math.min(crossPct, 100)}%"></i></div>
+        <span class="lb">${crossPct.toFixed(0)}%</span>
+      </div>
+      <div class="settings-note">
+        이 게이지가 <b>100%</b>를 넘는 순간부터 <b>수익률 1%p</b>가 <b>저축률 1%p</b>보다 큰 돈이 됩니다.
+        지금은 ${crossPct >= 100 ? '이미 넘었으니 배분·비용 관리의 비중을 올릴 구간' : `아직 ${(100 - crossPct).toFixed(0)}%p 남았으니 유입을 늘리고 누수를 막는 게 우선`}입니다.
+        연수입은 보너스 같은 일회성 입금에 흔들리지 않게 <b>중앙값</b>으로 계산했어요.
+        실현 수익(판매수익)은 계좌 안에 그대로 남기 때문에 <b>유입</b>에도, 위의 <b>시장 손익</b>에도 함께 잡힙니다.
+      </div>
+    </div>
+
+    <div class="panel full" id="panel-struct-actions"></div>
+
+    <div class="grid">
+      <div class="panel" id="panel-struct-check"></div>
+      <div class="panel" id="panel-struct-note"></div>
+    </div>
+  `;
+
+  /* --- 액션 우선순위 표 --- */
+  const ctrlCls = (c) => c === '높음' ? 'hi' : c === '중간' ? 'mid' : 'lo';
+  document.getElementById('panel-struct-actions').innerHTML = `
+    <div class="panel-title">
+      <div><span class="eyebrow">LEVERAGE</span>어디를 눌러야 하는가</div>
+      <div class="month-nav"><span style="font-family:var(--mono);font-size:11.5px;color:var(--text-faint);">연 환산 임팩트 × 통제력 순</span></div>
+    </div>
+    <div class="table-scroll" style="max-height:none;">
+      <table class="data-table">
+        <thead><tr>
+          <th style="width:44px">순위</th><th style="width:60px">지점</th><th>액션</th>
+          <th style="text-align:right;width:120px">연간 임팩트</th><th style="width:64px">통제력</th><th>지금 할 일</th>
+        </tr></thead>
+        <tbody>
+          ${AC.list.map(a => `<tr>
+            <td style="font-family:var(--mono);color:${a.rank <= 2 ? 'var(--gold-soft)' : 'var(--text-dim)'};font-weight:${a.rank <= 2 ? '600' : '400'}">${a.risk ? '방어' : a.rank}</td>
+            <td><span class="tag-pill ${a.stage === '유입' ? 'income' : a.stage === '누수' ? 'expense' : 'transfer'}">${a.stage}</span></td>
+            <td>${a.name}${a.assumed ? '<span style="color:var(--text-faint);font-size:11px;"> (가정)</span>' : ''}</td>
+            <td style="text-align:right"><span class="act-imp">${a.impact ? '+' + formatCompactWon(a.impact) + '원' : '—'}</span></td>
+            <td><span class="act-ctrl ${ctrlCls(a.control)}">${a.control}</span></td>
+            <td style="color:var(--text-dim);font-size:11.5px;line-height:1.6;">${a.todo}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+    <div class="settings-note">
+      임팩트는 최근 ${m.n}개월 실적을 연으로 환산한 값이고, 순위는 <b>임팩트 × 통제력</b>으로 정렬했어요.
+      그래서 금액이 더 커도 내가 못 바꾸는 항목(수익률)은 아래로 밀립니다.
+      근로소득은 보너스·일회성 입금이 평균을 부풀리지 않게 <b>중앙값</b>으로 계산했고,
+      "(가정)" 표시가 붙은 항목은 실적이 아니라 비교를 위한 목표값입니다.
+    </div>
+  `;
+
+  /* --- 구조 체크 --- */
+  const emgTarget = AC.emgTarget;
+  const cashRatio = m.stock.total ? (d.emergencyFund / m.stock.total) * 100 : 0;
+  const workShare = m.inc.total ? (m.inc.work / m.inc.total) * 100 : 0;
+  const coreShare = m.riskAssets ? (m.stock.pension / m.riskAssets) * 100 : 0;
+  const pensionFill = (AC.annPension / PENSION_LIMIT) * 100;
+  const monthlyFixed = m.per(m.exp.fixed);
+
+  const row = (label, sub, cur, tgt, ok) => `
+    <div class="chk-row">
+      <span class="mk ${ok === null ? 'na' : ok ? 'ok' : 'no'}">${ok === null ? '참고' : ok ? '통과' : '미달'}</span>
+      <span class="nm">${label}<i>${sub}</i></span>
+      <span class="fig">${cur}${tgt ? `<em>${tgt}</em>` : ''}</span>
+    </div>`;
+
+  document.getElementById('panel-struct-check').innerHTML = `
+    <div class="panel-title"><div><span class="eyebrow">STRUCTURE CHECK</span>구조 점검</div></div>
+    ${row('저축률', '연료가 충분히 들어오는가', `${m.saveRate.toFixed(1)}%`, `목표 ${state.goals.savingsRateTarget}%`, m.saveRate >= state.goals.savingsRateTarget)}
+    ${row('월 고정비', '자동으로 빠지는 누수', `${formatCompactWon(monthlyFixed)}원`, tg.fixed ? `목표 ${formatCompactWon(tg.fixed)}원` : '목표 미설정', tg.fixed ? monthlyFixed <= tg.fixed : null)}
+    ${row('비상금', '하락장에서 안 팔 수 있는 방어선', `${formatCompactWon(d.emergencyFund)}원`, `목표 ${formatCompactWon(emgTarget)}원`, d.emergencyFund >= emgTarget)}
+    ${row('현금 비율', '총자산 대비 비상금', `${cashRatio.toFixed(1)}%`, tg.cashPct ? `목표 ${tg.cashPct}%` : '목표 미설정', tg.cashPct ? cashRatio >= tg.cashPct : null)}
+    ${row('연금 한도 소진', `연 납입 ${formatCompactWon(AC.annPension)}원 / 900만원`, `${pensionFill.toFixed(0)}%`, '확정 수익 13.2~16.5%', pensionFill >= 100)}
+    ${row('유입 집중도', '근로소득이 전체 유입에서 차지하는 비중', `${workShare.toFixed(0)}%`, '참고 기준 90% 이하', workShare <= 90)}
+    <div class="settings-note">
+      목표값은 <b>목표 탭</b>에서 읽어옵니다. 목표 문구에 숫자가 없으면 "목표 미설정"으로 표시돼요.
+    </div>
+  `;
+
+  /* --- 읽는 법 --- */
+  const nextMile = (tg.milestones || []).find(v => v > m.stock.total);
+  const annNet = m.ann(m.netSave);
+  document.getElementById('panel-struct-note').innerHTML = `
+    <div class="panel-title"><div><span class="eyebrow">HOW TO READ</span>이 구조를 읽는 법</div></div>
+    <div style="font-size:12.5px;line-height:1.9;color:var(--text-dim);">
+      <b style="color:var(--text)">① 유입 → ② 누수 → ③ 연료 → ④ 배분 → ⑤ 축적</b>,
+      그리고 ⑤에서 나온 수익이 다시 ①로 돌아오는 한 바퀴가 자산이 늘어나는 전부예요.
+      순서대로 위에서 볼 때 <b style="color:var(--gold-soft)">앞쪽 단계일수록 내 손이 닿고, 뒤쪽일수록 시장의 몫</b>입니다.
+      <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+        <b style="color:var(--text)">코어 / 위성</b> — 투자성 자산 ${formatCompactWon(m.riskAssets)}원 중 연금(코어)이
+        <b style="color:var(--text)">${coreShare.toFixed(0)}%</b>, 증권(위성)이 <b style="color:var(--text)">${(100 - coreShare).toFixed(0)}%</b>예요.
+        위성이 클수록 자산이 아니라 <b>종목 선택</b>이 성과를 결정합니다.
+      </div>
+      ${nextMile ? `<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+        <b style="color:var(--text)">다음 마일스톤</b> — ${formatCompactWon(nextMile)}원까지 ${formatCompactWon(nextMile - m.stock.total)}원 남았고,
+        지금 순저축 속도(연 ${formatCompactWon(annNet)}원)만으로는
+        <b style="color:var(--gold-soft)">약 ${annNet > 0 ? ((nextMile - m.stock.total) / annNet).toFixed(1) : '—'}년</b>이 걸려요.
+        수익률은 이 숫자를 줄여주지만, 그 전에 <b>연료(순저축)</b>가 멈추면 아무 일도 일어나지 않아요.
+      </div>` : ''}
+    </div>
+  `;
+}
+
 /* ---------------- page: 자산 ---------------- */
+
 
 function renderAssetsPage(container, data, d) {
   container.innerHTML = `
