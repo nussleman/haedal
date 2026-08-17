@@ -446,7 +446,7 @@ body{
 }
 @keyframes sk{0%{background-position:100% 50%}100%{background-position:0 50%}}
 
-/* ---------- 지금(now) 페이지 ---------- */
+/* ---------- 이번달(now) 페이지 ---------- */
 .now-progress{display:flex;align-items:center;gap:12px;margin-top:2px;}
 .now-progress-track{flex:1;height:6px;background:var(--panel-2);border-radius:3px;overflow:hidden;}
 .now-progress-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--gold),var(--gold-soft));transition:width .3s;}
@@ -464,6 +464,59 @@ body{
 @media (max-width:600px){
   .now-progress{flex-wrap:wrap;}
   .now-chip{flex:1 1 calc(50% - 8px);}
+}
+
+/* ---------- 오늘(today) 페이지 ---------- */
+.month-nav input[type="date"]{
+  background:var(--panel-2);border:1px solid var(--border-strong);color:var(--text);
+  border-radius:6px;padding:4px 8px;font-family:var(--mono);font-size:12px;color-scheme:dark;
+}
+.cal-cell.real{border-style:dashed;border-color:var(--gold-soft);}
+.today-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+.today-date{font-family:var(--serif);font-weight:800;font-size:25px;line-height:1.2;color:var(--text);}
+.today-date .today-dow{color:var(--gold-soft);}
+.today-date small{display:block;font-family:var(--mono);font-size:11px;font-weight:400;color:var(--text-faint);letter-spacing:.04em;margin-top:6px;}
+.today-verdict{font-family:var(--serif);font-weight:700;font-size:15px;line-height:1.55;margin-top:2px;}
+.today-verdict.good{color:var(--green);}
+.today-verdict.warn{color:var(--red);}
+.today-verdict.neutral{color:var(--gold-soft);}
+.allow-track{height:9px;border-radius:5px;background:var(--panel-2);overflow:hidden;margin-top:10px;}
+.allow-fill{height:100%;border-radius:5px;background:linear-gradient(90deg,var(--green),#6fa88a);transition:width .3s;}
+.allow-fill.over{background:linear-gradient(90deg,var(--red),#d9756c);}
+.allow-legend{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10.5px;color:var(--text-faint);margin-top:6px;}
+.streak-badge{display:inline-block;font-family:var(--mono);font-size:10.5px;padding:3px 9px;border-radius:20px;border:1px solid var(--border-strong);color:var(--text-dim);margin-top:10px;}
+.streak-badge.on{border-color:rgba(76,140,107,0.45);color:var(--green);background:var(--green-soft);}
+.dow-row{display:flex;gap:5px;margin-top:12px;}
+.dow-cell{flex:1;text-align:center;border:1px solid var(--border);border-radius:8px;padding:7px 2px;background:var(--panel-2);}
+.dow-cell.sel{border-color:var(--gold);}
+.dow-cell.future{opacity:.35;}
+.dow-cell em{display:block;font-style:normal;font-family:var(--mono);font-size:9.5px;color:var(--text-faint);}
+.dow-cell span{display:block;font-family:var(--mono);font-size:10.5px;color:var(--text);margin-top:3px;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:12px;}
+.cal-dow{font-family:var(--mono);font-size:10px;color:var(--text-faint);text-align:center;padding-bottom:2px;}
+.cal-cell{min-height:52px;border:1px solid var(--border);border-radius:8px;background:var(--panel-2);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:3px;
+  cursor:pointer;transition:border-color .15s;font:inherit;}
+.cal-cell.blank{border-color:transparent;background:transparent;cursor:default;}
+.cal-cell.future{opacity:.3;cursor:default;}
+.cal-cell:hover:not(.blank):not(.future){border-color:var(--gold-soft);}
+.cal-cell.sel{border-color:var(--gold);background:rgba(201,162,39,0.12);}
+.cal-day{font-family:var(--mono);font-size:11px;color:var(--text-dim);}
+.cal-cell.sel .cal-day{color:var(--gold-soft);}
+.cal-amt{font-family:var(--mono);font-size:9px;color:var(--text-faint);line-height:1.2;}
+.cal-amt.zero{color:var(--green);}
+.fixed-due{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px dotted var(--border);font-size:12.5px;}
+.fixed-due:last-child{border-bottom:none;}
+.fixed-due .dday{font-family:var(--mono);font-size:10px;flex-shrink:0;width:46px;text-align:center;padding:3px 0;border-radius:5px;background:var(--panel-2);color:var(--text-dim);}
+.fixed-due .dday.soon{background:rgba(201,162,39,0.18);color:var(--gold-soft);}
+.fixed-due .dday.late{background:var(--red-soft);color:#d9756c;}
+.fixed-due .nm{flex:1;color:var(--text);}
+.fixed-due .nm small{display:block;font-family:var(--mono);font-size:10px;color:var(--text-faint);}
+.fixed-due .amt2{font-family:var(--mono);color:var(--text);}
+@media (max-width:600px){
+  .today-date{font-size:21px;}
+  .cal-cell{min-height:44px;}
+  .cal-amt{font-size:8px;}
 }
 
 /* ---------- nav ---------- */
@@ -743,9 +796,11 @@ const state = {
   assetTrendFilter: 'all',
   savTrendRange: 12,
   savContribRange: 12,
-  nowMonthKey: null,       // '지금' 탭에서 보고 있는 달 (YYYY-MM)
+  nowMonthKey: null,       // '이번달' 탭에서 보고 있는 달 (YYYY-MM)
   nowWeekIdx: null,        // null = 그 달 전체, 0.. = 해당 주차만
-  nowGranularity: 'week'   // 'week' | 'day'
+  nowGranularity: 'week',  // 'week' | 'day'
+  todayDayKey: null,       // '오늘' 탭에서 보고 있는 날 (YYYY-MM-DD), null = 실제 오늘
+  todayTrendRange: 14      // '오늘' 탭 일별 추이 기간 (일)
 };
 
 /* ---------------- helpers ---------------- */
@@ -1695,7 +1750,8 @@ function setSyncState(status) {
 
 const NAV_ITEMS = [
   { id: 'home', label: '홈' },
-  { id: 'now', label: '지금' },
+  { id: 'today', label: '오늘' },
+  { id: 'now', label: '이번달' },
   { id: 'assets', label: '자산' },
   { id: 'income', label: '수입' },
   { id: 'expense', label: '지출' },
@@ -1784,7 +1840,8 @@ function renderPage() {
   const d = computeDerived(data);
   destroyPageCharts();
   const container = document.getElementById('page-content');
-  if (state.page === 'now') renderNowPage(container, data, d);
+  if (state.page === 'today') renderTodayPage(container, data, d);
+  else if (state.page === 'now') renderNowPage(container, data, d);
   else if (state.page === 'assets') renderAssetsPage(container, data, d);
   else if (state.page === 'income') renderIncomePage(container, data, d);
   else if (state.page === 'expense') renderExpensePage(container, data, d);
@@ -2348,7 +2405,7 @@ function renderAdvancedTableBody(key, allRows, opts) {
   }
 }
 
-/* ---------------- page: 지금 (이번 달 종합) ---------------- */
+/* ---------------- page: 이번달 (월 종합) ---------------- */
 
 function parseLedgerDateParts(s) {
   const m = (s || '').match(/(\d{4})\.\s*(\d{1,2})\.\s*(\d{1,2})/);
@@ -2585,12 +2642,12 @@ function renderNowPage(container, data, d) {
   container.innerHTML = `
     <div class="panel full">
       <div class="panel-title">
-        <div><span class="eyebrow">NOW</span>${scopeLabel}</div>
+        <div><span class="eyebrow">THIS MONTH</span>${scopeLabel}</div>
         <div class="month-nav">
           <button id="now-prev" ${availableKeys.indexOf(monthKey) <= 0 ? 'disabled' : ''}>◀</button>
           <select id="now-month-select">${monthOptions}</select>
           <button id="now-next" ${availableKeys.indexOf(monthKey) >= availableKeys.length - 1 ? 'disabled' : ''}>▶</button>
-          <button class="btn small" id="now-thismonth">이번달</button>
+          <button class="btn small" id="now-thismonth">이번 달로</button>
         </div>
       </div>
 
@@ -2633,7 +2690,7 @@ function renderNowPage(container, data, d) {
         <div id="now-fixed-body"></div>
       </div>
       <div class="panel">
-        <div class="panel-title"><div><span class="eyebrow">TRANSFERS</span>이번 달 이체</div></div>
+        <div class="panel-title"><div><span class="eyebrow">TRANSFERS</span>${week ? week.label : monthKeyLabel(monthKey)} 이체</div></div>
         <div id="now-transfer-body"></div>
       </div>
     </div>
@@ -2827,6 +2884,506 @@ function renderNowPage(container, data, d) {
     const t = thisMonthKey();
     setMonth(availableKeys.includes(t) ? t : availableKeys[availableKeys.length - 1]);
   });
+}
+
+/* ---------------- page: 오늘 (하루 단위) ---------------- */
+
+const DOW_KR = ['일', '월', '화', '수', '목', '금', '토'];
+
+function pad2(n) { return String(n).padStart(2, '0'); }
+function dayKeyOfDate(dt) { return `${dt.getFullYear()}-${pad2(dt.getMonth() + 1)}-${pad2(dt.getDate())}`; }
+function todayDayKey() { return dayKeyOfDate(new Date()); }
+
+function ledgerDayKey(dateStr) {
+  const p = parseLedgerDateParts(dateStr);
+  return p ? `${p.y}-${pad2(p.mo)}-${pad2(p.d)}` : null;
+}
+
+function shiftDayKey(key, delta) {
+  const [y, m, d] = key.split('-').map(Number);
+  return dayKeyOfDate(new Date(y, m - 1, d + delta));
+}
+
+function dowOfDayKey(key) {
+  const [y, m, d] = key.split('-').map(Number);
+  return new Date(y, m - 1, d).getDay();
+}
+
+function dayKeyLabel(key) {
+  const [y, m, d] = key.split('-').map(Number);
+  return `${y}년 ${m}월 ${d}일`;
+}
+
+function dayKeyShort(key) {
+  const [, m, d] = key.split('-').map(Number);
+  return `${m}/${d}`;
+}
+
+/* 월요일 시작 주의 시작/끝 날짜 */
+function weekRangeOfDayKey(key) {
+  const dow = dowOfDayKey(key);
+  const offset = dow === 0 ? 6 : dow - 1;
+  const start = shiftDayKey(key, -offset);
+  return { start, end: shiftDayKey(start, 6), offset };
+}
+
+function dayDiff(a, b) {
+  const [y1, m1, d1] = a.split('-').map(Number);
+  const [y2, m2, d2] = b.split('-').map(Number);
+  return Math.round((new Date(y1, m1 - 1, d1) - new Date(y2, m2 - 1, d2)) / 86400000);
+}
+
+/* 월 지출 예산: 목표 탭의 "월 지출 N만원" 우선, 없으면 마감된 최근 3개월 평균 */
+function monthlyExpenseTarget(data, ledger, monthKey) {
+  const goals = data.goals || [];
+  for (const g of goals) {
+    const title = pickGoalField(g, 'title');
+    if (!title) continue;
+    const m = String(title).match(/(?:월\s*)?지출\s*([\d,]+)\s*만원/);
+    if (m) return { amount: parseFloat(m[1].replace(/,/g, '')) * 10000, source: '목표 탭' };
+  }
+  const cur = thisMonthKey();
+  const vals = [];
+  for (let i = 1; i <= 3; i++) {
+    const k = shiftMonthKey(monthKey, -i);
+    if (k >= cur) continue;
+    const sum = ledger.filter(r => ledgerMonthKey(r.date) === k && r.major.includes('지출'))
+      .reduce((a, r) => a + r.amount, 0);
+    if (sum > 0) vals.push(sum);
+  }
+  if (!vals.length) return null;
+  return { amount: Math.round(vals.reduce((a, b) => a + b, 0) / vals.length), source: '최근 3개월 평균' };
+}
+
+/* 고정비 항목별 예상 결제일(최근 3개월 결제일 중앙값)까지 포함한 상태 */
+function fixedScheduleStatus(ledger, monthKey) {
+  const prevKeys = [1, 2, 3].map(i => shiftMonthKey(monthKey, -i));
+  const tpl = {};
+  ledger.filter(r => r.fixed && r.major.includes('지출')).forEach(r => {
+    const k = ledgerMonthKey(r.date);
+    if (!prevKeys.includes(k)) return;
+    const p = parseLedgerDateParts(r.date);
+    const id = `${r.item}|${r.vendor}`;
+    if (!tpl[id]) tpl[id] = { item: r.item, vendor: r.vendor, minor: r.minor, amounts: [], days: [] };
+    tpl[id].amounts.push(r.amount);
+    if (p) tpl[id].days.push(p.d);
+  });
+  const paid = {};
+  ledger.filter(r => r.fixed && r.major.includes('지출') && ledgerMonthKey(r.date) === monthKey).forEach(r => {
+    const id = `${r.item}|${r.vendor}`;
+    const p = parseLedgerDateParts(r.date);
+    if (!paid[id]) paid[id] = { amount: 0, day: p ? p.d : null };
+    paid[id].amount += r.amount;
+  });
+  return Object.keys(tpl).map(id => {
+    const t = tpl[id];
+    const days = t.days.slice().sort((a, b) => a - b);
+    return {
+      item: t.item, vendor: t.vendor, minor: t.minor,
+      expected: Math.round(t.amounts.reduce((a, b) => a + b, 0) / t.amounts.length),
+      expectedDay: days.length ? days[Math.floor(days.length / 2)] : null,
+      paid: paid[id] ? paid[id].amount : null,
+      paidDay: paid[id] ? paid[id].day : null
+    };
+  }).sort((a, b) => (a.expectedDay || 99) - (b.expectedDay || 99));
+}
+
+function renderTodayPage(container, data, d) {
+  const ledger = data.ledger || [];
+  if (!ledger.length) {
+    container.innerHTML = '<div class="panel full"><div class="empty-state">가계부(D) 데이터를 불러오지 못해 오늘을 계산할 수 없어요.</div></div>';
+    return;
+  }
+
+  /* --- 날짜별 집계 --- */
+  const byDay = {};
+  ledger.forEach(r => {
+    const k = ledgerDayKey(r.date);
+    if (!k) return;
+    if (!byDay[k]) byDay[k] = { income: 0, expense: 0, transfer: 0, rows: [] };
+    byDay[k].rows.push(r);
+    if (r.major.includes('수입')) byDay[k].income += r.amount;
+    else if (r.major.includes('지출')) byDay[k].expense += r.amount;
+    else if (r.major.includes('이체')) byDay[k].transfer += r.amount;
+  });
+  const dayOf = (k) => byDay[k] || { income: 0, expense: 0, transfer: 0, rows: [] };
+  const recordedKeys = Object.keys(byDay).sort();
+  const earliestKey = recordedKeys[0];
+  const latestKey = recordedKeys[recordedKeys.length - 1];
+
+  const realToday = todayDayKey();
+  if (!state.todayDayKey) state.todayDayKey = realToday;
+  if (state.todayDayKey > realToday) state.todayDayKey = realToday;
+  const key = state.todayDayKey;
+  const isToday = key === realToday;
+
+  const [Y, MO, DD] = key.split('-').map(Number);
+  const monthKey = key.slice(0, 7);
+  const monthDays = daysInMonthKey(monthKey);
+  const M = buildNowMonth(ledger, monthKey);
+  const today = dayOf(key);
+
+  const cumBefore = M.daily.slice(0, DD - 1).reduce((a, b) => a + b.expense, 0);
+  const cumThrough = cumBefore + today.expense;
+
+  /* --- 예산 / 오늘 허용액 --- */
+  const budget = monthlyExpenseTarget(data, ledger, monthKey);
+  const sched = fixedScheduleStatus(ledger, monthKey);
+  const pending = sched.filter(f => f.paid === null);
+  const pendingSum = pending.reduce((a, f) => a + f.expected, 0);
+  const remainDays = Math.max(monthDays - DD + 1, 1);
+  const remainBudget = budget ? budget.amount - cumBefore - pendingSum : null;
+  const allowance = remainBudget === null ? null : Math.max(Math.round(remainBudget / remainDays), 0);
+  const allowPct = allowance ? Math.min((today.expense / allowance) * 100, 100) : (today.expense > 0 ? 100 : 0);
+  const overToday = allowance !== null && today.expense > allowance;
+
+  /* --- 이번 주 --- */
+  const wk = weekRangeOfDayKey(key);
+  const weekDays = [];
+  for (let i = 0; i < 7; i++) {
+    const k = shiftDayKey(wk.start, i);
+    weekDays.push({ key: k, dow: DOW_KR[dowOfDayKey(k)], ...dayOf(k) });
+  }
+  const weekExpense = weekDays.reduce((a, b) => a + b.expense, 0);
+  const weekToDate = weekDays.slice(0, wk.offset + 1).reduce((a, b) => a + b.expense, 0);
+  const prevWkStart = shiftDayKey(wk.start, -7);
+  let prevWeekToDate = 0;
+  for (let i = 0; i <= wk.offset; i++) prevWeekToDate += dayOf(shiftDayKey(prevWkStart, i)).expense;
+  const weekDelta = prevWeekToDate > 0 ? weekToDate - prevWeekToDate : null;
+
+  /* --- 무지출 스트릭 (기록이 아직 없는 날은 '무지출'로 세지 않는다) --- */
+  const noRecordYet = today.rows.length === 0 && key > latestKey;
+  let streak = 0;
+  if (!noRecordYet) {
+    let cursor = key;
+    while (dayOf(cursor).expense === 0 && cursor >= earliestKey && streak < 90) {
+      streak++;
+      cursor = shiftDayKey(cursor, -1);
+    }
+  }
+  const noSpendInMonth = M.daily.filter(b => b.day <= DD && b.expense === 0).length;
+
+  /* --- 같은 요일 평균 (최근 8주) --- */
+  const sameDowVals = [];
+  for (let i = 1; i <= 8; i++) {
+    const k = shiftDayKey(key, -7 * i);
+    if (k < earliestKey) break;
+    sameDowVals.push(dayOf(k).expense);
+  }
+  const sameDowAvg = sameDowVals.length ? sameDowVals.reduce((a, b) => a + b, 0) / sameDowVals.length : null;
+  const monthDailyAvg = DD > 0 ? cumThrough / DD : 0;
+
+  /* --- 판정 문구 --- */
+  let verdict, verdictCls;
+  if (today.rows.length === 0) {
+    verdictCls = 'neutral';
+    verdict = isToday
+      ? `아직 오늘 기록이 없어요.${latestKey && latestKey < realToday ? ` 마지막 기록은 <b>${dayKeyShort(latestKey)}</b> (${dayDiff(realToday, latestKey)}일 전)이에요.` : ''}`
+      : '이 날은 기록이 없어요.';
+  } else if (allowance === null) {
+    verdictCls = 'neutral';
+    verdict = `${isToday ? '오늘' : '이 날'} <b>${formatWon(today.expense)}</b> 썼어요. 이번 달 하루 평균은 ${formatWon(Math.round(monthDailyAvg))}이에요.`;
+  } else if (overToday) {
+    verdictCls = 'warn';
+    verdict = `${isToday ? '오늘' : '이 날'} 예산 ${formatWon(allowance)}보다 <b>${formatWon(today.expense - allowance)}</b> 더 썼어요.`;
+  } else {
+    verdictCls = 'good';
+    verdict = `${isToday ? '오늘' : '이 날'} 예산 ${formatWon(allowance)} 중 ${formatWon(today.expense)} 사용 · <b>${formatWon(allowance - today.expense)}</b> 여유 있어요.`;
+  }
+
+  /* --- 오늘 카테고리 --- */
+  const catMap = {};
+  today.rows.filter(r => r.major.includes('지출')).forEach(r => {
+    catMap[r.minor || '기타'] = (catMap[r.minor || '기타'] || 0) + r.amount;
+  });
+  const catRows = Object.entries(catMap).map(([name, amt]) => ({ name, amt })).sort((a, b) => b.amt - a.amt);
+  const catMax = Math.max(...catRows.map(r => r.amt), 1);
+
+  /* --- 곧 나갈 고정비 --- */
+  const dueRows = pending.map(f => ({ ...f, dday: f.expectedDay === null ? null : f.expectedDay - DD }))
+    .sort((a, b) => (a.dday === null ? 99 : a.dday) - (b.dday === null ? 99 : b.dday));
+
+  container.innerHTML = `
+    <div class="panel full">
+      <div class="panel-title">
+        <div><span class="eyebrow">TODAY</span>${isToday ? '오늘' : '지난 하루'} 살펴보기</div>
+        <div class="month-nav">
+          <button id="today-prev" ${key <= earliestKey ? 'disabled' : ''}>◀</button>
+          <input type="date" id="today-date" value="${key}" max="${realToday}" />
+          <button id="today-next" ${key >= realToday ? 'disabled' : ''}>▶</button>
+          <button class="btn small" id="today-jump">오늘로</button>
+        </div>
+      </div>
+
+      <div class="today-head">
+        <div class="today-date">
+          ${dayKeyLabel(key)} <span class="today-dow">(${DOW_KR[dowOfDayKey(key)]})</span>
+          <small>${monthKeyLabel(monthKey)} D+${DD} / ${monthDays}일 · 남은 ${monthDays - DD}일${isToday ? ' · 오늘' : ` · ${dayDiff(realToday, key)}일 전`}</small>
+        </div>
+        <div class="today-verdict ${verdictCls}" style="flex:1;min-width:260px;">${verdict}</div>
+      </div>
+
+      <div class="stat-grid" style="margin-top:18px;margin-bottom:0;">
+        <div class="stat-card">
+          <div class="label">${isToday ? '오늘' : '이 날'} 지출</div>
+          <div class="value" style="color:var(--red)">${formatWon(today.expense)}</div>
+          <div class="sub ${sameDowAvg !== null && today.expense <= sameDowAvg ? 'up' : 'down'}">${sameDowAvg !== null ? `최근 ${DOW_KR[dowOfDayKey(key)]}요일 평균 ${formatWon(Math.round(sameDowAvg))}` : '비교 데이터 없음'}</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">${isToday ? '오늘' : '이 날'} 수입</div>
+          <div class="value" style="color:var(--green)">${formatWon(today.income)}</div>
+          <div class="sub">이체 ${formatWon(today.transfer)}</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">이번 달 누적 지출</div>
+          <div class="value">${formatWon(cumThrough)}</div>
+          <div class="sub">하루 평균 ${formatWon(Math.round(monthDailyAvg))}</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">기록 건수</div>
+          <div class="value">${today.rows.length}건</div>
+          <div class="sub">${noSpendInMonth}일 무지출 (이번 달)</div>
+        </div>
+      </div>
+
+      ${allowance !== null ? `
+      <div style="margin-top:18px;">
+        <div class="allow-track"><div class="allow-fill ${overToday ? 'over' : ''}" style="width:${allowPct}%"></div></div>
+        <div class="allow-legend">
+          <span>${isToday ? '오늘' : '이 날'} 사용 ${formatWon(today.expense)}</span>
+          <span>하루 예산 ${formatWon(allowance)}</span>
+        </div>
+      </div>` : ''}
+
+      <div class="streak-badge ${streak > 0 ? 'on' : ''}">${noRecordYet ? '✍️ 아직 기록이 입력되지 않았어요' : streak > 0 ? `🌱 무지출 ${streak}일 연속` : `지출이 있는 날 · 이번 달 무지출 ${noSpendInMonth}일`}</div>
+    </div>
+
+    <div class="grid grid-3">
+      <div class="panel">
+        <div class="panel-title"><div><span class="eyebrow">BUDGET</span>하루 예산 계산</div></div>
+        <div id="today-budget-body"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title"><div><span class="eyebrow">THIS WEEK</span>이번 주 (${dayKeyShort(wk.start)}–${dayKeyShort(wk.end)})</div></div>
+        <div id="today-week-body"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title"><div><span class="eyebrow">UPCOMING</span>곧 나갈 고정비</div></div>
+        <div id="today-due-body"></div>
+      </div>
+    </div>
+
+    <div class="panel full">
+      <div class="panel-title">
+        <div><span class="eyebrow">TREND</span>일별 지출 추이</div>
+        <div class="range-toggle" id="today-trend-range">
+          <button data-n="14" class="${state.todayTrendRange === 14 ? 'active' : ''}">14일</button>
+          <button data-n="30" class="${state.todayTrendRange === 30 ? 'active' : ''}">30일</button>
+          <button data-n="60" class="${state.todayTrendRange === 60 ? 'active' : ''}">60일</button>
+        </div>
+      </div>
+      <div class="chart-wrap tall"><canvas id="chart-today-trend"></canvas></div>
+      <div class="chart-legend">
+        <span><i style="background:rgba(193,72,63,0.8)"></i>일별 지출</span>
+        <span><i style="background:#c9a227"></i>선택한 날</span>
+        <span><i style="background:#e0c766"></i>7일 이동평균</span>
+      </div>
+      <div class="settings-note">막대를 클릭하면 그 날짜로 이동합니다.</div>
+    </div>
+
+    <div class="grid">
+      <div class="panel">
+        <div class="panel-title"><div><span class="eyebrow">CATEGORIES</span>${isToday ? '오늘' : '이 날'} 카테고리</div></div>
+        <div id="today-cat-body"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title"><div><span class="eyebrow">RECORDS</span>${isToday ? '오늘' : dayKeyShort(key)} 내역 <span style="color:var(--text-faint);font-family:var(--mono);font-size:11px;">${today.rows.length}건</span></div></div>
+        <div id="today-rows-body"></div>
+      </div>
+    </div>
+
+    <div class="panel full">
+      <div class="panel-title"><div><span class="eyebrow">CALENDAR</span>${monthKeyLabel(monthKey)} 지출 캘린더</div></div>
+      <div id="today-calendar"></div>
+    </div>
+  `;
+
+  /* --- 예산 계산 --- */
+  document.getElementById('today-budget-body').innerHTML = budget ? `
+    <div class="now-kv"><span>월 지출 예산 <em style="font-style:normal;color:var(--text-faint);font-size:10.5px;">(${budget.source})</em></span><b>${formatWon(budget.amount)}</b></div>
+    <div class="now-kv"><span>${DD}일 이전까지 쓴 돈</span><b>${formatWon(cumBefore)}</b></div>
+    <div class="now-kv"><span>아직 안 나간 고정비 ${pending.length}건</span><b style="color:${pendingSum ? 'var(--red)' : 'var(--green)'}">${formatWon(pendingSum)}</b></div>
+    <div class="now-kv"><span>남은 예산 ÷ 남은 ${remainDays}일</span><b style="color:${remainBudget < 0 ? 'var(--red)' : 'var(--gold-soft)'}">${formatWon(allowance)}</b></div>
+    ${remainBudget < 0
+      ? `<div class="insight warn"><span class="dot"></span><span>고정비까지 반영하면 이미 예산을 <b>${formatWon(Math.abs(remainBudget))}</b> 넘었어요. 남은 ${remainDays}일은 지출을 최소로 두는 게 좋아요.</span></div>`
+      : `<div class="settings-note">남은 ${remainDays}일 동안 하루 <b style="color:var(--gold-soft)">${formatWon(allowance)}</b>씩 쓰면 예산 안에서 마감돼요.</div>`}
+  ` : `<div class="empty-state">목표 탭에 "월 지출 N만원" 목표가 없고 비교할 과거 3개월 데이터도 부족해서 하루 예산을 계산할 수 없어요.</div>`;
+
+  /* --- 이번 주 --- */
+  const weekMax = Math.max(...weekDays.map(w => w.expense), 1);
+  document.getElementById('today-week-body').innerHTML = `
+    <div class="now-kv"><span>이번 주 누적 (${dayKeyShort(wk.start)}–${dayKeyShort(key)})</span><b>${formatWon(weekToDate)}</b></div>
+    <div class="now-kv"><span>지난주 같은 시점</span><b>${prevWeekToDate > 0 ? formatWon(prevWeekToDate) : '—'}</b></div>
+    ${weekDelta !== null ? `<div class="insight ${weekDelta > 0 ? 'warn' : 'good'}"><span class="dot"></span><span>지난주 같은 시점보다 <b>${wonComma(weekDelta)}원 ${weekDelta > 0 ? '더' : '덜'}</b> 썼어요.</span></div>` : ''}
+    <div class="dow-row">
+      ${weekDays.map(w => `
+        <div class="dow-cell ${w.key === key ? 'sel' : ''} ${w.key > realToday ? 'future' : ''}" data-k="${w.key}" style="${w.expense ? `background:rgba(193,72,63,${(0.10 + 0.30 * (w.expense / weekMax)).toFixed(2)})` : ''};cursor:${w.key > realToday ? 'default' : 'pointer'}">
+          <em>${w.dow}</em>
+          <span>${w.expense ? formatCompactWon(w.expense) : '·'}</span>
+        </div>`).join('')}
+    </div>
+    <div class="settings-note">주간 합계 ${formatWon(weekExpense)} · 요일을 누르면 그 날로 이동해요.</div>
+  `;
+  document.querySelector('#today-week-body .dow-row').addEventListener('click', (e) => {
+    const cell = e.target.closest('.dow-cell');
+    if (!cell || cell.classList.contains('future')) return;
+    state.todayDayKey = cell.dataset.k;
+    renderPage();
+  });
+
+  /* --- 곧 나갈 고정비 --- */
+  document.getElementById('today-due-body').innerHTML = `
+    <div class="now-kv"><span>미결제 ${pending.length}건 예상 합계</span><b style="color:${pendingSum ? 'var(--red)' : 'var(--green)'}">${formatWon(pendingSum)}</b></div>
+    <div style="max-height:240px;overflow-y:auto;margin-top:8px;">
+      ${dueRows.length ? dueRows.map(f => {
+        const cls = f.dday === null ? '' : f.dday < 0 ? 'late' : f.dday <= 3 ? 'soon' : '';
+        const lbl = f.dday === null ? '?' : f.dday === 0 ? '오늘' : f.dday > 0 ? `D-${f.dday}` : `+${-f.dday}일`;
+        return `<div class="fixed-due">
+          <span class="dday ${cls}">${lbl}</span>
+          <span class="nm">${f.item}<small>${f.vendor || f.minor || ''}${f.expectedDay ? ` · 보통 ${f.expectedDay}일` : ''}</small></span>
+          <span class="amt2">${formatWon(f.expected)}</span>
+        </div>`;
+      }).join('') : '<div class="empty-state">이번 달 나갈 고정비는 모두 결제됐어요. 👍</div>'}
+    </div>
+    ${dueRows.some(f => f.dday !== null && f.dday < 0) ? '<div class="settings-note">예상 결제일이 지났는데 기록이 없는 항목은 가계부 입력이 빠졌는지 확인해보세요.</div>' : ''}
+  `;
+
+  /* --- 카테고리 --- */
+  document.getElementById('today-cat-body').innerHTML = catRows.length ? catRows.map(r => `
+    <div class="budget-row-compact">
+      <span class="b-name" title="${r.name}">${r.name}</span>
+      <div class="b-bar-track"><div class="b-bar-fill" style="width:${(r.amt / catMax) * 100}%"></div></div>
+      <span class="b-figures">${wonComma(r.amt)}원 · ${((r.amt / (today.expense || 1)) * 100).toFixed(0)}%</span>
+    </div>`).join('') : '<div class="empty-state">지출 기록이 없어요.</div>';
+
+  /* --- 내역 --- */
+  const sortedRows = today.rows.slice().sort((a, b) => b.amount - a.amount);
+  document.getElementById('today-rows-body').innerHTML = `
+    <div class="table-scroll" style="max-height:340px;">
+      <table class="data-table">
+        <thead><tr><th>분류</th><th>소분류</th><th>항목</th><th>사용처 / 메모</th><th style="text-align:right">금액</th></tr></thead>
+        <tbody>${sortedRows.length ? sortedRows.map(r => {
+          const cls = majorTagClass(r.major);
+          return `<tr>
+            <td><span class="tag-pill ${cls}">${r.major || '-'}</span></td>
+            <td>${r.minor || '-'}</td>
+            <td>${r.item || '-'}</td>
+            <td>${r.vendor || ''}${r.memo ? `<div style="color:var(--text-faint);font-size:11px;">${r.memo}</div>` : ''}</td>
+            <td class="amt ${cls}">${formatWon(r.amount)}</td>
+          </tr>`;
+        }).join('') : '<tr><td colspan="5" style="text-align:center;color:var(--text-faint);padding:20px;">이 날 기록이 없어요.</td></tr>'}</tbody>
+      </table>
+    </div>
+  `;
+
+  /* --- 캘린더 --- */
+  const firstDow = new Date(Y, MO - 1, 1).getDay();
+  const lead = firstDow === 0 ? 6 : firstDow - 1;
+  const maxDayExp = Math.max(...M.daily.map(b => b.expense), 1);
+  const cells = [];
+  for (let i = 0; i < lead; i++) cells.push('<div class="cal-cell blank"></div>');
+  M.daily.forEach(b => {
+    const k = `${Y}-${pad2(MO)}-${pad2(b.day)}`;
+    const future = k > realToday;
+    const heat = b.expense > 0 ? `background:rgba(193,72,63,${(0.08 + 0.42 * (b.expense / maxDayExp)).toFixed(2)});` : '';
+    cells.push(`<div class="cal-cell ${k === key ? 'sel' : ''} ${future ? 'future' : ''} ${k === realToday && k !== key ? 'real' : ''}" data-k="${k}" style="${heat}">
+      <span class="cal-day">${b.day}</span>
+      <span class="cal-amt ${b.expense === 0 && !future ? 'zero' : ''}">${future ? '' : (b.expense ? formatCompactWon(b.expense) : '·')}</span>
+    </div>`);
+  });
+  document.getElementById('today-calendar').innerHTML = `
+    <div class="cal-grid">${['월', '화', '수', '목', '금', '토', '일'].map(x => `<div class="cal-dow">${x}</div>`).join('')}</div>
+    <div class="cal-grid">${cells.join('')}</div>
+    <div class="settings-note">색이 진할수록 지출이 큰 날이에요. 점(·)은 무지출 · 날짜를 누르면 그 날로 이동합니다.</div>
+  `;
+  document.getElementById('today-calendar').addEventListener('click', (e) => {
+    const cell = e.target.closest('.cal-cell');
+    if (!cell || cell.classList.contains('blank') || cell.classList.contains('future')) return;
+    state.todayDayKey = cell.dataset.k;
+    renderPage();
+  });
+
+  /* --- 추이 차트 --- */
+  const drawTodayTrend = () => {
+    if (state.charts.todayTrend) state.charts.todayTrend.destroy();
+    const n = state.todayTrendRange;
+    const keys = [];
+    for (let i = n - 1; i >= 0; i--) keys.push(shiftDayKey(key, -i));
+    const vals = keys.map(k => dayOf(k).expense);
+    const ma = vals.map((_, i) => {
+      const from = Math.max(0, i - 6);
+      const slice = vals.slice(from, i + 1);
+      return slice.reduce((a, b) => a + b, 0) / slice.length;
+    });
+    state.charts.todayTrend = new Chart(document.getElementById('chart-today-trend'), {
+      data: {
+        labels: keys.map(dayKeyShort),
+        datasets: [
+          {
+            type: 'bar', label: '일별 지출', data: vals, borderRadius: 3, order: 2,
+            backgroundColor: keys.map(k => k === key ? '#c9a227' : 'rgba(193,72,63,0.7)')
+          },
+          {
+            type: 'line', label: '7일 이동평균', data: ma, borderColor: '#e0c766',
+            borderWidth: 2, pointRadius: 0, tension: 0.3, order: 1
+          }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, layout: { padding: { top: 14 } },
+        interaction: { mode: 'index', intersect: false },
+        onClick: (evt, els) => {
+          if (!els || !els.length) return;
+          const k = keys[els[0].index];
+          if (k > realToday) return;
+          state.todayDayKey = k;
+          renderPage();
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              title: (items) => dayKeyLabel(keys[items[0].dataIndex]) + ` (${DOW_KR[dowOfDayKey(keys[items[0].dataIndex])]})`,
+              label: (c) => ` ${c.dataset.label}: ${formatWon(c.raw)}`
+            }
+          }
+        },
+        scales: {
+          x: { ticks: { ...MONO_TICK, autoSkip: true, maxRotation: 0 }, grid: { display: false } },
+          y: { ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT }
+        }
+      }
+    });
+  };
+  document.getElementById('today-trend-range').addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    state.todayTrendRange = parseInt(btn.dataset.n, 10);
+    document.querySelectorAll('#today-trend-range button').forEach(b => b.classList.toggle('active', b === btn));
+    drawTodayTrend();
+  });
+  drawTodayTrend();
+
+  /* --- 날짜 이동 --- */
+  const setDay = (k) => {
+    if (!k || k > realToday) return;
+    state.todayDayKey = k;
+    renderPage();
+  };
+  document.getElementById('today-date').addEventListener('change', (e) => setDay(e.target.value));
+  document.getElementById('today-prev').addEventListener('click', () => setDay(shiftDayKey(key, -1)));
+  document.getElementById('today-next').addEventListener('click', () => setDay(shiftDayKey(key, 1)));
+  document.getElementById('today-jump').addEventListener('click', () => setDay(realToday));
 }
 
 /* ---------------- page: 자산 ---------------- */
