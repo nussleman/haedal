@@ -859,7 +859,25 @@ const GID_LEDGER_D = '1990449957';   // 가계부(D) - raw daily transaction led
 const GID_ASSETS = '1458451221';     // 자산 스냅샷 - monthly asset balances
 const GID_GOALS = '384376571';       // 목표 - goals / roadmap
 const GID_CLASSIFY = '701072426';    // 분류 - 사용처/종목 분류표 (주식_카테고리 매핑 포함)
-const TAB_GIDS = [GID_LEDGER_D, GID_ASSETS, GID_GOALS, GID_CLASSIFY];
+const GID_INDEX = '772931342';       // 지수_S&P500 - 월별 지수 종가 (벤치마크 반사실 계산용)
+const TAB_GIDS = [GID_LEDGER_D, GID_ASSETS, GID_GOALS, GID_CLASSIFY, GID_INDEX];
+
+/* 지수_S&P500 탭을 못 불러왔을 때만 쓰는 씨앗 데이터.
+   시트가 단일 소스이고, 이 상수는 오프라인/권한오류 시 패널이 빈 화면이
+   되지 않게 하는 백업일 뿐이다. 시트에 값이 있으면 항상 시트가 이긴다. */
+const INDEX_SEED = {
+  '2023-03': 3968.56, '2023-04': 4121.47, '2023-05': 4146.17, '2023-06': 4345.37,
+  '2023-07': 4508.08, '2023-08': 4426.24, '2023-09': 4409.10, '2023-10': 4258.98,
+  '2023-11': 4460.06, '2023-12': 4685.05, '2024-01': 4804.49, '2024-02': 5011.96,
+  '2024-03': 5170.57, '2024-04': 5095.46, '2024-05': 5235.23, '2024-06': 5415.14,
+  '2024-07': 5542.89, '2024-08': 5502.17, '2024-09': 5626.12, '2024-10': 5792.32,
+  '2024-11': 5929.92, '2024-12': 6010.91, '2025-01': 5979.52, '2025-02': 6038.69,
+  '2025-03': 5683.98, '2025-04': 5369.50, '2025-05': 5810.92, '2025-06': 6029.95,
+  '2025-07': 6296.50, '2025-08': 6408.95, '2025-09': 6584.02, '2025-10': 6735.69,
+  '2025-11': 6740.89, '2025-12': 6853.03, '2026-01': 6929.12, '2026-02': 6893.81,
+  '2026-03': 6654.42, '2026-04': 6957.01, '2026-05': 7412.55, '2026-06': 7450.03,
+  '2026-07': 7513.50, '2026-08': 7851.30
+};
 const csvUrlFor = (gid) => `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&gid=${gid}`;
 const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/edit?gid=${GID_LEDGER_D}#gid=${GID_LEDGER_D}`;
 
@@ -898,6 +916,8 @@ const state = {
   fixedMonthKey: null,
   vendorRange: 12,
   invRange: 12,
+  benchRange: 'all',
+  benchMode: 'amount',   // 'amount' | 'excess'
   invContribRange: 12,
   invReturnsRange: 12,
   invCumPeriod: 'month',
@@ -1021,6 +1041,42 @@ function parseAssetsFromRows(rows) {
     }
   }
   return assetRows;
+}
+
+/* 지수_S&P500 탭: 년월 / 종가 두 컬럼.
+   구글 시트가 "2023-03"을 날짜로 해석해버리므로 gviz/tq CSV에서는
+   "2023. 3. 1" 형태로 내려온다. 원문 문자열/날짜/한글표기 모두 받는다.
+   컬럼은 항상 헤더명으로 찾는다 — 컬럼이 추가돼도 안 깨지게. */
+function normIndexMonthKey(raw) {
+  const s = String(raw || '').trim();
+  if (!s) return null;
+  let m = s.match(/^(\d{4})[.\-/년]\s*(\d{1,2})/);          // 2023-03 / 2023. 3. 1 / 2023년 3월
+  if (m) return `${m[1]}-${String(parseInt(m[2], 10)).padStart(2, '0')}`;
+  m = s.match(/^(\d{2})년\s*(\d{1,2})월/);                   // 23년 03월
+  if (m) return `${2000 + parseInt(m[1], 10)}-${String(parseInt(m[2], 10)).padStart(2, '0')}`;
+  return null;
+}
+
+function parseIndexFromRows(rows) {
+  let headerRowIdx = -1, monthCol = -1, closeCol = -1;
+  for (let r = 0; r < rows.length && r < 30; r++) {
+    const row = (rows[r] || []).map(c => cleanLabel(c || ''));
+    const mi = row.findIndex(c => c === '년월' || c === '월' || c === '기준월');
+    const ci = row.findIndex(c => c === '종가' || c === '지수' || c === '가격');
+    if (mi !== -1 && ci !== -1) { headerRowIdx = r; monthCol = mi; closeCol = ci; break; }
+  }
+  if (headerRowIdx === -1) return {};
+
+  const out = {};
+  for (let r = headerRowIdx + 1; r < rows.length; r++) {
+    const row = rows[r] || [];
+    const key = normIndexMonthKey(row[monthCol]);
+    if (!key) continue;
+    const v = parseFloat(String(row[closeCol] || '').replace(/[^0-9.\-]/g, ''));
+    if (!isFinite(v) || v <= 0) continue;
+    out[key] = v;
+  }
+  return out;
 }
 
 /* 목표 탭: 시기 / 구분 / 목표 / 상태 / 달성한 날 / 메모 컬럼 구조.
@@ -1920,7 +1976,7 @@ function renderShell() {
 function renderBanner() {
   const slot = document.getElementById('banner-slot');
   if (!slot) return;
-  const tabLabels = { [GID_LEDGER_D]: '가계부(D)', [GID_ASSETS]: '자산 스냅샷', [GID_GOALS]: '목표', [GID_CLASSIFY]: '분류' };
+  const tabLabels = { [GID_LEDGER_D]: '가계부(D)', [GID_ASSETS]: '자산 스냅샷', [GID_GOALS]: '목표', [GID_CLASSIFY]: '분류', [GID_INDEX]: '지수_S&P500' };
   const testLinks = TAB_GIDS.map(g => `<a href="${csvUrlFor(g)}" target="_blank" rel="noopener" style="color:var(--gold-soft);">${tabLabels[g]}</a>`).join(' · ');
 
   if (state.source === 'snapshot' && state.lastError) {
@@ -5052,6 +5108,302 @@ function analyzeCapitalGainsTax(ledger) {
   return { rows, paid, paidRows, totalPaid, totalGain };
 }
 
+/* ---------------- BENCHMARK: 같은 일정으로 지수에 넣었다면 ----------------
+   "내가 고른 종목"과 "아무 생각 없이 지수"를 같은 조건에서 비교한다.
+   조건을 맞추는 방법: 실제 투자 이체가 일어난 달·금액 그대로 지수를 매수했다고
+   가정하고, 매달 누적 좌수 × 그 달 지수 = 반사실 평가액.
+   실제 평가액(자산 스냅샷의 투자 자산)과 같은 시점에서 뺀 값이 초과수익.
+   이 패널이 있어야 "이겼다/졌다"를 기억이 아니라 숫자로 판정할 수 있다. */
+function analyzeBenchmark(data, d) {
+  const hasSheetPrices = data.indexPrices && Object.keys(data.indexPrices).length > 0;
+  const prices = hasSheetPrices ? data.indexPrices : INDEX_SEED;
+  if (!Object.keys(prices).length) return null;
+
+  const sortedPriceKeys = Object.keys(prices).sort();
+  /* 해당 월 가격이 없으면 그 이전 가장 가까운 달 가격으로 대체한다.
+     (시트 갱신이 한 달 밀렸을 때 패널이 죽지 않게) */
+  const priceAt = (key) => {
+    if (prices[key] !== undefined) return prices[key];
+    let found = null;
+    for (const k of sortedPriceKeys) { if (k <= key) found = prices[k]; else break; }
+    return found;
+  };
+
+  /* 1) 납입 스케줄.
+     원장이 충분하면 원장에서 뽑는다 — 계좌별로 나뉘어 있어서
+     "이체 기록이 있는 계좌"만 비교 대상으로 좁힐 수 있다.
+     신한 증권처럼 이체 기록 없이 잔고만 있는 계좌를 실제 평가액에 넣으면
+     그 금액만큼 초과수익이 매달 공짜로 부풀려진다. */
+  const monthKeyOf = (pivotMonth) => {
+    const m = String(pivotMonth).match(/(\d{4})-(\d{1,2})월/);
+    return m ? `${m[1]}-${String(parseInt(m[2], 10)).padStart(2, '0')}` : null;
+  };
+  const ledgerMonthKey = (s) => {
+    const m = String(s || '').match(/(\d{4})\.\s*(\d{1,2})\./);
+    return m ? `${m[1]}-${String(parseInt(m[2], 10)).padStart(2, '0')}` : null;
+  };
+
+  const pivotSeries = data.transferCategories['투자 자산'] || [];
+  const pivotFlow = {};
+  let pivotTotal = 0;
+  data.months.forEach((pm, i) => {
+    const key = monthKeyOf(pm);
+    if (!key) return;
+    pivotFlow[key] = (pivotFlow[key] || 0) + (pivotSeries[i] || 0);
+    pivotTotal += pivotSeries[i] || 0;
+  });
+
+  const invTransfers = (data.ledger || []).filter(r => r.major === '이체' && r.minor === '투자 자산');
+  const ledgerFlow = {};
+  const trackedAccounts = new Set();
+  let ledgerTotal = 0;
+  invTransfers.forEach(r => {
+    const key = ledgerMonthKey(r.date);
+    if (!key) return;
+    ledgerFlow[key] = (ledgerFlow[key] || 0) + (r.amount || 0);
+    ledgerTotal += r.amount || 0;
+    if (r.item) trackedAccounts.add(r.item);
+  });
+
+  /* 원장 쪽이 피벗 총액을 거의 재현할 때만 원장을 신뢰한다.
+     오프라인 스냅샷의 ledger는 앞부분만 잘려 담겨 있어서, 건수만 보고
+     원장을 쓰면 누적 원금이 조용히 과소 집계된다. */
+  const ledgerAgrees = pivotTotal === 0
+    ? invTransfers.length >= 10
+    : Math.abs(ledgerTotal - pivotTotal) <= Math.abs(pivotTotal) * 0.02;
+  const useLedger = invTransfers.length >= 10 && ledgerAgrees;
+
+  const flowByKey = useLedger ? ledgerFlow : pivotFlow;
+  if (!useLedger) trackedAccounts.clear();
+
+  /* 2) 시간순으로 누적 좌수와 누적 원금을 쌓는다 */
+  let units = 0, contrib = 0, missing = 0;
+  const stateByKey = {};
+  const allKeys = Array.from(new Set(Object.keys(flowByKey).concat(sortedPriceKeys))).sort();
+  allKeys.forEach(key => {
+    const flow = flowByKey[key] || 0;
+    if (flow !== 0) {
+      const px = priceAt(key);
+      if (px) { units += flow / px; contrib += flow; }
+      else { missing += 1; contrib += flow; }
+    }
+    stateByKey[key] = { units, contrib };
+  });
+
+  /* 3) 자산 스냅샷이 있는 달마다 실제 vs 반사실을 같은 시점으로 맞춘다.
+     원장을 쓸 수 있으면 이체 기록이 있는 계좌만 합산한다. */
+  const balByMonth = {};
+  const excluded = new Set();
+  data.assetRows.forEach(r => {
+    if (r.category !== '투자 자산' || r.amount === null) return;
+    if (useLedger && trackedAccounts.size && !trackedAccounts.has(r.account)) {
+      excluded.add(r.account);
+      return;
+    }
+    balByMonth[r.date] = (balByMonth[r.date] || 0) + r.amount;
+  });
+
+  const carry = (key) => {
+    if (stateByKey[key]) return stateByKey[key];
+    const keys = Object.keys(stateByKey).filter(k => k <= key).sort();
+    return keys.length ? stateByKey[keys[keys.length - 1]] : { units: 0, contrib: 0 };
+  };
+
+  const rows = [];
+  (d.assetMonths || []).forEach(am => {
+    const mk = assetMonthKey(am);
+    if (!mk) return;
+    const key = `${Math.floor(mk / 100)}-${String(mk % 100).padStart(2, '0')}`;
+    const px = priceAt(key);
+    const st = carry(key);
+    const actual = balByMonth[am];
+    if (px === null || px === undefined || actual === undefined) return;
+    const index = st.units * px;
+    rows.push({
+      month: am, key, contrib: st.contrib, actual, index,
+      diff: actual - index,
+      actualRoi: st.contrib > 0 ? ((actual - st.contrib) / st.contrib) * 100 : null,
+      indexRoi: st.contrib > 0 ? ((index - st.contrib) / st.contrib) * 100 : null
+    });
+  });
+  if (!rows.length) return null;
+
+  const last = rows[rows.length - 1];
+  const best = rows.reduce((a, r) => (r.diff > a.diff ? r : a), rows[0]);
+  const worst = rows.reduce((a, r) => (r.diff < a.diff ? r : a), rows[0]);
+  const wins = rows.filter(r => r.diff > 0).length;
+
+  return {
+    rows, last, best, worst, wins, total: rows.length, missing,
+    source: hasSheetPrices ? (data.indexSource || 'sheet') : 'seed',
+    accounts: Array.from(trackedAccounts), excluded: Array.from(excluded), useLedger
+  };
+}
+
+function renderBenchmarkPanel(hostId, data, d) {
+  const host = document.getElementById(hostId);
+  if (!host) return;
+  const b = analyzeBenchmark(data, d);
+  if (!b) {
+    host.innerHTML = `
+      <div class="panel-title"><div><span class="eyebrow">BENCHMARK</span>지수 대비 초과수익</div></div>
+      <div class="empty-state">지수 데이터를 찾지 못했어요. 시트의 <b>지수_S&amp;P500</b> 탭에
+        <b>년월 / 종가</b> 두 컬럼이 있는지 확인해주세요.
+        <a href="${csvUrlFor(GID_INDEX)}" target="_blank" rel="noopener" style="color:var(--gold-soft);">불러오는 값 확인</a></div>`;
+    return;
+  }
+
+  const { last, best, worst, wins, total } = b;
+  const sign = (v) => (v >= 0 ? '+' : '−');
+  const col = (v) => (v >= 0 ? 'var(--green)' : 'var(--red)');
+  const pct = (v) => (v === null ? '—' : `${v >= 0 ? '+' : '−'}${Math.abs(v).toFixed(1)}%`);
+
+  host.innerHTML = `
+    <div class="panel-title">
+      <div><span class="eyebrow">BENCHMARK</span>지수 대비 초과수익 — 같은 일정으로 S&amp;P500에 넣었다면</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <div class="range-toggle" id="bench-mode-toggle">
+          <button data-mode="amount" class="${state.benchMode !== 'excess' ? 'active' : ''}">금액</button>
+          <button data-mode="excess" class="${state.benchMode === 'excess' ? 'active' : ''}">초과수익</button>
+        </div>
+        <div class="range-toggle" id="bench-range-toggle"></div>
+      </div>
+    </div>
+    <div class="stat-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-bottom:16px;">
+      <div class="stat-card" style="border-color:${last.diff >= 0 ? 'rgba(76,140,107,0.45)' : 'rgba(193,72,63,0.45)'};">
+        <div class="label">${assetMonthLabel(last.month)} 초과수익</div>
+        <div class="value" style="color:${col(last.diff)}">${sign(last.diff)}${formatCompactWon(Math.abs(last.diff))}원</div>
+        <div class="sub">내 ${pct(last.actualRoi)} vs 지수 ${pct(last.indexRoi)}</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">최고 초과수익</div>
+        <div class="value" style="color:${col(best.diff)}">${sign(best.diff)}${formatCompactWon(Math.abs(best.diff))}원</div>
+        <div class="sub">${assetMonthLabel(best.month)} 시점</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">최저 초과수익</div>
+        <div class="value" style="color:${col(worst.diff)}">${sign(worst.diff)}${formatCompactWon(Math.abs(worst.diff))}원</div>
+        <div class="sub">${assetMonthLabel(worst.month)} 시점</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">지수를 이긴 달</div>
+        <div class="value">${wins} / ${total}</div>
+        <div class="sub">스냅샷 기준 승률 ${total ? Math.round((wins / total) * 100) : 0}%</div>
+      </div>
+    </div>
+    <div class="chart-wrap tall"><canvas id="chart-bench"></canvas></div>
+    <div class="chart-legend" id="bench-legend"></div>
+    <div class="table-scroll" style="margin-top:12px;">
+      <table class="data-table">
+        <thead><tr>
+          <th>시점</th><th style="text-align:right">누적 납입</th><th style="text-align:right">내 평가액</th>
+          <th style="text-align:right">지수 반사실</th><th style="text-align:right">초과수익</th>
+          <th style="text-align:right">내 수익률</th><th style="text-align:right">지수 수익률</th><th>판정</th>
+        </tr></thead>
+        <tbody>
+          ${b.rows.slice().reverse().map(r => `<tr>
+            <td>${assetMonthLabel(r.month)}</td>
+            <td class="amt">${formatWon(r.contrib)}</td>
+            <td class="amt">${formatWon(r.actual)}</td>
+            <td class="amt">${formatWon(Math.round(r.index))}</td>
+            <td class="amt" style="color:${col(r.diff)}">${r.diff >= 0 ? '+' : '-'}${wonComma(r.diff)}</td>
+            <td class="amt">${pct(r.actualRoi)}</td>
+            <td class="amt">${pct(r.indexRoi)}</td>
+            <td style="color:${col(r.diff)}">${r.diff >= 0 ? '내가 앞섬' : '지수가 앞섬'}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+    <div class="settings-note" style="margin-top:12px;">
+      실제 투자 이체가 일어난 <b>달과 금액 그대로</b> 지수를 샀다고 가정한 값이에요
+      (누적 좌수 × 그 달 종가). 조건이 같으니 차이는 <b>종목 선택의 결과</b>입니다.
+      한계: 시트의 종가는 <b>월평균</b>이고 <b>배당 재투자가 빠져</b> 있어 지수가 연 약 1.3%p 과소평가돼요.
+      환율은 양쪽에서 상쇄된다고 보고 무시했고, 국내주식이 섞인 만큼은 정확하지 않습니다.
+      실현한 양도세는 여기 반영되지 않으니 <b>TAX 패널과 함께</b> 보세요.
+      ${b.accounts.length ? `<br>비교 대상 계좌: <b>${b.accounts.join(', ')}</b>.` : ''}
+      ${b.excluded.length ? ` 이체 기록이 없는 <b>${b.excluded.join(', ')}</b>은(는) 제외했어요 — 납입 없이 잔고만 있으면 초과수익이 그만큼 부풀려지니까요.` : ''}
+      ${!b.useLedger ? `<br><b style="color:var(--gold-soft)">원장이 얕아 월별 피벗으로 계산 중이라 계좌 분리가 안 됐어요.</b>` : ''}
+      ${b.missing ? `<br><b style="color:var(--red)">${b.missing}개 달의 지수 값이 없어 이전 달 종가로 대체했어요.</b>` : ''}
+      ${b.source === 'seed' ? `<br><b style="color:var(--gold-soft)">지수_S&amp;P500 탭을 못 읽어서 내장 백업값으로 계산 중이에요.</b>` : ''}
+    </div>
+  `;
+
+  const drawBench = () => {
+    if (state.charts.bench) state.charts.bench.destroy();
+    const slice = sliceByRange(b.rows, state.benchRange);
+    const labels = slice.map(r => assetMonthLabel(r.month));
+    const ctx = document.getElementById('chart-bench');
+    if (!ctx) return;
+    const excess = state.benchMode === 'excess';
+
+    document.getElementById('bench-legend').innerHTML = excess
+      ? '<span><i style="background:#c9a227"></i>초과수익 (내 평가액 − 지수 반사실)</span>'
+      : '<span><i style="background:#4c8c6b"></i>내 평가액</span><span><i style="background:#5b8fc7"></i>지수 반사실</span><span><i style="background:#e0c766"></i>누적 납입</span>';
+
+    if (excess) {
+      state.charts.bench = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: '초과수익', data: slice.map(r => Math.round(r.diff)),
+            backgroundColor: slice.map(r => (r.diff >= 0 ? 'rgba(76,140,107,0.65)' : 'rgba(193,72,63,0.65)')),
+            borderColor: slice.map(r => (r.diff >= 0 ? '#4c8c6b' : '#c1483f')), borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` 초과수익: ${formatWon(c.raw)}` } } },
+          scales: {
+            x: { ticks: MONO_TICK, grid: { display: false } },
+            y: { ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT }
+          }
+        }
+      });
+      return;
+    }
+
+    state.charts.bench = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          { label: '내 평가액', data: slice.map(r => r.actual), borderColor: '#4c8c6b', backgroundColor: 'rgba(76,140,107,0.12)', fill: true, tension: 0.3, pointRadius: 2 },
+          { label: '지수 반사실', data: slice.map(r => Math.round(r.index)), borderColor: '#5b8fc7', backgroundColor: 'transparent', borderDash: [6, 4], tension: 0.3, pointRadius: 2 },
+          { label: '누적 납입', data: slice.map(r => r.contrib), borderColor: '#e0c766', backgroundColor: 'transparent', borderDash: [2, 3], borderWidth: 1.5, tension: 0.3, pointRadius: 0 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` ${c.dataset.label}: ${formatWon(c.raw)}` } } },
+        scales: {
+          x: { ticks: MONO_TICK, grid: { display: false } },
+          y: { ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT }
+        }
+      }
+    });
+  };
+
+  function onBenchRangePick(v) {
+    state.benchRange = v === 'all' ? 'all' : parseInt(v, 10);
+    bindRangeToggle('bench-range-toggle', RANGE_OPTIONS, state.benchRange, onBenchRangePick);
+    drawBench();
+  }
+  bindRangeToggle('bench-range-toggle', RANGE_OPTIONS, state.benchRange, onBenchRangePick);
+
+  const modeToggle = document.getElementById('bench-mode-toggle');
+  if (modeToggle) {
+    modeToggle.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.benchMode = btn.dataset.mode;
+        modeToggle.querySelectorAll('button').forEach(x => x.classList.toggle('active', x === btn));
+        drawBench();
+      });
+    });
+  }
+  drawBench();
+}
+
 function renderCapitalGainsPanel(hostId, ledger) {
   const host = document.getElementById(hostId);
   if (!host) return;
@@ -5421,6 +5773,7 @@ function renderInvestmentPage(container, data, d) {
         <div id="stock-profit-list"></div>
       </div>
     </div>
+    <div class="panel full" id="panel-bench"></div>
     <div class="panel full" id="panel-cgt"></div>
     <div class="panel full">
       <div class="panel-title"><div><span class="eyebrow">RECORDS</span>투자 관련 내역</div></div>
@@ -5429,6 +5782,7 @@ function renderInvestmentPage(container, data, d) {
   `;
 
   renderWeeklyInsights('panel-investment-insights', 'weekly-insights-investment', '투자 인사이트', () => computeInvestmentInsights(data, d, cumSeries, tagAgg), data, ['투자']);
+  renderBenchmarkPanel('panel-bench', data, d);
   renderCapitalGainsPanel('panel-cgt', data.ledger);
 
   const drawCum = () => {
@@ -5907,8 +6261,12 @@ async function fetchAllTabsAndMerge() {
     throw new Error(failures[0] ? failures[0].reason.message : '탭을 하나도 불러오지 못했어요');
   }
 
-  let assetRows = [], ledger = [], investmentTags = [], goals = [], stockCategoryMap = {};
+  let assetRows = [], ledger = [], investmentTags = [], goals = [], stockCategoryMap = {}, indexPrices = {};
   for (const rows of rowSets) {
+    try {
+      const ip = parseIndexFromRows(rows);
+      if (Object.keys(ip).length > Object.keys(indexPrices).length) indexPrices = ip;
+    } catch (e) {}
     try {
       const ar = parseAssetsFromRows(rows);
       if (ar.length > assetRows.length) assetRows = ar;
@@ -5944,7 +6302,9 @@ async function fetchAllTabsAndMerge() {
   const data = {
     months: pivot.months, incomeTotal: pivot.incomeTotal, expenseTotal: pivot.expenseTotal,
     expenseCategories: pivot.expenseCategories, incomeCategories: pivot.incomeCategories, transferCategories: pivot.transferCategories,
-    assetRows, ledger, investmentTags, goals, stockCategoryMap
+    assetRows, ledger, investmentTags, goals, stockCategoryMap,
+    indexPrices: Object.keys(indexPrices).length ? indexPrices : INDEX_SEED,
+    indexSource: Object.keys(indexPrices).length ? 'sheet' : 'seed'
   };
 
   if (failures.length) {
