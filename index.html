@@ -1095,6 +1095,79 @@ body{font-variant-numeric:tabular-nums;}
 #home-structure{display:flex;flex-direction:column;gap:var(--gap);}
 #home-structure:empty{display:none;}
 
+/* ---------- 체크 배지 (후회·고정비·환급·재분류) ---------- */
+.chk-strip{display:flex;gap:4px;flex-wrap:wrap;align-items:center;}
+.chk-pill{font-family:var(--mono);font-size:9.5px;letter-spacing:.02em;padding:2px 6px;border-radius:5px;white-space:nowrap;}
+.chk-pill.fixed{background:rgba(91,143,199,0.18);color:#9dc2e8;}
+.chk-pill.regret{background:rgba(193,72,63,0.20);color:#eb9891;}
+.chk-pill.refund{background:rgba(76,140,107,0.20);color:#8fd0ac;}
+.chk-pill.reclass{background:rgba(255,255,255,0.06);color:var(--text-dim);}
+#today-cards{display:flex;flex-direction:column;gap:8px;}
+#today-cards .stat-card{flex:0 0 auto;}
+#today-cards .stat-card .chk-strip{margin-top:8px;}
+#today-cards .mininote{margin-top:8px;}
+
+/* ---------- 목표 보드 ---------- */
+.gb-board{display:flex;flex-direction:column;gap:7px;}
+.gb-row{display:grid;grid-template-columns:118px 1fr;gap:10px;align-items:stretch;
+  border:1px solid var(--border);border-radius:10px;background:var(--panel-2);padding:8px 10px;}
+.gb-row.now{border-color:var(--gold);background:rgba(201,162,39,0.07);}
+.gb-row.undated{border-style:dashed;}
+.gb-rowhead{display:flex;flex-direction:column;justify-content:center;gap:2px;border-right:1px solid var(--border);padding-right:8px;}
+.gb-rowhead b{font-family:var(--serif);font-size:14px;font-weight:700;color:var(--text);line-height:1.2;}
+.gb-rowhead span{font-family:var(--mono);font-size:10.5px;color:var(--text-faint);}
+.gb-row.now .gb-rowhead b{color:var(--gold-soft);}
+.gb-lane{display:flex;gap:7px;flex-wrap:wrap;align-items:flex-start;min-height:52px;border-radius:8px;padding:2px;transition:background .15s;}
+.gb-lane.over{background:rgba(201,162,39,0.14);outline:1px dashed var(--gold-soft);}
+.gb-empty{font-family:var(--mono);font-size:10.5px;color:var(--text-faint);padding:16px 8px;}
+.gb-card{flex:1 1 210px;max-width:320px;min-width:190px;background:var(--panel);border:1px solid var(--border-strong);
+  border-left:3px solid var(--text-faint);border-radius:9px;padding:9px 11px;cursor:grab;transition:transform .12s,box-shadow .12s;}
+.gb-card:hover{box-shadow:0 4px 14px rgba(0,0,0,.35);transform:translateY(-1px);}
+.gb-card.dragging{opacity:.45;cursor:grabbing;}
+.gb-card.ok{border-left-color:var(--green);}
+.gb-card.no{border-left-color:var(--red);}
+.gb-card.active{border-left-color:var(--gold);}
+.gb-card.pending{border-left-color:var(--text-faint);}
+.gb-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;}
+.gb-title{font-size:13.5px;font-weight:600;color:var(--text);line-height:1.35;}
+.gb-pct{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--gold-soft);flex-shrink:0;}
+.gb-bar{height:5px;border-radius:3px;background:rgba(255,255,255,.06);overflow:hidden;margin-top:7px;}
+.gb-bar i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,var(--gold),var(--gold-soft));}
+.gb-bar i.good{background:linear-gradient(90deg,var(--green),#6fb08c);}
+.gb-figs{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--text-faint);margin-top:4px;}
+.gb-foot{display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-top:7px;}
+.gb-tag,.gb-status,.gb-date,.gb-pending{font-family:var(--mono);font-size:9.5px;padding:2px 6px;border-radius:5px;white-space:nowrap;}
+.gb-tag{background:rgba(91,143,199,0.16);color:#9dc2e8;}
+.gb-status.ok{background:rgba(76,140,107,0.18);color:#8fd0ac;}
+.gb-status.no{background:rgba(193,72,63,0.18);color:#eb9891;}
+.gb-status.active{background:rgba(201,162,39,0.2);color:var(--gold-soft);}
+.gb-status.pending{background:rgba(154,163,182,0.14);color:var(--text-dim);}
+.gb-date{background:rgba(255,255,255,.05);color:var(--text-faint);}
+.gb-pending{background:rgba(201,162,39,.22);color:var(--gold-soft);}
+.gb-memo{font-size:11px;color:var(--text-faint);line-height:1.5;margin-top:6px;}
+.gb-donut{height:9px;border-radius:5px;background:var(--panel-2);overflow:hidden;}
+.gb-donut i{display:block;height:100%;border-radius:5px;background:linear-gradient(90deg,var(--green),#6fb08c);}
+@media (max-width:820px){
+  .gb-row{grid-template-columns:1fr;}
+  .gb-rowhead{flex-direction:row;justify-content:space-between;border-right:none;border-bottom:1px solid var(--border);padding:0 0 6px;}
+  .gb-card{max-width:none;}
+}
+
+/* ---------- 토스트 ---------- */
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(14px);
+  background:var(--panel);border:1px solid var(--border-strong);color:var(--text);
+  font-size:12.5px;padding:10px 16px;border-radius:9px;box-shadow:0 8px 28px rgba(0,0,0,.45);
+  opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:9999;}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
+.toast.good{border-color:rgba(76,140,107,.5);}
+.toast.warn{border-color:rgba(201,162,39,.5);}
+
+/* ---------- 자산 증식 구조: 압축 ---------- */
+.eng-node{padding:7px 8px;gap:3px;}
+.eng-node-top .nm{font-size:12px;}
+.eng-amt{font-size:14px;}
+.eng-stage-head span{font-family:var(--mono);font-size:11px;color:var(--text-dim);margin-left:auto;}
+
 /* 캘린더 월 타이틀 */
 .cal-month-title{font-family:var(--serif);font-weight:800;font-size:27px;line-height:1.15;color:var(--text);letter-spacing:-.01em;}
 @media (max-width:820px){.cal-month-title{font-size:22px;}}
@@ -1201,6 +1274,7 @@ const state = {
   savTrendRange: 12,
   savContribRange: 12,
   homeSub: 'insights',     // 홈 하위 탭: insights | goals | structure
+  goalMoves: {},           // 드래그로 옮긴 목표 시기 (시트 반영 전 로컬 오버라이드)
   nowMonthKey: null,       // '이번달' 탭에서 보고 있는 달 (YYYY-MM)
   nowWeekIdx: null,        // null = 그 달 전체, 0.. = 해당 주차만
   nowGranularity: 'week',  // 'week' | 'day'
@@ -1375,6 +1449,7 @@ function parseGoalsFromRows(rows) {
       obj[name] = v;
     });
     if (!hasAny) continue;
+    obj.__row = r + 1;   /* 시트 실제 행 번호 (쓰기 반영용) */
     goals.push(obj);
   }
   return goals;
@@ -1513,8 +1588,9 @@ function parseLedgerFromRows(rows) {
     amount: findCol(['금액'], c0 + 5),
     vendor: findCol([/^사용처/, /브랜드/], c0 + 6),
     memo: findCol(['내용', '메모'], c0 + 7),
-    reclass: findCol(['재분류', '후회하는소비'], c0 + 8),
-    refund: findCol([/^회사환급/], -1),
+    reclass: findCol(['재분류'], c0 + 8),
+    regret: findCol([/^후회/], -1),
+    refund: findCol([/^회사환급/, /^환급/], -1),
     fixed: findCol([/^고정비/], -1)
   };
 
@@ -1538,9 +1614,10 @@ function parseLedgerFromRows(rows) {
     const memo = (row[COL.memo] || '').trim();
     const reclass = (row[COL.reclass] || '').trim();
     const fixed = COL.fixed >= 0 ? isTruthyFlag(row[COL.fixed]) : false;
+    const regret = COL.regret >= 0 ? isTruthyFlag(row[COL.regret]) : false;
     const refund = COL.refund >= 0 ? (parseWon(row[COL.refund]) || 0) : 0;
     if (amount === null || amount === 0) continue;
-    ledger.push({ date: dateCell, major, minor, item, amount, vendor, memo, reclass, fixed, refund });
+    ledger.push({ date: dateCell, major, minor, item, amount, vendor, memo, reclass, fixed, regret, refund });
   }
   return ledger;
 }
@@ -2219,6 +2296,7 @@ function renderShell() {
           <span class="sync-dot" id="sync-dot"></span>
           <span id="sync-label">불러오는 중…</span>
           <button class="btn small" id="refresh-btn">↻ 새로고침</button>
+          <a class="btn small" href="${SHEET_URL}" target="_blank" rel="noopener">↗ 원본 시트</a>
         </div>
       </div>
       <div id="banner-slot"></div>
@@ -2227,9 +2305,7 @@ function renderShell() {
       </nav>
     </div>
     <div id="page-content"></div>
-    <div class="footer">
-      <a href="${SHEET_URL}" target="_blank" rel="noopener">원본 시트 열기</a>
-    </div>
+    <div class="footer"></div>
   `;
   document.getElementById('refresh-btn').addEventListener('click', () => fetchLive(true));
   document.getElementById('navbar').addEventListener('click', (e) => {
@@ -2316,24 +2392,17 @@ function renderHomePage(container, data, d) {
     `<button data-sub="${v}" class="${v === SUB ? 'active' : ''}">${l}</button>`).join('')}</div>`;
 
   container.innerHTML = `
-    <div class="stat-grid" id="home-status"></div>
     ${subnav}
     ${SUB === 'insights' ? `
     <div class="g">
-      <div class="panel s7" id="panel-priority-insights"></div>
-      <div class="panel s5" id="panel-home-quick"></div>
+      <div class="panel s5" id="panel-priority-insights"></div>
+      <div class="stat-grid s7" style="grid-template-columns:repeat(2,1fr);" id="home-status"></div>
     </div>` : ''}
-    ${SUB === 'goals' ? `
-    <div class="g">
-      <div class="panel s8" id="panel-goal-cards"></div>
-      <div class="panel s4" id="panel-home-quick"></div>
-    </div>` : ''}
+    ${SUB === 'goals' ? `<div id="home-goals"></div>` : ''}
     ${SUB === 'structure' ? `<div id="home-structure"></div>` : ''}
   `;
-  renderHomeStatus(data, d);
-  if (SUB === 'insights') renderPriorityInsights(data, d);
-  if (SUB === 'goals') renderGoalCards(data, d);
-  if (SUB !== 'structure') renderHomeQuick(data, d);
+  if (SUB === 'insights') { renderHomeStatus(data, d); renderPriorityInsights(data, d); }
+  if (SUB === 'goals') renderGoalBoard(data, d);
   if (SUB === 'structure') renderStructurePage(document.getElementById('home-structure'), data, d);
 
   document.getElementById('home-subnav').addEventListener('click', (e) => {
@@ -2342,36 +2411,6 @@ function renderHomePage(container, data, d) {
     state.homeSub = btn.dataset.sub;
     renderPage();
   });
-}
-
-/* 홈 서브탭 옆 보조 패널 — 이번 달 현금흐름 한눈에 */
-function renderHomeQuick(data, d) {
-  const panel = document.getElementById('panel-home-quick');
-  if (!panel) return;
-  const cf = d.cashflow || [];
-  const last = cf.length ? cf[cf.length - 1] : null;
-  const recent = cf.slice(-6);
-  const target = state.goals.savingsRateTarget;
-  if (!last) { panel.innerHTML = '<div class="panel-title"><div>최근 현금흐름</div></div><div class="empty-state">현금흐름 데이터가 없어요.</div>'; return; }
-  const maxV = Math.max(...recent.map(c => Math.max(c.income, c.expense)), 1);
-  panel.innerHTML = `
-    <div class="panel-title"><div>최근 현금흐름</div><span class="ptag">최근 ${recent.length}개월</span></div>
-    <div class="now-kv"><span>수입</span><b style="color:var(--green)">${formatWon(last.income)}</b></div>
-    <div class="now-kv"><span>지출</span><b style="color:var(--red)">${formatWon(last.expense)}</b></div>
-    <div class="now-kv"><span>순저축</span><b style="color:${last.income - last.expense >= 0 ? 'var(--net)' : 'var(--red)'}">${formatWon(last.income - last.expense)}</b></div>
-    <div class="now-kv"><span>저축률</span><b style="color:${last.savingsRate >= target ? 'var(--net)' : 'var(--red)'}">${last.savingsRate.toFixed(1)}% <em style="font-style:normal;color:var(--text-faint);font-size:10.5px;">/ 목표 ${target}%</em></b></div>
-    <div style="margin-top:10px;">
-      ${recent.map(c => {
-        const net = c.income - c.expense;
-        return `<div class="dow-avg-row">
-          <span class="nm" style="width:38px;">${(c.month || '').split('-')[1] || c.month}</span>
-          <div class="b-bar-track"><div class="b-bar-fill" style="width:${(c.expense / maxV) * 100}%"></div></div>
-          <span class="fig" style="width:96px;color:${net >= 0 ? 'var(--net)' : 'var(--red)'}">${formatCompactWon(net)}원</span>
-        </div>`;
-      }).join('')}
-    </div>
-    <div class="settings-note">막대 = 지출 규모 · 오른쪽 숫자 = 순저축</div>
-  `;
 }
 
 /* ---------------- 홈: 현 상태 요약 ---------------- */
@@ -2408,88 +2447,264 @@ function renderHomeStatus(data, d) {
   ].join('');
 }
 
-/* ---------------- 목표 탭 카드 ---------------- */
+/* ---------------- 목표 보드 (연도/반기 그리드 · 드래그 이동) ---------------- */
 
-function renderGoalCards(data, d) {
-  const panel = document.getElementById('panel-goal-cards');
-  const allGoals = data.goals || [];
-  const goals = allGoals.filter(g => pickGoalField(g, 'title'));
-  if (!goals.length) {
-    panel.innerHTML = `
+/* Apps Script 웹앱 URL. 배포 후 여기에 붙여넣으면 드래그 결과가 시트에 반영된다.
+   비워두면 화면에서만 바뀌고 '시트 미반영' 배지가 뜬다. */
+const GOALS_WEBAPP_URL = '';
+
+/* "2026 상반기" / "26년 하반기" / "2026 H1" / "2026 3분기" / "2026" 등을 {y, h}로 */
+function parseGoalPeriod(raw) {
+  const s0 = String(raw || '').trim();
+  if (!s0) return null;
+  const ym = s0.match(/(20\d{2}|\d{2})\s*년?/);
+  if (!ym) return null;
+  let y = parseInt(ym[1], 10);
+  if (y < 100) y += 2000;
+  let h = null;
+  if (/상반기|상반|H1|1H/i.test(s0)) h = 1;
+  else if (/하반기|하반|H2|2H/i.test(s0)) h = 2;
+  else {
+    const q = s0.match(/([1-4])\s*(?:분기|Q)/i) || s0.match(/Q\s*([1-4])/i);
+    if (q) h = parseInt(q[1], 10) <= 2 ? 1 : 2;
+  }
+  return { y, h };
+}
+
+/* 시트에 이미 쓰인 표기 스타일을 최대한 따라간다 */
+function goalPeriodFormatter(goals) {
+  let useYearSuffix = false, useShortYear = false;
+  for (const g of goals) {
+    const p = String(pickGoalField(g, 'period') || '');
+    if (/\d\s*년/.test(p)) useYearSuffix = true;
+    if (/^\s*\d{2}\s*년/.test(p)) useShortYear = true;
+  }
+  return (y, h) => {
+    const yy = useShortYear ? String(y).slice(2) : String(y);
+    const head = useYearSuffix ? `${yy}년` : yy;
+    return h ? `${head} ${h === 1 ? '상' : '하'}반기` : head;
+  };
+}
+
+function goalBucketKey(p) { return p ? `${p.y}-${p.h || 0}` : 'none'; }
+
+function renderGoalBoard(data, d) {
+  const host = document.getElementById('home-goals');
+  if (!host) return;
+  const allGoals = (data.goals || []).filter(g => pickGoalField(g, 'title'));
+  if (!allGoals.length) {
+    host.innerHTML = `<div class="g"><div class="panel s8">
       <div class="panel-title"><div>목표</div></div>
-      <div class="empty-state">목표 탭에서 아직 목표 데이터를 찾지 못했어요. <a href="${csvUrlFor(GID_GOALS)}" target="_blank" rel="noopener" style="color:var(--gold-soft);">이 링크</a>를 눌러 실제로 어떤 데이터가 불러와지는지 확인해보세요 — "목표" 탭이 아닌 다른 탭 내용이 보인다면 시트의 gid가 바뀐 것일 수 있어요.</div>
-    `;
+      <div class="empty-state">목표 탭에서 목표 데이터를 찾지 못했어요.
+      <a href="${csvUrlFor(GID_GOALS)}" target="_blank" rel="noopener" style="color:var(--gold-soft);">불러오는 값 확인</a></div>
+    </div></div>`;
     return;
   }
 
   const fixedTrend = getFixedMonthlyTrend(data.ledger);
   const extra = { latestFixed: fixedTrend.length ? fixedTrend[fixedTrend.length - 1].total : 0 };
+  const fmtPeriod = goalPeriodFormatter(allGoals);
 
-  const statuses = [...new Set(goals.map(g => pickGoalField(g, 'status')).filter(Boolean))];
-  if (!state.goalFilter) state.goalFilter = { status: 'all', sort: 'default' };
+  /* 로컬 이동 오버라이드 (시트 반영 전/실패 시에도 화면에 유지) */
+  if (!state.goalMoves) state.goalMoves = {};
+  const periodOf = (g) => state.goalMoves[g.__row] !== undefined
+    ? state.goalMoves[g.__row]
+    : (pickGoalField(g, 'period') || '');
 
-  let filtered = goals;
-  if (state.goalFilter.status !== 'all') {
-    filtered = filtered.filter(g => pickGoalField(g, 'status') === state.goalFilter.status);
-  }
-  if (state.goalFilter.sort === 'status') {
-    const order = { '진행중': 0, '진행': 0, '대기': 1, '완료': 2, '달성': 2 };
-    filtered = [...filtered].sort((a, b) => {
-      const sa = pickGoalField(a, 'status') || '';
-      const sb = pickGoalField(b, 'status') || '';
-      return (order[sa] !== undefined ? order[sa] : 9) - (order[sb] !== undefined ? order[sb] : 9);
-    });
-  }
+  /* 버킷 구성: 데이터에 등장한 연도 + 올해~내년, 각 상/하반기 */
+  const years = new Set();
+  allGoals.forEach(g => { const p = parseGoalPeriod(periodOf(g)); if (p) years.add(p.y); });
+  const nowY = new Date().getFullYear();
+  years.add(nowY); years.add(nowY + 1);
+  const buckets = [];
+  [...years].sort((a, b) => a - b).forEach(y => {
+    buckets.push({ key: `${y}-1`, y, h: 1, label: `${y} 상반기` });
+    buckets.push({ key: `${y}-2`, y, h: 2, label: `${y} 하반기` });
+  });
+  buckets.push({ key: 'none', y: null, h: null, label: '시기 미정' });
 
-  panel.innerHTML = `
-    <div class="panel-title">
-      <div>목표</div>
-      <div class="month-nav">
-        <select id="goal-status-filter">
-          <option value="all" ${state.goalFilter.status === 'all' ? 'selected' : ''}>전체 상태</option>
-          ${statuses.map(s => `<option value="${s}" ${state.goalFilter.status === s ? 'selected' : ''}>${s}</option>`).join('')}
-        </select>
-        <select id="goal-sort">
-          <option value="default" ${state.goalFilter.sort === 'default' ? 'selected' : ''}>기본순</option>
-          <option value="status" ${state.goalFilter.sort === 'status' ? 'selected' : ''}>상태순</option>
-        </select>
+  const byBucket = {};
+  buckets.forEach(b => { byBucket[b.key] = []; });
+  allGoals.forEach(g => {
+    const p = parseGoalPeriod(periodOf(g));
+    let k = p ? (p.h ? `${p.y}-${p.h}` : `${p.y}-1`) : 'none';
+    if (!byBucket[k]) k = 'none';
+    byBucket[k].push(g);
+  });
+
+  const curHalf = (new Date().getMonth() < 6) ? 1 : 2;
+  const curKey = `${nowY}-${curHalf}`;
+
+  const total = allGoals.length;
+  const done = allGoals.filter(g => goalStatusClass(pickGoalField(g, 'status')) === 'ok').length;
+  const active = allGoals.filter(g => goalStatusClass(pickGoalField(g, 'status')) === 'active').length;
+
+  const card = (g) => {
+    const title = pickGoalField(g, 'title');
+    const category = pickGoalField(g, 'category');
+    const status = pickGoalField(g, 'status');
+    const memo = pickGoalField(g, 'memo');
+    const doneDate = pickGoalField(g, 'doneDate');
+    const vClass = goalStatusClass(status) || 'pending';
+    const progress = computeGoalProgress(title, d, extra);
+    let pctTxt = '', barHtml = '';
+    if (progress && !progress.isPct) {
+      const raw = progress.invert
+        ? (progress.current > 0 ? (progress.target / progress.current) * 100 : 100)
+        : (progress.target > 0 ? (progress.current / progress.target) * 100 : 0);
+      const pct = Math.max(0, Math.min(raw, 100));
+      const good = progress.invert ? progress.current <= progress.target : progress.current >= progress.target;
+      pctTxt = `${Math.round(raw)}%`;
+      barHtml = `<div class="gb-bar"><i class="${good ? 'good' : ''}" style="width:${pct}%"></i></div>
+        <div class="gb-figs"><span>${formatCompactWon(progress.current)}원</span><span>목표 ${formatCompactWon(progress.target)}원</span></div>`;
+    } else if (progress && progress.isPct) {
+      const good = progress.invert ? progress.current <= progress.target : progress.current >= progress.target;
+      pctTxt = `${progress.current.toFixed(1)}%`;
+      barHtml = `<div class="gb-figs"><span style="color:${good ? 'var(--green)' : 'var(--red)'}">${progress.current.toFixed(1)}%</span><span>목표 ${progress.target.toFixed(1)}%</span></div>`;
+    }
+    const pending = state.goalMoves[g.__row] !== undefined;
+    return `<div class="gb-card ${vClass}" draggable="true" data-row="${g.__row}" title="${title}">
+      <div class="gb-head">
+        <span class="gb-title">${title}</span>
+        ${pctTxt ? `<span class="gb-pct">${pctTxt}</span>` : ''}
       </div>
-    </div>
-    <div class="goal-card-grid">
-      ${filtered.map(g => {
-        const period = pickGoalField(g, 'period');
-        const category = pickGoalField(g, 'category');
-        const title = pickGoalField(g, 'title');
-        const status = pickGoalField(g, 'status');
-        const doneDate = pickGoalField(g, 'doneDate');
-        const memo = pickGoalField(g, 'memo');
-        const vClass = goalStatusClass(status);
-        const progress = computeGoalProgress(title, d, extra);
-        return `<div class="goal-card ${vClass}">
-          <div class="goal-card-top">
-            <div class="goal-card-chips">
-              ${period ? `<span class="goal-chip goal-chip-period">${period}</span>` : ''}
-              ${category ? `<span class="goal-chip goal-chip-cat">${category}</span>` : ''}
-            </div>
-            ${status ? `<span class="goal-chip goal-chip-status ${vClass || 'neutral'}">${status}</span>` : ''}
-          </div>
-          <div class="goal-card-item">${title || '—'}</div>
-          ${progress ? renderGoalProgressLine(progress) : ''}
-          ${doneDate ? `<div class="goal-card-target">달성 ${doneDate}</div>` : ''}
-          ${memo ? `<div class="goal-card-target">${memo}</div>` : ''}
-        </div>`;
-      }).join('') || '<div class="empty-state">해당 상태의 목표가 없어요.</div>'}
+      ${barHtml}
+      <div class="gb-foot">
+        ${category ? `<span class="gb-tag">${category}</span>` : ''}
+        ${status ? `<span class="gb-status ${vClass}">${status}</span>` : ''}
+        ${doneDate ? `<span class="gb-date">${doneDate}</span>` : ''}
+        ${pending ? '<span class="gb-pending">시트 반영 대기</span>' : ''}
+      </div>
+      ${memo ? `<div class="gb-memo">${memo}</div>` : ''}
+    </div>`;
+  };
+
+  host.innerHTML = `
+    <div class="g">
+      <div class="panel s9">
+        <div class="panel-title">
+          <div>목표 로드맵</div>
+          <span class="ptag">전체 ${total} · 진행 ${active} · 완료 ${done}${GOALS_WEBAPP_URL ? '' : ' · 시트 쓰기 미설정'}</span>
+        </div>
+        <div class="gb-board" id="goal-board">
+          ${buckets.map(b => `
+            <div class="gb-row ${b.key === curKey ? 'now' : ''} ${b.key === 'none' ? 'undated' : ''}" data-bucket="${b.key}">
+              <div class="gb-rowhead">
+                <b>${b.label}</b>
+                <span>${byBucket[b.key].length}</span>
+              </div>
+              <div class="gb-lane" data-bucket="${b.key}">
+                ${byBucket[b.key].map(card).join('') || '<div class="gb-empty">여기로 끌어다 놓기</div>'}
+              </div>
+            </div>`).join('')}
+        </div>
+      </div>
+      <div class="panel s3" id="panel-goal-side"></div>
     </div>
   `;
 
-  document.getElementById('goal-status-filter').addEventListener('change', (e) => {
-    state.goalFilter.status = e.target.value;
-    renderGoalCards(data, d);
+  /* --- 사이드: 상태 요약 --- */
+  const byStatus = {};
+  allGoals.forEach(g => {
+    const st = pickGoalField(g, 'status') || '미지정';
+    byStatus[st] = (byStatus[st] || 0) + 1;
   });
-  document.getElementById('goal-sort').addEventListener('change', (e) => {
-    state.goalFilter.sort = e.target.value;
-    renderGoalCards(data, d);
+  const byCat = {};
+  allGoals.forEach(g => {
+    const c = pickGoalField(g, 'category') || '기타';
+    byCat[c] = (byCat[c] || 0) + 1;
   });
+  document.getElementById('panel-goal-side').innerHTML = `
+    <div class="panel-title"><div>요약</div></div>
+    <div class="gb-donut"><i style="width:${total ? (done / total) * 100 : 0}%"></i></div>
+    <div class="gb-figs" style="margin-bottom:12px;"><span>완료 ${done}</span><span>${total ? Math.round((done / total) * 100) : 0}%</span></div>
+    <div class="subhead">상태</div>
+    ${Object.entries(byStatus).sort((a, b) => b[1] - a[1]).map(([k, v]) =>
+      `<div class="now-kv"><span>${k}</span><b>${v}</b></div>`).join('')}
+    <div class="subhead" style="margin-top:12px;">구분</div>
+    ${Object.entries(byCat).sort((a, b) => b[1] - a[1]).map(([k, v]) =>
+      `<div class="now-kv"><span>${k}</span><b>${v}</b></div>`).join('')}
+    <div class="settings-note">카드를 끌어 다른 반기로 옮기면 목표 탭 '시기' 열이 갱신돼요.</div>
+  `;
+
+  /* --- 드래그 앤 드롭 --- */
+  const board = document.getElementById('goal-board');
+  let dragRow = null;
+  board.addEventListener('dragstart', (e) => {
+    const c = e.target.closest('.gb-card');
+    if (!c) return;
+    dragRow = c.dataset.row;
+    c.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    try { e.dataTransfer.setData('text/plain', dragRow); } catch (err) {}
+  });
+  board.addEventListener('dragend', () => {
+    board.querySelectorAll('.dragging').forEach(x => x.classList.remove('dragging'));
+    board.querySelectorAll('.over').forEach(x => x.classList.remove('over'));
+  });
+  board.addEventListener('dragover', (e) => {
+    const lane = e.target.closest('.gb-lane');
+    if (!lane) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    board.querySelectorAll('.gb-lane.over').forEach(x => { if (x !== lane) x.classList.remove('over'); });
+    lane.classList.add('over');
+  });
+  board.addEventListener('dragleave', (e) => {
+    const lane = e.target.closest('.gb-lane');
+    if (lane) lane.classList.remove('over');
+  });
+  board.addEventListener('drop', (e) => {
+    const lane = e.target.closest('.gb-lane');
+    if (!lane) return;
+    e.preventDefault();
+    lane.classList.remove('over');
+    const row = dragRow || e.dataTransfer.getData('text/plain');
+    if (!row) return;
+    const bk = lane.dataset.bucket;
+    const newPeriod = bk === 'none' ? '' : (() => {
+      const [y, h] = bk.split('-').map(Number);
+      return fmtPeriod(y, h);
+    })();
+    const g = allGoals.find(x => String(x.__row) === String(row));
+    if (!g) return;
+    if (periodOf(g) === newPeriod) return;
+    state.goalMoves[row] = newPeriod;
+    renderGoalBoard(data, d);
+    pushGoalPeriod(Number(row), newPeriod, pickGoalField(g, 'title'));
+  });
+}
+
+/* 시트 반영 — Apps Script 웹앱으로 POST. 실패해도 화면 상태는 유지된다. */
+async function pushGoalPeriod(row, period, title) {
+  if (!GOALS_WEBAPP_URL) {
+    showToast('시트 쓰기 엔드포인트가 없어 화면에만 반영됐어요.', 'warn');
+    return;
+  }
+  try {
+    await fetch(GOALS_WEBAPP_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'setGoalPeriod', row, period, title })
+    });
+    showToast(`시트에 반영했어요 · ${period || '시기 미정'}`, 'good');
+  } catch (e) {
+    showToast('시트 반영 실패 — 화면에만 적용됐어요.', 'warn');
+  }
+}
+
+function showToast(msg, kind) {
+  let el = document.getElementById('app-toast');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'app-toast';
+    document.body.appendChild(el);
+  }
+  el.className = `toast ${kind || ''} on`;
+  el.textContent = msg;
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => { el.className = `toast ${kind || ''}`; }, 2600);
 }
 
 /* ---------------- 홈 인사이트 (매주 월요일 갱신) ---------------- */
@@ -3532,6 +3747,16 @@ function renderNowPage(container, data, d) {
 
 /* ---------------- page: 오늘 (하루 단위) ---------------- */
 
+/* 시트의 체크 항목(후회하는 소비 · 고정비 · 회사 환급 · 재분류)을 배지로 */
+function checkPills(r) {
+  const out = [];
+  if (r.fixed) out.push('<span class="chk-pill fixed">고정</span>');
+  if (r.regret) out.push('<span class="chk-pill regret">후회</span>');
+  if (r.refund) out.push(`<span class="chk-pill refund">환급 ${formatCompactWon(r.refund)}</span>`);
+  if (r.reclass) out.push(`<span class="chk-pill reclass">${r.reclass}</span>`);
+  return out.length ? `<span class="chk-strip">${out.join('')}</span>` : '<span style="color:var(--text-faint)">·</span>';
+}
+
 const DOW_KR = ['일', '월', '화', '수', '목', '금', '토'];
 
 function pad2(n) { return String(n).padStart(2, '0'); }
@@ -3577,14 +3802,20 @@ function dayDiff(a, b) {
   return Math.round((new Date(y1, m1 - 1, d1) - new Date(y2, m2 - 1, d2)) / 86400000);
 }
 
-/* 월 지출 예산: 목표 탭의 "월 지출 N만원" 우선, 없으면 마감된 최근 3개월 평균 */
+/* 지출 한 건의 '실지출' = 금액 − 회사 환급 */
+function netExpenseOf(r) { return r.amount - (r.refund || 0); }
+
+/* 월 지출 예산
+   1순위: 목표 탭의 "(월) 지출/실지출 N만원" 목표
+   2순위: 마감된 최근 3개월 실지출(환급 제외) 평균
+   ※ 예산·누적 지출 모두 '환급 제외' 기준으로 통일 */
 function monthlyExpenseTarget(data, ledger, monthKey) {
   const goals = data.goals || [];
   for (const g of goals) {
     const title = pickGoalField(g, 'title');
     if (!title) continue;
-    const m = String(title).match(/(?:월\s*)?지출\s*([\d,]+)\s*만원/);
-    if (m) return { amount: parseFloat(m[1].replace(/,/g, '')) * 10000, source: '목표 탭' };
+    const m = String(title).match(/(?:월\s*)?(?:실)?지출\s*([\d,]+)\s*만원/);
+    if (m) return { amount: parseFloat(m[1].replace(/,/g, '')) * 10000, source: '목표 탭', label: String(title).trim() };
   }
   const cur = thisMonthKey();
   const vals = [];
@@ -3592,11 +3823,11 @@ function monthlyExpenseTarget(data, ledger, monthKey) {
     const k = shiftMonthKey(monthKey, -i);
     if (k >= cur) continue;
     const sum = ledger.filter(r => ledgerMonthKey(r.date) === k && r.major.includes('지출'))
-      .reduce((a, r) => a + r.amount, 0);
+      .reduce((a, r) => a + netExpenseOf(r), 0);
     if (sum > 0) vals.push(sum);
   }
   if (!vals.length) return null;
-  return { amount: Math.round(vals.reduce((a, b) => a + b, 0) / vals.length), source: '최근 3개월 평균' };
+  return { amount: Math.round(vals.reduce((a, b) => a + b, 0) / vals.length), source: '최근 3개월 실지출 평균', label: null };
 }
 
 /* 고정비 항목별 예상 결제일(최근 3개월 결제일 중앙값)까지 포함한 상태 */
@@ -3667,8 +3898,18 @@ function renderTodayPage(container, data, d) {
   const M = buildNowMonth(ledger, monthKey);
   const today = dayOf(key);
 
-  const cumBefore = M.daily.slice(0, DD - 1).reduce((a, b) => a + b.expense, 0);
-  const cumThrough = cumBefore + today.expense;
+  /* 예산·누적은 모두 '실지출(회사 환급 제외)' 기준으로 계산한다 */
+  const netExpOfDay = (k) => dayOf(k).rows.filter(r => r.major.includes('지출')).reduce((a, r) => a + netExpenseOf(r), 0);
+  const cumBefore = (() => {
+    let sum = 0;
+    for (let dd = 1; dd < DD; dd++) sum += netExpOfDay(`${monthKey}-${pad2(dd)}`);
+    return sum;
+  })();
+  const todayNetExpense = netExpOfDay(key);
+  const todayRefund = today.rows.reduce((a, r) => a + (r.major.includes('지출') ? (r.refund || 0) : 0), 0);
+  const todayRegret = today.rows.filter(r => r.regret && r.major.includes('지출')).reduce((a, r) => a + netExpenseOf(r), 0);
+  const todayFixed = today.rows.filter(r => r.fixed && r.major.includes('지출')).reduce((a, r) => a + netExpenseOf(r), 0);
+  const cumThrough = cumBefore + todayNetExpense;
 
   /* --- 예산 / 오늘 허용액 --- */
   const budget = monthlyExpenseTarget(data, ledger, monthKey);
@@ -3677,9 +3918,10 @@ function renderTodayPage(container, data, d) {
   const pendingSum = pending.reduce((a, f) => a + f.expected, 0);
   const remainDays = Math.max(monthDays - DD + 1, 1);
   const remainBudget = budget ? budget.amount - cumBefore - pendingSum : null;
+  const overBudget = remainBudget !== null && remainBudget < 0;   /* 남은 예산이 이미 마이너스 */
   const allowance = remainBudget === null ? null : Math.max(Math.round(remainBudget / remainDays), 0);
-  const allowPct = allowance ? Math.min((today.expense / allowance) * 100, 100) : (today.expense > 0 ? 100 : 0);
-  const overToday = allowance !== null && today.expense > allowance;
+  const allowPct = allowance ? Math.min((todayNetExpense / allowance) * 100, 100) : (todayNetExpense > 0 ? 100 : 0);
+  const overToday = allowance !== null && todayNetExpense > allowance;
 
   /* --- 무지출 스트릭 (기록이 아직 없는 날은 '무지출'로 세지 않는다) --- */
   const noRecordYet = today.rows.length === 0 && key > latestKey;
@@ -3696,7 +3938,7 @@ function renderTodayPage(container, data, d) {
   for (let i = 1; i <= 8; i++) {
     const k = shiftDayKey(key, -7 * i);
     if (k < earliestKey) break;
-    sameDowVals.push(dayOf(k).expense);
+    sameDowVals.push(netExpOfDay(k));
   }
   const sameDowAvg = sameDowVals.length ? sameDowVals.reduce((a, b) => a + b, 0) / sameDowVals.length : null;
   const monthDailyAvg = DD > 0 ? cumThrough / DD : 0;
@@ -3710,31 +3952,40 @@ function renderTodayPage(container, data, d) {
       : '이 날은 기록이 없어요.';
   } else if (allowance === null) {
     verdictCls = 'neutral';
-    verdict = `${isToday ? '오늘' : '이 날'} <b>${formatWon(today.expense)}</b> 썼어요. 이번 달 하루 평균은 ${formatWon(Math.round(monthDailyAvg))}이에요.`;
+    verdict = `${isToday ? '오늘' : '이 날'} <b>${formatWon(todayNetExpense)}</b> 썼어요. 이번 달 하루 평균은 ${formatWon(Math.round(monthDailyAvg))}이에요.`;
+  } else if (overBudget) {
+    verdictCls = 'warn';
+    verdict = `이번 달 예산을 이미 <b>${formatWon(Math.abs(remainBudget))}</b> 넘었어요. (${isToday ? '오늘' : '이 날'} ${formatWon(todayNetExpense)})`;
   } else if (overToday) {
     verdictCls = 'warn';
-    verdict = `${isToday ? '오늘' : '이 날'} 예산 ${formatWon(allowance)}보다 <b>${formatWon(today.expense - allowance)}</b> 더 썼어요.`;
+    verdict = `${isToday ? '오늘' : '이 날'} 하루 예산 ${formatWon(allowance)}보다 <b>${formatWon(todayNetExpense - allowance)}</b> 더 썼어요.`;
   } else {
     verdictCls = 'good';
-    verdict = `${isToday ? '오늘' : '이 날'} 예산 ${formatWon(allowance)} 중 ${formatWon(today.expense)} 사용 · <b>${formatWon(allowance - today.expense)}</b> 여유 있어요.`;
+    verdict = `${isToday ? '오늘' : '이 날'} 하루 예산 ${formatWon(allowance)} 중 ${formatWon(todayNetExpense)} 사용 · <b>${formatWon(allowance - todayNetExpense)}</b> 여유 있어요.`;
   }
 
   /* --- 오늘 카테고리 --- */
   const catMap = {};
   today.rows.filter(r => r.major.includes('지출')).forEach(r => {
-    catMap[r.minor || '기타'] = (catMap[r.minor || '기타'] || 0) + r.amount;
+    catMap[r.minor || '기타'] = (catMap[r.minor || '기타'] || 0) + netExpenseOf(r);
   });
   const catRows = Object.entries(catMap).map(([name, amt]) => ({ name, amt })).sort((a, b) => b.amt - a.amt);
   const catMax = Math.max(...catRows.map(r => r.amt), 1);
 
-  /* --- 예산 기준 설명 --- */
-  const basisHtml = budget
-    ? `예산 기준 · 월 지출 예산 <em>${formatWon(budget.amount)}</em> <span style="opacity:.7">(${budget.source})</span>`
-      + ` − ${DD}일 이전 지출 <em>${formatWon(cumBefore)}</em>`
-      + ` − 미결제 고정비 ${pending.length}건 <em>${formatWon(pendingSum)}</em>`
-      + ` = 남은 예산 <em>${formatWon(remainBudget)}</em> ÷ 남은 ${remainDays}일`
-      + ` → 하루 예산 <b>${formatWon(allowance)}</b>`
-    : `예산 기준 · 목표 탭에 "월 지출 N만원" 목표가 없고 비교할 과거 3개월 데이터도 부족해서 하루 예산을 계산할 수 없어요.`;
+  /* --- 예산 기준 (접이식) --- */
+  const basisHtml = budget ? `
+    <details class="mininote">
+      <summary>예산 기준</summary>
+      <div class="now-kv"><span>월 실지출 예산 <em style="font-style:normal;color:var(--text-faint)">(${budget.source})</em></span><b>${formatWon(budget.amount)}</b></div>
+      <div class="now-kv"><span>− ${DD}일 이전 실지출</span><b>${formatWon(cumBefore)}</b></div>
+      <div class="now-kv"><span>− 미결제 고정비 ${pending.length}건</span><b>${formatWon(pendingSum)}</b></div>
+      <div class="now-kv"><span>= 남은 예산 ÷ 남은 ${remainDays}일</span><b style="color:${overBudget ? 'var(--red)' : 'var(--gold-soft)'}">${formatWon(remainBudget)}</b></div>
+      <div class="settings-note">실지출 = 금액 − 회사 환급</div>
+    </details>` : `
+    <details class="mininote">
+      <summary>예산 기준</summary>
+      <div class="settings-note">목표 탭에 "월 지출 N만원" 목표가 없고, 마감된 최근 3개월 데이터도 부족해 하루 예산을 계산할 수 없어요.</div>
+    </details>`;
 
   container.innerHTML = `
     <div class="page-daybar">
@@ -3752,39 +4003,34 @@ function renderTodayPage(container, data, d) {
 
     <div class="g">
       <div class="panel s5">
-        <div class="panel-title"><div>내역</div><span class="ptag">${dayKeyShort(key)}</span></div>
+        <div class="panel-title"><div>내역</div><span class="ptag">${today.rows.length}건</span></div>
         <div id="today-rows-body"></div>
       </div>
 
-      <div class="panel s3">
-        <div class="panel-title"><div>오늘 요약</div></div>
-        <div class="stat-grid" style="grid-template-columns:1fr;margin-bottom:0;">
-          <div class="stat-card">
-            <div class="label">지출 합계</div>
-            <div class="value" style="color:var(--red)">${formatWon(today.expense)}</div>
-            <div class="sub ${sameDowAvg !== null && today.expense <= sameDowAvg ? 'up' : 'down'}">${sameDowAvg !== null ? `${DOW_KR[dowOfDayKey(key)]}요일 평균 ${formatWon(Math.round(sameDowAvg))}` : '비교 데이터 없음'}</div>
-          </div>
-          <div class="stat-card">
-            <div class="label">수입 합계</div>
-            <div class="value" style="color:var(--green)">${formatWon(today.income)}</div>
-            <div class="sub">이체 ${formatWon(today.transfer)}</div>
-          </div>
-          <div class="stat-card">
-            <div class="label">이번 달 하루 평균 지출</div>
-            <div class="value">${formatWon(Math.round(monthDailyAvg))}</div>
-            <div class="sub">누적 ${formatWon(cumThrough)} · D+${DD}</div>
-          </div>
+      <div class="s3" id="today-cards">
+        <div class="stat-card">
+          <div class="label">지출</div>
+          <div class="value" style="color:var(--red)">${formatWon(todayNetExpense)}</div>
+          ${allowance !== null ? `
+            <div class="allow-track" style="margin-top:9px;"><div class="allow-fill ${overToday || overBudget ? 'over' : ''}" style="width:${allowPct}%"></div></div>
+            <div class="allow-legend"><span>하루 예산 ${formatWon(allowance)}</span><span>${overBudget ? '예산 초과' : overToday ? `${formatWon(todayNetExpense - allowance)} 초과` : `${formatWon(allowance - todayNetExpense)} 여유`}</span></div>` : ''}
+          <div class="sub">이번 달 하루 평균 ${formatWon(Math.round(monthDailyAvg))} · 누적 ${formatWon(cumThrough)}</div>
+          <div class="sub ${sameDowAvg !== null && todayNetExpense <= sameDowAvg ? 'up' : 'down'}">${sameDowAvg !== null ? `${DOW_KR[dowOfDayKey(key)]}요일 평균 ${formatWon(Math.round(sameDowAvg))}` : '요일 비교 데이터 없음'}</div>
+          ${(todayFixed || todayRegret || todayRefund) ? `<div class="chk-strip">
+            ${todayFixed ? `<span class="chk-pill fixed">고정비 ${formatWon(todayFixed)}</span>` : ''}
+            ${todayRegret ? `<span class="chk-pill regret">후회 ${formatWon(todayRegret)}</span>` : ''}
+            ${todayRefund ? `<span class="chk-pill refund">환급 ${formatWon(todayRefund)}</span>` : ''}
+          </div>` : ''}
+          ${basisHtml}
         </div>
-        ${allowance !== null ? `
-        <div style="margin-top:12px;">
-          <div class="allow-track"><div class="allow-fill ${overToday ? 'over' : ''}" style="width:${allowPct}%"></div></div>
-          <div class="allow-legend">
-            <span>사용 ${formatWon(today.expense)}</span>
-            <span>하루 예산 ${formatWon(allowance)}</span>
-          </div>
-        </div>` : ''}
-        ${noRecordYet || streak > 0 ? `<div class="streak-badge ${streak > 0 ? 'on' : ''}">${noRecordYet ? '✍️ 기록 미입력' : `🌱 무지출 ${streak}일 연속`}</div>` : ''}
-        <div class="budget-basis">${basisHtml}</div>
+
+        <div class="stat-card">
+          <div class="label">수입</div>
+          <div class="value" style="color:var(--green)">${formatWon(today.income)}</div>
+          <div class="sub">이번 달 누적 ${formatWon(M.income)}</div>
+          <div class="sub">이체 ${formatWon(today.transfer)}</div>
+          ${noRecordYet || streak > 0 ? `<div class="streak-badge ${streak > 0 ? 'on' : ''}">${noRecordYet ? '✍️ 기록 미입력' : `🌱 무지출 ${streak}일 연속`}</div>` : ''}
+        </div>
       </div>
 
       <div class="panel s4">
@@ -3819,7 +4065,7 @@ function renderTodayPage(container, data, d) {
     <div class="budget-row-compact">
       <span class="b-name" title="${r.name}">${r.name}</span>
       <div class="b-bar-track"><div class="b-bar-fill" style="width:${(r.amt / catMax) * 100}%"></div></div>
-      <span class="b-figures">${wonComma(r.amt)}원 · ${((r.amt / (today.expense || 1)) * 100).toFixed(0)}%</span>
+      <span class="b-figures">${wonComma(r.amt)}원 · ${((r.amt / (todayNetExpense || 1)) * 100).toFixed(0)}%</span>
     </div>`).join('') : '<div class="empty-state">지출 기록이 없어요.</div>';
 
   /* --- 내역 --- */
@@ -3827,7 +4073,7 @@ function renderTodayPage(container, data, d) {
   document.getElementById('today-rows-body').innerHTML = `
     <div class="table-scroll" style="max-height:340px;">
       <table class="data-table">
-        <thead><tr><th>분류</th><th>소분류</th><th>항목</th><th>사용처 / 메모</th><th style="text-align:right">금액</th></tr></thead>
+        <thead><tr><th>분류</th><th>소분류</th><th>항목</th><th>사용처 / 메모</th><th>체크</th><th style="text-align:right">금액</th></tr></thead>
         <tbody>${sortedRows.length ? sortedRows.map(r => {
           const cls = majorTagClass(r.major);
           return `<tr>
@@ -3835,9 +4081,10 @@ function renderTodayPage(container, data, d) {
             <td>${r.minor || '-'}</td>
             <td>${r.item || '-'}</td>
             <td>${r.vendor || ''}${r.memo ? `<div style="color:var(--text-faint);font-size:11px;">${r.memo}</div>` : ''}</td>
-            <td class="amt ${cls}">${formatWon(r.amount)}</td>
+            <td>${checkPills(r)}</td>
+            <td class="amt ${cls}">${formatWon(r.amount)}${r.refund ? `<div style="color:var(--green);font-size:10.5px;">−${wonComma(r.refund)} 환급</div>` : ''}</td>
           </tr>`;
-        }).join('') : '<tr><td colspan="5" style="text-align:center;color:var(--text-faint);padding:20px;">이 날 기록이 없어요.</td></tr>'}</tbody>
+        }).join('') : '<tr><td colspan="6" style="text-align:center;color:var(--text-faint);padding:20px;">이 날 기록이 없어요.</td></tr>'}</tbody>
       </table>
     </div>
   `;
@@ -3959,7 +4206,7 @@ function renderCalendarPage(container, data, d) {
   const monthKey = state.calMonthKey;
   const [Y, MO] = monthKey.split('-').map(Number);
   const M = buildNowMonth(ledger, monthKey);
-  const mode = CAL_MODES.some(m => m[0] === state.calMode) ? state.calMode : 'all';
+  const mode = 'all';
   const realToday = todayDayKey();
   const isThisMonth = monthKey === thisMonthKey();
 
@@ -4017,9 +4264,6 @@ function renderCalendarPage(container, data, d) {
       <div class="panel-title">
         <div class="cal-month-title">${monthKeyLabel(monthKey)}</div>
         <div class="month-nav">
-          <div class="range-toggle" id="cal-mode-toggle">
-            ${CAL_MODES.map(([v, l]) => `<button data-mode="${v}" class="${mode === v ? 'active' : ''}">${l}</button>`).join('')}
-          </div>
           <button id="cal-prev" ${availableKeys.indexOf(monthKey) <= 0 ? 'disabled' : ''}>◀</button>
           <select id="cal-month-select">${monthOptions}</select>
           <button id="cal-next" ${availableKeys.indexOf(monthKey) >= availableKeys.length - 1 ? 'disabled' : ''}>▶</button>
@@ -4055,7 +4299,7 @@ function renderCalendarPage(container, data, d) {
         <span><i style="background:#e08a82"></i>지출</span>
         <span><i style="background:var(--gold-soft)"></i>이체</span>
         <span><i style="background:var(--panel-2);border:1px dashed var(--gold-soft)"></i>오늘</span>
-        <span style="color:var(--text-faint)">진하기 = ${mode === 'income' ? '수입' : mode === 'transfer' ? '이체' : '지출'} 규모 · 날짜 클릭 → 오른쪽 내역</span>
+        <span style="color:var(--text-faint)">진하기 = 지출 규모 · 날짜 클릭 → 오른쪽 내역</span>
       </div>
     </div>
     <div class="panel s5" id="panel-cal-day"></div>
@@ -4090,12 +4334,13 @@ function renderCalendarPage(container, data, d) {
           <div class="dtl-group-head ${gCls}"><span>${gLabel} · ${rows.length}건</span><b>${formatWon(sum)}</b></div>
           <div class="table-scroll">
             <table class="data-table">
-              <thead><tr><th>소분류</th><th>항목</th><th>사용처</th><th>메모</th><th style="text-align:right">금액</th></tr></thead>
+              <thead><tr><th>소분류</th><th>항목</th><th>사용처</th><th>메모</th><th>체크</th><th style="text-align:right">금액</th></tr></thead>
               <tbody>${rows.map(r => `<tr>
                 <td>${r.minor || '-'}</td>
                 <td>${r.item || '-'}</td>
                 <td>${r.vendor || '-'}</td>
                 <td>${r.memo || '-'}</td>
+                <td>${checkPills(r)}</td>
                 <td class="amt ${gCls}">${formatWon(r.amount)}</td>
               </tr>`).join('')}</tbody>
             </table>
@@ -4144,12 +4389,6 @@ function renderCalendarPage(container, data, d) {
   document.getElementById('cal-thismonth').addEventListener('click', () => {
     const t = thisMonthKey();
     setMonth(availableKeys.includes(t) ? t : availableKeys[availableKeys.length - 1]);
-  });
-  document.getElementById('cal-mode-toggle').addEventListener('click', (e) => {
-    const btn = e.target.closest('button');
-    if (!btn) return;
-    state.calMode = btn.dataset.mode;
-    renderPage();
   });
 }
 
@@ -4401,172 +4640,148 @@ function renderStructurePage(container, data, d) {
   /* --- 복리 루프 문구 --- */
   const annIncome = m.medIncome * 12;   /* 일회성 유입이 낀 달을 빼기 위해 중앙값 사용 */
   const crossPct = annIncome ? (m.riskAssets / annIncome) * 100 : 0;
-  const loopHtml = (() => {
-    if (!m.loop.covered) {
-      return `<div class="tx">투자 자산 스냅샷이 이 기간을 다 덮지 못해서 투입/시장 분해는 생략했어요.</div>`;
-    }
-    const c = Math.max(m.loop.contribution, 0);
-    const k = m.loop.market;
-    const base = c + Math.abs(k) || 1;
-    const cw = (c / base) * 100;
-    const kw = (Math.abs(k) / base) * 100;
-    return `
-      <div class="tx">
-        최근 ${m.n}개월 투자 자산은 <b>${formatCompactWon(m.loop.delta)}원</b> 늘었고,
-        그중 내가 넣은 돈이 <b>${formatCompactWon(c)}원</b>,
-        시장이 만든 손익이 <b>${k >= 0 ? '+' : '−'}${formatCompactWon(Math.abs(k))}원</b>이에요.
-        ${c > Math.abs(k)
-          ? `아직 <b>투입이 엔진</b>입니다 — 수익률을 고민하는 시간보다 저축률을 지키는 게 성과가 큽니다.`
-          : `이미 <b>시장이 엔진</b>에 더 가깝습니다 — 자산 배분과 변동성 관리의 비중을 높여야 할 구간입니다.`}
-      </div>
-      <div class="eng-split" title="투입 ${formatWon(c)} / 시장 ${formatWon(k)}">
-        <i style="width:${cw}%;background:var(--gold-soft)"></i>
-        <i style="width:${kw}%;background:${k >= 0 ? '#4c8c6b' : '#c1483f'}"></i>
-      </div>`;
-  })();
-
-  container.innerHTML = `
-    <div class="panel full">
-      <div class="panel-title">
-        <div>자산 증식 구조</div>
-        <div class="month-nav">
-          <span style="font-family:var(--mono);font-size:11.5px;color:var(--text-faint);">최근 ${m.n}개월 평균 · ${winLabel}</span>
-        </div>
-      </div>
-
-      <div class="eng-board">
-        <div class="eng-stage">
-          <div class="eng-stage-head"><b>유입</b><span>INFLOW / 월</span></div>
-          ${node({ nm: '근로소득', amount: m.per(m.inc.work), pct: pctOf(m.inc.work, m.inc.total), tone: 'inc', sub: '월급 · 월급 외 · 보너스' })}
-          ${node({ nm: '부수입', amount: m.per(m.inc.side), pct: pctOf(m.inc.side, m.inc.total), tone: 'inc', sub: '근로 외 채널' })}
-          ${node({ nm: '투자 수익', amount: m.per(m.inc.invest), pct: pctOf(m.inc.invest, m.inc.total), tone: 'inc', sub: `실현 ${formatCompactWon(m.per(m.realized))} · 배당/이자 ${formatCompactWon(m.per(m.inc.invest - m.realized))}` })}
-        </div>
-        <div class="eng-arrow">▶</div>
-
-        <div class="eng-stage">
-          <div class="eng-stage-head"><b>누수</b><span>OUTFLOW / 월</span></div>
-          ${node({ nm: '고정비', amount: m.per(m.exp.fixed), pct: pctOf(m.exp.fixed, m.exp.total), tone: 'exp', cls: 'leak', sub: '한 번 끊으면 매달 절약' })}
-          ${node({ nm: '변동비', amount: m.per(m.exp.variable), pct: pctOf(m.exp.variable, m.exp.total), tone: 'exp', cls: 'leak', sub: '매달 판단이 필요한 지출' })}
-          ${node({ nm: '양도세', amount: m.per(m.exp.tax), pct: pctOf(m.exp.tax, m.exp.total), tone: 'exp', cls: 'leak', sub: '소비 아님 · 실현이익 정산' })}
-        </div>
-        <div class="eng-arrow">▶</div>
-
-        <div class="eng-stage">
-          <div class="eng-stage-head"><b>연료</b><span>FUEL / 월</span></div>
-          ${node({ nm: '순저축', amount: m.per(m.netSave), pct: null, tone: 'trf', sub: `유입 ${formatCompactWon(m.per(m.inc.total))} − 지출 ${formatCompactWon(m.per(m.exp.total))}` })}
-          <div class="eng-node" title="저축률">
-            <div class="eng-node-top"><span class="nm">저축률</span><span class="pct">목표 ${state.goals.savingsRateTarget}%</span></div>
-            <div class="eng-amt" style="color:${m.saveRate >= state.goals.savingsRateTarget ? 'var(--green)' : 'var(--red)'}">${m.saveRate.toFixed(1)}%</div>
-            <div class="eng-bar"><i style="width:${Math.min(Math.max(m.saveRate, 0), 100)}%;background:${m.saveRate >= state.goals.savingsRateTarget ? '#4c8c6b' : '#e08a82'}"></i></div>
-            <div class="eng-sub">이 엔진의 회전 속도</div>
-          </div>
-        </div>
-        <div class="eng-arrow">▶</div>
-
-        <div class="eng-stage">
-          <div class="eng-stage-head"><b>배분</b><span>ALLOCATION / 월</span></div>
-          ${node({ nm: '연금(코어)', amount: m.per(m.trf.pension), pct: pctOf(m.trf.pension, m.trf.total), tone: 'trf', sub: '연금저축 · IRP' })}
-          ${node({ nm: '투자(위성)', amount: m.per(m.trf.invest), pct: pctOf(m.trf.invest, m.trf.total), tone: 'trf', sub: '토스 · 신한 증권' })}
-          ${node({ nm: '저축', amount: m.per(m.trf.save), pct: pctOf(m.trf.save, m.trf.total), tone: 'trf', sub: '청약통장' })}
-          ${node({ nm: '비상금', amount: m.per(m.trf.emergency), pct: pctOf(m.trf.emergency, m.trf.total), tone: 'trf', sub: 'NH-CMA' })}
-        </div>
-        <div class="eng-arrow">▶</div>
-
-        <div class="eng-stage">
-          <div class="eng-stage-head"><b>축적</b><span>STOCK · ${d.latestMonth || ''}</span></div>
-          ${node({ nm: '투자 자산', amount: m.stock.invest, pct: pctOf(m.stock.invest, m.stock.total), tone: 'stk', sub: '변동성 노출' })}
-          ${node({ nm: '연금 자산', amount: m.stock.pension, pct: pctOf(m.stock.pension, m.stock.total), tone: 'stk', sub: '장기 · 인출 제한' })}
-          ${node({ nm: '저축 자산', amount: m.stock.save, pct: pctOf(m.stock.save, m.stock.total), tone: 'stk', sub: '청약 · CMA' })}
-          ${node({ nm: '현금 자산', amount: m.stock.cash, pct: pctOf(m.stock.cash, m.stock.total), tone: 'stk', sub: '생활 유동성' })}
-        </div>
-      </div>
-
-      <div class="eng-loop">
-        <span class="ic">↻</span>
-        ${loopHtml}
-      </div>
-
-      <div class="eng-cross">
-        <span class="lb">투자성 자산 ${formatCompactWon(m.riskAssets)} / 연수입 ${formatCompactWon(annIncome)}</span>
-        <div class="tr"><i style="width:${Math.min(crossPct, 100)}%"></i></div>
-        <span class="lb">${crossPct.toFixed(0)}%</span>
-      </div>
-      <div class="settings-note">
-        이 게이지가 100%를 넘으면 <b>수익률 1%p &gt; 저축률 1%p</b>.
-        ${crossPct >= 100 ? '이미 넘음 → 배분·비용 관리 비중 확대' : `${(100 - crossPct).toFixed(0)}%p 남음 → 유입 확대·누수 차단 우선`}
-      </div>
-      <div id="panel-struct-note"></div>
-    </div>
-
-    <div class="g">
-      <div class="panel s8" id="panel-struct-actions"></div>
-      <div class="panel s4" id="panel-struct-check"></div>
-    </div>
-  `;
-
-  /* --- 액션 우선순위 표 --- */
-  const ctrlCls = (c) => c === '높음' ? 'hi' : c === '중간' ? 'mid' : 'lo';
-  document.getElementById('panel-struct-actions').innerHTML = `
-    <div class="panel-title">
-      <div>레버리지 순위</div>
-      <div class="month-nav"><span style="font-family:var(--mono);font-size:11.5px;color:var(--text-faint);">연 환산 임팩트 × 통제력 순</span></div>
-    </div>
-    <div class="table-scroll" style="max-height:none;">
-      <table class="data-table">
-        <thead><tr>
-          <th style="width:44px">순위</th><th style="width:60px">지점</th><th>액션</th>
-          <th style="text-align:right;width:120px">연간 임팩트</th><th style="width:64px">통제력</th><th>지금 할 일</th>
-        </tr></thead>
-        <tbody>
-          ${AC.list.map(a => `<tr>
-            <td style="font-family:var(--mono);color:${a.rank <= 2 ? 'var(--gold-soft)' : 'var(--text-dim)'};font-weight:${a.rank <= 2 ? '600' : '400'}">${a.risk ? '방어' : a.rank}</td>
-            <td><span class="tag-pill ${a.stage === '유입' ? 'income' : a.stage === '누수' ? 'expense' : 'transfer'}">${a.stage}</span></td>
-            <td>${a.name}${a.assumed ? '<span style="color:var(--text-faint);font-size:11px;"> (가정)</span>' : ''}</td>
-            <td style="text-align:right"><span class="act-imp">${a.impact ? '+' + formatCompactWon(a.impact) + '원' : '—'}</span></td>
-            <td><span class="act-ctrl ${ctrlCls(a.control)}">${a.control}</span></td>
-            <td style="color:var(--text-dim);font-size:11.5px;line-height:1.6;">${a.todo}</td>
-          </tr>`).join('')}
-        </tbody>
-      </table>
-    </div>
-    <div class="settings-note">최근 ${m.n}개월 연환산 · 임팩트 × 통제력 순 · 근로소득은 중앙값 · "(가정)"은 목표값</div>
-  `;
-
-  /* --- 구조 체크 --- */
-  const emgTarget = AC.emgTarget;
+  const nextMile = (tg.milestones || []).find(v => v > m.stock.total);
+  const annNet = m.ann(m.netSave);
+  const emgTargetV = AC.emgTarget;
   const cashRatio = m.stock.total ? (d.emergencyFund / m.stock.total) * 100 : 0;
   const workShare = m.inc.total ? (m.inc.work / m.inc.total) * 100 : 0;
   const coreShare = m.riskAssets ? (m.stock.pension / m.riskAssets) * 100 : 0;
   const pensionFill = (AC.annPension / PENSION_LIMIT) * 100;
   const monthlyFixed = m.per(m.exp.fixed);
+  const loopC = Math.max(m.loop.contribution, 0);
+  const loopK = m.loop.market;
+  const loopBase = (loopC + Math.abs(loopK)) || 1;
 
-  const row = (label, sub, cur, tgt, ok) => `
+  container.innerHTML = `
+    <div class="g">
+      <div class="stat-grid s12" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:0;">
+        <div class="stat-card">
+          <div class="label">순저축 / 월</div>
+          <div class="value" style="color:var(--net)">${formatCompactWon(m.per(m.netSave))}원</div>
+          <div class="sub">저축률 ${m.saveRate.toFixed(1)}% / 목표 ${state.goals.savingsRateTarget}%</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">엔진</div>
+          <div class="value" style="color:${loopC > Math.abs(loopK) ? 'var(--gold-soft)' : '#8fb4dd'}">${!m.loop.covered ? '—' : loopC > Math.abs(loopK) ? '투입' : '시장'}</div>
+          <div class="sub">${!m.loop.covered ? '스냅샷 부족' : `투입 ${formatCompactWon(loopC)} · 시장 ${loopK >= 0 ? '+' : '−'}${formatCompactWon(Math.abs(loopK))}`}</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">투자성 / 연수입</div>
+          <div class="value" style="color:${crossPct >= 100 ? 'var(--green)' : 'var(--text)'}">${crossPct.toFixed(0)}%</div>
+          <div class="sub">${formatCompactWon(m.riskAssets)} / ${formatCompactWon(annIncome)}</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">코어 / 위성</div>
+          <div class="value">${coreShare.toFixed(0)} : ${(100 - coreShare).toFixed(0)}</div>
+          <div class="sub">연금 ${formatCompactWon(m.stock.pension)} · 투자 ${formatCompactWon(m.stock.invest)}</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">다음 마일스톤</div>
+          <div class="value">${nextMile ? formatCompactWon(nextMile) + '원' : '—'}</div>
+          <div class="sub">${nextMile ? `${formatCompactWon(nextMile - m.stock.total)} 남음 · ${annNet > 0 ? ((nextMile - m.stock.total) / annNet).toFixed(1) + '년' : '—'}` : '목표 탭 미설정'}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="g">
+      <div class="panel s12">
+        <div class="panel-title">
+          <div>흐름</div>
+          <span class="ptag">최근 ${m.n}개월 월평균 · ${winLabel}</span>
+        </div>
+        <div class="eng-board">
+          <div class="eng-stage">
+            <div class="eng-stage-head"><b>유입</b><span>${formatCompactWon(m.per(m.inc.total))}</span></div>
+            ${node({ nm: '근로소득', amount: m.per(m.inc.work), pct: pctOf(m.inc.work, m.inc.total), tone: 'inc' })}
+            ${node({ nm: '부수입', amount: m.per(m.inc.side), pct: pctOf(m.inc.side, m.inc.total), tone: 'inc' })}
+            ${node({ nm: '투자 수익', amount: m.per(m.inc.invest), pct: pctOf(m.inc.invest, m.inc.total), tone: 'inc' })}
+          </div>
+          <div class="eng-arrow">▶</div>
+
+          <div class="eng-stage">
+            <div class="eng-stage-head"><b>누수</b><span>${formatCompactWon(m.per(m.exp.total))}</span></div>
+            ${node({ nm: '고정비', amount: m.per(m.exp.fixed), pct: pctOf(m.exp.fixed, m.exp.total), tone: 'exp', cls: 'leak' })}
+            ${node({ nm: '변동비', amount: m.per(m.exp.variable), pct: pctOf(m.exp.variable, m.exp.total), tone: 'exp', cls: 'leak' })}
+            ${node({ nm: '양도세', amount: m.per(m.exp.tax), pct: pctOf(m.exp.tax, m.exp.total), tone: 'exp', cls: 'leak' })}
+          </div>
+          <div class="eng-arrow">▶</div>
+
+          <div class="eng-stage">
+            <div class="eng-stage-head"><b>연료</b><span>${formatCompactWon(m.per(m.netSave))}</span></div>
+            ${node({ nm: '순저축', amount: m.per(m.netSave), pct: null, tone: 'trf' })}
+            <div class="eng-node">
+              <div class="eng-node-top"><span class="nm">저축률</span><span class="pct">목표 ${state.goals.savingsRateTarget}%</span></div>
+              <div class="eng-amt" style="color:${m.saveRate >= state.goals.savingsRateTarget ? 'var(--green)' : 'var(--red)'}">${m.saveRate.toFixed(1)}%</div>
+              <div class="eng-bar"><i style="width:${Math.min(Math.max(m.saveRate, 0), 100)}%;background:${m.saveRate >= state.goals.savingsRateTarget ? '#4c8c6b' : '#e08a82'}"></i></div>
+            </div>
+          </div>
+          <div class="eng-arrow">▶</div>
+
+          <div class="eng-stage">
+            <div class="eng-stage-head"><b>배분</b><span>${formatCompactWon(m.per(m.trf.total))}</span></div>
+            ${node({ nm: '연금(코어)', amount: m.per(m.trf.pension), pct: pctOf(m.trf.pension, m.trf.total), tone: 'trf' })}
+            ${node({ nm: '투자(위성)', amount: m.per(m.trf.invest), pct: pctOf(m.trf.invest, m.trf.total), tone: 'trf' })}
+            ${node({ nm: '저축', amount: m.per(m.trf.save), pct: pctOf(m.trf.save, m.trf.total), tone: 'trf' })}
+            ${node({ nm: '비상금', amount: m.per(m.trf.emergency), pct: pctOf(m.trf.emergency, m.trf.total), tone: 'trf' })}
+          </div>
+          <div class="eng-arrow">▶</div>
+
+          <div class="eng-stage">
+            <div class="eng-stage-head"><b>축적</b><span>${formatCompactWon(m.stock.total)}</span></div>
+            ${node({ nm: '투자 자산', amount: m.stock.invest, pct: pctOf(m.stock.invest, m.stock.total), tone: 'stk' })}
+            ${node({ nm: '연금 자산', amount: m.stock.pension, pct: pctOf(m.stock.pension, m.stock.total), tone: 'stk' })}
+            ${node({ nm: '저축 자산', amount: m.stock.save, pct: pctOf(m.stock.save, m.stock.total), tone: 'stk' })}
+            ${node({ nm: '현금 자산', amount: m.stock.cash, pct: pctOf(m.stock.cash, m.stock.total), tone: 'stk' })}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="g">
+      <div class="panel s7" id="panel-struct-actions"></div>
+      <div class="panel s5" id="panel-struct-check"></div>
+    </div>
+  `;
+
+  /* --- 레버리지 순위 --- */
+  const ctrlCls = (c) => c === '높음' ? 'hi' : c === '중간' ? 'mid' : 'lo';
+  document.getElementById('panel-struct-actions').innerHTML = `
+    <div class="panel-title"><div>레버리지 순위</div><span class="ptag">연 환산 임팩트 × 통제력</span></div>
+    <div class="table-scroll" style="max-height:none;">
+      <table class="data-table">
+        <thead><tr>
+          <th style="width:40px">#</th><th style="width:56px">단계</th><th>액션</th>
+          <th style="text-align:right;width:104px">연 임팩트</th><th style="width:56px">통제력</th>
+        </tr></thead>
+        <tbody>
+          ${AC.list.map(a => `<tr title="${a.todo.replace(/"/g, '&quot;')}">
+            <td style="font-family:var(--mono);color:${a.rank <= 2 ? 'var(--gold-soft)' : 'var(--text-dim)'};font-weight:${a.rank <= 2 ? '600' : '400'}">${a.risk ? '방어' : a.rank}</td>
+            <td><span class="tag-pill ${a.stage === '유입' ? 'income' : a.stage === '누수' ? 'expense' : 'transfer'}">${a.stage}</span></td>
+            <td style="white-space:normal;">${a.short}</td>
+            <td style="text-align:right"><span class="act-imp">${a.impact ? '+' + formatCompactWon(a.impact) + '원' : '—'}</span></td>
+            <td><span class="act-ctrl ${ctrlCls(a.control)}">${a.control}</span></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+
+  /* --- 구조 점검 --- */
+  const row = (label, cur, tgt, ok) => `
     <div class="chk-row">
-      <span class="mk ${ok === null ? 'na' : ok ? 'ok' : 'no'}">${ok === null ? '참고' : ok ? '통과' : '미달'}</span>
-      <span class="nm">${label}<i>${sub}</i></span>
+      <span class="mk ${ok === null ? 'na' : ok ? 'ok' : 'no'}">${ok === null ? '—' : ok ? '통과' : '미달'}</span>
+      <span class="nm">${label}</span>
       <span class="fig">${cur}${tgt ? `<em>${tgt}</em>` : ''}</span>
     </div>`;
 
   document.getElementById('panel-struct-check').innerHTML = `
     <div class="panel-title"><div>구조 점검</div></div>
-    ${row('저축률', '연료가 충분히 들어오는가', `${m.saveRate.toFixed(1)}%`, `목표 ${state.goals.savingsRateTarget}%`, m.saveRate >= state.goals.savingsRateTarget)}
-    ${row('월 고정비', '자동으로 빠지는 누수', `${formatCompactWon(monthlyFixed)}원`, tg.fixed ? `목표 ${formatCompactWon(tg.fixed)}원` : '목표 미설정', tg.fixed ? monthlyFixed <= tg.fixed : null)}
-    ${row('비상금', '하락장에서 안 팔 수 있는 방어선', `${formatCompactWon(d.emergencyFund)}원`, `목표 ${formatCompactWon(emgTarget)}원`, d.emergencyFund >= emgTarget)}
-    ${row('현금 비율', '총자산 대비 비상금', `${cashRatio.toFixed(1)}%`, tg.cashPct ? `목표 ${tg.cashPct}%` : '목표 미설정', tg.cashPct ? cashRatio >= tg.cashPct : null)}
-    ${row('연금 한도 소진', `연 납입 ${formatCompactWon(AC.annPension)}원 / 900만원`, `${pensionFill.toFixed(0)}%`, '확정 수익 13.2~16.5%', pensionFill >= 100)}
-    ${row('유입 집중도', '근로소득이 전체 유입에서 차지하는 비중', `${workShare.toFixed(0)}%`, '참고 기준 90% 이하', workShare <= 90)}
-
-  `;
-
-  /* --- 읽는 법 --- */
-  const nextMile = (tg.milestones || []).find(v => v > m.stock.total);
-  const annNet = m.ann(m.netSave);
-  document.getElementById('panel-struct-note').innerHTML = `
-    <div class="note-strip" style="margin-top:14px;">
-      <span><em>코어 / 위성</em><b>${coreShare.toFixed(0)}% / ${(100 - coreShare).toFixed(0)}%</b>투자성 ${formatCompactWon(m.riskAssets)}원 기준</span>
-      ${nextMile ? `<span><em>다음 마일스톤</em><b>${formatCompactWon(nextMile)}원</b>${formatCompactWon(nextMile - m.stock.total)}원 남음 · 현 순저축(연 ${formatCompactWon(annNet)}원)으로 약 ${annNet > 0 ? ((nextMile - m.stock.total) / annNet).toFixed(1) : '—'}년</span>` : ''}
-      <span><em>단계</em><b>유입 → 누수 → 연료 → 배분 → 축적</b>앞쪽일수록 내 통제, 뒤쪽일수록 시장</span>
-    </div>
+    ${row('저축률', `${m.saveRate.toFixed(1)}%`, `${state.goals.savingsRateTarget}%`, m.saveRate >= state.goals.savingsRateTarget)}
+    ${row('월 고정비', `${formatCompactWon(monthlyFixed)}원`, tg.fixed ? `${formatCompactWon(tg.fixed)}원` : '—', tg.fixed ? monthlyFixed <= tg.fixed : null)}
+    ${row('비상금', `${formatCompactWon(d.emergencyFund)}원`, `${formatCompactWon(emgTargetV)}원`, d.emergencyFund >= emgTargetV)}
+    ${row('현금 비율', `${cashRatio.toFixed(1)}%`, tg.cashPct ? `${tg.cashPct}%` : '—', tg.cashPct ? cashRatio >= tg.cashPct : null)}
+    ${row('연금 한도', `${pensionFill.toFixed(0)}%`, '100%', pensionFill >= 100)}
+    ${row('유입 집중도', `${workShare.toFixed(0)}%`, '≤90%', workShare <= 90)}
   `;
 }
 
