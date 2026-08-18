@@ -1107,20 +1107,26 @@ body{font-variant-numeric:tabular-nums;}
 #today-cards .stat-card .chk-strip{margin-top:8px;}
 #today-cards .mininote{margin-top:8px;}
 
-/* ---------- 목표 보드 ---------- */
-.gb-board{display:flex;flex-direction:column;gap:7px;}
-.gb-row{display:grid;grid-template-columns:118px 1fr;gap:10px;align-items:stretch;
-  border:1px solid var(--border);border-radius:10px;background:var(--panel-2);padding:8px 10px;}
-.gb-row.now{border-color:var(--gold);background:rgba(201,162,39,0.07);}
-.gb-row.undated{border-style:dashed;}
-.gb-rowhead{display:flex;flex-direction:column;justify-content:center;gap:2px;border-right:1px solid var(--border);padding-right:8px;}
-.gb-rowhead b{font-family:var(--serif);font-size:14px;font-weight:700;color:var(--text);line-height:1.2;}
-.gb-rowhead span{font-family:var(--mono);font-size:10.5px;color:var(--text-faint);}
-.gb-row.now .gb-rowhead b{color:var(--gold-soft);}
-.gb-lane{display:flex;gap:7px;flex-wrap:wrap;align-items:flex-start;min-height:52px;border-radius:8px;padding:2px;transition:background .15s;}
+/* ---------- 목표 보드 (좌 → 우 시간순 · 가로 스크롤) ---------- */
+.gb-board{display:flex;gap:10px;overflow-x:auto;overflow-y:hidden;padding:2px 2px 10px;scroll-snap-type:x proximity;}
+.gb-board::-webkit-scrollbar{height:9px;}
+.gb-board::-webkit-scrollbar-track{background:var(--panel-2);border-radius:5px;}
+.gb-board::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:5px;}
+.gb-board::-webkit-scrollbar-thumb:hover{background:var(--gold-soft);}
+.gb-col{flex:0 0 246px;display:flex;flex-direction:column;scroll-snap-align:start;
+  border:1px solid var(--border);border-radius:10px;background:var(--panel-2);padding:9px 9px 6px;}
+.gb-col.now{border-color:var(--gold);background:rgba(201,162,39,0.07);}
+.gb-col.undated{border-style:dashed;flex-basis:214px;}
+.gb-colhead{display:flex;align-items:baseline;justify-content:space-between;gap:6px;
+  padding-bottom:7px;margin-bottom:7px;border-bottom:1px solid var(--border);}
+.gb-colhead b{font-family:var(--serif);font-size:14px;font-weight:700;color:var(--text);line-height:1.2;white-space:nowrap;}
+.gb-colhead span{font-family:var(--mono);font-size:10.5px;color:var(--text-faint);}
+.gb-col.now .gb-colhead b{color:var(--gold-soft);}
+.gb-lane{display:flex;flex-direction:column;gap:7px;flex:1;min-height:110px;
+  border-radius:8px;padding:2px;transition:background .15s;}
 .gb-lane.over{background:rgba(201,162,39,0.14);outline:1px dashed var(--gold-soft);}
-.gb-empty{font-family:var(--mono);font-size:10.5px;color:var(--text-faint);padding:16px 8px;}
-.gb-card{flex:1 1 210px;max-width:320px;min-width:190px;background:var(--panel);border:1px solid var(--border-strong);
+.gb-empty{font-family:var(--mono);font-size:10.5px;color:var(--text-faint);padding:22px 6px;text-align:center;}
+.gb-card{background:var(--panel);border:1px solid var(--border-strong);
   border-left:3px solid var(--text-faint);border-radius:9px;padding:9px 11px;cursor:grab;transition:transform .12s,box-shadow .12s;}
 .gb-card:hover{box-shadow:0 4px 14px rgba(0,0,0,.35);transform:translateY(-1px);}
 .gb-card.dragging{opacity:.45;cursor:grabbing;}
@@ -1129,7 +1135,7 @@ body{font-variant-numeric:tabular-nums;}
 .gb-card.active{border-left-color:var(--gold);}
 .gb-card.pending{border-left-color:var(--text-faint);}
 .gb-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;}
-.gb-title{font-size:13.5px;font-weight:600;color:var(--text);line-height:1.35;}
+.gb-title{font-size:13px;font-weight:600;color:var(--text);line-height:1.35;}
 .gb-pct{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--gold-soft);flex-shrink:0;}
 .gb-bar{height:5px;border-radius:3px;background:rgba(255,255,255,.06);overflow:hidden;margin-top:7px;}
 .gb-bar i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,var(--gold),var(--gold-soft));}
@@ -1148,9 +1154,8 @@ body{font-variant-numeric:tabular-nums;}
 .gb-donut{height:9px;border-radius:5px;background:var(--panel-2);overflow:hidden;}
 .gb-donut i{display:block;height:100%;border-radius:5px;background:linear-gradient(90deg,var(--green),#6fb08c);}
 @media (max-width:820px){
-  .gb-row{grid-template-columns:1fr;}
-  .gb-rowhead{flex-direction:row;justify-content:space-between;border-right:none;border-bottom:1px solid var(--border);padding:0 0 6px;}
-  .gb-card{max-width:none;}
+  .gb-col{flex-basis:82vw;}
+  .gb-col.undated{flex-basis:82vw;}
 }
 
 /* ---------- 토스트 ---------- */
@@ -2451,7 +2456,7 @@ function renderHomeStatus(data, d) {
 
 /* Apps Script 웹앱 URL. 배포 후 여기에 붙여넣으면 드래그 결과가 시트에 반영된다.
    비워두면 화면에서만 바뀌고 '시트 미반영' 배지가 뜬다. */
-const GOALS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbzFwhJn7N868W5kto2g99SmcXmcALOEGHPn7_iHvGPO6JreSYryGbcPQo9isowKjAeT/exec';
+const GOALS_WEBAPP_URL = '';
 
 /* "2026 상반기" / "26년 하반기" / "2026 H1" / "2026 3분기" / "2026" 등을 {y, h}로 */
 function parseGoalPeriod(raw) {
@@ -2520,6 +2525,7 @@ function renderGoalBoard(data, d) {
   [...years].sort((a, b) => a - b).forEach(y => {
     buckets.push({ key: `${y}-1`, y, h: 1, label: `${y} 상반기` });
     buckets.push({ key: `${y}-2`, y, h: 2, label: `${y} 하반기` });
+    /* 라벨은 컬럼 헤더에서 그대로 쓰되, 같은 해가 이어지면 연도 반복은 CSS가 아니라 데이터로 처리하지 않는다 */
   });
   buckets.push({ key: 'none', y: null, h: null, label: '시기 미정' });
 
@@ -2588,8 +2594,8 @@ function renderGoalBoard(data, d) {
         </div>
         <div class="gb-board" id="goal-board">
           ${buckets.map(b => `
-            <div class="gb-row ${b.key === curKey ? 'now' : ''} ${b.key === 'none' ? 'undated' : ''}" data-bucket="${b.key}">
-              <div class="gb-rowhead">
+            <div class="gb-col ${b.key === curKey ? 'now' : ''} ${b.key === 'none' ? 'undated' : ''}" data-bucket="${b.key}">
+              <div class="gb-colhead">
                 <b>${b.label}</b>
                 <span>${byBucket[b.key].length}</span>
               </div>
@@ -2630,6 +2636,24 @@ function renderGoalBoard(data, d) {
   /* --- 드래그 앤 드롭 --- */
   const board = document.getElementById('goal-board');
   let dragRow = null;
+
+  /* 현재 반기 컬럼이 보이도록 초기 스크롤 */
+  const nowCol = board.querySelector('.gb-col.now');
+  if (nowCol) board.scrollLeft = Math.max(0, nowCol.offsetLeft - board.offsetLeft - 12);
+
+  /* 드래그 중 좌우 끝에 가까이 가면 자동 스크롤 */
+  let autoTimer = null;
+  const stopAuto = () => { if (autoTimer) { clearInterval(autoTimer); autoTimer = null; } };
+  const autoScroll = (clientX) => {
+    const r = board.getBoundingClientRect();
+    const edge = 70;
+    let dir = 0;
+    if (clientX < r.left + edge) dir = -1;
+    else if (clientX > r.right - edge) dir = 1;
+    if (!dir) { stopAuto(); return; }
+    if (autoTimer) return;
+    autoTimer = setInterval(() => { board.scrollLeft += dir * 18; }, 16);
+  };
   board.addEventListener('dragstart', (e) => {
     const c = e.target.closest('.gb-card');
     if (!c) return;
@@ -2639,10 +2663,12 @@ function renderGoalBoard(data, d) {
     try { e.dataTransfer.setData('text/plain', dragRow); } catch (err) {}
   });
   board.addEventListener('dragend', () => {
+    stopAuto();
     board.querySelectorAll('.dragging').forEach(x => x.classList.remove('dragging'));
     board.querySelectorAll('.over').forEach(x => x.classList.remove('over'));
   });
   board.addEventListener('dragover', (e) => {
+    autoScroll(e.clientX);
     const lane = e.target.closest('.gb-lane');
     if (!lane) return;
     e.preventDefault();
@@ -2659,6 +2685,7 @@ function renderGoalBoard(data, d) {
     if (!lane) return;
     e.preventDefault();
     lane.classList.remove('over');
+    stopAuto();
     const row = dragRow || e.dataTransfer.getData('text/plain');
     if (!row) return;
     const bk = lane.dataset.bucket;
