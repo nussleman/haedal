@@ -1182,10 +1182,10 @@ body{font-variant-numeric:tabular-nums;}
 .chk-pill.regret{background:rgba(193,72,63,0.20);color:#eb9891;}
 .chk-pill.refund{background:rgba(76,140,107,0.20);color:#8fd0ac;}
 .chk-pill.reclass{background:rgba(255,255,255,0.06);color:var(--text-dim);}
-#today-cards{display:flex;flex-direction:column;gap:8px;}
-#today-cards .stat-card{flex:0 0 auto;}
-#today-cards .stat-card .chk-strip{margin-top:8px;}
-#today-cards .mininote{margin-top:8px;}
+#today-left{display:flex;flex-direction:column;gap:var(--gap);min-width:0;}
+#today-left .stat-card{flex:0 0 auto;}
+#today-left .stat-card .chk-strip{margin-top:8px;}
+#today-left .panel{flex:1;}
 
 /* ---------- 목표 보드 (좌 → 우 시간순 · 가로 스크롤) ---------- */
 #goal-board-wrap{min-width:0;padding-left:14px;}
@@ -1265,56 +1265,56 @@ body{font-variant-numeric:tabular-nums;}
 .gb-nolink{font-family:var(--mono);font-size:9.5px;padding:2px 6px;border-radius:5px;background:rgba(255,255,255,.05);color:var(--text-faint);}
 
 /* ---------- 증식 구조: 시뮬레이터 ---------- */
-.sim-kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:10px;margin-top:12px;
+.sim-kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:10px;margin-top:12px;
   padding-top:12px;border-top:1px solid var(--border);}
 .sim-kpi span{display:flex;flex-direction:column;gap:2px;}
-.sim-kpi em{font-style:normal;font-family:var(--mono);font-size:9.5px;letter-spacing:.05em;color:var(--text-faint);}
-.sim-kpi b{font-family:var(--mono);font-size:17px;font-weight:600;color:var(--text);}
-.sim-kpi i{font-style:normal;font-family:var(--mono);font-size:9.5px;color:var(--text-faint);}
+.sim-kpi em{font-style:normal;font-family:var(--mono);font-size:11px;letter-spacing:.03em;color:var(--text-dim);}
+.sim-kpi b{font-family:var(--mono);font-size:18px;font-weight:600;color:var(--text);}
+.sim-kpi i{font-style:normal;font-family:var(--mono);font-size:11px;color:var(--text-faint);}
 
-.lv-group{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;color:var(--text-faint);
-  margin:12px 0 5px;padding-bottom:4px;border-bottom:1px solid var(--border);}
-.lv-group:first-of-type{margin-top:2px;}
+.lv-sec{display:flex;align-items:center;gap:9px;margin:14px 0 6px;}
+.lv-sec:first-of-type{margin-top:2px;}
+.lv-sec span{font-family:var(--mono);font-size:11px;letter-spacing:.06em;font-weight:600;
+  padding:2px 9px;border-radius:5px;white-space:nowrap;}
+.lv-sec::after{content:'';flex:1;height:1px;background:var(--border);}
+.lv-sec.inflow span{background:var(--green-soft);color:#8fd0ac;}
+.lv-sec.leak span{background:var(--red-soft);color:#eb9891;}
+.lv-sec.ret span{background:rgba(155,127,194,.2);color:#c0a8e0;}
 .lv{display:grid;grid-template-columns:1fr auto;grid-template-areas:'nm cur' 'in delta';
-  gap:3px 8px;padding:7px 0;border-bottom:1px dotted var(--border);}
+  gap:4px 8px;padding:8px 0;border-bottom:1px dotted var(--border);}
 .lv:last-child{border-bottom:none;}
-.lv-nm{grid-area:nm;font-size:12.5px;color:var(--text);}
-.lv-nm em{font-style:normal;font-family:var(--mono);font-size:9.5px;color:var(--text-faint);margin-left:6px;}
-.lv-cur{grid-area:cur;font-family:var(--mono);font-size:10px;color:var(--text-faint);align-self:center;}
-.lv-in{grid-area:in;display:flex;align-items:center;gap:4px;}
-.lv-in input{width:110px;background:var(--panel-2);border:1px solid var(--border-strong);color:var(--text);
-  font-family:var(--mono);font-size:12.5px;border-radius:6px;padding:5px 8px;text-align:right;}
+.lv-nm{grid-area:nm;font-size:13px;color:var(--text);}
+.lv-nm em{font-style:normal;font-family:var(--mono);font-size:11px;color:var(--text-faint);margin-left:7px;}
+.lv-cur{grid-area:cur;font-family:var(--mono);font-size:11.5px;color:var(--text-faint);align-self:center;}
+.lv-in{grid-area:in;display:flex;align-items:center;gap:5px;}
+.lv-in input{width:118px;background:var(--panel-2);border:1px solid var(--border-strong);color:var(--text);
+  font-family:var(--mono);font-size:13px;border-radius:6px;padding:5px 8px;text-align:right;}
 .lv-in input:focus{outline:none;border-color:var(--gold-soft);}
-.lv-in i{font-style:normal;font-family:var(--mono);font-size:10px;color:var(--text-faint);}
-.lv-delta{grid-area:delta;font-family:var(--mono);font-size:11px;color:var(--text-faint);align-self:center;text-align:right;}
+.lv-in i{font-style:normal;font-family:var(--mono);font-size:11px;color:var(--text-faint);}
+.lv-delta{grid-area:delta;font-family:var(--mono);font-size:12px;color:var(--text-faint);align-self:center;text-align:right;}
 .lv.up .lv-delta{color:var(--green);}
 .lv.down .lv-delta{color:var(--red);}
 .lv.up .lv-in input{border-color:rgba(76,140,107,.6);}
 .lv.down .lv-in input{border-color:rgba(193,72,63,.6);}
 
 .pri-list{display:flex;flex-direction:column;}
-.pri{display:grid;grid-template-columns:26px 1fr 120px 52px 1.1fr;gap:12px;align-items:center;
+.pri{display:grid;grid-template-columns:22px 1fr auto;gap:9px;align-items:start;
   padding:9px 2px;border-bottom:1px dotted var(--border);}
 .pri:last-child{border-bottom:none;}
-.pri-rank{font-family:var(--mono);font-size:11px;font-weight:700;width:24px;height:24px;line-height:24px;
-  text-align:center;border-radius:50%;background:rgba(255,255,255,.07);color:var(--text-dim);}
+.pri.p1{background:rgba(201,162,39,.07);border-radius:8px;padding-left:7px;padding-right:7px;}
+.pri.risk{background:rgba(193,72,63,.07);border-radius:8px;padding-left:7px;padding-right:7px;}
+.pri-rank{font-family:var(--mono);font-size:11px;font-weight:700;width:21px;height:21px;line-height:21px;
+  text-align:center;border-radius:50%;background:rgba(255,255,255,.07);color:var(--text-dim);margin-top:1px;}
 .pri.p1 .pri-rank{background:var(--gold);color:#1a1508;}
 .pri.risk .pri-rank{background:var(--red-soft);color:#eb9891;}
-.pri-body b{display:block;font-size:13.5px;font-weight:600;color:var(--text);}
-.pri-body em{font-style:normal;font-family:var(--mono);font-size:10px;color:var(--text-faint);}
-.pri-imp{font-family:var(--mono);font-size:14px;font-weight:600;color:var(--gold-soft);text-align:right;}
-.pri-imp i{font-style:normal;font-size:9.5px;color:var(--text-faint);margin-left:3px;}
-.pri-ctrl{font-family:var(--mono);font-size:10px;text-align:center;border-radius:5px;padding:3px 0;}
-.pri-ctrl.hi{background:var(--green-soft);color:#8fd0ac;}
-.pri-ctrl.mid{background:rgba(201,162,39,.18);color:var(--gold-soft);}
-.pri-ctrl.lo{background:rgba(255,255,255,.05);color:var(--text-faint);}
-.pri-goal-chip{font-family:var(--mono);font-size:10px;color:var(--gold-soft);
-  background:rgba(201,162,39,.12);border-radius:5px;padding:3px 7px;display:inline-block;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;}
-@media (max-width:1100px){
-  .pri{grid-template-columns:26px 1fr auto;row-gap:5px;}
-  .pri-ctrl,.pri-goal{grid-column:2 / -1;text-align:left;}
-}
+.pri-body{min-width:0;}
+.pri-body b{display:block;font-size:13px;font-weight:600;color:var(--text);line-height:1.35;}
+.pri-body em{display:block;font-style:normal;font-family:var(--mono);font-size:11px;color:var(--text-faint);margin-top:2px;}
+.pri-imp{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--gold-soft);white-space:nowrap;text-align:right;}
+.pri-imp i{font-style:normal;font-size:10px;color:var(--text-faint);margin-left:2px;}
+.pri-goal-chip{display:inline-block;font-family:var(--mono);font-size:10.5px;color:var(--gold-soft);
+  background:rgba(201,162,39,.12);border-radius:5px;padding:2px 6px;margin-top:5px;
+  max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 
 /* ---------- 카테고리별 예산 ---------- */
 .bg-total{border:1px solid var(--border-strong);border-radius:11px;background:var(--panel-2);padding:13px 15px;margin-bottom:14px;}
@@ -1372,6 +1372,36 @@ body{font-variant-numeric:tabular-nums;}
   .thm-row{grid-template-columns:1fr 90px;row-gap:4px;}
   .thm-track,.thm-top{grid-column:1 / -1;}
 }
+
+.yr-list{display:flex;flex-direction:column;}
+.yr-row{display:grid;grid-template-columns:auto 1fr 78px 44px;gap:10px;align-items:center;
+  padding:8px 4px;border-bottom:1px dotted var(--border);cursor:pointer;border-radius:6px;}
+.yr-row:last-child{border-bottom:none;}
+.yr-row:hover{background:var(--panel-2);}
+.yr-row.on{background:rgba(201,162,39,.09);}
+.yr-y{font-family:var(--mono);font-size:13px;color:var(--text);}
+.yr-y em{font-style:normal;font-size:10px;color:var(--text-faint);margin-left:5px;}
+.yr-track{height:6px;border-radius:3px;background:rgba(255,255,255,.06);overflow:hidden;}
+.yr-track i{display:block;height:100%;border-radius:3px;background:var(--net);}
+.yr-track i.neg{background:var(--red);}
+.yr-net{font-family:var(--mono);font-size:12.5px;text-align:right;}
+.yr-rate{font-family:var(--mono);font-size:11px;color:var(--text-faint);text-align:right;}
+
+/* 자산 배분 · 계좌별 잔액 압축 */
+.alloc-split{display:grid;grid-template-columns:150px 1fr;gap:16px;align-items:center;}
+.alloc-donut{height:150px;position:relative;}
+.alloc-legend{display:flex;flex-direction:column;}
+.alloc-split .alloc-row{display:grid;grid-template-columns:10px 1fr auto;gap:9px;padding:5px 0;font-size:12.5px;}
+.alloc-split .alloc-amt{font-family:var(--mono);font-size:12.5px;color:var(--text);}
+.alloc-split .alloc-amt em{font-style:normal;font-size:10.5px;color:var(--text-faint);margin-left:6px;}
+.acct-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;}
+.acct-cell{display:flex;align-items:baseline;justify-content:space-between;gap:9px;
+  border:1px solid var(--border);border-left:3px solid var(--text-faint);border-radius:8px;
+  background:var(--panel-2);padding:8px 11px;}
+.acct-nm{font-size:12.5px;color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.acct-val{font-family:var(--mono);font-size:13px;color:var(--text);white-space:nowrap;}
+.acct-val em{font-style:normal;font-size:10.5px;color:var(--text-faint);margin-left:5px;}
+@media (max-width:600px){.alloc-split{grid-template-columns:1fr;}.alloc-donut{height:130px;}}
 
 /* 차트 시리즈 체크박스 */
 .series-toggles{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:9px;}
@@ -1537,6 +1567,8 @@ const state = {
   goalTarget: {},          // 목표 행별 수동 목표값 (문구 대신 이 값을 씀)
   simLevers: {},           // 증식 구조 시뮬레이터 레버 입력
   simYears: 10,
+  yearKey: null,
+  yearMode: 'flow',
   nowMonthKey: null,       // '이번달' 탭에서 보고 있는 달 (YYYY-MM)
   nowWeekIdx: null,        // null = 그 달 전체, 0.. = 해당 주차만
   nowGranularity: 'week',  // 'week' | 'day'
@@ -2456,9 +2488,13 @@ const valueLabelPlugin = {
       if (dataset.hideLabel) return;
       const meta = chart.getDatasetMeta(dsIndex);
       if (!meta || meta.hidden) return;
+      /* 점이 많으면 라벨이 서로 겹치므로 간격을 띄워 그린다 */
+      const n = meta.data.length;
+      const step = dataset.labelStep || (n > 30 ? Math.ceil(n / 8) : n > 16 ? Math.ceil(n / 10) : 1);
       meta.data.forEach((element, index) => {
         const value = dataset.data[index];
         if (value === null || value === undefined || value === 0) return;
+        if (step > 1 && (n - 1 - index) % step !== 0) return;
         const pos = element.tooltipPosition ? element.tooltipPosition() : element;
         ctx.save();
         ctx.font = "600 10px 'IBM Plex Mono', monospace";
@@ -2600,6 +2636,7 @@ const SECTION_SUBS = {
   flow: [
     ['today', '오늘'],
     ['now', '이번달'],
+    ['year', '올해'],
     ['calendar', '캘린더'],
     ['income', '수입'],
     ['expense', '지출']
@@ -2612,7 +2649,7 @@ const SECTION_SUBS = {
   ],
   status: [
     ['goals', '목표'],
-    ['structure', '증식 구조']
+    ['structure', '시뮬레이션']
   ]
 };
 
@@ -2735,6 +2772,7 @@ function renderPage() {
   if (section === 'flow') {
     if (SUB === 'today') renderTodayPage(body, data, d);
     else if (SUB === 'now') renderNowPage(body, data, d);
+    else if (SUB === 'year') renderYearPage(body, data, d);
     else if (SUB === 'calendar') renderCalendarPage(body, data, d);
     else if (SUB === 'income') renderIncomePage(body, data, d);
     else renderExpensePage(body, data, d);
@@ -3498,16 +3536,18 @@ function renderAllocation(d) {
   const entries = DISPLAY_ORDER.filter(c => d.displayAllocation[c] !== undefined).map(c => [c, d.displayAllocation[c]]);
   panel.innerHTML = `
     <div class="panel-title"><div>자산 배분</div><span class="ptag">${d.latestMonth || ''}</span></div>
-    <div class="chart-wrap"><canvas id="chart-alloc"></canvas></div>
-    <div>
-      ${entries.map(([cat, amt]) => {
-        const pct = d.totalAssets ? (amt / d.totalAssets) * 100 : 0;
-        return `<div class="alloc-row">
-          <span class="alloc-swatch" style="background:${DISPLAY_COLORS[cat] || '#888'}"></span>
-          <span class="alloc-name">${cat}${cat === '저축' ? ' <span style="color:var(--text-faint);font-size:10px;">(저축+연금)</span>' : ''}</span>
-          <span class="alloc-amt">${amtPct(amt, pct)}</span>
-        </div>`;
-      }).join('')}
+    <div class="alloc-split">
+      <div class="alloc-donut"><canvas id="chart-alloc"></canvas></div>
+      <div class="alloc-legend">
+        ${entries.map(([cat, amt]) => {
+          const pct = d.totalAssets ? (amt / d.totalAssets) * 100 : 0;
+          return `<div class="alloc-row">
+            <span class="alloc-swatch" style="background:${DISPLAY_COLORS[cat] || '#888'}"></span>
+            <span class="alloc-name">${cat}</span>
+            <span class="alloc-amt">${formatCompactWon(amt)}<em>${pct.toFixed(0)}%</em></span>
+          </div>`;
+        }).join('')}
+      </div>
     </div>
   `;
   const ctx = document.getElementById('chart-alloc');
@@ -4650,13 +4690,18 @@ function renderTodayPage(container, data, d) {
     verdict = `${isToday ? '오늘' : '이 날'} 하루 예산 ${formatWon(allowance)} 중 ${formatWon(todayNetExpense)} 사용 · <b>${formatWon(allowance - todayNetExpense)}</b> 여유 있어요.`;
   }
 
-  /* --- 오늘 카테고리 --- */
-  const catMap = {};
-  today.rows.filter(r => r.major.includes('지출')).forEach(r => {
-    catMap[r.minor || '기타'] = (catMap[r.minor || '기타'] || 0) + netExpenseOf(r);
+  /* --- 하루 평균 비교 기준 --- */
+  const last12Keys = [];
+  for (let i = 0; i < 12; i++) last12Keys.push(shiftMonthKey(monthKey, -i));
+  let sum12 = 0, days12 = 0;
+  last12Keys.forEach(k => {
+    const rowsK = ledger.filter(r => ledgerMonthKey(r.date) === k && r.major.includes('지출'));
+    if (!rowsK.length) return;
+    sum12 += rowsK.reduce((a, r) => a + netExpenseOf(r), 0);
+    days12 += (k === thisMonthKey() ? Math.max(elapsedDaysOf(k), 1) : daysInMonthKey(k));
   });
-  const catRows = Object.entries(catMap).map(([name, amt]) => ({ name, amt })).sort((a, b) => b.amt - a.amt);
-  const catMax = Math.max(...catRows.map(r => r.amt), 1);
+  const avgDaily12 = days12 > 0 ? sum12 / days12 : 0;
+  const targetDaily = budget ? Math.round(budget.amount / monthDays) : null;
 
   /* --- 예산 기준 (접이식) --- */
   const basisHtml = budget ? `
@@ -4688,45 +4733,31 @@ function renderTodayPage(container, data, d) {
     </div>
 
     <div class="g">
-      <div class="panel s5">
-        <div class="panel-title"><div>내역</div><span class="ptag">${today.rows.length}건</span></div>
-        <div id="today-rows-body"></div>
-      </div>
-
-      <div class="s3" id="today-cards">
+      <div class="s5" id="today-left">
+        <div class="stat-card">
+          <div class="label">수입</div>
+          <div class="value" style="color:var(--green)">${formatWon(today.income)}</div>
+          ${noRecordYet || streak > 0 ? `<div class="streak-badge ${streak > 0 ? 'on' : ''}">${noRecordYet ? '✍️ 기록 미입력' : `🌱 무지출 ${streak}일 연속`}</div>` : ''}
+        </div>
         <div class="stat-card">
           <div class="label">지출</div>
           <div class="value" style="color:var(--red)">${formatWon(todayNetExpense)}</div>
-          ${allowance !== null ? `
-            <div class="allow-track" style="margin-top:9px;"><div class="allow-fill ${overToday || overBudget ? 'over' : ''}" style="width:${allowPct}%"></div></div>
-            <div class="allow-legend"><span>하루 예산 ${formatWon(allowance)}</span><span>${overBudget ? '예산 초과' : overToday ? `${formatWon(todayNetExpense - allowance)} 초과` : `${formatWon(allowance - todayNetExpense)} 여유`}</span></div>` : ''}
-          <div class="sub">이번 달 하루 평균 ${formatWon(Math.round(monthDailyAvg))} · 누적 ${formatWon(cumThrough)}</div>
+          <div class="sub ${todayNetExpense <= avgDaily12 ? 'up' : 'down'}">최근 12개월 하루 평균 ${formatWon(Math.round(avgDaily12))}</div>
+          <div class="sub ${targetDaily === null ? '' : todayNetExpense <= targetDaily ? 'up' : 'down'}">${targetDaily === null ? '지출 목표 미설정' : `지출 목표 기준 하루 ${formatWon(targetDaily)}`}</div>
           <div class="sub ${sameDowAvg !== null && todayNetExpense <= sameDowAvg ? 'up' : 'down'}">${sameDowAvg !== null ? `${DOW_KR[dowOfDayKey(key)]}요일 평균 ${formatWon(Math.round(sameDowAvg))}` : '요일 비교 데이터 없음'}</div>
           ${(todayFixed || todayRegret || todayRefund) ? `<div class="chk-strip">
             ${todayFixed ? `<span class="chk-pill fixed">고정비 ${formatWon(todayFixed)}</span>` : ''}
             ${todayRegret ? `<span class="chk-pill regret">후회 ${formatWon(todayRegret)}</span>` : ''}
             ${todayRefund ? `<span class="chk-pill refund">환급 ${formatWon(todayRefund)}</span>` : ''}
           </div>` : ''}
-          ${basisHtml}
         </div>
-
-        <div class="stat-card">
-          <div class="label">수입</div>
-          <div class="value" style="color:var(--green)">${formatWon(today.income)}</div>
-          <div class="sub">이번 달 누적 ${formatWon(M.income)}</div>
-          <div class="sub">이체 ${formatWon(today.transfer)}</div>
-          ${noRecordYet || streak > 0 ? `<div class="streak-badge ${streak > 0 ? 'on' : ''}">${noRecordYet ? '✍️ 기록 미입력' : `🌱 무지출 ${streak}일 연속`}</div>` : ''}
+        <div class="panel">
+          <div class="panel-title"><div>내역</div><span class="ptag">${today.rows.length}건</span></div>
+          <div id="today-rows-body"></div>
         </div>
       </div>
 
-      <div class="panel s4">
-        <div class="panel-title"><div>카테고리</div></div>
-        <div id="today-cat-body"></div>
-      </div>
-    </div>
-
-    <div class="g">
-      <div class="panel s8">
+      <div class="panel s7">
         <div class="panel-title">
           <div>일별 지출</div>
           <div class="range-toggle" id="today-trend-range">
@@ -4735,7 +4766,7 @@ function renderTodayPage(container, data, d) {
             <button data-n="60" class="${state.todayTrendRange === 60 ? 'active' : ''}">60일</button>
           </div>
         </div>
-        <div class="chart-wrap tall"><canvas id="chart-today-trend"></canvas></div>
+        <div class="chart-wrap tall" style="min-height:300px;"><canvas id="chart-today-trend"></canvas></div>
         <div class="chart-legend">
           <span><i style="background:rgba(193,72,63,0.8)"></i>일별 지출</span>
           <span><i style="background:#c9a227"></i>선택한 날</span>
@@ -4745,14 +4776,6 @@ function renderTodayPage(container, data, d) {
       </div>
     </div>
   `;
-
-  /* --- 카테고리 --- */
-  document.getElementById('today-cat-body').innerHTML = catRows.length ? catRows.map(r => `
-    <div class="budget-row-compact">
-      <span class="b-name" title="${r.name}">${r.name}</span>
-      <div class="b-bar-track"><div class="b-bar-fill" style="width:${(r.amt / catMax) * 100}%"></div></div>
-      <span class="b-figures">${wonComma(r.amt)}원 · ${((r.amt / (todayNetExpense || 1)) * 100).toFixed(0)}%</span>
-    </div>`).join('') : '<div class="empty-state">지출 기록이 없어요.</div>';
 
   /* --- 내역 --- */
   const sortedRows = today.rows.slice().sort((a, b) => b.amount - a.amount);
@@ -4846,6 +4869,182 @@ function renderTodayPage(container, data, d) {
   document.getElementById('today-prev').addEventListener('click', () => setDay(shiftDayKey(key, -1)));
   document.getElementById('today-next').addEventListener('click', () => setDay(shiftDayKey(key, 1)));
   document.getElementById('today-jump').addEventListener('click', () => setDay(realToday));
+}
+
+
+/* ---------------- page: 올해 ---------------- */
+
+function renderYearPage(container, data, d) {
+  const rows = data.months.map((m, i) => {
+    const ym = pivotYearMonth(m);
+    return { key: m, year: ym.year, month: ym.month, income: data.incomeTotal[i] || 0, expense: data.expenseTotal[i] || 0 };
+  }).filter(r => r.year);
+
+  const years = [...new Set(rows.map(r => r.year))].sort();
+  if (!state.yearKey || !years.includes(state.yearKey)) {
+    const t = String(new Date().getFullYear());
+    state.yearKey = years.includes(t) ? t : years[years.length - 1];
+  }
+  const Y = state.yearKey;
+  const prevY = String(Number(Y) - 1);
+  const isThisYear = Y === String(new Date().getFullYear());
+
+  const cur = rows.filter(r => r.year === Y).sort((a, b) => a.month - b.month);
+  const lastMonthWithData = cur.reduce((a, r) => (r.income > 0 || r.expense > 0) ? r.month : a, 0);
+  const throughMonth = isThisYear ? Math.max(new Date().getMonth() + 1, lastMonthWithData) : 12;
+  const prev = rows.filter(r => r.year === prevY);
+  const prevSame = prev.filter(r => r.month <= throughMonth);
+
+  const sum = (arr, k) => arr.reduce((a, r) => a + r[k], 0);
+  const income = sum(cur, 'income'), expense = sum(cur, 'expense');
+  const net = income - expense;
+  const rate = income > 0 ? (net / income) * 100 : null;
+
+  const pIncome = sum(prevSame, 'income'), pExpense = sum(prevSame, 'expense');
+  const pNet = pIncome - pExpense;
+  const pRate = pIncome > 0 ? (pNet / pIncome) * 100 : null;
+  const cmpNote = isThisYear ? `${prevY}년 1–${throughMonth}월 대비` : `${prevY}년 대비`;
+
+  const monthsElapsed = cur.filter(r => r.income > 0 || r.expense > 0).length || throughMonth;
+  const projected = isThisYear && monthsElapsed > 0 ? { income: income / monthsElapsed * 12, expense: expense / monthsElapsed * 12 } : null;
+
+  /* 연도별 요약 (비교표) */
+  const byYear = years.map(y => {
+    const rs = rows.filter(r => r.year === y);
+    const inc = sum(rs, 'income'), exp = sum(rs, 'expense');
+    return { y, inc, exp, net: inc - exp, rate: inc > 0 ? ((inc - exp) / inc) * 100 : null, months: rs.filter(r => r.income > 0 || r.expense > 0).length };
+  }).reverse();
+  const maxYearNet = Math.max(...byYear.map(x => Math.abs(x.net)), 1);
+
+  container.innerHTML = `
+    <div class="page-daybar">
+      <div class="today-datewrap">
+        <div class="day-title">${Y}년</div>
+        <div class="month-nav">
+          <button id="yr-prev" ${years.indexOf(Y) <= 0 ? 'disabled' : ''}>◀</button>
+          <select id="yr-select">${years.slice().reverse().map(y => `<option value="${y}" ${y === Y ? 'selected' : ''}>${y}년</option>`).join('')}</select>
+          <button id="yr-next" ${years.indexOf(Y) >= years.length - 1 ? 'disabled' : ''}>▶</button>
+        </div>
+      </div>
+      <div class="today-verdict ${net >= 0 ? 'good' : 'warn'}">
+        ${isThisYear ? `1–${throughMonth}월 동안` : `${Y}년 동안`} <b>${formatWon(income)}</b> 벌고 <b>${formatWon(expense)}</b> 써서
+        <b>${formatWon(net)}</b> 남았어요.
+      </div>
+    </div>
+
+    <div class="panel full">
+      <div class="stat-grid" style="margin-bottom:0;">
+        <div class="stat-card">
+          <div class="label">수입</div>
+          <div class="value" style="color:var(--green)">${formatWon(income)}</div>
+          ${cmpSub(income, pIncome, false, cmpNote)}
+          ${projected ? `<div class="sub">연말 예상 ${formatCompactWon(projected.income)}원</div>` : ''}
+        </div>
+        <div class="stat-card">
+          <div class="label">지출</div>
+          <div class="value" style="color:var(--red)">${formatWon(expense)}</div>
+          ${cmpSub(expense, pExpense, true, cmpNote)}
+          ${projected ? `<div class="sub">연말 예상 ${formatCompactWon(projected.expense)}원</div>` : ''}
+        </div>
+        <div class="stat-card">
+          <div class="label">순익 (쌓인 돈)</div>
+          <div class="value" style="color:${net >= 0 ? 'var(--net)' : 'var(--red)'}">${formatWon(net)}</div>
+          ${cmpSub(net, pNet, false, cmpNote)}
+          <div class="sub">월 평균 ${formatCompactWon(monthsElapsed ? net / monthsElapsed : 0)}원</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">저축률</div>
+          <div class="value" style="color:${rate !== null && rate >= state.goals.savingsRateTarget ? 'var(--net)' : 'var(--red)'}">${rate === null ? '—' : rate.toFixed(1) + '%'}</div>
+          ${cmpSubPp(rate, state.goals.savingsRateTarget, `목표 ${state.goals.savingsRateTarget}% 대비`)}
+          ${cmpSubPp(rate, pRate, `${prevY}년 대비`)}
+        </div>
+      </div>
+    </div>
+
+    <div class="g">
+      <div class="panel s8">
+        <div class="panel-title">
+          <div>${Y}년 월별 흐름</div>
+          <div class="range-toggle" id="yr-mode">
+            <button data-m="flow" class="${(state.yearMode || 'flow') === 'flow' ? 'active' : ''}">월별</button>
+            <button data-m="cum" class="${state.yearMode === 'cum' ? 'active' : ''}">누적</button>
+          </div>
+        </div>
+        <div class="chart-wrap tall"><canvas id="chart-year"></canvas></div>
+        <div class="chart-legend">
+          <span><i style="background:rgba(76,140,107,0.8)"></i>수입</span>
+          <span><i style="background:rgba(193,72,63,0.8)"></i>지출</span>
+          <span><i style="background:#39a8bd"></i>순익</span>
+          <span style="color:var(--text-faint)">점선 = ${prevY}년</span>
+        </div>
+      </div>
+      <div class="panel s4">
+        <div class="panel-title"><div>연도별 비교</div></div>
+        <div class="yr-list">
+          ${byYear.map(x => `
+            <div class="yr-row ${x.y === Y ? 'on' : ''}" data-y="${x.y}">
+              <span class="yr-y">${x.y}<em>${x.months}개월</em></span>
+              <span class="yr-track"><i class="${x.net < 0 ? 'neg' : ''}" style="width:${(Math.abs(x.net) / maxYearNet) * 100}%"></i></span>
+              <span class="yr-net" style="color:${x.net >= 0 ? 'var(--net)' : 'var(--red)'}">${formatCompactWon(x.net)}</span>
+              <span class="yr-rate">${x.rate === null ? '—' : x.rate.toFixed(0) + '%'}</span>
+            </div>`).join('')}
+        </div>
+        <div class="settings-note">막대 = 순익 · 오른쪽 = 저축률 · 클릭하면 그 해로 이동</div>
+      </div>
+    </div>
+  `;
+
+  const drawYear = () => {
+    if (state.charts.year) state.charts.year.destroy();
+    const mode = state.yearMode || 'flow';
+    const labels = [];
+    for (let i = 1; i <= 12; i++) labels.push(i + '월');
+    const get = (arr, mo, k) => { const r = arr.find(x => x.month === mo); return r ? r[k] : 0; };
+    const has = (mo) => cur.some(x => x.month === mo && (x.income > 0 || x.expense > 0));
+    const inc = [], exp = [], nt = [], pnt = [];
+    let ci = 0, ce = 0, cp = 0;
+    for (let mo = 1; mo <= 12; mo++) {
+      const i0 = get(cur, mo, 'income'), e0 = get(cur, mo, 'expense');
+      const p0 = get(prev, mo, 'income') - get(prev, mo, 'expense');
+      ci += i0; ce += e0; cp += p0;
+      const live = has(mo) || !isThisYear;
+      inc.push(mode === 'cum' ? (live ? ci : null) : i0);
+      exp.push(mode === 'cum' ? (live ? ce : null) : e0);
+      nt.push(mode === 'cum' ? (live ? ci - ce : null) : i0 - e0);
+      pnt.push(mode === 'cum' ? cp : p0);
+    }
+    state.charts.year = new Chart(document.getElementById('chart-year'), {
+      data: {
+        labels,
+        datasets: [
+          { type: 'bar', label: '수입', data: inc, backgroundColor: 'rgba(76,140,107,0.75)', borderRadius: 3, order: 3 },
+          { type: 'bar', label: '지출', data: exp, backgroundColor: 'rgba(193,72,63,0.75)', borderRadius: 3, order: 3 },
+          { type: 'line', label: '순익', data: nt, borderColor: '#39a8bd', backgroundColor: 'transparent', tension: 0.25, pointRadius: 2, borderWidth: 2.5, spanGaps: false, order: 1 },
+          { type: 'line', label: `${prevY}년 순익`, data: pnt, borderColor: 'rgba(154,163,182,.65)', borderDash: [5, 4], backgroundColor: 'transparent', tension: 0.25, pointRadius: 0, borderWidth: 2, order: 2 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, layout: { padding: { top: 18 } },
+        interaction: { mode: 'index', intersect: false },
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` ${c.dataset.label}: ${c.raw === null ? '—' : formatWon(c.raw)}` } } },
+        scales: { x: { ticks: MONO_TICK, grid: { display: false } }, y: { ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT } }
+      }
+    });
+  };
+  drawYear();
+
+  document.getElementById('yr-mode').addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    state.yearMode = b.dataset.m;
+    document.querySelectorAll('#yr-mode button').forEach(x => x.classList.toggle('active', x === b));
+    drawYear();
+  });
+  const setYear = (y) => { state.yearKey = y; renderPage(); };
+  document.getElementById('yr-select').addEventListener('change', (e) => setYear(e.target.value));
+  document.getElementById('yr-prev').addEventListener('click', () => { const i = years.indexOf(Y); if (i > 0) setYear(years[i - 1]); });
+  document.getElementById('yr-next').addEventListener('click', () => { const i = years.indexOf(Y); if (i < years.length - 1) setYear(years[i + 1]); });
+  container.querySelectorAll('.yr-row').forEach(r => r.addEventListener('click', () => setYear(r.dataset.y)));
 }
 
 /* ---------------- page: 캘린더 (수입·지출·이체 한눈에) ---------------- */
@@ -5472,7 +5671,7 @@ function renderStructurePage(container, data, d) {
 
   container.innerHTML = `
     <div class="g">
-      <div class="panel s8">
+      <div class="panel s6">
         <div class="panel-title">
           <div>자산 시뮬레이션</div>
           <div class="range-toggle" id="sim-years">
@@ -5487,20 +5686,18 @@ function renderStructurePage(container, data, d) {
         <div id="sim-out"></div>
       </div>
 
-      <div class="panel s4">
+      <div class="panel s3">
         <div class="panel-title"><div>레버</div><button class="btn small" id="sim-reset">되돌리기</button></div>
-        <div class="lv-group">유입 · 월</div>
+        <div class="lv-sec inflow"><span>유입 · 월</span></div>
         ${LEVERS.filter(l => l.side === 'in').map(leverRow).join('')}
-        <div class="lv-group">누수 · 월</div>
+        <div class="lv-sec leak"><span>누수 · 월</span></div>
         ${LEVERS.filter(l => l.side === 'out').map(leverRow).join('')}
-        <div class="lv-group">수익률 · 연</div>
+        <div class="lv-sec ret"><span>수익률 · 연</span></div>
         ${leverRow(RET)}
       </div>
-    </div>
 
-    <div class="g">
-      <div class="panel s12">
-        <div class="panel-title"><div>지금 할 일</div><span class="ptag">연 환산 임팩트 × 통제력 순</span></div>
+      <div class="panel s3">
+        <div class="panel-title"><div>지금 할 일</div><span class="ptag">임팩트순</span></div>
         <div class="pri-list">
           ${actions.map(a => {
             const gl = goalFor(a);
@@ -5508,11 +5705,10 @@ function renderStructurePage(container, data, d) {
               <span class="pri-rank">${a.risk ? '!' : a.rank}</span>
               <span class="pri-body">
                 <b>${a.short}</b>
-                <em>${a.node} · ${a.stage}</em>
+                <em>${a.node} · 통제력 ${a.control}</em>
+                ${gl ? `<span class="pri-goal-chip">🎯 ${gl.title}</span>` : ''}
               </span>
-              <span class="pri-imp">${a.impact ? '+' + formatCompactWon(a.impact) + '원' : '—'}<i>/ 연</i></span>
-              <span class="pri-ctrl ${a.control === '높음' ? 'hi' : a.control === '중간' ? 'mid' : 'lo'}">${a.control}</span>
-              <span class="pri-goal">${gl ? `<span class="pri-goal-chip">🎯 ${gl.title}${gl.status ? ` · ${gl.status}` : ''}</span>` : ''}</span>
+              <span class="pri-imp">${a.impact ? '+' + formatCompactWon(a.impact) : '—'}<i>/연</i></span>
             </div>`;
           }).join('')}
         </div>
@@ -5612,14 +5808,15 @@ function renderAccountsPanel(data, d) {
   const accountList = Object.entries(accounts).sort((a, b) => b[1].amount - a[1].amount);
   panel.innerHTML = `
     <div class="panel-title"><div>계좌별 잔액</div><span class="ptag">${latestMonth || ''}</span></div>
-    ${accountList.map(([name, v]) => {
-      const pct = d.totalAssets ? (v.amount / d.totalAssets) * 100 : 0;
-      return `<div class="acct-row">
-        <span class="alloc-swatch" style="background:${CAT_COLORS[v.category] || '#888'}"></span>
-        <span class="acct-name">${name}<div class="acct-cat">${v.category}</div></span>
-        <span class="acct-amt">${amtPct(v.amount, pct)}</span>
-      </div>`;
-    }).join('') || '<div class="empty-state">계좌 데이터가 없어요.</div>'}
+    <div class="acct-grid">
+      ${accountList.map(([name, v]) => {
+        const pct = d.totalAssets ? (v.amount / d.totalAssets) * 100 : 0;
+        return `<div class="acct-cell" style="border-left-color:${CAT_COLORS[v.category] || '#888'}">
+          <span class="acct-nm">${name}</span>
+          <span class="acct-val">${formatCompactWon(v.amount)}<em>${pct.toFixed(0)}%</em></span>
+        </div>`;
+      }).join('') || '<div class="empty-state">계좌 데이터가 없어요.</div>'}
+    </div>
   `;
 }
 
@@ -7314,7 +7511,7 @@ const INV_SERIES = [
   { key: 'balance', label: '평가액', color: '#4c8c6b' },
   { key: 'contrib', label: '누적 원금', color: '#e0c766' },
   { key: 'transfer', label: '투자 이체', color: '#39a8bd' },
-  { key: 'returns', label: '실현 수익', color: '#e0c766' },
+  { key: 'returns', label: '실현 수익', color: '#c98fd0' },
   { key: 'roi', label: '원금 대비 수익률', color: '#9b7fc2' }
 ];
 
@@ -7560,16 +7757,16 @@ function renderInvestmentPage(container, data, d) {
 
     const S = state.invSeries;
     const ds = [];
-    if (S.transfer) ds.push({ type: 'bar', label: '투자 이체', data: flowAgg(transferByYM), backgroundColor: 'rgba(57,168,189,0.65)', borderRadius: 3, yAxisID: 'yFlow', order: 4 });
-    if (S.returns) ds.push({ type: 'bar', label: '실현 수익', data: flowAgg(returnsByYM), backgroundColor: 'rgba(224,199,102,0.85)', borderRadius: 3, yAxisID: 'yFlow', order: 3 });
-    if (S.balance) ds.push({ type: 'line', label: '평가액', data: pick.map(am => (cumMap[am] ? cumMap[am].balance : 0)), borderColor: '#4c8c6b', backgroundColor: 'rgba(76,140,107,0.10)', fill: true, tension: 0.3, pointRadius: 2, yAxisID: 'y', order: 1 });
-    if (S.contrib) ds.push({ type: 'line', label: '누적 원금', data: pick.map(am => (cumMap[am] ? cumMap[am].cumContribution : 0)), borderColor: '#e0c766', borderDash: [5, 4], backgroundColor: 'transparent', tension: 0.3, pointRadius: 2, yAxisID: 'y', order: 2 });
-    if (S.roi) ds.push({ type: 'line', label: '원금 대비 수익률', data: pick.map(am => (roiMap[am] === undefined ? null : roiMap[am])), borderColor: '#9b7fc2', backgroundColor: 'transparent', borderDash: [3, 3], tension: 0.3, pointRadius: 0, spanGaps: true, yAxisID: 'yRoi', order: 0 });
+    if (S.transfer) ds.push({ type: 'bar', label: '투자 이체', data: flowAgg(transferByYM), backgroundColor: 'rgba(57,168,189,0.7)', borderRadius: 3, yAxisID: 'yFlow', labelColor: '#8fd4e4', order: 4 });
+    if (S.returns) ds.push({ type: 'bar', label: '실현 수익', data: flowAgg(returnsByYM), backgroundColor: 'rgba(201,143,208,0.8)', borderRadius: 3, yAxisID: 'yFlow', labelColor: '#e0b8e6', order: 3 });
+    if (S.balance) ds.push({ type: 'line', label: '평가액', data: pick.map(am => (cumMap[am] ? cumMap[am].balance : 0)), borderColor: '#4c8c6b', backgroundColor: 'rgba(76,140,107,0.10)', fill: true, tension: 0.3, pointRadius: 2, yAxisID: 'y', labelColor: '#c7e4d4', labelOffset: -18, order: 1 });
+    if (S.contrib) ds.push({ type: 'line', label: '누적 원금', data: pick.map(am => (cumMap[am] ? cumMap[am].cumContribution : 0)), borderColor: '#e0c766', borderDash: [5, 4], backgroundColor: 'transparent', tension: 0.3, pointRadius: 2, yAxisID: 'y', labelColor: '#efdfa0', labelOffset: 16, order: 2 });
+    if (S.roi) ds.push({ hideLabel: true, type: 'line', label: '원금 대비 수익률', data: pick.map(am => (roiMap[am] === undefined ? null : roiMap[am])), borderColor: '#9b7fc2', backgroundColor: 'transparent', borderDash: [3, 3], tension: 0.3, pointRadius: 0, spanGaps: true, yAxisID: 'yRoi', order: 0 });
 
     state.charts.invMain = new Chart(ctx, {
       data: { labels, datasets: ds },
       options: {
-        responsive: true, maintainAspectRatio: false, layout: { padding: { top: 16 } },
+        responsive: true, maintainAspectRatio: false, layout: { padding: { top: 28 } },
         interaction: { mode: 'index', intersect: false },
         plugins: {
           legend: { display: false },
@@ -7582,7 +7779,8 @@ function renderInvestmentPage(container, data, d) {
           yFlow: { display: S.transfer || S.returns, position: 'right', beginAtZero: true, ticks: { ...MONO_TICK, color: '#e0c766', callback: (v) => formatCompactWon(v) }, grid: { display: false }, title: { display: true, text: '월/연 흐름', color: '#e0c766', font: { family: 'IBM Plex Mono', size: 9 } } },
           yRoi: { display: S.roi, position: 'right', ticks: { ...MONO_TICK, color: '#b79ede', callback: (v) => `${v}%` }, grid: { display: false } }
         }
-      }
+      },
+      plugins: [valueLabelPlugin]
     });
   };
   drawInvMain();
