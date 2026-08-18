@@ -1387,20 +1387,72 @@ body{font-variant-numeric:tabular-nums;}
 .yr-net{font-family:var(--mono);font-size:12.5px;text-align:right;}
 .yr-rate{font-family:var(--mono);font-size:11px;color:var(--text-faint);text-align:right;}
 
+/* ---------- 비중 도넛 ---------- */
+.share-split{display:grid;grid-template-columns:132px 1fr;gap:14px;align-items:center;}
+.share-donut{height:132px;position:relative;}
+.share-list{display:flex;flex-direction:column;}
+.share-row{display:grid;grid-template-columns:9px 1fr 46px 62px;gap:8px;align-items:center;
+  padding:4px 0;font-size:12px;}
+.share-sw{width:9px;height:9px;border-radius:2px;}
+.share-nm{color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.share-pct{font-family:var(--mono);font-size:12px;color:var(--text);text-align:right;}
+.share-amt{font-family:var(--mono);font-size:10.5px;color:var(--text-faint);text-align:right;}
+@media (max-width:600px){.share-split{grid-template-columns:1fr;}}
+
+/* ---------- 예산 트리 / 실적 ---------- */
+.bt{display:flex;flex-direction:column;}
+.bt-g{border-bottom:1px solid var(--border);}
+.bt-g:last-child{border-bottom:none;}
+.bt-ghead{display:grid;grid-template-columns:14px 1fr 1.1fr auto;gap:10px;align-items:center;
+  padding:10px 2px;cursor:pointer;border-radius:6px;}
+.bt-ghead:hover{background:var(--panel-2);}
+.bt-caret{font-family:var(--mono);font-size:10px;color:var(--text-faint);}
+.bt-gnm{font-size:13px;font-weight:600;color:var(--text);}
+.bt-gnm em{font-style:normal;font-family:var(--mono);font-size:10.5px;color:var(--text-faint);margin-left:6px;}
+.bt-gtrack{height:6px;border-radius:3px;background:rgba(255,255,255,.06);overflow:hidden;}
+.bt-gtrack i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,var(--gold),var(--gold-soft));}
+.bt-gamt{font-family:var(--mono);font-size:13px;color:var(--text);text-align:right;}
+.bt-i{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;
+  padding:6px 2px 6px 26px;font-size:12px;border-top:1px dotted var(--border);}
+.bt-inm{color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.bt-iavg{font-family:var(--mono);font-size:10.5px;color:var(--text-faint);}
+.bt-iin{display:flex;align-items:center;gap:5px;}
+.bt-iin em{font-style:normal;font-family:var(--mono);font-size:9px;color:var(--text-faint);
+  background:rgba(255,255,255,.05);border-radius:4px;padding:1px 4px;}
+.ba-list{display:flex;flex-direction:column;}
+.ba-row{display:grid;grid-template-columns:1fr 1fr 38px auto;grid-template-areas:'nm track pct fig' 'nm track pct rem';
+  gap:2px 10px;align-items:center;padding:8px 2px;border-bottom:1px dotted var(--border);font-size:12.5px;}
+.ba-row:last-child{border-bottom:none;}
+.ba-nm{grid-area:nm;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ba-track{grid-area:track;height:6px;border-radius:3px;background:rgba(255,255,255,.06);overflow:hidden;}
+.ba-track i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,var(--green),#6fb08c);}
+.ba-track i.over{background:linear-gradient(90deg,var(--red),#d9756c);}
+.ba-pct{grid-area:pct;font-family:var(--mono);font-size:11px;color:var(--text-faint);text-align:right;}
+.ba-fig{grid-area:fig;font-family:var(--mono);font-size:11.5px;color:var(--text-dim);text-align:right;white-space:nowrap;}
+.ba-fig em{font-style:normal;color:var(--text-faint);margin-left:3px;}
+.ba-rem{grid-area:rem;font-family:var(--mono);font-size:11px;color:var(--green);text-align:right;}
+.ba-rem.over{color:var(--red);}
+
 /* 자산 배분 · 계좌별 잔액 압축 */
-.alloc-split{display:grid;grid-template-columns:150px 1fr;gap:16px;align-items:center;}
-.alloc-donut{height:150px;position:relative;}
+.alloc-split{display:grid;grid-template-columns:124px 1fr;gap:14px;align-items:center;}
+.alloc-donut{height:124px;position:relative;}
 .alloc-legend{display:flex;flex-direction:column;}
 .alloc-split .alloc-row{display:grid;grid-template-columns:10px 1fr auto;gap:9px;padding:5px 0;font-size:12.5px;}
 .alloc-split .alloc-amt{font-family:var(--mono);font-size:12.5px;color:var(--text);}
 .alloc-split .alloc-amt em{font-style:normal;font-size:10.5px;color:var(--text-faint);margin-left:6px;}
-.acct-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;}
-.acct-cell{display:flex;align-items:baseline;justify-content:space-between;gap:9px;
-  border:1px solid var(--border);border-left:3px solid var(--text-faint);border-radius:8px;
-  background:var(--panel-2);padding:8px 11px;}
-.acct-nm{font-size:12.5px;color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.acct-val{font-family:var(--mono);font-size:13px;color:var(--text);white-space:nowrap;}
-.acct-val em{font-style:normal;font-size:10.5px;color:var(--text-faint);margin-left:5px;}
+.acct-board{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;align-items:start;}
+.acct-col{display:flex;flex-direction:column;gap:6px;}
+.acct-col-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;
+  padding-bottom:6px;border-bottom:2px solid var(--catc);}
+.acct-col-head b{font-size:12.5px;font-weight:700;color:var(--text);}
+.acct-col-head span{font-family:var(--mono);font-size:12px;color:var(--text-dim);}
+.acct-col-head em{font-style:normal;font-size:10px;color:var(--text-faint);margin-left:5px;}
+.acct-cell{display:grid;grid-template-columns:1fr auto;gap:3px 8px;
+  border:1px solid var(--border);border-radius:8px;background:var(--panel-2);padding:8px 10px;}
+.acct-nm{font-size:12px;color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.acct-val{font-family:var(--mono);font-size:12.5px;color:var(--text);white-space:nowrap;text-align:right;}
+.acct-bar{grid-column:1 / -1;height:3px;border-radius:2px;background:rgba(255,255,255,.06);overflow:hidden;}
+.acct-bar i{display:block;height:100%;border-radius:2px;background:var(--catc);opacity:.75;}
 @media (max-width:600px){.alloc-split{grid-template-columns:1fr;}.alloc-donut{height:130px;}}
 
 /* 차트 시리즈 체크박스 */
@@ -1436,6 +1488,7 @@ body{font-variant-numeric:tabular-nums;}
 .ge-link.good{border-color:rgba(76,140,107,.45);background:var(--green-soft);color:#a8d8bf;}
 .ge-link.bad{border-color:rgba(193,72,63,.45);background:var(--red-soft);color:#eb9891;}
 .ge-link.none{color:var(--text-faint);}
+.btn.small.on{border-color:var(--gold);color:var(--gold-soft);}
 .btn.primary{background:var(--gold);border-color:var(--gold);color:#1a1508;font-weight:700;}
 .btn.danger{border-color:rgba(193,72,63,.5);color:#eb9891;}
 
@@ -1516,6 +1569,7 @@ const CAT_COLORS = {
   '연금 자산': '#9b7fc2'
 };
 const CAT_ORDER = ['현금 자산', '투자 자산', '저축 자산', '연금 자산'];
+const ACCT_BOARD_ORDER = ['현금 자산', '투자 자산', '연금 자산', '저축 자산'];
 const DISPLAY_GROUP = { '현금 자산': '현금', '투자 자산': '투자', '저축 자산': '저축', '연금 자산': '저축' };
 const DISPLAY_COLORS = { '현금': '#c9a227', '투자': '#4c8c6b', '저축': '#5b8fc7' };
 const DISPLAY_ORDER = ['현금', '투자', '저축'];
@@ -1542,6 +1596,7 @@ const state = {
   expenseAvgExpenseRange: 12,
   expenseAvgFixedRange: 12,
   fixedMonthKey: null,
+  fixedRange: 12,
   vendorRange: 12,
   invRange: 12,
   benchRange: 'all',
@@ -1575,7 +1630,8 @@ const state = {
   todayDayKey: null,       // '오늘' 탭에서 보고 있는 날 (YYYY-MM-DD), null = 실제 오늘
   todayTrendRange: 14,     // '오늘' 탭 일별 추이 기간 (일)
   calMonthKey: null,       // '캘린더' 탭에서 보고 있는 달 (YYYY-MM)
-  calMode: 'all',          // 'all' | 'expense' | 'income' | 'transfer'
+  calMode: 'all',
+  calHeat: true,          // 'all' | 'expense' | 'income' | 'transfer'
   calSelDay: null          // 캘린더에서 선택한 날 (YYYY-MM-DD)
 };
 
@@ -3550,11 +3606,41 @@ function renderAllocation(d) {
       </div>
     </div>
   `;
+  /* 도넛 조각 위에 카테고리 · % 를 직접 찍는다 */
+  const donutLabel = {
+    id: 'donutLabel',
+    afterDatasetsDraw(chart) {
+      const { ctx } = chart;
+      const total = chart.data.datasets[0].data.reduce((a, b) => a + b, 0) || 1;
+      chart.getDatasetMeta(0).data.forEach((arc, i) => {
+        const v = chart.data.datasets[0].data[i];
+        const pct = (v / total) * 100;
+        if (pct < 6) return;
+        const pos = arc.tooltipPosition();
+        ctx.save();
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#0f141d';
+        ctx.font = "700 11px 'IBM Plex Mono', monospace";
+        ctx.fillText(`${pct.toFixed(0)}%`, pos.x, pos.y);
+        ctx.restore();
+      });
+      /* 가운데 총액 */
+      const meta = chart.getDatasetMeta(0).data[0];
+      if (!meta) return;
+      ctx.save();
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#eae8e0';
+      ctx.font = "700 14px 'IBM Plex Mono', monospace";
+      ctx.fillText(formatCompactWon(total), meta.x, meta.y);
+      ctx.restore();
+    }
+  };
   const ctx = document.getElementById('chart-alloc');
   state.charts.alloc = new Chart(ctx, {
     type: 'doughnut',
     data: { labels: entries.map(e => e[0]), datasets: [{ data: entries.map(e => e[1]), backgroundColor: entries.map(e => DISPLAY_COLORS[e[0]] || '#888'), borderColor: '#171e2b', borderWidth: 3 }] },
-    options: { responsive: true, maintainAspectRatio: false, cutout: '68%', plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` ${c.label}: ${formatCompactWon(c.raw)}원` } } } }
+    options: { responsive: true, maintainAspectRatio: false, cutout: '58%', plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` ${c.label}: ${formatCompactWon(c.raw)}원` } } } },
+    plugins: [donutLabel]
   });
 }
 
@@ -4908,13 +4994,22 @@ function renderYearPage(container, data, d) {
   const monthsElapsed = cur.filter(r => r.income > 0 || r.expense > 0).length || throughMonth;
   const projected = isThisYear && monthsElapsed > 0 ? { income: income / monthsElapsed * 12, expense: expense / monthsElapsed * 12 } : null;
 
-  /* 연도별 요약 (비교표) */
-  const byYear = years.map(y => {
-    const rs = rows.filter(r => r.year === y);
-    const inc = sum(rs, 'income'), exp = sum(rs, 'expense');
-    return { y, inc, exp, net: inc - exp, rate: inc > 0 ? ((inc - exp) / inc) * 100 : null, months: rs.filter(r => r.income > 0 || r.expense > 0).length };
-  }).reverse();
-  const maxYearNet = Math.max(...byYear.map(x => Math.abs(x.net)), 1);
+  /* 주요 수입 · 지출 TOP (가계부 원장 기준, 항목+사용처로 묶음) */
+  const yrRows = (data.ledger || []).filter(r => String(ledgerMonthKey(r.date) || '').startsWith(Y));
+  const topOf = (pred, useNet) => {
+    const m = {};
+    yrRows.filter(pred).forEach(r => {
+      const nm = [r.minor, r.item].filter(Boolean).join(' · ') || r.vendor || '기타';
+      if (!m[nm]) m[nm] = { name: nm, v: 0, n: 0 };
+      m[nm].v += useNet ? netExpenseOf(r) : r.amount;
+      m[nm].n += 1;
+    });
+    return Object.values(m).filter(x => x.v > 0).sort((a, b) => b.v - a.v).slice(0, 8);
+  };
+  const topIncome = topOf(r => r.major.includes('수입'), false);
+  const topExpense = topOf(r => r.major.includes('지출'), true);
+  const maxTopIn = Math.max(...topIncome.map(r => r.v), 1);
+  const maxTopEx = Math.max(...topExpense.map(r => r.v), 1);
 
   container.innerHTML = `
     <div class="page-daybar">
@@ -4932,8 +5027,7 @@ function renderYearPage(container, data, d) {
       </div>
     </div>
 
-    <div class="panel full">
-      <div class="stat-grid" style="margin-bottom:0;">
+    <div class="stat-grid" style="margin-bottom:0;">
         <div class="stat-card">
           <div class="label">수입</div>
           <div class="value" style="color:var(--green)">${formatWon(income)}</div>
@@ -4958,11 +5052,10 @@ function renderYearPage(container, data, d) {
           ${cmpSubPp(rate, state.goals.savingsRateTarget, `목표 ${state.goals.savingsRateTarget}% 대비`)}
           ${cmpSubPp(rate, pRate, `${prevY}년 대비`)}
         </div>
-      </div>
     </div>
 
     <div class="g">
-      <div class="panel s8">
+      <div class="panel s12">
         <div class="panel-title">
           <div>${Y}년 월별 흐름</div>
           <div class="range-toggle" id="yr-mode">
@@ -4978,18 +5071,32 @@ function renderYearPage(container, data, d) {
           <span style="color:var(--text-faint)">점선 = ${prevY}년</span>
         </div>
       </div>
-      <div class="panel s4">
-        <div class="panel-title"><div>연도별 비교</div></div>
+    </div>
+
+    <div class="g">
+      <div class="panel s6">
+        <div class="panel-title"><div>주요 수입</div><span class="ptag">${Y}년 TOP 8</span></div>
         <div class="yr-list">
-          ${byYear.map(x => `
-            <div class="yr-row ${x.y === Y ? 'on' : ''}" data-y="${x.y}">
-              <span class="yr-y">${x.y}<em>${x.months}개월</em></span>
-              <span class="yr-track"><i class="${x.net < 0 ? 'neg' : ''}" style="width:${(Math.abs(x.net) / maxYearNet) * 100}%"></i></span>
-              <span class="yr-net" style="color:${x.net >= 0 ? 'var(--net)' : 'var(--red)'}">${formatCompactWon(x.net)}</span>
-              <span class="yr-rate">${x.rate === null ? '—' : x.rate.toFixed(0) + '%'}</span>
-            </div>`).join('')}
+          ${topIncome.length ? topIncome.map(r => `
+            <div class="yr-row">
+              <span class="yr-y" style="font-family:var(--sans);font-size:12.5px;">${r.name}<em>${r.n}건</em></span>
+              <span class="yr-track"><i style="width:${(r.v / maxTopIn) * 100}%;background:var(--green)"></i></span>
+              <span class="yr-net" style="color:var(--green)">${formatCompactWon(r.v)}</span>
+              <span class="yr-rate">${income ? ((r.v / income) * 100).toFixed(0) + '%' : '—'}</span>
+            </div>`).join('') : '<div class="empty-state">수입 내역이 없어요.</div>'}
         </div>
-        <div class="settings-note">막대 = 순익 · 오른쪽 = 저축률 · 클릭하면 그 해로 이동</div>
+      </div>
+      <div class="panel s6">
+        <div class="panel-title"><div>주요 지출</div><span class="ptag">${Y}년 TOP 8</span></div>
+        <div class="yr-list">
+          ${topExpense.length ? topExpense.map(r => `
+            <div class="yr-row">
+              <span class="yr-y" style="font-family:var(--sans);font-size:12.5px;">${r.name}<em>${r.n}건</em></span>
+              <span class="yr-track"><i style="width:${(r.v / maxTopEx) * 100}%;background:var(--red)"></i></span>
+              <span class="yr-net" style="color:var(--red)">${formatCompactWon(r.v)}</span>
+              <span class="yr-rate">${expense ? ((r.v / expense) * 100).toFixed(0) + '%' : '—'}</span>
+            </div>`).join('') : '<div class="empty-state">지출 내역이 없어요.</div>'}
+        </div>
       </div>
     </div>
   `;
@@ -5017,18 +5124,19 @@ function renderYearPage(container, data, d) {
       data: {
         labels,
         datasets: [
-          { type: 'bar', label: '수입', data: inc, backgroundColor: 'rgba(76,140,107,0.75)', borderRadius: 3, order: 3 },
-          { type: 'bar', label: '지출', data: exp, backgroundColor: 'rgba(193,72,63,0.75)', borderRadius: 3, order: 3 },
-          { type: 'line', label: '순익', data: nt, borderColor: '#39a8bd', backgroundColor: 'transparent', tension: 0.25, pointRadius: 2, borderWidth: 2.5, spanGaps: false, order: 1 },
-          { type: 'line', label: `${prevY}년 순익`, data: pnt, borderColor: 'rgba(154,163,182,.65)', borderDash: [5, 4], backgroundColor: 'transparent', tension: 0.25, pointRadius: 0, borderWidth: 2, order: 2 }
+          { type: 'bar', label: '수입', data: inc, backgroundColor: 'rgba(76,140,107,0.75)', borderRadius: 3, labelColor: '#c7e4d4', order: 3 },
+          { type: 'bar', label: '지출', data: exp, backgroundColor: 'rgba(193,72,63,0.75)', borderRadius: 3, labelColor: '#f0c4c0', order: 3 },
+          { type: 'line', label: '순익', data: nt, borderColor: '#39a8bd', backgroundColor: 'transparent', tension: 0.25, pointRadius: 2, borderWidth: 2.5, spanGaps: false, labelColor: '#8fd4e4', labelOffset: -14, order: 1 },
+          { type: 'line', label: `${prevY}년 순익`, data: pnt, borderColor: 'rgba(154,163,182,.65)', borderDash: [5, 4], backgroundColor: 'transparent', tension: 0.25, pointRadius: 0, borderWidth: 2, hideLabel: true, order: 2 }
         ]
       },
       options: {
-        responsive: true, maintainAspectRatio: false, layout: { padding: { top: 18 } },
+        responsive: true, maintainAspectRatio: false, layout: { padding: { top: 24 } },
         interaction: { mode: 'index', intersect: false },
         plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` ${c.dataset.label}: ${c.raw === null ? '—' : formatWon(c.raw)}` } } },
         scales: { x: { ticks: MONO_TICK, grid: { display: false } }, y: { ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT } }
-      }
+      },
+      plugins: [valueLabelPlugin]
     });
   };
   drawYear();
@@ -5044,7 +5152,6 @@ function renderYearPage(container, data, d) {
   document.getElementById('yr-select').addEventListener('change', (e) => setYear(e.target.value));
   document.getElementById('yr-prev').addEventListener('click', () => { const i = years.indexOf(Y); if (i > 0) setYear(years[i - 1]); });
   document.getElementById('yr-next').addEventListener('click', () => { const i = years.indexOf(Y); if (i < years.length - 1) setYear(years[i + 1]); });
-  container.querySelectorAll('.yr-row').forEach(r => r.addEventListener('click', () => setYear(r.dataset.y)));
 }
 
 /* ---------------- page: 캘린더 (수입·지출·이체 한눈에) ---------------- */
@@ -5128,7 +5235,7 @@ function renderCalendarPage(container, data, d) {
     const k = dayKeyFor(b.day);
     const future = k > realToday;
     const metric = Math.abs(metricOf(b));
-    const heat = (!future && metric > 0) ? `background:${calHeatColor(mode, metric / maxMetric)};` : '';
+    const heat = (state.calHeat !== false && !future && metric > 0) ? `background:${calHeatColor(mode, metric / maxMetric)};` : '';
     const dowCls = b.dow === 0 ? 'sun' : b.dow === 6 ? 'sat' : '';
     const lines = [];
     if (!future) {
@@ -5148,6 +5255,7 @@ function renderCalendarPage(container, data, d) {
       <div class="today-datewrap">
         <div class="day-title">${monthKeyLabel(monthKey)}</div>
         <div class="month-nav">
+          <button class="btn small ${state.calHeat === false ? '' : 'on'}" id="cal-heat">${state.calHeat === false ? '지출 진하기 끔' : '지출 진하기 켬'}</button>
           <button id="cal-prev" ${availableKeys.indexOf(monthKey) <= 0 ? 'disabled' : ''}>◀</button>
           <select id="cal-month-select">${monthOptions}</select>
           <button id="cal-next" ${availableKeys.indexOf(monthKey) >= availableKeys.length - 1 ? 'disabled' : ''}>▶</button>
@@ -5186,7 +5294,7 @@ function renderCalendarPage(container, data, d) {
         <span><i style="background:#e08a82"></i>지출</span>
         <span><i style="background:var(--gold-soft)"></i>이체</span>
         <span><i style="background:var(--panel-2);border:1px dashed var(--gold-soft)"></i>오늘</span>
-        <span style="color:var(--text-faint)">진하기 = 지출 규모 · 날짜 클릭 → 오른쪽 내역</span>
+        <span style="color:var(--text-faint)">${state.calHeat === false ? '날짜 클릭 → 오른쪽 내역' : '진하기 = 지출 규모 · 날짜 클릭 → 오른쪽 내역'}</span>
       </div>
     </div>
     <div class="panel s5" id="panel-cal-day"></div>
@@ -5270,6 +5378,10 @@ function renderCalendarPage(container, data, d) {
   document.getElementById('cal-next').addEventListener('click', () => {
     const i = availableKeys.indexOf(monthKey);
     if (i < availableKeys.length - 1) setMonth(availableKeys[i + 1]);
+  });
+  document.getElementById('cal-heat').addEventListener('click', () => {
+    state.calHeat = state.calHeat === false;
+    renderPage();
   });
   document.getElementById('cal-thismonth').addEventListener('click', () => {
     const t = thisMonthKey();
@@ -5808,12 +5920,22 @@ function renderAccountsPanel(data, d) {
   const accountList = Object.entries(accounts).sort((a, b) => b[1].amount - a[1].amount);
   panel.innerHTML = `
     <div class="panel-title"><div>계좌별 잔액</div><span class="ptag">${latestMonth || ''}</span></div>
-    <div class="acct-grid">
-      ${accountList.map(([name, v]) => {
-        const pct = d.totalAssets ? (v.amount / d.totalAssets) * 100 : 0;
-        return `<div class="acct-cell" style="border-left-color:${CAT_COLORS[v.category] || '#888'}">
-          <span class="acct-nm">${name}</span>
-          <span class="acct-val">${formatCompactWon(v.amount)}<em>${pct.toFixed(0)}%</em></span>
+    <div class="acct-board">
+      ${ACCT_BOARD_ORDER.map(cat => {
+        const list = accountList.filter(([, v]) => v.category === cat);
+        if (!list.length) return '';
+        const sum = list.reduce((a, [, v]) => a + v.amount, 0);
+        const catPct = d.totalAssets ? (sum / d.totalAssets) * 100 : 0;
+        return `<div class="acct-col" style="--catc:${CAT_COLORS[cat] || '#888'}">
+          <div class="acct-col-head"><b>${cat.replace(' 자산', '')}</b><span>${formatCompactWon(sum)}<em>${catPct.toFixed(0)}%</em></span></div>
+          ${list.map(([name, v]) => {
+            const pct = sum ? (v.amount / sum) * 100 : 0;
+            return `<div class="acct-cell">
+              <span class="acct-nm">${name}</span>
+              <span class="acct-val">${formatCompactWon(v.amount)}</span>
+              <span class="acct-bar"><i style="width:${pct}%"></i></span>
+            </div>`;
+          }).join('')}
         </div>`;
       }).join('') || '<div class="empty-state">계좌 데이터가 없어요.</div>'}
     </div>
@@ -6227,20 +6349,17 @@ function renderExpensePage(container, data, d) {
       </div>
     </div>` : ''}
 
-    ${SUB === 'fixed' ? `
-    <div class="g">
-      <div class="panel s7" id="panel-fixed-detail"></div>
-      <div class="panel s5" id="panel-invest-cost"></div>
-    </div>` : ''}
+    ${SUB === 'fixed' ? `<div id="panel-fixed-detail"></div>` : ''}
 
     ${SUB === 'budget' ? `
     <div class="g">
-      <div class="panel s12" id="panel-budget-month-section">
-        <div class="panel-title">
-          <div>카테고리별 예산</div>
-          <div id="expense-month-nav-slot"></div>
-        </div>
+      <div class="panel s7" id="panel-budget-month-section">
+        <div class="panel-title"><div>세부 카테고리별 예산</div><span class="ptag">기준 = 최근 12개월 월평균</span></div>
         <div id="cat-budget-body"></div>
+      </div>
+      <div class="panel s5">
+        <div class="panel-title"><div>실적</div><div id="expense-month-nav-slot"></div></div>
+        <div id="budget-actual-body"></div>
       </div>
     </div>` : ''}
 
@@ -6256,10 +6375,7 @@ function renderExpensePage(container, data, d) {
     renderExpenseAvgCard('panel-avg-expense', cf, '평균 월 지출', 'expenseAvgExpenseRange');
     renderExpenseAvgCard('panel-avg-fixed', fixedSeries, '평균 월 고정비', 'expenseAvgFixedRange');
   }
-  if (SUB === 'fixed') {
-    renderFixedDetailSection(data, cf, fixedSeries);
-    renderInvestCostPanel('panel-invest-cost', data.ledger, cf);
-  }
+  if (SUB === 'fixed') renderFixedDetailSection(data, cf, fixedSeries);
 
   const drawExpenseTrend = () => {
     if (!document.getElementById('chart-expense-trend')) return;
@@ -6364,6 +6480,7 @@ function renderExpenseMonthSection(data, d) {
   if (navSlot) navSlot.innerHTML = renderMonthNavControls(idx, data, d);
   bindMonthNavControls(data, d);
   renderCategoryBudgetPanel(data, d);
+  renderBudgetActualPanel(data, d);
 }
 
 function setExpenseMonthIdx(idx, data, d) {
@@ -6404,73 +6521,144 @@ function bindMonthNavControls(data, d) {
   });
 }
 
+/* 세부 카테고리(소분류 › 항목) 단위 예산.
+   기준값 = 최근 12개월 월평균 실지출. 사용자가 고치면 그 값이 예산이 된다. */
+function buildBudgetTree(data) {
+  const rows = (data.ledger || []).filter(r => r.major.includes('지출'));
+  const keys = Array.from(new Set(rows.map(r => ledgerMonthKey(r.date)).filter(Boolean))).sort();
+  const last12 = keys.slice(-12);
+  const n = last12.length || 1;
+  const tree = {};
+  rows.forEach(r => {
+    const mk = ledgerMonthKey(r.date);
+    const minor = r.minor || '기타';
+    const item = r.item || '기타';
+    tree[minor] = tree[minor] || { name: minor, items: {} };
+    const it = tree[minor].items[item] = tree[minor].items[item] || { name: item, sum12: 0, byMonth: {} };
+    if (last12.includes(mk)) it.sum12 += netExpenseOf(r);
+    it.byMonth[mk] = (it.byMonth[mk] || 0) + netExpenseOf(r);
+  });
+  const groups = Object.values(tree).map(g => {
+    const items = Object.values(g.items).map(it => ({ ...it, avg: it.sum12 / n }))
+      .filter(it => it.avg > 0).sort((a, b) => b.avg - a.avg);
+    return { name: g.name, items, avg: items.reduce((a, x) => a + x.avg, 0) };
+  }).filter(g => g.items.length).sort((a, b) => b.avg - a.avg);
+  return { groups, months: keys, n };
+}
+
+function budgetKeyOf(minor, item) { return `${minor}|${item}`; }
+function budgetOf(minor, item, fallback) {
+  const v = state.budgets && state.budgets[budgetKeyOf(minor, item)];
+  return (v === undefined || v === null || v === '') ? fallback : Number(v);
+}
+
 function renderCategoryBudgetPanel(data, d) {
   const body = document.getElementById('cat-budget-body');
   if (!body) return;
-  const catNames = Object.keys(data.expenseCategories);
-  const idx = state.expenseMonthIdx;
+  const { groups } = buildBudgetTree(data);
+  if (!state.budgetOpen) state.budgetOpen = {};
 
-  const rows = catNames.map(name => {
-    const vals = data.expenseCategories[name];
-    const cur = vals[idx] || 0;
-    const guide = avgOf([vals[idx - 1] || 0, vals[idx - 2] || 0, vals[idx - 3] || 0]);
-    const budget = (state.budgets && state.budgets[name] !== undefined && state.budgets[name] !== null && state.budgets[name] !== '')
-      ? Number(state.budgets[name]) : guide;
-    const remaining = budget - cur;
-    const pct = budget > 0 ? (cur / budget) * 100 : 0;
-    return { name, cur, guide, budget, remaining, pct, over: remaining < 0, custom: !!(state.budgets && state.budgets[name]) };
-  }).filter(r => r.cur > 0 || r.guide > 0 || r.budget > 0).sort((a, b) => b.pct - a.pct);
-
-  const sumBudget = rows.reduce((a, r) => a + r.budget, 0);
-  const sumCur = rows.reduce((a, r) => a + r.cur, 0);
-  const sumPct = sumBudget > 0 ? (sumCur / sumBudget) * 100 : 0;
-  const overCount = rows.filter(r => r.over).length;
+  const gTotals = groups.map(g => ({
+    name: g.name,
+    avg: g.avg,
+    budget: g.items.reduce((a, it) => a + budgetOf(g.name, it.name, it.avg), 0)
+  }));
+  const sumAvg = gTotals.reduce((a, g) => a + g.avg, 0);
+  const sumBudget = gTotals.reduce((a, g) => a + g.budget, 0);
+  const maxG = Math.max(...gTotals.map(g => g.budget), 1);
 
   body.innerHTML = `
-    <div class="bg-total ${sumCur > sumBudget ? 'over' : ''}">
-      <div class="bg-total-head">
-        <span>합계</span>
-        <b>${formatWon(sumCur)} <em>/ ${formatWon(sumBudget)}</em></b>
-      </div>
-      <div class="bg-track lg"><div class="bg-fill ${sumCur > sumBudget ? 'over' : ''}" style="width:${Math.min(sumPct, 100)}%"></div></div>
-      <div class="bg-total-foot">
-        <span>${sumCur > sumBudget ? `${formatWon(sumCur - sumBudget)} 초과` : `${formatWon(sumBudget - sumCur)} 남음`}</span>
-        <span>${sumPct.toFixed(0)}%${overCount ? ` · 초과 ${overCount}개` : ''}</span>
-      </div>
+    <div class="bg-total">
+      <div class="bg-total-head"><span>월 예산 합계</span><b>${formatWon(sumBudget)}</b></div>
+      <div class="bg-total-foot"><span>최근 12개월 월평균 ${formatWon(Math.round(sumAvg))}</span>
+        <span style="color:${sumBudget <= sumAvg ? 'var(--green)' : 'var(--red)'}">${sumBudget <= sumAvg ? '−' : '+'}${formatWon(Math.abs(sumBudget - sumAvg))}</span></div>
     </div>
-
-    <div class="bg-table">
-      <div class="bg-head">
-        <span>카테고리</span><span>사용</span><span>예산</span><span class="bg-barcol">진행</span><span>남은 금액</span>
-      </div>
-      ${rows.map(r => `
-        <div class="bg-row ${r.over ? 'over' : ''}">
-          <span class="bg-nm" title="${r.name}">${r.name}</span>
-          <span class="bg-cur">${wonComma(r.cur)}</span>
-          <span class="bg-bud">
-            <input type="text" inputmode="numeric" class="budget-input-compact" data-cat="${r.name}" value="${wonComma(r.budget)}" title="${r.custom ? '직접 설정' : '최근 3개월 평균'}" />
-            ${r.custom ? '' : '<em title="최근 3개월 평균">자동</em>'}
-          </span>
-          <span class="bg-barcol">
-            <span class="bg-track"><span class="bg-fill ${r.over ? 'over' : ''}" style="width:${Math.min(r.pct, 100)}%"></span></span>
-            <em>${r.pct.toFixed(0)}%</em>
-          </span>
-          <span class="bg-rem ${r.over ? 'over' : ''}">${r.over ? '+' + wonComma(Math.abs(r.remaining)) : wonComma(r.remaining)}</span>
-        </div>`).join('') || '<div class="empty-state">해당 월 데이터가 없어요.</div>'}
+    <div class="bt">
+      ${groups.map(g => {
+        const gt = gTotals.find(x => x.name === g.name);
+        const open = !!state.budgetOpen[g.name];
+        return `<div class="bt-g ${open ? 'open' : ''}">
+          <div class="bt-ghead" data-g="${g.name}">
+            <span class="bt-caret">${open ? '▾' : '▸'}</span>
+            <span class="bt-gnm">${g.name}<em>${g.items.length}</em></span>
+            <span class="bt-gtrack"><i style="width:${(gt.budget / maxG) * 100}%"></i></span>
+            <span class="bt-gamt">${formatWon(gt.budget)}</span>
+          </div>
+          ${open ? g.items.map(it => {
+            const b = budgetOf(g.name, it.name, it.avg);
+            const custom = !!(state.budgets && state.budgets[budgetKeyOf(g.name, it.name)]);
+            return `<div class="bt-i">
+              <span class="bt-inm">${it.name}</span>
+              <span class="bt-iavg">평균 ${wonComma(Math.round(it.avg))}</span>
+              <span class="bt-iin">
+                <input type="text" inputmode="numeric" class="budget-input-compact" data-cat="${g.name}" data-item="${it.name}" value="${wonComma(Math.round(b))}" />
+                ${custom ? '' : '<em title="최근 12개월 평균">자동</em>'}
+              </span>
+            </div>`;
+          }).join('') : ''}
+        </div>`;
+      }).join('') || '<div class="empty-state">지출 데이터가 없어요.</div>'}
     </div>
-    <div class="settings-note">예산 칸을 직접 고치면 저장돼요. 비우면 최근 3개월 평균으로 돌아갑니다.</div>
+    <div class="settings-note">그룹을 눌러 세부 항목을 펼치고, 예산 칸을 고치면 저장돼요. 비우면 12개월 평균으로 돌아갑니다.</div>
   `;
 
+  body.querySelectorAll('.bt-ghead').forEach(h => h.addEventListener('click', () => {
+    state.budgetOpen[h.dataset.g] = !state.budgetOpen[h.dataset.g];
+    renderCategoryBudgetPanel(data, d);
+  }));
   body.querySelectorAll('.budget-input-compact').forEach(inp => {
     inp.addEventListener('click', (e) => e.stopPropagation());
     inp.addEventListener('change', () => {
-      const cat = inp.dataset.cat;
+      const k = budgetKeyOf(inp.dataset.cat, inp.dataset.item);
       const raw = inp.value.replace(/[^0-9]/g, '');
-      state.budgets[cat] = raw === '' ? undefined : parseFloat(raw);
+      state.budgets[k] = raw === '' ? undefined : parseFloat(raw);
       saveBudgets();
       renderCategoryBudgetPanel(data, d);
+      renderBudgetActualPanel(data, d);
     });
   });
+}
+
+/* 선택한 달의 예산 대비 실적 */
+function renderBudgetActualPanel(data, d) {
+  const body = document.getElementById('budget-actual-body');
+  if (!body) return;
+  const { groups, months } = buildBudgetTree(data);
+  if (state.expenseMonthIdx === undefined || state.expenseMonthIdx === null) state.expenseMonthIdx = d.latestPivotIdx;
+  const pm = data.months[state.expenseMonthIdx];
+  const ym = pivotYearMonth(pm);
+  const mk = ym.year ? `${ym.year}-${String(ym.month).padStart(2, '0')}` : months[months.length - 1];
+
+  const rows = groups.map(g => {
+    const budget = g.items.reduce((a, it) => a + budgetOf(g.name, it.name, it.avg), 0);
+    const used = g.items.reduce((a, it) => a + (it.byMonth[mk] || 0), 0);
+    return { name: g.name, budget, used, pct: budget > 0 ? (used / budget) * 100 : 0, rem: budget - used };
+  }).filter(r => r.budget > 0 || r.used > 0).sort((a, b) => b.pct - a.pct);
+
+  const tB = rows.reduce((a, r) => a + r.budget, 0);
+  const tU = rows.reduce((a, r) => a + r.used, 0);
+  const tPct = tB > 0 ? (tU / tB) * 100 : 0;
+
+  body.innerHTML = `
+    <div class="bg-total ${tU > tB ? 'over' : ''}">
+      <div class="bg-total-head"><span>${monthKeyLabel(mk)}</span><b>${formatWon(tU)} <em>/ ${formatWon(tB)}</em></b></div>
+      <div class="bg-track lg"><div class="bg-fill ${tU > tB ? 'over' : ''}" style="width:${Math.min(tPct, 100)}%"></div></div>
+      <div class="bg-total-foot">
+        <span style="color:${tU > tB ? 'var(--red)' : 'var(--green)'}">${tU > tB ? `${formatWon(tU - tB)} 초과` : `${formatWon(tB - tU)} 남음`}</span>
+        <span>${tPct.toFixed(0)}%</span>
+      </div>
+    </div>
+    <div class="ba-list">
+      ${rows.map(r => `
+        <div class="ba-row ${r.rem < 0 ? 'over' : ''}">
+          <span class="ba-nm">${r.name}</span>
+          <span class="ba-track"><i class="${r.rem < 0 ? 'over' : ''}" style="width:${Math.min(r.pct, 100)}%"></i></span>
+          <span class="ba-pct">${r.pct.toFixed(0)}%</span>
+          <span class="ba-fig">${wonComma(Math.round(r.used))}<em>/ ${wonComma(Math.round(r.budget))}</em></span>
+          <span class="ba-rem ${r.rem < 0 ? 'over' : ''}">${r.rem < 0 ? '+' + wonComma(Math.round(-r.rem)) : wonComma(Math.round(r.rem))}</span>
+        </div>`).join('') || '<div class="empty-state">해당 월 데이터가 없어요.</div>'}
+    </div>
+  `;
 }
 
 function renderTopExpensesPanel(data, d) {
@@ -6569,107 +6757,126 @@ const FIXED_TONE_COLOR = { red: 'var(--red)', green: 'var(--green)', gold: 'var(
 function renderFixedDetailSection(data, cf, fixedSeries) {
   const host = document.getElementById('panel-fixed-detail');
   if (!host) return;
-  const expenseMonthKeys = Array.from(new Set(
-    data.ledger.filter(r => r.major.includes('지출')).map(r => ledgerMonthKey(r.date)).filter(Boolean)
-  )).sort();
-  if (!expenseMonthKeys.length) { host.innerHTML = ''; return; }
-  if (!state.fixedMonthKey || !expenseMonthKeys.includes(state.fixedMonthKey)) {
-    state.fixedMonthKey = expenseMonthKeys[expenseMonthKeys.length - 1];
+  const rowsAll = data.ledger.filter(r => r.fixed && r.major.includes('지출'));
+  const monthKeys = Array.from(new Set(rowsAll.map(r => ledgerMonthKey(r.date)).filter(Boolean))).sort();
+  if (!monthKeys.length) {
+    host.innerHTML = `<div class="g"><div class="panel s12"><div class="empty-state">고정비로 표시된 항목이 없어요. 가계부(D) 시트의 <b>고정비</b> 열을 TRUE로 채워주세요.</div></div></div>`;
+    return;
   }
+  if (!state.fixedMonthKey || !monthKeys.includes(state.fixedMonthKey)) {
+    state.fixedMonthKey = monthKeys[monthKeys.length - 1];
+  }
+  if (!state.fixedRange) state.fixedRange = 12;
 
   const draw = () => {
-    const monthKey = state.fixedMonthKey;
-    const a = analyzeFixedCosts(data.ledger, monthKey);
-    const totalExpense = data.ledger
-      .filter(r => r.major.includes('지출') && ledgerMonthKey(r.date) === monthKey)
-      .reduce((s, r) => s + r.amount, 0);
-    const share = totalExpense ? (a.paidTotal / totalExpense) * 100 : 0;
-    const recent12 = sliceByRange(fixedSeries, 12).map(s => s.expense).filter(v => v > 0);
-    const avg12 = avgOf(recent12);
-    const vsAvg = avg12 ? ((a.paidTotal - avg12) / avg12) * 100 : 0;
-    const options = expenseMonthKeys.slice().reverse()
-      .map(k => `<option value="${k}" ${k === monthKey ? 'selected' : ''}>${monthKeyLabel(k)}</option>`).join('');
+    const shown = state.fixedRange === 'all' ? monthKeys : monthKeys.slice(-state.fixedRange);
+    const byMonth = {};
+    rowsAll.forEach(r => {
+      const k = ledgerMonthKey(r.date);
+      byMonth[k] = (byMonth[k] || 0) + netExpenseOf(r);
+    });
+    if (!shown.includes(state.fixedMonthKey)) state.fixedMonthKey = shown[shown.length - 1];
+    const sel = state.fixedMonthKey;
+    const vals = shown.map(k => byMonth[k] || 0);
+    const avg = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
+    const curTotal = byMonth[sel] || 0;
+
+    /* 항목별(사용처 기준) 집계 — 최근 12개월 */
+    const last12 = monthKeys.slice(-12);
+    const items = {};
+    rowsAll.forEach(r => {
+      const k = ledgerMonthKey(r.date);
+      const nm = r.vendor || r.item || '기타';
+      if (!items[nm]) items[nm] = { nm, minor: r.minor, item: r.item, byMonth: {}, last12: 0, hits: 0 };
+      items[nm].byMonth[k] = (items[nm].byMonth[k] || 0) + netExpenseOf(r);
+    });
+    Object.values(items).forEach(it => {
+      it.last12 = last12.reduce((a, k) => a + (it.byMonth[k] || 0), 0);
+      it.hits = last12.filter(k => it.byMonth[k] !== undefined).length;
+      it.monthly = it.hits ? it.last12 / it.hits : 0;
+      it.cur = it.byMonth[sel] || 0;
+    });
+    const cutList = Object.values(items).filter(it => it.last12 > 0)
+      .sort((a, b) => b.last12 - a.last12).slice(0, 8);
+    const maxCut = Math.max(...cutList.map(it => it.last12), 1);
+
+    /* 선택 월 내역 */
+    const detail = rowsAll.filter(r => ledgerMonthKey(r.date) === sel)
+      .sort((a, b) => netExpenseOf(b) - netExpenseOf(a));
 
     host.innerHTML = `
-      <div class="panel-title">
-        <div>고정비 정밀 분석</div>
-        <select id="fixed-month-select" class="month-nav-select-standalone">${options}</select>
-      </div>
-      <div class="stat-grid" style="grid-template-columns:repeat(auto-fit,minmax(122px,1fr));margin-bottom:10px;">
-        <div class="stat-card">
-          <div class="label">이번 달 결제된 고정비</div>
-          <div class="value">${formatCompactWon(a.paidTotal)}원</div>
-          <div class="sub ${vsAvg > 0 ? 'down' : 'up'}">12개월 평균 대비 ${vsAvg >= 0 ? '+' : ''}${vsAvg.toFixed(1)}%</div>
+      <div class="g">
+        <div class="panel s8">
+          <div class="panel-title">
+            <div>고정비 추이</div>
+            <div class="range-toggle" id="fixed-range-toggle"></div>
+          </div>
+          <div class="chart-wrap tall" style="min-height:250px;"><canvas id="chart-fixed"></canvas></div>
+          <div class="chart-legend">
+            <span><i style="background:rgba(201,162,39,0.85)"></i>고정비</span>
+            <span><i style="background:#c9a227"></i>선택한 달</span>
+            <span style="color:var(--text-faint)">막대 클릭 → 오른쪽 내역 필터 · 점선 = 평균 ${formatCompactWon(avg)}</span>
+          </div>
+
+          <div class="panel-title" style="margin-top:18px;"><div>줄이면 좋을 고정비</div><span class="ptag">최근 12개월 합계 순</span></div>
+          <div class="yr-list">
+            ${cutList.map(it => `
+              <div class="yr-row">
+                <span class="yr-y" style="font-family:var(--sans);font-size:12.5px;">${it.nm}<em>${it.minor || ''} · ${it.hits}/12개월</em></span>
+                <span class="yr-track"><i style="width:${(it.last12 / maxCut) * 100}%;background:var(--gold)"></i></span>
+                <span class="yr-net" style="color:var(--gold-soft)">${formatCompactWon(it.last12)}</span>
+                <span class="yr-rate">월 ${formatCompactWon(it.monthly)}</span>
+              </div>`).join('') || '<div class="empty-state">집계할 고정비가 없어요.</div>'}
+          </div>
+          <div class="settings-note">오른쪽 숫자 = 실제 결제된 달 기준 1회 평균 · 연 1회 구독은 12로 나누지 않습니다.</div>
         </div>
-        <div class="stat-card">
-          <div class="label">총지출 대비 비중</div>
-          <div class="value">${share.toFixed(1)}%</div>
-          <div class="sub">총지출 ${formatCompactWon(totalExpense)}원</div>
+
+        <div class="panel s4">
+          <div class="panel-title"><div>${monthKeyLabel(sel)} 내역</div><span class="ptag">${detail.length}건 · ${formatCompactWon(curTotal)}</span></div>
+          <div class="table-scroll" style="max-height:none;">
+            <table class="data-table">
+              <thead><tr><th>항목</th><th>사용처</th><th style="text-align:right">금액</th></tr></thead>
+              <tbody>${detail.length ? detail.map(r => `<tr>
+                <td>${r.item || '-'}<div style="color:var(--text-faint);font-size:10.5px;">${r.minor || ''}</div></td>
+                <td style="white-space:normal;">${r.vendor || '-'}</td>
+                <td class="amt expense">${formatWon(netExpenseOf(r))}</td>
+              </tr>`).join('') : '<tr><td colspan="3" style="text-align:center;color:var(--text-faint);padding:20px;">이 달 고정비 결제 내역이 없어요.</td></tr>'}</tbody>
+            </table>
+          </div>
         </div>
-        <div class="stat-card">
-          <div class="label">아직 안 나간 고정비</div>
-          <div class="value" style="color:${a.missingTotal > 0 ? 'var(--red)' : 'var(--green)'}">${formatCompactWon(a.missingTotal)}원</div>
-          <div class="sub">${a.items.filter(x => x.status === '미결제').length}건 미결제</div>
-        </div>
-        <div class="stat-card">
-          <div class="label">최근 12개월 고정비</div>
-          <div class="value">${formatCompactWon(a.annual)}원</div>
-          <div class="sub">매달 반복분 월 ${formatCompactWon(a.runRate)}원</div>
-        </div>
-      </div>
-      <div class="chart-wrap"><canvas id="chart-fixed-stack"></canvas></div>
-      <div class="settings-note" style="margin:8px 0 4px;">금색 고정비 · 붉은색 변동비</div>
-      <div class="table-scroll" style="margin-top:14px;">
-        <table class="data-table">
-          <thead><tr>
-            <th>항목</th><th>분류</th><th style="text-align:right">이번 달</th>
-            <th style="text-align:right">직전 3개월 평균</th><th style="text-align:right">차이</th>
-            <th style="text-align:right">최근 12개월</th><th style="text-align:center">주기</th><th>상태</th>
-          </tr></thead>
-          <tbody>
-            ${a.items.map(x => `<tr>
-              <td>${x.name}</td>
-              <td style="color:var(--text-faint)">${x.minor || ''} · ${x.item || ''}</td>
-              <td class="amt">${x.cur ? formatWon(x.cur) : '—'}</td>
-              <td class="amt">${x.avg3 ? formatWon(Math.round(x.avg3)) : '—'}</td>
-              <td class="amt" style="color:${x.diff === null ? 'var(--text-faint)' : (x.diff > 0 ? 'var(--red)' : (x.diff < 0 ? 'var(--green)' : 'var(--text-faint)'))}">${x.diff === null ? '—' : (x.diff > 0 ? '+' : '') + formatWon(Math.round(x.diff))}</td>
-              <td class="amt">${formatCompactWon(x.last12)}원</td>
-              <td class="amt" style="text-align:center;color:var(--text-faint)">${x.hits12}/12</td>
-              <td style="color:${FIXED_TONE_COLOR[x.tone]}">${x.status}</td>
-            </tr>`).join('') || '<tr><td colspan="8"><div class="empty-state">고정비로 표시된 항목이 없어요. 가계부(D) 시트의 <b>고정비</b> 열을 TRUE로 채워주세요.</div></td></tr>'}
-          </tbody>
-        </table>
       </div>
     `;
 
-    if (state.charts.fixedStack) state.charts.fixedStack.destroy();
-    const stackSlice = sliceByRange(cf, 12);
-    const fixedMap = {};
-    fixedSeries.forEach(s => { fixedMap[s.month] = s.expense; });
-    state.charts.fixedStack = new Chart(document.getElementById('chart-fixed-stack'), {
+    if (state.charts.fixed) state.charts.fixed.destroy();
+    state.charts.fixed = new Chart(document.getElementById('chart-fixed'), {
       type: 'bar',
       data: {
-        labels: stackSlice.map(s => pivotMonthLabel(s.month)),
-        datasets: [
-          { label: '고정비', data: stackSlice.map(s => fixedMap[s.month] || 0), backgroundColor: 'rgba(201,162,39,0.8)', borderRadius: 3 },
-          { label: '변동비', data: stackSlice.map(s => Math.max(0, s.expense - (fixedMap[s.month] || 0))), backgroundColor: 'rgba(193,72,63,0.55)', borderRadius: 3 }
-        ]
+        labels: shown.map(monthKeyLabel),
+        datasets: [{
+          label: '고정비', data: vals, borderRadius: 3, labelColor: '#efdfa0',
+          backgroundColor: shown.map(k => k === sel ? '#c9a227' : 'rgba(201,162,39,0.55)')
+        }]
       },
       options: {
-        responsive: true, maintainAspectRatio: false,
-        plugins: {
-          legend: { display: true, labels: { boxWidth: 10, font: { size: 11 } } },
-          tooltip: { callbacks: { label: (c) => ` ${c.dataset.label}: ${formatWon(c.raw)}` } }
+        responsive: true, maintainAspectRatio: false, layout: { padding: { top: 22 } },
+        onClick: (evt, els) => {
+          if (!els || !els.length) return;
+          state.fixedMonthKey = shown[els[0].index];
+          draw();
         },
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` ${formatWon(c.raw)}` } } },
         scales: {
-          x: { stacked: true, ticks: MONO_TICK, grid: { display: false } },
-          y: { stacked: true, ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT }
+          x: { ticks: { ...MONO_TICK, autoSkip: true, maxRotation: 0 }, grid: { display: false } },
+          y: { ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT }
         }
-      }
+      },
+      plugins: [valueLabelPlugin, avgLinePlugin(vals)]
     });
 
-    const sel = document.getElementById('fixed-month-select');
-    if (sel) sel.addEventListener('change', (e) => { state.fixedMonthKey = e.target.value; draw(); });
+    bindRangeToggle('fixed-range-toggle', RANGE_OPTIONS, state.fixedRange, (v) => {
+      state.fixedRange = v === 'all' ? 'all' : parseInt(v, 10);
+      draw();
+    });
   };
   draw();
 }
@@ -7511,7 +7718,7 @@ const INV_SERIES = [
   { key: 'balance', label: '평가액', color: '#4c8c6b' },
   { key: 'contrib', label: '누적 원금', color: '#e0c766' },
   { key: 'transfer', label: '투자 이체', color: '#39a8bd' },
-  { key: 'returns', label: '실현 수익', color: '#c98fd0' },
+  { key: 'returns', label: '실현 수익', color: '#e08a5f' },
   { key: 'roi', label: '원금 대비 수익률', color: '#9b7fc2' }
 ];
 
@@ -7654,34 +7861,30 @@ function renderInvestmentPage(container, data, d) {
 
     ${SUB === 'holdings' ? `
     <div class="g">
-      <div class="panel s12">
-        <div class="panel-title">
-          <div>테마별 실현 수익</div>
-          <span class="ptag">누적 · 한 종목이 여러 테마면 각 테마에 모두 집계 (합계 ≠ 총합)</span>
+      <div class="panel s6">
+        <div class="panel-title"><div>테마별 수익 비중</div><span class="ptag">플러스 수익 기준 · 종목 중복 포함</span></div>
+        <div class="share-split">
+          <div class="share-donut"><canvas id="chart-theme-share"></canvas></div>
+          <div id="theme-share-list" class="share-list"></div>
         </div>
-        <div id="theme-list"></div>
+      </div>
+      <div class="panel s6">
+        <div class="panel-title"><div>종목별 수익 비중</div><span class="ptag">플러스 수익 기준</span></div>
+        <div class="share-split">
+          <div class="share-donut"><canvas id="chart-stock-share"></canvas></div>
+          <div id="stock-share-list" class="share-list"></div>
+        </div>
       </div>
     </div>
 
     <div class="g">
-      <div class="panel s7">
-        <div class="panel-title">
-          <div>종목별 누적 실현 수익</div>
-          <span class="ptag">상위 15</span>
-        </div>
-        <div id="stock-profit-list"></div>
+      <div class="panel s6">
+        <div class="panel-title"><div>테마별 실현 수익</div><span class="ptag">누적 · 마이너스 포함</span></div>
+        <div id="theme-list"></div>
       </div>
-      <div class="panel s5">
-        <div class="panel-title">
-          <div>월별 실현손익 추이</div>
-          <div class="income-cat-btns" id="inv-pick-type-btns" style="margin:0;">
-            <button data-type="stock" class="income-cat-btn ${state.invPickType !== 'category' ? 'active' : ''}">종목</button>
-            <button data-type="category" class="income-cat-btn ${state.invPickType === 'category' ? 'active' : ''}">테마</button>
-          </div>
-        </div>
-        <select id="inv-pick-name" class="month-nav-select-standalone"></select>
-        <div class="chart-wrap tall"><canvas id="chart-inv-pick"></canvas></div>
-        <div class="settings-note">고른 종목·테마가 <b>어느 달에 벌고 어느 달에 까먹었는지</b>를 봅니다. 한 달에 몰린 이익은 운, 여러 달에 퍼진 이익은 실력에 가깝습니다.</div>
+      <div class="panel s6">
+        <div class="panel-title"><div>종목별 실현 수익</div><span class="ptag">상위 12</span></div>
+        <div id="stock-profit-list"></div>
       </div>
     </div>` : ''}
 
@@ -7758,7 +7961,7 @@ function renderInvestmentPage(container, data, d) {
     const S = state.invSeries;
     const ds = [];
     if (S.transfer) ds.push({ type: 'bar', label: '투자 이체', data: flowAgg(transferByYM), backgroundColor: 'rgba(57,168,189,0.7)', borderRadius: 3, yAxisID: 'yFlow', labelColor: '#8fd4e4', order: 4 });
-    if (S.returns) ds.push({ type: 'bar', label: '실현 수익', data: flowAgg(returnsByYM), backgroundColor: 'rgba(201,143,208,0.8)', borderRadius: 3, yAxisID: 'yFlow', labelColor: '#e0b8e6', order: 3 });
+    if (S.returns) ds.push({ type: 'bar', label: '실현 수익', data: flowAgg(returnsByYM), backgroundColor: 'rgba(224,138,95,0.85)', borderRadius: 3, yAxisID: 'yFlow', labelColor: '#f0b795', order: 3 });
     if (S.balance) ds.push({ type: 'line', label: '평가액', data: pick.map(am => (cumMap[am] ? cumMap[am].balance : 0)), borderColor: '#4c8c6b', backgroundColor: 'rgba(76,140,107,0.10)', fill: true, tension: 0.3, pointRadius: 2, yAxisID: 'y', labelColor: '#c7e4d4', labelOffset: -18, order: 1 });
     if (S.contrib) ds.push({ type: 'line', label: '누적 원금', data: pick.map(am => (cumMap[am] ? cumMap[am].cumContribution : 0)), borderColor: '#e0c766', borderDash: [5, 4], backgroundColor: 'transparent', tension: 0.3, pointRadius: 2, yAxisID: 'y', labelColor: '#efdfa0', labelOffset: 16, order: 2 });
     if (S.roi) ds.push({ hideLabel: true, type: 'line', label: '원금 대비 수익률', data: pick.map(am => (roiMap[am] === undefined ? null : roiMap[am])), borderColor: '#9b7fc2', backgroundColor: 'transparent', borderDash: [3, 3], tension: 0.3, pointRadius: 0, spanGaps: true, yAxisID: 'yRoi', order: 0 });
@@ -7808,53 +8011,6 @@ function renderInvestmentPage(container, data, d) {
   }
 
   if (SUB === 'holdings') {
-  const stockMonthly = getStockMonthlyProfit(data.ledger);
-  const categoryMonthly = getCategoryMonthlyProfit(stockMonthly, stockCategoryMap);
-  const pickTypeBtns = document.getElementById('inv-pick-type-btns');
-  const pickNameSel = document.getElementById('inv-pick-name');
-  if (!state.invPickType) state.invPickType = 'stock';
-
-  const refreshPickOptions = () => {
-    const names = state.invPickType === 'stock' ? stockMonthly.stocks : categoryMonthly.categories;
-    pickNameSel.innerHTML = names.map(n => `<option value="${n}">${n}</option>`).join('') || '<option value="">데이터 없음</option>';
-    if (!names.includes(state.invPickName)) state.invPickName = names[0] || '';
-    pickNameSel.value = state.invPickName;
-  };
-  const drawPickChart = () => {
-    const src = state.invPickType === 'stock' ? stockMonthly.byStockMonth[state.invPickName] : categoryMonthly.byCatMonth[state.invPickName];
-    const monthKeys = Object.keys(src || {}).sort();
-    if (state.charts.invPick) state.charts.invPick.destroy();
-    const ctx = document.getElementById('chart-inv-pick');
-    const values = monthKeys.map(k => (src && src[k]) || 0);
-    state.charts.invPick = new Chart(ctx, {
-      data: {
-        labels: monthKeys,
-        datasets: [{ type: 'bar', label: state.invPickName || '', data: values, backgroundColor: values.map(v => v >= 0 ? 'rgba(76,140,107,0.75)' : 'rgba(193,72,63,0.75)'), borderRadius: 3, labelColor: '#c7e4d4' }]
-      },
-      options: {
-        responsive: true, maintainAspectRatio: false, layout: { padding: { top: 18 } },
-        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` ${formatWon(c.raw)}` } } },
-        scales: { x: { ticks: MONO_TICK, grid: { display: false } }, y: { ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT } }
-      },
-      plugins: [valueLabelPlugin]
-    });
-  };
-  refreshPickOptions();
-  drawPickChart();
-  pickTypeBtns.addEventListener('click', (e) => {
-    const btn = e.target.closest('button');
-    if (!btn) return;
-    state.invPickType = btn.dataset.type;
-    state.invPickName = null;
-    pickTypeBtns.querySelectorAll('button').forEach(b => b.classList.toggle('active', b === btn));
-    refreshPickOptions();
-    drawPickChart();
-  });
-  pickNameSel.addEventListener('change', () => {
-    state.invPickName = pickNameSel.value;
-    drawPickChart();
-  });
-
   /* 테마별: 종목 수·대표 종목까지 같이 (한 종목이 여러 테마면 중복 집계) */
   const themeAgg = {};
   stockProfit.forEach(([name, amt]) => {
@@ -7877,7 +8033,55 @@ function renderInvestmentPage(container, data, d) {
     </div>`;
   }).join('') || '<div class="empty-state">주식 카테고리 매핑을 찾지 못했어요.</div>';
 
-  const stockRows = stockProfit.filter(([, v]) => v !== 0).slice(0, 15);
+  /* --- 비중 도넛 (플러스 수익만) --- */
+  const SHARE_PALETTE = ['#4c8c6b', '#c9a227', '#5b8fc7', '#9b7fc2', '#e08a5f', '#39a8bd', '#c1483f', '#7fbf9c', '#e0c766'];
+  const drawShare = (canvasId, listId, pairs) => {
+    const pos = pairs.filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
+    const total = pos.reduce((a, x) => a + x[1], 0);
+    const TOP = 7;
+    const head = pos.slice(0, TOP);
+    const restSum = pos.slice(TOP).reduce((a, x) => a + x[1], 0);
+    const rows = restSum > 0 ? head.concat([['기타 ' + (pos.length - TOP) + '건', restSum]]) : head;
+    const el = document.getElementById(canvasId);
+    if (!el) return;
+    if (state.charts[canvasId]) state.charts[canvasId].destroy();
+    state.charts[canvasId] = new Chart(el, {
+      type: 'doughnut',
+      data: { labels: rows.map(r => r[0]), datasets: [{ data: rows.map(r => r[1]), backgroundColor: rows.map((_, i) => SHARE_PALETTE[i % SHARE_PALETTE.length]), borderColor: '#171e2b', borderWidth: 2 }] },
+      options: { responsive: true, maintainAspectRatio: false, cutout: '56%',
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` ${c.label}: ${formatCompactWon(c.raw)}원 · ${total ? ((c.raw / total) * 100).toFixed(1) : 0}%` } } } },
+      plugins: [{
+        id: canvasId + 'lbl',
+        afterDatasetsDraw(chart) {
+          const { ctx } = chart;
+          chart.getDatasetMeta(0).data.forEach((arc, i) => {
+            const pct = total ? (rows[i][1] / total) * 100 : 0;
+            if (pct < 7) return;
+            const pp = arc.tooltipPosition();
+            ctx.save();
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#0f141d';
+            ctx.font = "700 10.5px 'IBM Plex Mono', monospace";
+            ctx.fillText(`${pct.toFixed(0)}%`, pp.x, pp.y);
+            ctx.restore();
+          });
+        }
+      }]
+    });
+    document.getElementById(listId).innerHTML = rows.map((r, i) => {
+      const pct = total ? (r[1] / total) * 100 : 0;
+      return `<div class="share-row">
+        <span class="share-sw" style="background:${SHARE_PALETTE[i % SHARE_PALETTE.length]}"></span>
+        <span class="share-nm">${r[0]}</span>
+        <span class="share-pct">${pct.toFixed(1)}%</span>
+        <span class="share-amt">${i < 3 ? formatCompactWon(r[1]) : ''}</span>
+      </div>`;
+    }).join('') || '<div class="empty-state">플러스 수익 데이터가 없어요.</div>';
+  };
+  drawShare('chart-theme-share', 'theme-share-list', themeRows.map(([n, v]) => [n, v.amt]));
+  drawShare('chart-stock-share', 'stock-share-list', stockProfit);
+
+  const stockRows = stockProfit.filter(([, v]) => v !== 0).slice(0, 12);
   const maxStock = Math.max(...stockRows.map(r => Math.abs(r[1])), 1);
   document.getElementById('stock-profit-list').innerHTML = stockRows.map(([name, amt]) => {
     const tags = stockTags(name);
