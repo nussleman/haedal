@@ -27,6 +27,9 @@
   --red-soft:rgba(193,72,63,0.16);
   --green:#4c8c6b;
   --green-soft:rgba(76,140,107,0.16);
+  /* 순저축·순액 전용 색 — 수입(초록)과 헷갈리지 않게 청록 계열로 분리 */
+  --net:#39a8bd;
+  --net-soft:rgba(57,168,189,0.16);
   --text:#eae8e0;
   --text-dim:#9aa3b6;
   --text-faint:#6b7385;
@@ -47,7 +50,7 @@ body{
   -webkit-font-smoothing:antialiased;
 }
 #app{
-  max-width:1600px;
+  max-width:none;
   width:100%;
   margin:0 auto;
   padding:0 clamp(16px, 2.5vw, 40px) 80px;
@@ -474,6 +477,26 @@ body{
 .cal-cell.real{border-style:dashed;border-color:var(--gold-soft);}
 .today-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;}
 .today-datewrap{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+/* 오늘 탭: 패널 밖으로 뺀 날짜 헤더 */
+.page-daybar{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:2px 2px 0;}
+.page-daybar .day-title{font-family:var(--serif);font-weight:800;font-size:30px;line-height:1.15;color:var(--text);letter-spacing:-.01em;}
+.page-daybar .day-title .today-dow{color:var(--gold-soft);}
+.page-daybar .today-verdict{flex:1 1 260px;min-width:220px;}
+@media (max-width:820px){.page-daybar .day-title{font-size:23px;}}
+/* 캘린더 상세: 수입/지출/이체 구분 헤더 */
+.dtl-group{margin-top:10px;}
+.dtl-group:first-child{margin-top:0;}
+.dtl-group-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;
+  font-family:var(--mono);font-size:11px;letter-spacing:.04em;padding:5px 8px;border-radius:7px;margin-bottom:5px;}
+.dtl-group-head b{font-family:var(--mono);font-size:12.5px;font-variant-numeric:tabular-nums;}
+.dtl-group-head.income{background:var(--green-soft);color:#8fd0ac;}
+.dtl-group-head.expense{background:var(--red-soft);color:#e39a93;}
+.dtl-group-head.transfer{background:rgba(201,162,39,0.16);color:var(--gold-soft);}
+.dtl-group .table-scroll{border:none;border-radius:0;}
+.dtl-group table{border-left:2px solid var(--border-strong);}
+.dtl-group.income table{border-left-color:rgba(76,140,107,0.5);}
+.dtl-group.expense table{border-left-color:rgba(193,72,63,0.5);}
+.dtl-group.transfer table{border-left-color:rgba(201,162,39,0.5);}
 .budget-basis{font-family:var(--mono);font-size:11px;line-height:1.7;color:var(--text-faint);margin-top:9px;}
 .budget-basis b{color:var(--gold-soft);font-weight:600;}
 .budget-basis em{font-style:normal;color:var(--text-dim);}
@@ -1177,6 +1200,7 @@ const state = {
   assetTrendFilter: 'all',
   savTrendRange: 12,
   savContribRange: 12,
+  homeSub: 'insights',     // 홈 하위 탭: insights | goals | structure
   nowMonthKey: null,       // '이번달' 탭에서 보고 있는 달 (YYYY-MM)
   nowWeekIdx: null,        // null = 그 달 전체, 0.. = 해당 주차만
   nowGranularity: 'week',  // 'week' | 'day'
@@ -2280,19 +2304,74 @@ function renderAll() {
 
 /* ---------------- page: 홈 ---------------- */
 
+const HOME_SUBS = [
+  ['insights', '인사이트'],
+  ['goals', '목표'],
+  ['structure', '자산 증식 구조']
+];
+
 function renderHomePage(container, data, d) {
+  const SUB = HOME_SUBS.some(x => x[0] === state.homeSub) ? state.homeSub : 'insights';
+  const subnav = `<div class="subnav" id="home-subnav">${HOME_SUBS.map(([v, l]) =>
+    `<button data-sub="${v}" class="${v === SUB ? 'active' : ''}">${l}</button>`).join('')}</div>`;
+
   container.innerHTML = `
     <div class="stat-grid" id="home-status"></div>
+    ${subnav}
+    ${SUB === 'insights' ? `
     <div class="g">
-      <div class="panel s5" id="panel-priority-insights"></div>
-      <div class="panel s7" id="panel-goal-cards"></div>
-    </div>
-    <div id="home-structure"></div>
+      <div class="panel s7" id="panel-priority-insights"></div>
+      <div class="panel s5" id="panel-home-quick"></div>
+    </div>` : ''}
+    ${SUB === 'goals' ? `
+    <div class="g">
+      <div class="panel s8" id="panel-goal-cards"></div>
+      <div class="panel s4" id="panel-home-quick"></div>
+    </div>` : ''}
+    ${SUB === 'structure' ? `<div id="home-structure"></div>` : ''}
   `;
   renderHomeStatus(data, d);
-  renderGoalCards(data, d);
-  renderPriorityInsights(data, d);
-  renderStructurePage(document.getElementById('home-structure'), data, d);
+  if (SUB === 'insights') renderPriorityInsights(data, d);
+  if (SUB === 'goals') renderGoalCards(data, d);
+  if (SUB !== 'structure') renderHomeQuick(data, d);
+  if (SUB === 'structure') renderStructurePage(document.getElementById('home-structure'), data, d);
+
+  document.getElementById('home-subnav').addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    state.homeSub = btn.dataset.sub;
+    renderPage();
+  });
+}
+
+/* 홈 서브탭 옆 보조 패널 — 이번 달 현금흐름 한눈에 */
+function renderHomeQuick(data, d) {
+  const panel = document.getElementById('panel-home-quick');
+  if (!panel) return;
+  const cf = d.cashflow || [];
+  const last = cf.length ? cf[cf.length - 1] : null;
+  const recent = cf.slice(-6);
+  const target = state.goals.savingsRateTarget;
+  if (!last) { panel.innerHTML = '<div class="panel-title"><div>최근 현금흐름</div></div><div class="empty-state">현금흐름 데이터가 없어요.</div>'; return; }
+  const maxV = Math.max(...recent.map(c => Math.max(c.income, c.expense)), 1);
+  panel.innerHTML = `
+    <div class="panel-title"><div>최근 현금흐름</div><span class="ptag">최근 ${recent.length}개월</span></div>
+    <div class="now-kv"><span>수입</span><b style="color:var(--green)">${formatWon(last.income)}</b></div>
+    <div class="now-kv"><span>지출</span><b style="color:var(--red)">${formatWon(last.expense)}</b></div>
+    <div class="now-kv"><span>순저축</span><b style="color:${last.income - last.expense >= 0 ? 'var(--net)' : 'var(--red)'}">${formatWon(last.income - last.expense)}</b></div>
+    <div class="now-kv"><span>저축률</span><b style="color:${last.savingsRate >= target ? 'var(--net)' : 'var(--red)'}">${last.savingsRate.toFixed(1)}% <em style="font-style:normal;color:var(--text-faint);font-size:10.5px;">/ 목표 ${target}%</em></b></div>
+    <div style="margin-top:10px;">
+      ${recent.map(c => {
+        const net = c.income - c.expense;
+        return `<div class="dow-avg-row">
+          <span class="nm" style="width:38px;">${(c.month || '').split('-')[1] || c.month}</span>
+          <div class="b-bar-track"><div class="b-bar-fill" style="width:${(c.expense / maxV) * 100}%"></div></div>
+          <span class="fig" style="width:96px;color:${net >= 0 ? 'var(--net)' : 'var(--red)'}">${formatCompactWon(net)}원</span>
+        </div>`;
+      }).join('')}
+    </div>
+    <div class="settings-note">막대 = 지출 규모 · 오른쪽 숫자 = 순저축</div>
+  `;
 }
 
 /* ---------------- 홈: 현 상태 요약 ---------------- */
@@ -2321,7 +2400,8 @@ function renderHomeStatus(data, d) {
     card('저축률', last ? last.savingsRate.toFixed(1) + '%' : '—',
       `목표 ${target}%`, last ? (last.savingsRate >= target ? 'var(--green)' : 'var(--red)') : null),
     card('순저축', last ? formatCompactWon(last.income - last.expense) + '원' : '—',
-      last ? `수입 ${formatCompactWon(last.income)} · 지출 ${formatCompactWon(last.expense)}` : ''),
+      last ? `수입 ${formatCompactWon(last.income)} · 지출 ${formatCompactWon(last.expense)}` : '',
+      last ? ((last.income - last.expense) >= 0 ? 'var(--net)' : 'var(--red)') : null),
     card('투자 자산', formatCompactWon(inv) + '원', `총자산의 ${invPct.toFixed(0)}%`),
     card('비상금', formatCompactWon(d.emergencyFund) + '원',
       emgMonths === null ? 'NH-CMA' : `지출 ${emgMonths.toFixed(1)}개월치`)
@@ -2640,8 +2720,8 @@ function renderTrend(data, d) {
       datasets = [{ label: '총자산', data: monthsSlice.map(m => d.byMonth[m] || 0), borderColor: '#c9a227', backgroundColor: 'rgba(201,162,39,0.12)', fill: true, tension: 0.35, pointRadius: 2, pointBackgroundColor: '#c9a227', borderWidth: 2, labelColor: '#e9dba8', yAxisID: 'y' }];
       legendHtml = `<span><i style="background:#c9a227"></i>총자산</span>`;
       if (document.getElementById('asset-net-toggle') && document.getElementById('asset-net-toggle').checked) {
-        datasets.push({ type: 'bar', label: '월별 순익', data: monthsSlice.map(m => netByMonth[m] || 0), backgroundColor: monthsSlice.map(m => (netByMonth[m] || 0) >= 0 ? 'rgba(76,140,107,0.55)' : 'rgba(193,72,63,0.55)'), yAxisID: 'y1' });
-        legendHtml += `<span><i style="background:#4c8c6b"></i>월별 순익</span>`;
+        datasets.push({ type: 'bar', label: '월별 순익', data: monthsSlice.map(m => netByMonth[m] || 0), backgroundColor: monthsSlice.map(m => (netByMonth[m] || 0) >= 0 ? 'rgba(57,168,189,0.6)' : 'rgba(193,72,63,0.55)'), yAxisID: 'y1' });
+        legendHtml += `<span><i style="background:#39a8bd"></i>월별 순익</span>`;
       }
       if (document.getElementById('asset-cumnet-toggle') && document.getElementById('asset-cumnet-toggle').checked) {
         datasets.push({ type: 'line', label: '누적 순익', data: monthsSlice.map(m => cumNetByMonth[m] || 0), borderColor: '#9b7fc2', backgroundColor: 'transparent', tension: 0.3, pointRadius: 2, borderWidth: 2, yAxisID: 'y1' });
@@ -2966,6 +3046,42 @@ function cumThroughDay(ledger, monthKey, dayLimit, keyword) {
   return sum;
 }
 
+/* 최근 N개월, 같은 일자까지의 누적 평균 (수입/지출/이체 공용) */
+function paceAverageOf(ledger, monthKey, dayLimit, lookback, keyword) {
+  const vals = [];
+  for (let i = 1; i <= lookback; i++) {
+    const k = shiftMonthKey(monthKey, -i);
+    const hasData = ledger.some(r => ledgerMonthKey(r.date) === k && r.major.includes(keyword));
+    if (hasData) vals.push(cumThroughDay(ledger, k, dayLimit, keyword));
+  }
+  if (!vals.length) return null;
+  return vals.reduce((a, b) => a + b, 0) / vals.length;
+}
+
+/* 스탯 카드 보조줄: 기준값 대비 증감 한 줄 */
+function cmpSub(cur, base, invert, label) {
+  if (base === null || base === undefined || !isFinite(base) || base === 0) {
+    return `<div class="sub" style="color:var(--text-faint)">${label} —</div>`;
+  }
+  const diff = cur - base;
+  const pct = (diff / Math.abs(base)) * 100;
+  const good = invert ? diff <= 0 : diff >= 0;
+  const cls = diff === 0 ? '' : (good ? 'up' : 'down');
+  const sign = diff > 0 ? '+' : diff < 0 ? '−' : '';
+  return `<div class="sub ${cls}">${label} ${sign}${wonComma(Math.abs(diff))}원 (${sign}${Math.abs(pct).toFixed(0)}%)</div>`;
+}
+
+/* 퍼센트포인트 비교 한 줄 */
+function cmpSubPp(cur, base, label) {
+  if (cur === null || base === null || base === undefined) {
+    return `<div class="sub" style="color:var(--text-faint)">${label} —</div>`;
+  }
+  const diff = cur - base;
+  const cls = diff === 0 ? '' : (diff > 0 ? 'up' : 'down');
+  const sign = diff > 0 ? '+' : diff < 0 ? '−' : '';
+  return `<div class="sub ${cls}">${label} ${sign}${Math.abs(diff).toFixed(1)}%p</div>`;
+}
+
 /* 최근 N개월, 같은 일자까지의 누적 지출 평균 (같은 페이스인지 비교용) */
 function pacePeerAverage(ledger, monthKey, dayLimit, lookback) {
   const vals = [];
@@ -3084,6 +3200,18 @@ function renderNowPage(container, data, d) {
   const prevIncomeSame = week ? null : cumThroughDay(ledger, prevKey, cmpDay, '수입');
   const prevExpenseSame = week ? null : cumThroughDay(ledger, prevKey, cmpDay, '지출');
 
+  /* --- 비교 기준: 전월 동일시점 / 최근 3개월 동일시점 평균 / 목표 --- */
+  const prevNetSame = (prevIncomeSame === null || prevExpenseSame === null) ? null : prevIncomeSame - prevExpenseSame;
+  const prevRateSame = (prevIncomeSame && prevIncomeSame > 0) ? ((prevIncomeSame - prevExpenseSame) / prevIncomeSame) * 100 : null;
+  const avgDay = isThisMonth ? (elapsed || M.days) : M.days;
+  const avgIncome = week ? null : paceAverageOf(ledger, monthKey, avgDay, 3, '수입');
+  const avgExpense = week ? null : paceAverageOf(ledger, monthKey, avgDay, 3, '지출');
+  const avgNet = (avgIncome === null || avgExpense === null) ? null : avgIncome - avgExpense;
+  const avgRate = (avgIncome && avgIncome > 0) ? ((avgIncome - avgExpense) / avgIncome) * 100 : null;
+  const rateTarget = state.goals.savingsRateTarget;
+  const netTarget = sIncome > 0 ? sIncome * (rateTarget / 100) : null;
+  const avgNote = isThisMonth ? '최근 3개월 같은 시점 평균 대비' : '최근 3개월 평균 대비';
+
   const peerAvg = pacePeerAverage(ledger, monthKey, elapsed || M.days, 3);
   const paceDiff = peerAvg !== null ? M.expense - peerAvg : null;
   const projected = (isThisMonth && elapsed > 0) ? Math.round(M.expense / elapsed * M.days) : null;
@@ -3122,21 +3250,27 @@ function renderNowPage(container, data, d) {
           <div class="label">수입</div>
           <div class="value" style="color:var(--green)">${formatWon(sIncome)}</div>
           ${week ? `<div class="sub">${week.label}</div>` : nowDeltaSub(sIncome, prevIncomeSame, false, cmpNote)}
+          ${week ? '' : cmpSub(sIncome, avgIncome, false, avgNote)}
         </div>
         <div class="stat-card">
           <div class="label">지출</div>
           <div class="value" style="color:var(--red)">${formatWon(sExpense)}</div>
           ${week ? `<div class="sub">${week.label}</div>` : nowDeltaSub(sExpense, prevExpenseSame, true, cmpNote)}
+          ${week ? '' : cmpSub(sExpense, avgExpense, true, avgNote)}
         </div>
         <div class="stat-card">
           <div class="label">순저축</div>
-          <div class="value" style="color:${sNet >= 0 ? 'var(--green)' : 'var(--red)'}">${formatWon(sNet)}</div>
-          <div class="sub">이체 ${formatWon(transferTotal)}</div>
+          <div class="value" style="color:${sNet >= 0 ? 'var(--net)' : 'var(--red)'}">${formatWon(sNet)}</div>
+          ${week ? `<div class="sub">이체 ${formatWon(transferTotal)}</div>` : cmpSub(sNet, prevNetSame, false, cmpNote)}
+          ${week ? '' : cmpSub(sNet, avgNet, false, avgNote)}
+          ${week ? '' : cmpSub(sNet, netTarget === null ? null : Math.round(netTarget), false, `목표(수입의 ${rateTarget}%) 대비`)}
         </div>
         <div class="stat-card">
           <div class="label">저축률</div>
-          <div class="value">${sRate === null ? '—' : sRate.toFixed(1) + '%'}</div>
-          <div class="sub ${sRate !== null && sRate >= state.goals.savingsRateTarget ? 'up' : 'down'}">목표 ${state.goals.savingsRateTarget}%</div>
+          <div class="value" style="color:${sRate === null ? 'var(--text)' : sRate >= rateTarget ? 'var(--net)' : 'var(--red)'}">${sRate === null ? '—' : sRate.toFixed(1) + '%'}</div>
+          ${cmpSubPp(sRate, rateTarget, `목표 ${rateTarget}% 대비`)}
+          ${week ? '' : cmpSubPp(sRate, prevRateSame, '전월 같은 시점 대비')}
+          ${week ? '' : cmpSubPp(sRate, avgRate === null ? null : avgRate, '최근 3개월 평균 대비')}
         </div>
       </div>
     </div>
@@ -3286,7 +3420,7 @@ function renderNowPage(container, data, d) {
             <td style="color:var(--text-faint);">${w.range}</td>
             <td class="amt income">${w.income ? formatWon(w.income) : '—'}</td>
             <td class="amt expense">${w.expense ? formatWon(w.expense) : '—'}</td>
-            <td class="amt" style="color:${w.income - w.expense >= 0 ? 'var(--green)' : 'var(--red)'}">${formatWon(w.income - w.expense)}</td>
+            <td class="amt" style="color:${w.income - w.expense >= 0 ? 'var(--net)' : 'var(--red)'}">${formatWon(w.income - w.expense)}</td>
           </tr>`).join('')}</tbody>
       </table>
     </div>
@@ -3603,62 +3737,64 @@ function renderTodayPage(container, data, d) {
     : `예산 기준 · 목표 탭에 "월 지출 N만원" 목표가 없고 비교할 과거 3개월 데이터도 부족해서 하루 예산을 계산할 수 없어요.`;
 
   container.innerHTML = `
-    <div class="panel full">
-      <div class="today-head">
-        <div class="today-datewrap">
-          <div class="today-date">${dayKeyLabel(key)} <span class="today-dow">(${DOW_KR[dowOfDayKey(key)]})</span></div>
-          <div class="month-nav">
-            <button id="today-prev" ${key <= earliestKey ? 'disabled' : ''}>◀</button>
-            <input type="date" id="today-date" value="${key}" max="${realToday}" />
-            <button id="today-next" ${key >= realToday ? 'disabled' : ''}>▶</button>
-            <button class="btn small" id="today-jump">오늘</button>
-          </div>
-        </div>
-        <div class="today-verdict ${verdictCls}" style="flex:1;min-width:260px;">${verdict}</div>
-      </div>
-
-      <div class="budget-basis">${basisHtml}</div>
-
-      <div class="stat-grid" style="margin-top:12px;margin-bottom:0;">
-        <div class="stat-card">
-          <div class="label">지출</div>
-          <div class="value" style="color:var(--red)">${formatWon(today.expense)}</div>
-          <div class="sub ${sameDowAvg !== null && today.expense <= sameDowAvg ? 'up' : 'down'}">${sameDowAvg !== null ? `${DOW_KR[dowOfDayKey(key)]}요일 평균 ${formatWon(Math.round(sameDowAvg))}` : '비교 데이터 없음'}</div>
-        </div>
-        <div class="stat-card">
-          <div class="label">수입</div>
-          <div class="value" style="color:var(--green)">${formatWon(today.income)}</div>
-          <div class="sub">이체 ${formatWon(today.transfer)}</div>
-        </div>
-        <div class="stat-card">
-          <div class="label">이번 달 누적 지출</div>
-          <div class="value">${formatWon(cumThrough)}</div>
-          <div class="sub">하루 평균 ${formatWon(Math.round(monthDailyAvg))}</div>
-        </div>
-        <div class="stat-card">
-          <div class="label">기록</div>
-          <div class="value">${today.rows.length}건</div>
+    <div class="page-daybar">
+      <div class="today-datewrap">
+        <div class="day-title">${dayKeyLabel(key)} <span class="today-dow">(${DOW_KR[dowOfDayKey(key)]})</span></div>
+        <div class="month-nav">
+          <button id="today-prev" ${key <= earliestKey ? 'disabled' : ''}>◀</button>
+          <input type="date" id="today-date" value="${key}" max="${realToday}" />
+          <button id="today-next" ${key >= realToday ? 'disabled' : ''}>▶</button>
+          <button class="btn small" id="today-jump">오늘</button>
         </div>
       </div>
-
-      ${allowance !== null ? `
-      <div style="margin-top:12px;">
-        <div class="allow-track"><div class="allow-fill ${overToday ? 'over' : ''}" style="width:${allowPct}%"></div></div>
-        <div class="allow-legend">
-          <span>사용 ${formatWon(today.expense)}</span>
-          <span>하루 예산 ${formatWon(allowance)}</span>
-        </div>
-      </div>` : ''}
-
-      ${noRecordYet || streak > 0 ? `<div class="streak-badge ${streak > 0 ? 'on' : ''}">${noRecordYet ? '✍️ 기록 미입력' : `🌱 무지출 ${streak}일 연속`}</div>` : ''}
+      <div class="today-verdict ${verdictCls}">${verdict}</div>
     </div>
 
     <div class="g">
       <div class="panel s5">
-        <div class="panel-title"><div>내역</div><span class="ptag">${today.rows.length}건</span></div>
+        <div class="panel-title"><div>내역</div><span class="ptag">${dayKeyShort(key)}</span></div>
         <div id="today-rows-body"></div>
       </div>
+
+      <div class="panel s3">
+        <div class="panel-title"><div>오늘 요약</div></div>
+        <div class="stat-grid" style="grid-template-columns:1fr;margin-bottom:0;">
+          <div class="stat-card">
+            <div class="label">지출 합계</div>
+            <div class="value" style="color:var(--red)">${formatWon(today.expense)}</div>
+            <div class="sub ${sameDowAvg !== null && today.expense <= sameDowAvg ? 'up' : 'down'}">${sameDowAvg !== null ? `${DOW_KR[dowOfDayKey(key)]}요일 평균 ${formatWon(Math.round(sameDowAvg))}` : '비교 데이터 없음'}</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">수입 합계</div>
+            <div class="value" style="color:var(--green)">${formatWon(today.income)}</div>
+            <div class="sub">이체 ${formatWon(today.transfer)}</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">이번 달 하루 평균 지출</div>
+            <div class="value">${formatWon(Math.round(monthDailyAvg))}</div>
+            <div class="sub">누적 ${formatWon(cumThrough)} · D+${DD}</div>
+          </div>
+        </div>
+        ${allowance !== null ? `
+        <div style="margin-top:12px;">
+          <div class="allow-track"><div class="allow-fill ${overToday ? 'over' : ''}" style="width:${allowPct}%"></div></div>
+          <div class="allow-legend">
+            <span>사용 ${formatWon(today.expense)}</span>
+            <span>하루 예산 ${formatWon(allowance)}</span>
+          </div>
+        </div>` : ''}
+        ${noRecordYet || streak > 0 ? `<div class="streak-badge ${streak > 0 ? 'on' : ''}">${noRecordYet ? '✍️ 기록 미입력' : `🌱 무지출 ${streak}일 연속`}</div>` : ''}
+        <div class="budget-basis">${basisHtml}</div>
+      </div>
+
       <div class="panel s4">
+        <div class="panel-title"><div>카테고리</div></div>
+        <div id="today-cat-body"></div>
+      </div>
+    </div>
+
+    <div class="g">
+      <div class="panel s8">
         <div class="panel-title">
           <div>일별 지출</div>
           <div class="range-toggle" id="today-trend-range">
@@ -3672,11 +3808,8 @@ function renderTodayPage(container, data, d) {
           <span><i style="background:rgba(193,72,63,0.8)"></i>일별 지출</span>
           <span><i style="background:#c9a227"></i>선택한 날</span>
           <span><i style="background:#e0c766"></i>7일 이동평균</span>
+          <span style="color:var(--text-faint)">막대 클릭 → 그 날짜로 이동</span>
         </div>
-      </div>
-      <div class="panel s3">
-        <div class="panel-title"><div>카테고리</div></div>
-        <div id="today-cat-body"></div>
       </div>
     </div>
   `;
@@ -3783,6 +3916,12 @@ function renderTodayPage(container, data, d) {
 }
 
 /* ---------------- page: 캘린더 (수입·지출·이체 한눈에) ---------------- */
+
+const DETAIL_GROUPS = [
+  ['수입', '수입', 'income'],
+  ['지출', '지출', 'expense'],
+  ['이체', '이체', 'transfer']
+];
 
 const CAL_MODES = [
   ['all', '전체'],
@@ -3903,7 +4042,7 @@ function renderCalendarPage(container, data, d) {
         </div>
         <div class="stat-card">
           <div class="label">순액</div>
-          <div class="value" style="color:${mIncome - mExpense >= 0 ? 'var(--green)' : 'var(--red)'}">${formatWon(mIncome - mExpense)}</div>
+          <div class="value" style="color:${mIncome - mExpense >= 0 ? 'var(--net)' : 'var(--red)'}">${formatWon(mIncome - mExpense)}</div>
         </div>
       </div>
 
@@ -3940,22 +4079,29 @@ function renderCalendarPage(container, data, d) {
       <div class="stat-card"><div class="label">수입</div><div class="value" style="color:var(--green)">${formatWon(selBucket.income)}</div></div>
       <div class="stat-card"><div class="label">지출</div><div class="value" style="color:var(--red)">${formatWon(selBucket.expense)}</div></div>
       <div class="stat-card"><div class="label">이체</div><div class="value" style="color:var(--gold-soft)">${formatWon(selBucket.transfer)}</div></div>
-      <div class="stat-card"><div class="label">순액</div><div class="value" style="color:${selBucket.income - selBucket.expense >= 0 ? 'var(--green)' : 'var(--red)'}">${formatWon(selBucket.income - selBucket.expense)}</div></div>
+      <div class="stat-card"><div class="label">순액</div><div class="value" style="color:${selBucket.income - selBucket.expense >= 0 ? 'var(--net)' : 'var(--red)'}">${formatWon(selBucket.income - selBucket.expense)}</div></div>
     </div>
-    <div class="table-scroll" style="max-height:none;flex:1;">
-      <table class="data-table">
-        <thead><tr><th>소분류</th><th>항목</th><th>사용처</th><th>메모</th><th style="text-align:right">금액</th></tr></thead>
-        <tbody>${selRows.length ? selRows.map(r => {
-          const cls = majorTagClass(r.major);
-          return `<tr>
-            <td>${r.minor || '-'}</td>
-            <td>${r.item || '-'}</td>
-            <td>${r.vendor || '-'}</td>
-            <td>${r.memo || '-'}</td>
-            <td class="amt ${cls}">${formatWon(r.amount)}</td>
-          </tr>`;
-        }).join('') : '<tr><td colspan="5" style="text-align:center;color:var(--text-faint);padding:20px;">이 날 기록이 없어요.</td></tr>'}</tbody>
-      </table>
+    <div style="flex:1;overflow-y:auto;">
+      ${selRows.length ? DETAIL_GROUPS.map(([gk, gLabel, gCls]) => {
+        const rows = selRows.filter(r => r.major.includes(gk));
+        if (!rows.length) return '';
+        const sum = rows.reduce((a, r) => a + r.amount, 0);
+        return `<div class="dtl-group ${gCls}">
+          <div class="dtl-group-head ${gCls}"><span>${gLabel} · ${rows.length}건</span><b>${formatWon(sum)}</b></div>
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead><tr><th>소분류</th><th>항목</th><th>사용처</th><th>메모</th><th style="text-align:right">금액</th></tr></thead>
+              <tbody>${rows.map(r => `<tr>
+                <td>${r.minor || '-'}</td>
+                <td>${r.item || '-'}</td>
+                <td>${r.vendor || '-'}</td>
+                <td>${r.memo || '-'}</td>
+                <td class="amt ${gCls}">${formatWon(r.amount)}</td>
+              </tr>`).join('')}</tbody>
+            </table>
+          </div>
+        </div>`;
+      }).join('') : '<div class="empty-state">이 날 기록이 없어요.</div>'}
     </div>
   `;
 
@@ -4349,12 +4495,12 @@ function renderStructurePage(container, data, d) {
         이 게이지가 100%를 넘으면 <b>수익률 1%p &gt; 저축률 1%p</b>.
         ${crossPct >= 100 ? '이미 넘음 → 배분·비용 관리 비중 확대' : `${(100 - crossPct).toFixed(0)}%p 남음 → 유입 확대·누수 차단 우선`}
       </div>
+      <div id="panel-struct-note"></div>
     </div>
 
     <div class="g">
       <div class="panel s8" id="panel-struct-actions"></div>
       <div class="panel s4" id="panel-struct-check"></div>
-      <div class="panel s12" id="panel-struct-note"></div>
     </div>
   `;
 
@@ -4416,8 +4562,7 @@ function renderStructurePage(container, data, d) {
   const nextMile = (tg.milestones || []).find(v => v > m.stock.total);
   const annNet = m.ann(m.netSave);
   document.getElementById('panel-struct-note').innerHTML = `
-    <div class="panel-title"><div>요약</div></div>
-    <div class="note-strip">
+    <div class="note-strip" style="margin-top:14px;">
       <span><em>코어 / 위성</em><b>${coreShare.toFixed(0)}% / ${(100 - coreShare).toFixed(0)}%</b>투자성 ${formatCompactWon(m.riskAssets)}원 기준</span>
       ${nextMile ? `<span><em>다음 마일스톤</em><b>${formatCompactWon(nextMile)}원</b>${formatCompactWon(nextMile - m.stock.total)}원 남음 · 현 순저축(연 ${formatCompactWon(annNet)}원)으로 약 ${annNet > 0 ? ((nextMile - m.stock.total) / annNet).toFixed(1) : '—'}년</span>` : ''}
       <span><em>단계</em><b>유입 → 누수 → 연료 → 배분 → 축적</b>앞쪽일수록 내 통제, 뒤쪽일수록 시장</span>
@@ -4431,14 +4576,14 @@ function renderStructurePage(container, data, d) {
 function renderAssetsPage(container, data, d) {
   container.innerHTML = `
     <div class="g">
-      <div class="panel s4" id="panel-assets-insights"></div>
-      <div class="s2" id="asset-stats"></div>
-      <div class="panel s3" id="panel-allocation"></div>
-      <div class="panel s3" id="panel-accounts"></div>
-      <div class="panel s12" id="panel-trend"></div>
+      <div class="panel s3" id="panel-asset-stats"></div>
+      <div class="panel s9" id="panel-trend"></div>
+    </div>
+    <div class="g">
+      <div class="panel s5" id="panel-allocation"></div>
+      <div class="panel s7" id="panel-accounts"></div>
     </div>
   `;
-  renderWeeklyInsights('panel-assets-insights', 'weekly-insights-assets', '자산 인사이트', () => computeAssetsInsights(data, d), data, ['자산']);
   renderAssetStats(data, d);
   renderAccountsPanel(data, d);
   renderTrend(data, d);
@@ -4446,11 +4591,45 @@ function renderAssetsPage(container, data, d) {
 }
 
 function renderAssetStats(data, d) {
-  const box = document.getElementById('asset-stats');
+  const box = document.getElementById('panel-asset-stats');
+  const latestMonth = d.latestMonth;
+  const accSum = (pred) => data.assetRows
+    .filter(r => r.date === latestMonth && r.amount !== null && pred(r.account, r.category))
+    .reduce((a, r) => a + r.amount, 0);
+  const toss = accSum((name) => /토스/.test(name));
+  const pension = (d.allocation && d.allocation['연금 자산']) || 0;
+  const emgTarget = state.goals.emergencyFundTarget || 0;
+  const emgPct = emgTarget > 0 ? Math.min((d.emergencyFund / emgTarget) * 100, 999) : null;
+  const emgDone = emgPct !== null && emgPct >= 100;
+  const pct = (v) => d.totalAssets ? ((v / d.totalAssets) * 100).toFixed(0) + '%' : '—';
+
   box.innerHTML = `
-    <div class="stat-grid" style="grid-template-columns:1fr;">
-      <div class="stat-card"><div class="label">${d.latestMonth || ''} 총자산</div><div class="value">${formatCompactWon(d.totalAssets)}원</div></div>
-      <div class="stat-card"><div class="label">비상금 (NH-CMA)</div><div class="value">${formatCompactWon(d.emergencyFund)}원</div></div>
+    <div class="panel-title"><div>주요 수치</div><span class="ptag">${latestMonth || ''}</span></div>
+    <div class="stat-grid" style="grid-template-columns:1fr;margin-bottom:0;">
+      <div class="stat-card">
+        <div class="label">총자산</div>
+        <div class="value">${formatCompactWon(d.totalAssets)}원</div>
+        <div class="sub ${d.deltaAssets >= 0 ? 'up' : 'down'}">전월 ${d.deltaAssets >= 0 ? '▲' : '▼'} ${formatCompactWon(Math.abs(d.deltaAssets))}원 (${d.deltaPct === null ? '—' : d.deltaPct.toFixed(1) + '%'})</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">비상금 (NH-CMA)</div>
+        <div class="value" style="color:${emgDone ? 'var(--green)' : 'var(--gold-soft)'}">${formatCompactWon(d.emergencyFund)}원</div>
+        <div class="sub">목표 ${formatCompactWon(emgTarget)}원 · 달성 ${emgPct === null ? '—' : emgPct.toFixed(0) + '%'}</div>
+        <div class="allow-track" style="margin-top:7px;height:7px;">
+          <div class="allow-fill" style="width:${emgPct === null ? 0 : Math.min(emgPct, 100)}%;${emgDone ? '' : 'background:linear-gradient(90deg,var(--gold),var(--gold-soft));'}"></div>
+        </div>
+        <div class="allow-legend"><span>${emgDone ? '목표 달성' : `${formatCompactWon(Math.max(emgTarget - d.emergencyFund, 0))}원 남음`}</span><span>${formatCompactWon(emgTarget)}원</span></div>
+      </div>
+      <div class="stat-card">
+        <div class="label">토스 증권</div>
+        <div class="value">${formatCompactWon(toss)}원</div>
+        <div class="sub">총자산의 ${pct(toss)}</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">연금 전체</div>
+        <div class="value" style="color:#9b7fc2">${formatCompactWon(pension)}원</div>
+        <div class="sub">총자산의 ${pct(pension)}</div>
+      </div>
     </div>
   `;
 }
@@ -4511,13 +4690,12 @@ function renderIncomePage(container, data, d) {
 
   container.innerHTML = `
     <div class="g">
-      <div class="panel s4" id="panel-income-insights"></div>
-      <div class="panel s3">
+      <div class="panel s5">
         <div class="panel-title"><div>수입처 비중</div><span class="ptag">${latest ? latest.month : ''}</span></div>
         <div class="chart-wrap" style="min-height:150px;"><canvas id="chart-income-pie"></canvas></div>
         <div id="income-pie-legend"></div>
       </div>
-      <div class="panel s5">
+      <div class="panel s7">
         <div class="panel-title">
           <div>총수입 추이</div>
           <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
@@ -4542,8 +4720,6 @@ function renderIncomePage(container, data, d) {
       <div class="rawbody"><div id="income-table"></div></div>
     </details>
   `;
-
-  renderWeeklyInsights('panel-income-insights', 'weekly-insights-income', '수입 인사이트', () => computeIncomeInsights(data, d), data, ['수입']);
 
   const catBtnsBox = document.getElementById('income-cat-btns');
   const renderCatBtns = () => {
@@ -4799,10 +4975,9 @@ function renderExpensePage(container, data, d) {
 
   container.innerHTML = `
     <div class="g">
-      <div class="panel s3" id="panel-expense-insights"></div>
-      <div class="panel s2" id="panel-avg-expense"></div>
-      <div class="panel s2" id="panel-avg-fixed"></div>
-      <div class="panel s5" id="panel-top-vendors">
+      <div class="panel s3" id="panel-avg-expense"></div>
+      <div class="panel s3" id="panel-avg-fixed"></div>
+      <div class="panel s6" id="panel-top-vendors">
         <div class="panel-title">
           <div>주요 지출처</div>
           <div class="range-toggle" id="vendor-range-toggle"></div>
@@ -4847,8 +5022,6 @@ function renderExpensePage(container, data, d) {
       <div class="rawbody"><div id="expense-table"></div></div>
     </details>
   `;
-
-  renderWeeklyInsights('panel-expense-insights', 'weekly-insights-expense', '지출 인사이트', () => computeExpenseInsights(data, d), data, ['지출']);
   renderExpenseAvgCard('panel-avg-expense', cf, '평균 월 지출', 'expenseAvgExpenseRange');
   renderExpenseAvgCard('panel-avg-fixed', fixedSeries, '평균 월 고정비', 'expenseAvgFixedRange');
   renderFixedDetailSection(data, cf, fixedSeries);
@@ -6158,8 +6331,7 @@ function renderInvestmentPage(container, data, d) {
   container.innerHTML = subnav + `
     ${SUB === 'overview' ? `
     <div class="g">
-      <div class="panel s4" id="panel-investment-insights"></div>
-      <div class="stat-grid s4" style="grid-template-columns:1fr 1fr;">
+      <div class="stat-grid s6" style="grid-template-columns:1fr 1fr 1fr;">
         <div class="stat-card"><div class="label">투자 자산</div><div class="value">${formatCompactWon(latestInv)}원</div><div class="sub">${latestMonth || ''}</div></div>
         <div class="stat-card"><div class="label">누적 원금</div><div class="value">${formatCompactWon(latestCumContrib)}원</div><div class="sub">입금 − 출금</div></div>
         <div class="stat-card" style="border-color:${roiPct === null ? 'var(--border)' : roiPct >= 0 ? 'rgba(76,140,107,0.45)' : 'rgba(193,72,63,0.45)'};">
@@ -6171,7 +6343,7 @@ function renderInvestmentPage(container, data, d) {
         <div class="stat-card"><div class="label">누적 실현수익</div><div class="value" style="color:${cumInvestmentIncome >= 0 ? 'var(--green)' : 'var(--red)'}">${cumInvestmentIncome >= 0 ? '+' : ''}${formatCompactWon(cumInvestmentIncome)}원</div><div class="sub">배당·매매·이자</div></div>
         <div class="stat-card"><div class="label">이번 달 투자 이체</div><div class="value">${formatCompactWon(investTransfer)}원</div></div>
       </div>
-      <div class="panel s4">
+      <div class="panel s6">
         <div class="panel-title"><div>계좌별 잔액</div><span class="ptag">${latestMonth || ''}</span></div>
         ${accountList.map(([name, v]) => {
           const pct = latestInv ? (v.amount / latestInv) * 100 : 0;
@@ -6282,7 +6454,7 @@ function renderInvestmentPage(container, data, d) {
       <div class="panel s5" id="panel-cgt"></div>
     </div>` : ''}
 
-    ${SUB === 'toss' ? `<div class="panel full" id="panel-toss-live"></div>` : ''}
+    ${SUB === 'toss' ? `<div class="g"><div class="panel s8" id="panel-toss-live"></div></div>` : ''}
 
     <details class="rawbox">
       <summary>투자 관련 내역</summary>
@@ -6304,7 +6476,6 @@ function renderInvestmentPage(container, data, d) {
   if (SUB === 'toss') renderTossPanel('panel-toss-live', data);
 
   if (SUB === 'overview') {
-  renderWeeklyInsights('panel-investment-insights', 'weekly-insights-investment', '투자 인사이트', () => computeInvestmentInsights(data, d, cumSeries, tagAgg), data, ['투자']);
 
   const drawCum = () => {
     const period = state.invCumPeriod || 'month';
@@ -6649,14 +6820,13 @@ function renderSavingsPage(container, data, d) {
 
   container.innerHTML = `
     <div class="g">
-      <div class="panel s4" id="panel-savings-insights"></div>
-      <div class="stat-grid s3" style="grid-template-columns:1fr 1fr;">
+      <div class="stat-grid s5" style="grid-template-columns:1fr 1fr;">
         <div class="stat-card"><div class="label">저축 자산</div><div class="value">${formatCompactWon(latestSaving)}원</div></div>
         <div class="stat-card"><div class="label">연금 자산</div><div class="value">${formatCompactWon(latestPension)}원</div></div>
         <div class="stat-card"><div class="label">합계</div><div class="value" style="color:#5b8fc7">${formatCompactWon(total)}원</div></div>
         ${cmaAmount !== null ? `<div class="stat-card"><div class="label">비상금 (NH-CMA)</div><div class="value">${formatCompactWon(cmaAmount)}원</div></div>` : ''}
       </div>
-      <div class="panel s5">
+      <div class="panel s7">
         <div class="panel-title"><div>계좌별 잔액</div><span class="ptag">${latestMonth || ''}</span></div>
         ${accountList.map(([name, v]) => {
           const pct = total ? (v.amount / total) * 100 : 0;
@@ -6693,8 +6863,6 @@ function renderSavingsPage(container, data, d) {
       <div class="rawbody"><div id="savings-table"></div></div>
     </details>
   `;
-
-  renderWeeklyInsights('panel-savings-insights', 'weekly-insights-savings', '저축 인사이트', () => computeSavingsInsights(data, d, latestSaving, latestPension, months, byMonthCat), data, ['저축', '연금']);
 
   const drawSavTrend = () => {
     const monthsSlice = sliceByRange(months, state.savTrendRange);
