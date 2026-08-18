@@ -662,36 +662,31 @@ body{
 
 /* ---------- nav ---------- */
 .navbar{
-  display:flex;gap:6px;margin:16px 0 0;
-  overflow-x:auto;
+  display:flex;align-items:center;gap:9px;
+  margin:14px 0 0;padding-bottom:11px;
+  overflow-x:auto;scrollbar-width:thin;
 }
+.navbar::-webkit-scrollbar{height:5px;}
+.navbar::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:3px;}
+.nav-group{display:flex;align-items:center;gap:3px;flex:0 0 auto;}
+.nav-group-label{
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;
+  color:var(--text-faint);white-space:nowrap;margin-right:5px;transition:color .15s;
+}
+.nav-group.on .nav-group-label{color:var(--gold-soft);}
+.nav-div{flex:0 0 auto;width:1px;height:17px;background:var(--border-strong);margin:0 2px;}
 .nav-btn{
-  font-family:var(--sans);font-weight:500;font-size:13px;
-  background:transparent;border:none;color:var(--text-dim);
-  padding:9px 14px;cursor:pointer;position:relative;white-space:nowrap;
-  border-bottom:2px solid transparent;
-  transition:color .15s;
-}
-.nav-btn:hover{color:var(--text);}
-.nav-btn.active{color:var(--gold-soft);border-bottom-color:var(--gold);font-weight:700;}
-
-/* 고정바 안의 하위 탭 — 상단 탭 바로 아래, 같이 sticky */
-.header-subnav{
-  display:flex;gap:4px;overflow-x:auto;
-  margin:0 0 -1px;padding:9px 0 10px;
-  border-top:1px solid var(--border);
-}
-.header-subnav:empty{display:none;}
-.header-subnav button{
   font-family:var(--sans);font-weight:500;font-size:12.5px;
-  background:transparent;border:1px solid transparent;color:var(--text-faint);
-  padding:5px 13px;border-radius:20px;cursor:pointer;white-space:nowrap;transition:all .15s;
+  background:transparent;border:1px solid transparent;color:var(--text-dim);
+  padding:6px 13px;border-radius:20px;cursor:pointer;white-space:nowrap;
+  transition:all .15s;
 }
-.header-subnav button:hover{color:var(--text);background:var(--panel-2);}
-.header-subnav button.active{background:var(--gold);border-color:var(--gold);color:#1a1508;font-weight:700;}
-@media (max-width:820px){
-  .header-subnav{padding:7px 0 8px;}
-  .header-subnav button{font-size:12px;padding:5px 11px;}
+.nav-btn:hover{color:var(--text);background:var(--panel-2);}
+.nav-btn.active{background:var(--gold);border-color:var(--gold);color:#1a1508;font-weight:700;}
+@media (max-width:900px){
+  .navbar{gap:7px;}
+  .nav-group-label{display:none;}
+  .nav-btn{font-size:12px;padding:5px 11px;}
 }
 
 /* ---------- stat cards ---------- */
@@ -920,8 +915,8 @@ body{font-variant-numeric:tabular-nums;}
 .brand h1{font-size:18px;}
 .brand .tagline{display:none;}
 .sync-box{font-size:11.5px;}
-.navbar{margin:6px 0 0;gap:1px;}
-.nav-btn{padding:8px 13px;font-size:13px;}
+.navbar{margin:8px 0 0;gap:9px;padding-bottom:9px;}
+.nav-btn{padding:6px 12px;font-size:12.5px;}
 #page-content{padding-top:12px;gap:var(--gap);}
 
 .panel{
@@ -2326,7 +2321,7 @@ const SECTION_SUBS = {
   status: [
     ['insights', '인사이트'],
     ['goals', '목표'],
-    ['structure', '자산 증식 구조']
+    ['structure', '증식 구조']
   ]
 };
 
@@ -2342,7 +2337,6 @@ function currentSub(section) {
 function goTo(section, sub) {
   state.page = section;
   if (sub && SECTION_STATE_KEY[section]) state[SECTION_STATE_KEY[section]] = sub;
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.page === section));
   renderPage();
 }
 
@@ -2364,10 +2358,7 @@ function renderShell() {
         </div>
       </div>
       <div id="banner-slot"></div>
-      <nav class="navbar" id="navbar">
-        ${NAV_ITEMS.map(n => `<button class="nav-btn${n.id === state.page ? ' active' : ''}" data-page="${n.id}">${n.label}</button>`).join('')}
-      </nav>
-      <div class="subnav header-subnav" id="subnav-slot"></div>
+      <nav class="navbar" id="navbar"></nav>
     </div>
     <div id="page-content"></div>
     <div class="footer"></div>
@@ -2376,17 +2367,9 @@ function renderShell() {
   document.getElementById('navbar').addEventListener('click', (e) => {
     const btn = e.target.closest('.nav-btn');
     if (!btn) return;
-    state.page = btn.dataset.page;
-    document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.page === state.page));
-    renderPage();
+    goTo(btn.dataset.page, btn.dataset.sub);
   });
-  document.getElementById('subnav-slot').addEventListener('click', (e) => {
-    const btn = e.target.closest('button');
-    if (!btn) return;
-    const key = SECTION_STATE_KEY[state.page];
-    if (key) state[key] = btn.dataset.sub;
-    renderPage();
-  });
+  renderNav();
 }
 
 function renderBanner() {
@@ -2428,15 +2411,19 @@ function destroyPageCharts() {
   state.charts = {};
 }
 
-/* 상단 고정바 안의 하위 탭 — 항상 보이고, 스크롤해도 따라온다 */
-function renderSubnav() {
-  const slot = document.getElementById('subnav-slot');
-  if (!slot) return;
-  const section = state.page;
-  const subs = SECTION_SUBS[section] || [];
-  const SUB = currentSub(section);
-  slot.innerHTML = subs.map(([v, l]) =>
-    `<button data-sub="${v}" class="${v === SUB ? 'active' : ''}">${l}</button>`).join('');
+/* 상·하위 탭을 한 줄에 모두 노출한다. 그룹 라벨 + 알약 버튼 + 구분자. */
+function renderNav() {
+  const bar = document.getElementById('navbar');
+  if (!bar) return;
+  bar.innerHTML = NAV_ITEMS.map(n => {
+    const on = n.id === state.page;
+    const cur = currentSub(n.id);
+    return `<div class="nav-group${on ? ' on' : ''}">
+      <span class="nav-group-label">${n.label}</span>
+      ${(SECTION_SUBS[n.id] || []).map(([v, l]) =>
+        `<button class="nav-btn${on && v === cur ? ' active' : ''}" data-page="${n.id}" data-sub="${v}">${l}</button>`).join('')}
+    </div>`;
+  }).join('<span class="nav-div"></span>');
 }
 
 function renderPage() {
@@ -2447,7 +2434,7 @@ function renderPage() {
   const section = NAV_ITEMS.some(n => n.id === state.page) ? state.page : 'flow';
   state.page = section;
   const SUB = currentSub(section);
-  renderSubnav();
+  renderNav();
   body.innerHTML = '';
 
   if (section === 'flow') {
