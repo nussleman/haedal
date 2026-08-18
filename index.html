@@ -1090,6 +1090,11 @@ body{font-variant-numeric:tabular-nums;}
 }
 .subnav button:hover{color:var(--text);border-color:var(--border-strong);}
 .subnav button.active{background:var(--gold);border-color:var(--gold);color:#1a1508;font-weight:700;}
+/* 2단 하위 탭 (예: 자산 › 투자 안쪽) — 1단과 헷갈리지 않게 약하게 */
+.subnav.sub2{margin-top:-2px;}
+.subnav.sub2 button{background:transparent;border-color:transparent;font-size:12px;padding:5px 11px;border-radius:20px;}
+.subnav.sub2 button:hover{background:var(--panel-2);border-color:var(--border);}
+.subnav.sub2 button.active{background:rgba(201,162,39,0.16);border-color:rgba(201,162,39,0.45);color:var(--gold-soft);font-weight:600;}
 
 /* 홈에 편입된 구조 섹션 */
 #home-structure{display:flex;flex-direction:column;gap:var(--gap);}
@@ -1247,7 +1252,7 @@ const state = {
   lastError: null,
   goals: { savingsRateTarget: 40, emergencyFundTarget: 5000000 },
   range: 12,
-  page: 'home',
+  page: 'today',
   ledgerFilter: { q: '', major: 'all', page: 1, pageSize: 50 },
   charts: {},
   budgets: {},          // 카테고리별 사용자 지정 예산 (window.storage에 저장)
@@ -1278,7 +1283,9 @@ const state = {
   assetTrendFilter: 'all',
   savTrendRange: 12,
   savContribRange: 12,
-  homeSub: 'insights',     // 홈 하위 탭: insights | goals | structure
+  flowSub: 'now',          // 흐름 하위 탭: now | calendar | income | expense
+  assetSub: 'overview',    // 자산 하위 탭: overview | investment | savings
+  homeSub: 'insights',     // 현황 하위 탭: insights | goals | structure
   goalMoves: {},           // 드래그로 옮긴 목표 시기 (시트 반영 전 로컬 오버라이드)
   nowMonthKey: null,       // '이번달' 탭에서 보고 있는 달 (YYYY-MM)
   nowWeekIdx: null,        // null = 그 달 전체, 0.. = 해당 주차만
@@ -2275,17 +2282,49 @@ function setSyncState(status) {
   else label.textContent = '스냅샷 데이터';
 }
 
+/* 최상단 4탭 = 사용 빈도순 (매일 → 주/월 → 월 → 분기)
+   각 탭의 하위는 SECTION_SUBS 에서 정의하고, 실제 렌더 함수로 매핑한다. */
 const NAV_ITEMS = [
-  { id: 'home', label: '홈' },
   { id: 'today', label: '오늘' },
-  { id: 'calendar', label: '캘린더' },
-  { id: 'now', label: '이번달' },
+  { id: 'flow', label: '흐름' },
   { id: 'assets', label: '자산' },
-  { id: 'income', label: '수입' },
-  { id: 'expense', label: '지출' },
-  { id: 'investment', label: '투자' },
-  { id: 'savings', label: '저축' }
+  { id: 'status', label: '현황' }
 ];
+
+const SECTION_SUBS = {
+  flow: [
+    ['now', '이번달'],
+    ['calendar', '캘린더'],
+    ['income', '수입'],
+    ['expense', '지출']
+  ],
+  assets: [
+    ['overview', '전체'],
+    ['investment', '투자'],
+    ['savings', '저축·연금']
+  ],
+  status: [
+    ['insights', '인사이트'],
+    ['goals', '목표'],
+    ['structure', '자산 증식 구조']
+  ]
+};
+
+const SECTION_STATE_KEY = { flow: 'flowSub', assets: 'assetSub', status: 'homeSub' };
+
+function currentSub(section) {
+  const subs = SECTION_SUBS[section] || [];
+  const key = SECTION_STATE_KEY[section];
+  const cur = state[key];
+  return subs.some(x => x[0] === cur) ? cur : (subs[0] ? subs[0][0] : null);
+}
+
+function goTo(section, sub) {
+  state.page = section;
+  if (sub && SECTION_STATE_KEY[section]) state[SECTION_STATE_KEY[section]] = sub;
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.page === section));
+  renderPage();
+}
 
 function renderShell() {
   const app = document.getElementById('app');
@@ -2365,16 +2404,53 @@ function renderPage() {
   const data = state.data;
   const d = computeDerived(data);
   destroyPageCharts();
-  const container = document.getElementById('page-content');
-  if (state.page === 'today') renderTodayPage(container, data, d);
-  else if (state.page === 'calendar') renderCalendarPage(container, data, d);
-  else if (state.page === 'now') renderNowPage(container, data, d);
-  else if (state.page === 'assets') renderAssetsPage(container, data, d);
-  else if (state.page === 'income') renderIncomePage(container, data, d);
-  else if (state.page === 'expense') renderExpensePage(container, data, d);
-  else if (state.page === 'investment') renderInvestmentPage(container, data, d);
-  else if (state.page === 'savings') renderSavingsPage(container, data, d);
-  else renderHomePage(container, data, d);
+  const host = document.getElementById('page-content');
+  const section = NAV_ITEMS.some(n => n.id === state.page) ? state.page : 'today';
+  state.page = section;
+
+  /* 오늘 = 하위 탭 없이 바로 렌더 */
+  if (section === 'today') { host.innerHTML = ''; renderTodayPage(host, data, d); return; }
+
+  const subs = SECTION_SUBS[section];
+  const SUB = currentSub(section);
+  host.innerHTML = `
+    <div class="subnav" id="section-subnav">${subs.map(([v, l]) =>
+      `<button data-sub="${v}" class="${v === SUB ? 'active' : ''}">${l}</button>`).join('')}</div>
+    <div id="section-body"></div>
+  `;
+  document.getElementById('section-subnav').addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    state[SECTION_STATE_KEY[section]] = btn.dataset.sub;
+    renderPage();
+  });
+
+  const body = document.getElementById('section-body');
+  if (section === 'flow') {
+    if (SUB === 'now') renderNowPage(body, data, d);
+    else if (SUB === 'calendar') renderCalendarPage(body, data, d);
+    else if (SUB === 'income') renderIncomePage(body, data, d);
+    else renderExpensePage(body, data, d);
+  } else if (section === 'assets') {
+    if (SUB === 'overview') renderAssetsPage(body, data, d);
+    else if (SUB === 'investment') renderInvestmentPage(body, data, d);
+    else renderSavingsPage(body, data, d);
+  } else {
+    if (SUB === 'insights') renderStatusInsights(body, data, d);
+    else if (SUB === 'goals') { body.innerHTML = '<div id="home-goals"></div>'; renderGoalBoard(data, d); }
+    else renderStructurePage(body, data, d);
+  }
+}
+
+/* 현황 › 인사이트 */
+function renderStatusInsights(host, data, d) {
+  host.innerHTML = `
+    <div class="g">
+      <div class="panel s5" id="panel-priority-insights"></div>
+      <div class="stat-grid s7" style="grid-template-columns:repeat(2,1fr);" id="home-status"></div>
+    </div>`;
+  renderHomeStatus(data, d);
+  renderPriorityInsights(data, d);
 }
 
 function renderAll() {
@@ -2384,39 +2460,6 @@ function renderAll() {
 }
 
 /* ---------------- page: 홈 ---------------- */
-
-const HOME_SUBS = [
-  ['insights', '인사이트'],
-  ['goals', '목표'],
-  ['structure', '자산 증식 구조']
-];
-
-function renderHomePage(container, data, d) {
-  const SUB = HOME_SUBS.some(x => x[0] === state.homeSub) ? state.homeSub : 'insights';
-  const subnav = `<div class="subnav" id="home-subnav">${HOME_SUBS.map(([v, l]) =>
-    `<button data-sub="${v}" class="${v === SUB ? 'active' : ''}">${l}</button>`).join('')}</div>`;
-
-  container.innerHTML = `
-    ${subnav}
-    ${SUB === 'insights' ? `
-    <div class="g">
-      <div class="panel s5" id="panel-priority-insights"></div>
-      <div class="stat-grid s7" style="grid-template-columns:repeat(2,1fr);" id="home-status"></div>
-    </div>` : ''}
-    ${SUB === 'goals' ? `<div id="home-goals"></div>` : ''}
-    ${SUB === 'structure' ? `<div id="home-structure"></div>` : ''}
-  `;
-  if (SUB === 'insights') { renderHomeStatus(data, d); renderPriorityInsights(data, d); }
-  if (SUB === 'goals') renderGoalBoard(data, d);
-  if (SUB === 'structure') renderStructurePage(document.getElementById('home-structure'), data, d);
-
-  document.getElementById('home-subnav').addEventListener('click', (e) => {
-    const btn = e.target.closest('button');
-    if (!btn) return;
-    state.homeSub = btn.dataset.sub;
-    renderPage();
-  });
-}
 
 /* ---------------- 홈: 현 상태 요약 ---------------- */
 
@@ -4390,9 +4433,7 @@ function renderCalendarPage(container, data, d) {
   document.getElementById('cal-day-next').addEventListener('click', () => setSel(shiftDayKey(selDay, 1)));
   document.getElementById('cal-day-open').addEventListener('click', () => {
     state.todayDayKey = selDay > realToday ? realToday : selDay;
-    state.page = 'today';
-    document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.page === 'today'));
-    renderPage();
+    goTo('today');
   });
 
   document.getElementById('cal-grid').addEventListener('click', (e) => {
@@ -6494,7 +6535,7 @@ const INV_SUBS = [
 
 function renderInvestmentPage(container, data, d) {
   const SUB = INV_SUBS.some(s => s[0] === state.invSub) ? state.invSub : 'overview';
-  const subnav = `<div class="subnav" id="inv-subnav">${INV_SUBS.map(([v, l]) =>
+  const subnav = `<div class="subnav sub2" id="inv-subnav">${INV_SUBS.map(([v, l]) =>
     `<button data-sub="${v}" class="${v === SUB ? 'active' : ''}">${l}</button>`).join('')}</div>`;
   const invCategories = ['투자 자산'];
   const byMonthCat = {};
