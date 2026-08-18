@@ -954,6 +954,8 @@ body{font-variant-numeric:tabular-nums;}
 .g>.s7{grid-column:span 7}
 .g>.s8{grid-column:span 8}
 .g>.s9{grid-column:span 9}
+.g>.s10{grid-column:span 10}
+.g>.s11{grid-column:span 11}
 .g>.s12,.g>.full{grid-column:1 / -1}
 .g>*{grid-column:span 12;min-width:0;}
 .g>.stat-grid,.g>div>.stat-grid{margin-bottom:0;height:100%;}
@@ -966,7 +968,7 @@ body{font-variant-numeric:tabular-nums;}
   .g>.s4,.g>.s5,.g>.s7,.g>.s8{grid-column:span 6}
 }
 @media (max-width:900px){
-  .g>.s2,.g>.s3,.g>.s4,.g>.s5,.g>.s6,.g>.s7,.g>.s8,.g>.s9{grid-column:1 / -1}
+  .g>.s2,.g>.s3,.g>.s4,.g>.s5,.g>.s6,.g>.s7,.g>.s8,.g>.s9,.g>.s10,.g>.s11{grid-column:1 / -1}
 }
 .grid,.grid-top{gap:var(--gap);margin-top:0;}
 
@@ -1238,10 +1240,14 @@ body{font-variant-numeric:tabular-nums;}
 }
 
 /* 목표 카드 — 상태별 강조/감쇠 + 지표 방향 */
+.gb-card.ok{border-color:rgba(76,140,107,.4);background:rgba(76,140,107,.06);opacity:.72;}
+.gb-card.ok:hover{opacity:1;}
+.gb-card.pending{border-style:dashed;border-color:var(--border-strong);background:transparent;opacity:.55;}
+.gb-card.pending:hover{opacity:.9;}
+.gb-card.pending .gb-title{color:var(--text-dim);}
+.gb-check{color:var(--green);font-weight:700;font-size:13px;flex-shrink:0;}
 .gb-boardbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;padding-left:2px;}
 .gb-card{border-left:none;border:1px solid var(--border-strong);}
-.gb-card.dim{opacity:.5;}
-.gb-card.dim:hover{opacity:.85;}
 .gb-card.active{border-color:rgba(201,162,39,.5);background:rgba(201,162,39,.05);}
 .gb-card.no{border-color:rgba(193,72,63,.5);}
 .gb-card.ok .gb-title{text-decoration:line-through;text-decoration-color:var(--text-faint);}
@@ -1256,6 +1262,95 @@ body{font-variant-numeric:tabular-nums;}
 .gb-metric.bad .gb-verdict{background:var(--red-soft);color:#eb9891;}
 .gb-bar i.bad{background:linear-gradient(90deg,var(--red),#d9756c);}
 .gb-nolink{font-family:var(--mono);font-size:9.5px;padding:2px 6px;border-radius:5px;background:rgba(255,255,255,.05);color:var(--text-faint);}
+
+/* ---------- 증식 구조: 유입 / 누수 ---------- */
+.fl-col.inflow{border-top:2px solid rgba(76,140,107,.55);}
+.fl-col.leak{border-top:2px solid rgba(193,72,63,.55);}
+.fl-item{padding:13px 0;border-bottom:1px dotted var(--border);}
+.fl-item:last-child{border-bottom:none;padding-bottom:2px;}
+.fl-item-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;}
+.fl-nm{font-size:14px;font-weight:600;color:var(--text);}
+.fl-amt{font-family:var(--mono);font-size:17px;font-weight:600;}
+.fl-amt em{font-style:normal;font-size:10px;color:var(--text-faint);margin-left:3px;}
+.fl-amt.inc{color:#7fbf9c;}
+.fl-amt.exp{color:#e08a82;}
+.fl-bar{display:flex;align-items:center;gap:8px;margin-top:7px;}
+.fl-bar i{flex:1;height:5px;border-radius:3px;background:rgba(255,255,255,.06);position:relative;overflow:hidden;}
+.fl-bar i::after{content:'';position:absolute;inset:0;width:100%;border-radius:3px;}
+.fl-bar i.inc::after{background:#4c8c6b;}
+.fl-bar i.exp::after{background:#c1483f;}
+.fl-bar span{font-family:var(--mono);font-size:10px;color:var(--text-faint);width:32px;text-align:right;}
+.fl-act{display:grid;grid-template-columns:20px 1fr auto 46px;gap:9px;align-items:center;
+  margin-top:7px;padding:7px 9px;border-radius:8px;background:var(--panel-2);
+  border:1px solid var(--border);font-size:12.5px;}
+.fl-act.p1{border-color:var(--gold);background:rgba(201,162,39,.09);}
+.fl-rank{font-family:var(--mono);font-size:10px;font-weight:700;width:18px;height:18px;line-height:18px;
+  text-align:center;border-radius:50%;background:rgba(255,255,255,.07);color:var(--text-dim);}
+.fl-act.p1 .fl-rank{background:var(--gold);color:#1a1508;}
+.fl-act-nm{color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.fl-act-imp{font-family:var(--mono);font-size:12.5px;font-weight:600;color:var(--gold-soft);white-space:nowrap;}
+.fl-act-ctrl{height:4px;border-radius:2px;background:rgba(255,255,255,.07);overflow:hidden;}
+.fl-act-ctrl i{display:block;height:100%;border-radius:2px;}
+.fl-act-ctrl.hi i{background:var(--green);}
+.fl-act-ctrl.mid i{background:var(--gold);}
+.fl-act-ctrl.lo i{background:var(--text-faint);}
+.fl-noact{font-family:var(--mono);font-size:10.5px;color:var(--text-faint);margin-top:6px;}
+.fl-risk{border-color:rgba(193,72,63,.45)!important;background:rgba(193,72,63,.08);
+  font-size:12.5px;line-height:1.7;color:#e39a93;}
+.fl-risk b{color:#f0b8b2;margin-right:6px;}
+
+/* ---------- 카테고리별 예산 ---------- */
+.bg-total{border:1px solid var(--border-strong);border-radius:11px;background:var(--panel-2);padding:13px 15px;margin-bottom:14px;}
+.bg-total.over{border-color:rgba(193,72,63,.5);background:rgba(193,72,63,.07);}
+.bg-total-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;}
+.bg-total-head span{font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--text-faint);}
+.bg-total-head b{font-family:var(--mono);font-size:20px;font-weight:600;color:var(--text);}
+.bg-total-head em{font-style:normal;font-size:13px;color:var(--text-faint);}
+.bg-total-foot{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10.5px;color:var(--text-faint);margin-top:6px;}
+.bg-track{display:block;height:6px;border-radius:3px;background:rgba(255,255,255,.06);overflow:hidden;}
+.bg-track.lg{height:10px;border-radius:5px;margin-top:9px;}
+.bg-fill{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,var(--green),#6fb08c);}
+.bg-fill.over{background:linear-gradient(90deg,var(--red),#d9756c);}
+.bg-table{display:flex;flex-direction:column;}
+.bg-head,.bg-row{display:grid;grid-template-columns:1.3fr 84px 106px 1.1fr 92px;gap:10px;align-items:center;}
+.bg-head{font-family:var(--mono);font-size:10px;letter-spacing:.05em;color:var(--text-faint);
+  padding:0 2px 7px;border-bottom:1px solid var(--border-strong);}
+.bg-head span:not(:first-child){text-align:right;}
+.bg-head .bg-barcol{text-align:left;}
+.bg-row{padding:7px 2px;border-bottom:1px dotted var(--border);font-size:12.5px;}
+.bg-row:last-child{border-bottom:none;}
+.bg-nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text);}
+.bg-cur{font-family:var(--mono);text-align:right;color:var(--text-dim);}
+.bg-bud{display:flex;align-items:center;justify-content:flex-end;gap:5px;}
+.bg-bud em{font-style:normal;font-family:var(--mono);font-size:9px;color:var(--text-faint);
+  background:rgba(255,255,255,.05);border-radius:4px;padding:1px 4px;}
+.bg-barcol{display:flex;align-items:center;gap:8px;}
+.bg-barcol .bg-track{flex:1;}
+.bg-barcol em{font-style:normal;font-family:var(--mono);font-size:10px;color:var(--text-faint);width:32px;text-align:right;}
+.bg-rem{font-family:var(--mono);text-align:right;color:var(--green);}
+.bg-rem.over{color:var(--red);}
+@media (max-width:1100px){
+  .bg-head{display:none;}
+  .bg-row{grid-template-columns:1fr auto;grid-auto-rows:auto;row-gap:5px;}
+  .bg-row .bg-barcol{grid-column:1 / -1;}
+}
+
+.gb-recs{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+.gb-rec{border:1px dashed var(--border-strong);border-radius:9px;padding:10px 11px;background:var(--panel-2);}
+.gb-rec-title{font-size:12.5px;font-weight:600;color:var(--text);line-height:1.4;}
+.gb-rec-why{font-family:var(--mono);font-size:10px;color:var(--text-faint);line-height:1.6;margin-top:4px;}
+.gb-rec .btn{margin-top:8px;width:100%;}
+
+/* 차트 시리즈 체크박스 */
+.series-toggles{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:9px;}
+.series-chk{display:inline-flex;align-items:center;gap:6px;cursor:pointer;user-select:none;
+  font-size:11.5px;color:var(--text-faint);border:1px solid var(--border);border-radius:20px;padding:4px 11px 4px 8px;
+  transition:all .15s;}
+.series-chk:hover{color:var(--text);border-color:var(--border-strong);}
+.series-chk.on{color:var(--text);border-color:var(--border-strong);background:var(--panel-2);}
+.series-chk input{width:12px;height:12px;accent-color:var(--gold);margin:0;}
+.series-chk i{width:9px;height:9px;border-radius:2px;display:inline-block;opacity:.35;}
+.series-chk.on i{opacity:1;}
 
 /* ---------- 모달 (목표 편집) ---------- */
 .modal-back{position:fixed;inset:0;background:rgba(6,9,15,.72);z-index:9998;
@@ -1390,6 +1485,7 @@ const state = {
   benchRange: 'all',
   benchMode: 'amount',   // 'amount' | 'excess'
   invPeriod: 'month',
+  invSeries: { balance: true, contrib: true, transfer: false, returns: true, roi: false },
   invCumMode: 'amount',    // 'amount' | 'roi' (원금 대비 수익률)
   invPickType: 'stock',
   invPickName: null,
@@ -1621,10 +1717,10 @@ function goalStatusClass(status) {
 /* 목표 문구 ↔ 대시보드 실제 수치 연결 정의.
    key = 수동 선택용 식별자, name = 화면 표시명, dir = 'up'(많을수록 좋음) | 'down'(적을수록 좋음) */
 const GOAL_METRIC_MATCHERS = [
-  { key: 'emergency', name: '비상금 (NH-CMA)', unit: 'won', dir: 'up', re: /비상금\s*([\d,]+)\s*만원/, target: (m) => parseFloat(m[1].replace(/,/g, '')) * 10000, current: (d) => d.emergencyFund, invert: false, type: 'accumulation' },
+  { key: 'emergency', name: '비상금 (NH-CMA 잔액)', unit: 'won', dir: 'up', re: /비상금\s*([\d,]+)\s*만원/, target: (m) => parseFloat(m[1].replace(/,/g, '')) * 10000, current: (d) => d.emergencyFund, invert: false, type: 'accumulation' },
   { key: 'totalAssets', name: '총자산', unit: 'won', dir: 'up', re: /총자산\s*([\d.]+)\s*억/, target: (m) => parseFloat(m[1]) * 100000000, current: (d) => d.totalAssets, invert: false, type: 'accumulation' },
-  { key: 'fixed', name: '월 고정비', unit: 'won', dir: 'down', re: /고정비\s*([\d,]+)\s*만원/, target: (m) => parseFloat(m[1].replace(/,/g, '')) * 10000, current: (d, extra) => extra.latestFixed, invert: true, type: 'cap' },
-  { key: 'expense', name: '월 지출', unit: 'won', dir: 'down', re: /(?:월\s*)?지출\s*([\d,]+)\s*만원/, target: (m) => parseFloat(m[1].replace(/,/g, '')) * 10000, current: (d) => (d.cashflow.length ? d.cashflow[d.cashflow.length - 1].expense : 0), invert: true, type: 'cap' },
+  { key: 'fixed', name: '월 고정비 (최근 12개월 평균)', unit: 'won', dir: 'down', re: /고정비\s*([\d,]+)\s*만원/, target: (m) => parseFloat(m[1].replace(/,/g, '')) * 10000, current: (d, extra) => extra.avgFixed12, invert: true, type: 'cap' },
+  { key: 'expense', name: '월 지출 (최근 12개월 평균)', unit: 'won', dir: 'down', re: /(?:월\s*)?지출\s*([\d,]+)\s*만원/, target: (m) => parseFloat(m[1].replace(/,/g, '')) * 10000, current: (d, extra) => extra.avgExpense12, invert: true, type: 'cap' },
   { key: 'cashPct', name: '현금 비율', unit: 'pct', dir: 'up', re: /현금\s*비율.*?(\d+(?:\.\d+)?)\s*%/, target: (m) => parseFloat(m[1]), current: (d) => (d.totalAssets ? (d.emergencyFund / d.totalAssets) * 100 : 0), invert: false, isPct: true, type: 'ratio' }
 ];
 
@@ -1643,6 +1739,19 @@ function parseGoalTargetValue(title, unit) {
   m = t.match(/([\d,]{4,})\s*원?/);
   if (m) return parseFloat(m[1].replace(/,/g, ''));
   return null;
+}
+
+/* 목표 지표에 쓰는 파생값 — 최근 12개월 평균 기준 */
+function goalMetricExtra(data, d) {
+  const fixedTrend = getFixedMonthlyTrend(data.ledger) || [];
+  const f12 = fixedTrend.slice(-12).map(x => x.total);
+  const cf12 = (d.cashflow || []).slice(-12).map(x => x.expense);
+  const avg = (a) => a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0;
+  return {
+    latestFixed: fixedTrend.length ? fixedTrend[fixedTrend.length - 1].total : 0,
+    avgFixed12: avg(f12),
+    avgExpense12: avg(cf12)
+  };
 }
 
 function computeGoalProgress(title, d, extra, forceKey) {
@@ -2684,8 +2793,7 @@ function renderGoalBoard(data, d) {
     return;
   }
 
-  const fixedTrend = getFixedMonthlyTrend(data.ledger);
-  const extra = { latestFixed: fixedTrend.length ? fixedTrend[fixedTrend.length - 1].total : 0 };
+  const extra = goalMetricExtra(data, d);
   const fmtPeriod = goalPeriodFormatter(allGoals);
 
   /* 로컬 이동 오버라이드 (시트 반영 전/실패 시에도 화면에 유지) */
@@ -2730,7 +2838,7 @@ function renderGoalBoard(data, d) {
     const memo = pickGoalField(g, 'memo');
     const doneDate = pickGoalField(g, 'doneDate');
     const vClass = goalStatusClass(status) || 'pending';
-    const dim = (vClass === 'ok' || vClass === 'pending');   /* 완료·대기는 흐리게 */
+    /* 완료 = 초록 체크·취소선, 대기 = 점선 테두리·흐림 (둘을 다르게 보이게) */
     const progress = computeGoalProgress(title, d, extra, (state.goalMetric || {})[g.__row] || null);
 
     let metricHtml = '';
@@ -2761,8 +2869,9 @@ function renderGoalBoard(data, d) {
     }
 
     const pending = state.goalMoves[g.__row] !== undefined || (state.goalEdits && state.goalEdits[g.__row]);
-    return `<div class="gb-card ${vClass}${dim ? ' dim' : ''}" draggable="true" data-row="${g.__row}" title="더블클릭 → 편집">
+    return `<div class="gb-card ${vClass}" draggable="true" data-row="${g.__row}" title="더블클릭 → 편집">
       <div class="gb-head">
+        ${vClass === 'ok' ? '<span class="gb-check">✓</span>' : ''}
         <span class="gb-title">${title}</span>
       </div>
       ${metricHtml}
@@ -2812,18 +2921,43 @@ function renderGoalBoard(data, d) {
     const c = pickGoalField(g, 'category') || '기타';
     byCat[c] = (byCat[c] || 0) + 1;
   });
+  const recs = buildGoalRecommendations(data, d, extra, allGoals);
   document.getElementById('panel-goal-side').innerHTML = `
-    <div class="panel-title"><div>요약</div><span class="ptag">${total}개${GOALS_WEBAPP_URL ? '' : ' · 시트 쓰기 미설정'}</span></div>
+    <div class="panel-title"><div>요약</div><span class="ptag">${total}개</span></div>
     <div class="gb-donut"><i style="width:${total ? (done / total) * 100 : 0}%"></i></div>
     <div class="gb-figs" style="margin-bottom:12px;"><span>완료 ${done} · 진행 ${active}</span><span>${total ? Math.round((done / total) * 100) : 0}%</span></div>
-    <div class="subhead">상태</div>
     ${Object.entries(byStatus).sort((a, b) => b[1] - a[1]).map(([k, v]) =>
       `<div class="now-kv"><span>${k}</span><b>${v}</b></div>`).join('')}
-    <div class="subhead" style="margin-top:12px;">구분</div>
-    ${Object.entries(byCat).sort((a, b) => b[1] - a[1]).map(([k, v]) =>
-      `<div class="now-kv"><span>${k}</span><b>${v}</b></div>`).join('')}
-    <div class="settings-note">카드를 끌어 다른 반기로 옮기면 목표 탭 '시기' 열이 갱신돼요.</div>
+
+    <div class="subhead" style="margin-top:16px;">추천 목표</div>
+    <div class="gb-recs">
+      ${recs.length ? recs.map((r, i) => `
+        <div class="gb-rec" data-rec="${i}">
+          <div class="gb-rec-title">${r.title}</div>
+          <div class="gb-rec-why">${r.why}</div>
+          <button class="btn small" data-rec-add="${i}">+ 추가</button>
+        </div>`).join('') : '<div class="empty-state" style="padding:14px 0;">지금 제안할 목표가 없어요.</div>'}
+    </div>
+    ${GOALS_WEBAPP_URL ? '' : '<div class="settings-note">시트 쓰기 미설정 — 변경은 화면에만 반영돼요.</div>'}
   `;
+
+  document.getElementById('panel-goal-side').addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-rec-add]');
+    if (!btn) return;
+    const r = recs[Number(btn.dataset.recAdd)];
+    if (!r) return;
+    const rows = (state.data.goals || []).map(x => x.__row || 0);
+    const newRow = (rows.length ? Math.max(...rows) : 1) + 1;
+    const obj = { __row: newRow, __local: true };
+    obj[goalFieldKeyFor(null, 'title')] = r.title;
+    obj[goalFieldKeyFor(null, 'period')] = fmtPeriod(nowY, curHalf);
+    obj[goalFieldKeyFor(null, 'category')] = r.category;
+    obj[goalFieldKeyFor(null, 'status')] = '진행중';
+    obj[goalFieldKeyFor(null, 'memo')] = r.why;
+    state.data.goals = (state.data.goals || []).concat([obj]);
+    pushGoalOp({ action: 'addGoal', title: r.title, period: fmtPeriod(nowY, curHalf), category: r.category, status: '진행중', memo: r.why });
+    renderPage();
+  });
 
   /* --- 편집 / 추가 / 삭제 --- */
   document.getElementById('goal-add-btn').addEventListener('click', () => openGoalEditor(null, data, d, fmtPeriod));
@@ -2904,6 +3038,78 @@ function renderGoalBoard(data, d) {
 }
 
 
+/* ---------------- 추천 목표 (현황을 보고 매번 다시 계산) ---------------- */
+
+/* 만원 단위 반올림 (목표 문구용) */
+function roundManwon(v, step) {
+  const st = (step || 10) * 10000;
+  return Math.max(st, Math.round(v / st) * st);
+}
+function manwonText(v) { return `${Math.round(v / 10000).toLocaleString('ko-KR')}만원`; }
+
+function buildGoalRecommendations(data, d, extra, existingGoals) {
+  const has = (re) => (existingGoals || []).some(g => re.test(String(pickGoalField(g, 'title') || '')));
+  const out = [];
+
+  /* 1. 비상금 — 월 지출 6개월치까지 */
+  const monthlyExp = extra.avgExpense12 || 0;
+  const emgTarget = roundManwon(monthlyExp * 6, 50);
+  if (monthlyExp > 0 && d.emergencyFund < emgTarget && !has(/비상금/)) {
+    out.push({
+      title: `비상금 ${manwonText(emgTarget)}`,
+      category: '저축',
+      why: `현재 ${formatCompactWon(d.emergencyFund)}원 · 월 지출 ${(d.emergencyFund / monthlyExp).toFixed(1)}개월치 (권장 6개월)`
+    });
+  }
+
+  /* 2. 월 고정비 — 최근 12개월 평균에서 10% 낮추기 */
+  const avgFixed = extra.avgFixed12 || 0;
+  if (avgFixed > 0 && !has(/고정비/)) {
+    const t = roundManwon(avgFixed * 0.9, 5);
+    out.push({
+      title: `월 고정비 ${manwonText(t)}`,
+      category: '지출',
+      why: `최근 12개월 평균 ${formatCompactWon(avgFixed)}원 → 10% 절감`
+    });
+  }
+
+  /* 3. 월 지출 — 목표 저축률을 맞추는 상한 */
+  const cf12 = (d.cashflow || []).slice(-12);
+  const avgIncome = cf12.length ? cf12.reduce((a, c) => a + c.income, 0) / cf12.length : 0;
+  const rateTarget = state.goals.savingsRateTarget || 40;
+  const expCap = avgIncome * (1 - rateTarget / 100);
+  if (avgIncome > 0 && monthlyExp > expCap && !has(/(월\s*)?지출/)) {
+    out.push({
+      title: `월 지출 ${manwonText(roundManwon(expCap, 10))}`,
+      category: '지출',
+      why: `저축률 ${rateTarget}% 기준 상한 · 현재 평균 ${formatCompactWon(monthlyExp)}원`
+    });
+  }
+
+  /* 4. 총자산 다음 마일스톤 (5천만 단위) */
+  if (d.totalAssets > 0 && !has(/총자산/)) {
+    const step = 50000000;
+    const next = Math.ceil((d.totalAssets + 1) / step) * step;
+    out.push({
+      title: `총자산 ${(next / 100000000).toFixed(1)}억`,
+      category: '자산',
+      why: `현재 ${formatCompactWon(d.totalAssets)}원 · ${formatCompactWon(next - d.totalAssets)}원 남음`
+    });
+  }
+
+  /* 5. 연금 세액공제 한도 */
+  const annPension = (data.transferCategories['연금 자산'] || []).slice(-12).reduce((a, v) => a + (v || 0), 0);
+  if (annPension < PENSION_LIMIT && !has(/연금/)) {
+    out.push({
+      title: `연금 납입 ${manwonText(PENSION_LIMIT)}`,
+      category: '연금',
+      why: `최근 12개월 ${formatCompactWon(Math.max(annPension, 0))}원 · 한도까지 ${formatCompactWon(PENSION_LIMIT - Math.max(annPension, 0))}원`
+    });
+  }
+
+  return out.slice(0, 4);
+}
+
 /* ---------------- 목표 편집기 (더블클릭 / 추가) ---------------- */
 
 const GOAL_STATUS_OPTIONS = ['진행중', '대기', '완료', '보류'];
@@ -2917,8 +3123,7 @@ function goalFieldKeyFor(goal, alias) {
 function openGoalEditor(goal, data, d, fmtPeriod) {
   const isNew = !goal;
   const g = goal || {};
-  const fixedTrend = getFixedMonthlyTrend(data.ledger);
-  const extra = { latestFixed: fixedTrend.length ? fixedTrend[fixedTrend.length - 1].total : 0 };
+  const extra = goalMetricExtra(data, d);
   const cats = [...new Set((data.goals || []).map(x => pickGoalField(x, 'category')).filter(Boolean))];
 
   const cur = {
@@ -3956,10 +4161,7 @@ function renderNowPage(container, data, d) {
       </div>
     </div>
 
-    <details class="rawbox" open>
-      <summary>${scopeLabel} 전체 내역 · ${scopeRows.length}건</summary>
-      <div class="rawbody"><div id="now-ledger-table"></div></div>
-    </details>` : ''}
+` : ''}
   `;
 
   document.getElementById('now-subnav').addEventListener('click', (e) => {
@@ -4103,11 +4305,6 @@ function renderNowPage(container, data, d) {
   }
 
   /* --- 내역 테이블 --- */
-  if (document.getElementById('now-ledger-table')) renderAdvancedTable('now-ledger-table', scopeRows, {
-    defaultSort: 'date-desc',
-    groupOptions: [['none', '그룹 없음'], ['category', '카테고리별']],
-    pageSize: 30
-  });
 
   /* --- 차트 --- */
   const drawNowFlow = () => {
@@ -4987,7 +5184,7 @@ function buildStructureActions(m, tg, d) {
     todo: `월 ${formatCompactWon(m.per(m.exp.variable))}원. 매달 의지로 관리해야 하는 영역이라 고정비보다 유지 비용이 큽니다.`
   });
   A.push({
-    node: '연금(코어)', stage: '배분', control: '높음',
+    node: '세금', stage: '누수', control: '높음',
     name: pensionRoom > 0 ? `연금 세액공제 한도 잔여 ${formatCompactWon(pensionRoom)}원 채우기` : '연금 세액공제 한도 소진 완료',
     impact: pensionRoom * PENSION_CREDIT,
     short: pensionRoom > 0 ? '연금 한도 채우기' : '한도 소진 완료',
@@ -4996,13 +5193,13 @@ function buildStructureActions(m, tg, d) {
       : `한도 900만원을 채웠습니다. 이 이상 납입은 절세 효과가 없으니 위성 계좌로 보내세요.`
   });
   A.push({
-    node: '양도세', stage: '누수', control: '높음',
+    node: '세금', stage: '누수', control: '높음',
     name: '해외주식 기본공제 250만원 매년 소진', impact: Math.min(annRealized, CGT_FREE) * CGT_TAX_RATE,
     short: '250만 공제 쓰기',
     todo: `최근 12개월 실현이익 ${formatCompactWon(annRealized)}원. 연말에 이익을 250만원 안쪽으로 나눠 실현하면 그만큼은 22%가 붙지 않습니다.`
   });
   A.push({
-    node: '투자 자산', stage: '축적', control: '낮음',
+    node: '투자 수익', stage: '유입', control: '낮음',
     name: '수익률 +1%p', impact: m.riskAssets * 0.01,
     short: '수익률 +1%p',
     todo: `투자성 자산 ${formatCompactWon(m.riskAssets)}원 기준. 종목을 잘 고르는 건 통제 밖이고, 실제로 통제되는 건 비용·분산·안 파는 것뿐입니다.`
@@ -5075,12 +5272,6 @@ function renderStructurePage(container, data, d) {
   const loopK = m.loop.market;
   const engineIsInput = loopC > Math.abs(loopK);
 
-  /* --- 진단: 지금 어느 단계인가 --- */
-  const phase = !m.loop.covered ? { key: 'na', title: '데이터 부족', lead: '투자 자산 스냅샷이 이 기간을 덮지 못해요' }
-    : engineIsInput
-      ? { key: 'input', title: '투입이 엔진', lead: '저축률이 성과를 결정하는 구간' }
-      : { key: 'market', title: '시장이 엔진', lead: '배분·변동성 관리가 성과를 결정하는 구간' };
-
   /* --- 구조 점검 6항목 (통과/미달) --- */
   const checks = [
     { nm: '저축률', cur: `${m.saveRate.toFixed(1)}%`, tgt: `${state.goals.savingsRateTarget}%`, ok: m.saveRate >= state.goals.savingsRateTarget },
@@ -5092,44 +5283,94 @@ function renderStructurePage(container, data, d) {
   ];
   const failCount = checks.filter(c => c.ok === false).length;
 
-  /* --- 할 일 TOP 3 --- */
-  const top3 = AC.list.filter(a => !a.risk).slice(0, 3);
   const risk = AC.list.find(a => a.risk && !(d.emergencyFund >= emgTargetV));
+
+  /* --- 유입 / 누수 두 축만. 액션은 각 항목에 붙인다. --- */
+  const byNode = {};
+  AC.list.forEach(a => { (byNode[a.node] = byNode[a.node] || []).push(a); });
+
+  const INFLOW = [
+    { nm: '근로소득', amt: m.per(m.inc.work), base: m.inc.total },
+    { nm: '부수입', amt: m.per(m.inc.side), base: m.inc.total },
+    { nm: '투자 수익', amt: m.per(m.inc.invest), base: m.inc.total }
+  ];
+  const LEAK = [
+    { nm: '고정비', amt: m.per(m.exp.fixed), base: m.exp.total },
+    { nm: '변동비', amt: m.per(m.exp.variable), base: m.exp.total },
+    { nm: '세금', amt: m.per(m.exp.tax), base: m.exp.total }
+  ];
+  const maxImpact = Math.max(...AC.list.map(a => a.impact || 0), 1);
   const ctrlPct = { '높음': 100, '중간': 60, '낮음': 20 };
-  const maxImpact = Math.max(...top3.map(a => a.impact || 0), 1);
+
+  const actionRow = (a) => `
+    <div class="fl-act ${a.rank === 1 ? 'p1' : ''}" title="${(a.todo || '').replace(/"/g, '&quot;')}">
+      <span class="fl-rank">${a.rank}</span>
+      <span class="fl-act-nm">${a.short}</span>
+      <span class="fl-act-imp">${a.impact ? '+' + formatCompactWon(a.impact) : '—'}</span>
+      <span class="fl-act-ctrl ${a.control === '높음' ? 'hi' : a.control === '중간' ? 'mid' : 'lo'}" title="통제력 ${a.control}">
+        <i style="width:${ctrlPct[a.control] || 50}%"></i>
+      </span>
+    </div>`;
+
+  const itemBlock = (it, tone) => {
+    const pct = it.base ? (Math.abs(it.amt) / (m.per(it.base) || 1)) * 100 : 0;
+    const acts = (byNode[it.nm] || []).sort((x, y) => x.rank - y.rank);
+    return `
+      <div class="fl-item">
+        <div class="fl-item-head">
+          <span class="fl-nm">${it.nm}</span>
+          <span class="fl-amt ${tone}">${formatCompactWon(it.amt)}<em>/월</em></span>
+        </div>
+        <div class="fl-bar"><i class="${tone}" style="width:${Math.min(pct, 100)}%"></i><span>${pct.toFixed(0)}%</span></div>
+        ${acts.map(actionRow).join('') || '<div class="fl-noact">액션 없음</div>'}
+      </div>`;
+  };
 
   container.innerHTML = `
     <div class="g">
-      <div class="panel s4 st-diag ${phase.key}">
-        <div class="st-diag-eyebrow">지금 단계</div>
-        <div class="st-diag-title">${phase.title}</div>
-        <div class="st-diag-lead">${phase.lead}</div>
-        <div class="st-diag-kv">
-          <span><em>저축률</em><b style="color:${m.saveRate >= state.goals.savingsRateTarget ? 'var(--net)' : 'var(--red)'}">${m.saveRate.toFixed(1)}%</b></span>
-          <span><em>순저축 / 월</em><b>${formatCompactWon(m.per(m.netSave))}</b></span>
-          <span><em>투자성 ÷ 연수입</em><b>${crossPct.toFixed(0)}%</b></span>
-          <span><em>코어 : 위성</em><b>${coreShare.toFixed(0)} : ${(100 - coreShare).toFixed(0)}</b></span>
+      <div class="stat-grid s12" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:0;">
+        <div class="stat-card">
+          <div class="label">유입 / 월</div>
+          <div class="value" style="color:var(--green)">${formatCompactWon(m.per(m.inc.total))}원</div>
+          <div class="sub">근로 ${(m.inc.total ? (m.inc.work / m.inc.total) * 100 : 0).toFixed(0)}%</div>
         </div>
-        <div class="st-diag-mile">${nextMile
-          ? `다음 마일스톤 <b>${formatCompactWon(nextMile)}원</b> · ${annNet > 0 ? ((nextMile - m.stock.total) / annNet).toFixed(1) + '년' : '—'}`
-          : '마일스톤 미설정'}</div>
-      </div>
-
-      <div class="panel s8">
-        <div class="panel-title"><div>지금 할 일</div><span class="ptag">연 환산 임팩트 × 통제력</span></div>
-        <div class="st-todo">
-          ${top3.map(a => `
-            <div class="st-todo-card ${a.rank === 1 ? 'p1' : ''}">
-              <div class="st-todo-top"><span class="st-rank">${a.rank}</span><span class="st-stage ${a.stage === '유입' ? 'income' : a.stage === '누수' ? 'expense' : 'transfer'}">${a.stage}</span></div>
-              <div class="st-todo-name">${a.short}</div>
-              <div class="st-todo-imp">${a.impact ? '+' + formatCompactWon(a.impact) + '원' : '—'}<em>/ 연</em></div>
-              <div class="st-todo-bar"><i style="width:${((a.impact || 0) / maxImpact) * 100}%"></i></div>
-              <div class="st-todo-ctrl"><span>통제력 ${a.control}</span><i><b style="width:${ctrlPct[a.control] || 50}%"></b></i></div>
-            </div>`).join('')}
+        <div class="stat-card">
+          <div class="label">누수 / 월</div>
+          <div class="value" style="color:var(--red)">${formatCompactWon(m.per(m.exp.total))}원</div>
+          <div class="sub">고정 ${(m.exp.total ? (m.exp.fixed / m.exp.total) * 100 : 0).toFixed(0)}%</div>
         </div>
-        ${risk ? `<div class="st-risk">방어 · ${risk.short} — 비상금 ${formatCompactWon(d.emergencyFund)} / ${formatCompactWon(emgTargetV)}</div>` : ''}
+        <div class="stat-card">
+          <div class="label">= 순저축 / 월</div>
+          <div class="value" style="color:${m.netSave >= 0 ? 'var(--net)' : 'var(--red)'}">${formatCompactWon(m.per(m.netSave))}원</div>
+          <div class="sub ${m.saveRate >= state.goals.savingsRateTarget ? 'up' : 'down'}">저축률 ${m.saveRate.toFixed(1)}% / 목표 ${state.goals.savingsRateTarget}%</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">액션 다 하면</div>
+          <div class="value" style="color:var(--gold-soft)">+${formatCompactWon(AC.list.reduce((a, x) => a + (x.impact || 0), 0))}원</div>
+          <div class="sub">연 환산 · 순저축 ${formatCompactWon(annNet)}원 대비</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">다음 마일스톤</div>
+          <div class="value">${nextMile ? formatCompactWon(nextMile) + '원' : '—'}</div>
+          <div class="sub">${nextMile ? `${annNet > 0 ? ((nextMile - m.stock.total) / annNet).toFixed(1) + '년 남음' : '—'}` : '목표 탭 미설정'}</div>
+        </div>
       </div>
     </div>
+
+    <div class="g">
+      <div class="panel s6 fl-col inflow">
+        <div class="panel-title"><div>유입을 키운다</div><span class="ptag">최근 ${m.n}개월 월평균</span></div>
+        ${INFLOW.map(it => itemBlock(it, 'inc')).join('')}
+      </div>
+      <div class="panel s6 fl-col leak">
+        <div class="panel-title"><div>누수를 줄인다</div><span class="ptag">최근 ${m.n}개월 월평균</span></div>
+        ${LEAK.map(it => itemBlock(it, 'exp')).join('')}
+      </div>
+    </div>
+
+    ${risk ? `<div class="g"><div class="panel s12 fl-risk">
+      <b>방어선</b> 비상금 ${formatCompactWon(d.emergencyFund)}원 / 목표 ${formatCompactWon(emgTargetV)}원 — 여기가 얇으면 하락장에서 투자 자산을 팔게 되고, 위 액션이 전부 무의미해집니다.
+    </div></div>` : ''}
 
     <div class="g">
       <div class="panel s12">
@@ -5143,79 +5384,6 @@ function renderStructurePage(container, data, d) {
             </div>`).join('')}
         </div>
       </div>
-    </div>
-
-    <details class="rawbox">
-      <summary>전체 흐름 · 최근 ${m.n}개월 월평균</summary>
-      <div class="rawbody">
-        <div class="eng-board">
-          <div class="eng-stage">
-            <div class="eng-stage-head"><b>유입</b><span>${formatCompactWon(m.per(m.inc.total))}</span></div>
-            ${node({ nm: '근로소득', amount: m.per(m.inc.work), pct: pctOf(m.inc.work, m.inc.total), tone: 'inc' })}
-            ${node({ nm: '부수입', amount: m.per(m.inc.side), pct: pctOf(m.inc.side, m.inc.total), tone: 'inc' })}
-            ${node({ nm: '투자 수익', amount: m.per(m.inc.invest), pct: pctOf(m.inc.invest, m.inc.total), tone: 'inc' })}
-          </div>
-          <div class="eng-arrow">▶</div>
-          <div class="eng-stage">
-            <div class="eng-stage-head"><b>누수</b><span>${formatCompactWon(m.per(m.exp.total))}</span></div>
-            ${node({ nm: '고정비', amount: m.per(m.exp.fixed), pct: pctOf(m.exp.fixed, m.exp.total), tone: 'exp', cls: 'leak' })}
-            ${node({ nm: '변동비', amount: m.per(m.exp.variable), pct: pctOf(m.exp.variable, m.exp.total), tone: 'exp', cls: 'leak' })}
-            ${node({ nm: '양도세', amount: m.per(m.exp.tax), pct: pctOf(m.exp.tax, m.exp.total), tone: 'exp', cls: 'leak' })}
-          </div>
-          <div class="eng-arrow">▶</div>
-          <div class="eng-stage">
-            <div class="eng-stage-head"><b>연료</b><span>${formatCompactWon(m.per(m.netSave))}</span></div>
-            ${node({ nm: '순저축', amount: m.per(m.netSave), pct: null, tone: 'trf' })}
-            <div class="eng-node">
-              <div class="eng-node-top"><span class="nm">저축률</span><span class="pct">목표 ${state.goals.savingsRateTarget}%</span></div>
-              <div class="eng-amt" style="color:${m.saveRate >= state.goals.savingsRateTarget ? 'var(--green)' : 'var(--red)'}">${m.saveRate.toFixed(1)}%</div>
-              <div class="eng-bar"><i style="width:${Math.min(Math.max(m.saveRate, 0), 100)}%;background:${m.saveRate >= state.goals.savingsRateTarget ? '#4c8c6b' : '#e08a82'}"></i></div>
-            </div>
-          </div>
-          <div class="eng-arrow">▶</div>
-          <div class="eng-stage">
-            <div class="eng-stage-head"><b>배분</b><span>${formatCompactWon(m.per(m.trf.total))}</span></div>
-            ${node({ nm: '연금(코어)', amount: m.per(m.trf.pension), pct: pctOf(m.trf.pension, m.trf.total), tone: 'trf' })}
-            ${node({ nm: '투자(위성)', amount: m.per(m.trf.invest), pct: pctOf(m.trf.invest, m.trf.total), tone: 'trf' })}
-            ${node({ nm: '저축', amount: m.per(m.trf.save), pct: pctOf(m.trf.save, m.trf.total), tone: 'trf' })}
-            ${node({ nm: '비상금', amount: m.per(m.trf.emergency), pct: pctOf(m.trf.emergency, m.trf.total), tone: 'trf' })}
-          </div>
-          <div class="eng-arrow">▶</div>
-          <div class="eng-stage">
-            <div class="eng-stage-head"><b>축적</b><span>${formatCompactWon(m.stock.total)}</span></div>
-            ${node({ nm: '투자 자산', amount: m.stock.invest, pct: pctOf(m.stock.invest, m.stock.total), tone: 'stk' })}
-            ${node({ nm: '연금 자산', amount: m.stock.pension, pct: pctOf(m.stock.pension, m.stock.total), tone: 'stk' })}
-            ${node({ nm: '저축 자산', amount: m.stock.save, pct: pctOf(m.stock.save, m.stock.total), tone: 'stk' })}
-            ${node({ nm: '현금 자산', amount: m.stock.cash, pct: pctOf(m.stock.cash, m.stock.total), tone: 'stk' })}
-          </div>
-        </div>
-      </div>
-    </details>
-
-    <details class="rawbox">
-      <summary>레버리지 순위 전체 · ${AC.list.length}건</summary>
-      <div class="rawbody"><div id="panel-struct-actions"></div></div>
-    </details>
-  `;
-
-  const ctrlCls = (c) => c === '높음' ? 'hi' : c === '중간' ? 'mid' : 'lo';
-  document.getElementById('panel-struct-actions').innerHTML = `
-    <div class="table-scroll" style="max-height:none;">
-      <table class="data-table">
-        <thead><tr>
-          <th style="width:40px">#</th><th style="width:56px">단계</th><th>액션</th>
-          <th style="text-align:right;width:104px">연 임팩트</th><th style="width:56px">통제력</th>
-        </tr></thead>
-        <tbody>
-          ${AC.list.map(a => `<tr title="${a.todo.replace(/"/g, '&quot;')}">
-            <td style="font-family:var(--mono);color:${a.rank <= 2 ? 'var(--gold-soft)' : 'var(--text-dim)'};font-weight:${a.rank <= 2 ? '600' : '400'}">${a.risk ? '방어' : a.rank}</td>
-            <td><span class="tag-pill ${a.stage === '유입' ? 'income' : a.stage === '누수' ? 'expense' : 'transfer'}">${a.stage}</span></td>
-            <td style="white-space:normal;">${a.short}</td>
-            <td style="text-align:right"><span class="act-imp">${a.impact ? '+' + formatCompactWon(a.impact) + '원' : '—'}</span></td>
-            <td><span class="act-ctrl ${ctrlCls(a.control)}">${a.control}</span></td>
-          </tr>`).join('')}
-        </tbody>
-      </table>
     </div>
   `;
 }
@@ -5405,10 +5573,6 @@ function renderIncomePage(container, data, d) {
         <div id="income-pie-legend"></div>
       </div>
     </div>
-    <details class="rawbox">
-      <summary>수입 내역</summary>
-      <div class="rawbody"><div id="income-table"></div></div>
-    </details>
   `;
 
   const catBtnsBox = document.getElementById('income-cat-btns');
@@ -5572,8 +5736,6 @@ function renderIncomePage(container, data, d) {
   }
   bindRangeToggle('income-pie-range-toggle', RANGE_OPTIONS, state.incomePieRange, onIncomePieRangePick);
   drawIncomePie();
-
-  renderAdvancedTable('income-table', incomeLedger, { majorOptions: [['수입', '전체']], defaultGroup: 'none' });
 }
 
 /* ---------------- page: 지출 ---------------- */
@@ -5706,16 +5868,12 @@ function renderExpensePage(container, data, d) {
       </div>
     </div>
     <div class="g">
-      <div class="panel s7" id="panel-top-vendors">
+      <div class="panel s12" id="panel-top-vendors">
         <div class="panel-title">
           <div>주요 지출처</div>
           <div class="range-toggle" id="vendor-range-toggle"></div>
         </div>
         <div id="top-vendors-list"></div>
-      </div>
-      <div class="panel s5">
-        <div class="panel-title"><div>큰 지출</div></div>
-        <div id="top-expenses-body"></div>
       </div>
     </div>` : ''}
 
@@ -5727,23 +5885,15 @@ function renderExpensePage(container, data, d) {
 
     ${SUB === 'budget' ? `
     <div class="g">
-      <div class="panel s7" id="panel-budget-month-section">
+      <div class="panel s12" id="panel-budget-month-section">
         <div class="panel-title">
           <div>카테고리별 예산</div>
           <div id="expense-month-nav-slot"></div>
         </div>
         <div id="cat-budget-body"></div>
       </div>
-      <div class="panel s5">
-        <div class="panel-title"><div>큰 지출</div></div>
-        <div id="top-expenses-body"></div>
-      </div>
     </div>` : ''}
 
-    <details class="rawbox">
-      <summary>지출 내역</summary>
-      <div class="rawbody"><div id="expense-table"></div></div>
-    </details>
   `;
   document.getElementById('exp-subnav').addEventListener('click', (e) => {
     const btn = e.target.closest('button');
@@ -5846,7 +5996,6 @@ function renderExpensePage(container, data, d) {
   }
 
   renderExpenseMonthSection(data, d);
-  renderAdvancedTable('expense-table', expenseLedger, { majorOptions: [['지출', '전체']], defaultGroup: 'none' });
 }
 
 /* ---------------- 카테고리별 예산 가이드 + 이번 달 주요 지출 (같은 연월 기준, 동시 업데이트) ---------------- */
@@ -5865,7 +6014,6 @@ function renderExpenseMonthSection(data, d) {
   if (navSlot) navSlot.innerHTML = renderMonthNavControls(idx, data, d);
   bindMonthNavControls(data, d);
   renderCategoryBudgetPanel(data, d);
-  renderTopExpensesPanel(data, d);
 }
 
 function setExpenseMonthIdx(idx, data, d) {
@@ -5907,7 +6055,6 @@ function bindMonthNavControls(data, d) {
 }
 
 function renderCategoryBudgetPanel(data, d) {
-  if (!document.getElementById('cat-budget-body')) return;
   const body = document.getElementById('cat-budget-body');
   if (!body) return;
   const catNames = Object.keys(data.expenseCategories);
@@ -5916,24 +6063,52 @@ function renderCategoryBudgetPanel(data, d) {
   const rows = catNames.map(name => {
     const vals = data.expenseCategories[name];
     const cur = vals[idx] || 0;
-    const window3 = [vals[idx - 1] || 0, vals[idx - 2] || 0, vals[idx - 3] || 0];
-    const guide = avgOf(window3);
+    const guide = avgOf([vals[idx - 1] || 0, vals[idx - 2] || 0, vals[idx - 3] || 0]);
     const budget = (state.budgets && state.budgets[name] !== undefined && state.budgets[name] !== null && state.budgets[name] !== '')
       ? Number(state.budgets[name]) : guide;
-    return { name, cur, guide, budget };
-  }).filter(r => r.cur > 0 || r.guide > 0 || r.budget > 0).sort((a, b) => b.cur - a.cur);
+    const remaining = budget - cur;
+    const pct = budget > 0 ? (cur / budget) * 100 : 0;
+    return { name, cur, guide, budget, remaining, pct, over: remaining < 0, custom: !!(state.budgets && state.budgets[name]) };
+  }).filter(r => r.cur > 0 || r.guide > 0 || r.budget > 0).sort((a, b) => b.pct - a.pct);
+
+  const sumBudget = rows.reduce((a, r) => a + r.budget, 0);
+  const sumCur = rows.reduce((a, r) => a + r.cur, 0);
+  const sumPct = sumBudget > 0 ? (sumCur / sumBudget) * 100 : 0;
+  const overCount = rows.filter(r => r.over).length;
 
   body.innerHTML = `
-    ${rows.map(r => {
-      const remaining = r.budget - r.cur;
-      const over = remaining < 0;
-      const pct = r.budget > 0 ? (r.cur / r.budget) * 100 : 0;
-      return `<div class="budget-row-compact ${over ? 'over' : ''}" title="${r.name}">
-        <span class="b-name">${r.name}</span>
-        <div class="b-bar-track"><div class="b-bar-fill ${over ? 'over' : ''}" style="width:${Math.min(pct, 100)}%"></div></div>
-        <span class="b-figures">${wonComma(r.cur)} / <input type="text" inputmode="numeric" class="budget-input-compact" data-cat="${r.name}" value="${wonComma(r.budget)}" />원 · <span style="color:${over ? 'var(--red)' : 'var(--green)'}">${over ? wonComma(Math.abs(remaining)) + '원 초과' : wonComma(remaining) + '원 여유'} (${pct.toFixed(0)}%)</span></span>
-      </div>`;
-    }).join('') || '<div class="empty-state">해당 월 데이터가 없어요.</div>'}
+    <div class="bg-total ${sumCur > sumBudget ? 'over' : ''}">
+      <div class="bg-total-head">
+        <span>합계</span>
+        <b>${formatWon(sumCur)} <em>/ ${formatWon(sumBudget)}</em></b>
+      </div>
+      <div class="bg-track lg"><div class="bg-fill ${sumCur > sumBudget ? 'over' : ''}" style="width:${Math.min(sumPct, 100)}%"></div></div>
+      <div class="bg-total-foot">
+        <span>${sumCur > sumBudget ? `${formatWon(sumCur - sumBudget)} 초과` : `${formatWon(sumBudget - sumCur)} 남음`}</span>
+        <span>${sumPct.toFixed(0)}%${overCount ? ` · 초과 ${overCount}개` : ''}</span>
+      </div>
+    </div>
+
+    <div class="bg-table">
+      <div class="bg-head">
+        <span>카테고리</span><span>사용</span><span>예산</span><span class="bg-barcol">진행</span><span>남은 금액</span>
+      </div>
+      ${rows.map(r => `
+        <div class="bg-row ${r.over ? 'over' : ''}">
+          <span class="bg-nm" title="${r.name}">${r.name}</span>
+          <span class="bg-cur">${wonComma(r.cur)}</span>
+          <span class="bg-bud">
+            <input type="text" inputmode="numeric" class="budget-input-compact" data-cat="${r.name}" value="${wonComma(r.budget)}" title="${r.custom ? '직접 설정' : '최근 3개월 평균'}" />
+            ${r.custom ? '' : '<em title="최근 3개월 평균">자동</em>'}
+          </span>
+          <span class="bg-barcol">
+            <span class="bg-track"><span class="bg-fill ${r.over ? 'over' : ''}" style="width:${Math.min(r.pct, 100)}%"></span></span>
+            <em>${r.pct.toFixed(0)}%</em>
+          </span>
+          <span class="bg-rem ${r.over ? 'over' : ''}">${r.over ? '+' + wonComma(Math.abs(r.remaining)) : wonComma(r.remaining)}</span>
+        </div>`).join('') || '<div class="empty-state">해당 월 데이터가 없어요.</div>'}
+    </div>
+    <div class="settings-note">예산 칸을 직접 고치면 저장돼요. 비우면 최근 3개월 평균으로 돌아갑니다.</div>
   `;
 
   body.querySelectorAll('.budget-input-compact').forEach(inp => {
@@ -5941,8 +6116,7 @@ function renderCategoryBudgetPanel(data, d) {
     inp.addEventListener('change', () => {
       const cat = inp.dataset.cat;
       const raw = inp.value.replace(/[^0-9]/g, '');
-      const val = raw === '' ? undefined : parseFloat(raw);
-      state.budgets[cat] = val;
+      state.budgets[cat] = raw === '' ? undefined : parseFloat(raw);
       saveBudgets();
       renderCategoryBudgetPanel(data, d);
     });
@@ -6983,6 +7157,14 @@ function getCategoryMonthlyProfit(stockMonthly, stockCategoryMap) {
   return { categories: [...cats].sort(), byCatMonth };
 }
 
+const INV_SERIES = [
+  { key: 'balance', label: '평가액', color: '#4c8c6b' },
+  { key: 'contrib', label: '누적 원금', color: '#e0c766' },
+  { key: 'transfer', label: '투자 이체', color: '#39a8bd' },
+  { key: 'returns', label: '실현 수익', color: '#e0c766' },
+  { key: 'roi', label: '원금 대비 수익률', color: '#9b7fc2' }
+];
+
 const INV_SUBS = [
   ['overview', '요약'],
   ['holdings', '종목·테마'],
@@ -6992,18 +7174,8 @@ const INV_SUBS = [
 
 function renderInvestmentPage(container, data, d) {
   const SUB = INV_SUBS.some(s => s[0] === state.invSub) ? state.invSub : 'overview';
-  const subnav = `<div class="subnav-row">
-    <div class="subnav sub2" id="inv-subnav">${INV_SUBS.map(([v, l]) =>
-      `<button data-sub="${v}" class="${v === SUB ? 'active' : ''}">${l}</button>`).join('')}</div>
-    ${SUB === 'overview' ? `
-    <div class="subnav-ctrl">
-      <div class="range-toggle" id="inv-period-toggle">
-        <button data-period="month" class="${(state.invPeriod || 'month') === 'month' ? 'active' : ''}">월</button>
-        <button data-period="year" class="${state.invPeriod === 'year' ? 'active' : ''}">연</button>
-      </div>
-      <div class="range-toggle" id="inv-range-toggle"></div>
-    </div>` : ''}
-  </div>`;
+  const subnav = `<div class="subnav sub2" id="inv-subnav">${INV_SUBS.map(([v, l]) =>
+    `<button data-sub="${v}" class="${v === SUB ? 'active' : ''}">${l}</button>`).join('')}</div>`;
   const invCategories = ['투자 자산'];
   const byMonthCat = {};
   data.assetRows.forEach(r => {
@@ -7102,36 +7274,28 @@ function renderInvestmentPage(container, data, d) {
           <div class="value" style="color:${cumInvestmentIncome >= 0 ? 'var(--green)' : 'var(--red)'}">${cumInvestmentIncome >= 0 ? '+' : ''}${formatCompactWon(cumInvestmentIncome)}원</div>
           <div class="sub">배당 · 매매 · 이자</div>
         </div>
-        ${accountList.map(([name, v]) => `
-        <div class="stat-card">
-          <div class="label">${name}</div>
-          <div class="value">${formatCompactWon(v.amount)}원</div>
-          <div class="sub">평가액의 ${latestInv ? ((v.amount / latestInv) * 100).toFixed(0) : 0}%</div>
-        </div>`).join('')}
       </div>
     </div>
 
     <div class="g">
-      <div class="panel s6">
+      <div class="panel s12">
         <div class="panel-title">
-          <div>원금 vs 평가액</div>
-          <div class="range-toggle" id="inv-cum-mode-toggle">
-            <button data-mode="amount" class="${state.invCumMode !== 'roi' ? 'active' : ''}">금액</button>
-            <button data-mode="roi" class="${state.invCumMode === 'roi' ? 'active' : ''}">수익률</button>
+          <div>투자 추이</div>
+          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+            <div class="range-toggle" id="inv-period-toggle">
+              <button data-period="month" class="${(state.invPeriod || 'month') === 'month' ? 'active' : ''}">월</button>
+              <button data-period="year" class="${state.invPeriod === 'year' ? 'active' : ''}">연</button>
+            </div>
+            <div class="range-toggle" id="inv-range-toggle"></div>
           </div>
         </div>
-        <div class="chart-wrap tall"><canvas id="chart-inv-cum"></canvas></div>
-        <div class="chart-legend" id="inv-cum-legend"></div>
-        <div class="settings-note" id="inv-cum-note"></div>
-      </div>
-      <div class="panel s3">
-        <div class="panel-title"><div>투자 이체</div></div>
-        <div class="chart-wrap tall"><canvas id="chart-inv-contrib"></canvas></div>
-      </div>
-      <div class="panel s3">
-        <div class="panel-title"><div>실현 수익</div></div>
-        <div class="chart-wrap tall"><canvas id="chart-inv-returns"></canvas></div>
-        <div class="chart-legend" id="inv-returns-legend"></div>
+        <div class="series-toggles" id="inv-series-toggles">
+          ${INV_SERIES.map(sr => `<label class="series-chk ${state.invSeries[sr.key] ? 'on' : ''}">
+            <input type="checkbox" data-key="${sr.key}" ${state.invSeries[sr.key] ? 'checked' : ''} />
+            <i style="background:${sr.color}"></i>${sr.label}
+          </label>`).join('')}
+        </div>
+        <div class="chart-wrap tall" style="min-height:300px;"><canvas id="chart-inv-main"></canvas></div>
       </div>
     </div>` : ''}
 
@@ -7181,10 +7345,6 @@ function renderInvestmentPage(container, data, d) {
 
     ${SUB === 'toss' ? `<div class="g"><div class="panel s8" id="panel-toss-live"></div></div>` : ''}
 
-    <details class="rawbox">
-      <summary>투자 관련 내역</summary>
-      <div class="rawbody"><div id="investment-table"></div></div>
-    </details>
   `;
 
   document.getElementById('inv-subnav').addEventListener('click', (e) => {
@@ -7202,172 +7362,82 @@ function renderInvestmentPage(container, data, d) {
 
   if (SUB === 'overview') {
 
-  const drawCum = () => {
-    const period = state.invPeriod || 'month';
-    const mode = state.invCumMode === 'roi' ? 'roi' : 'amount';
-    if (state.charts.invCum) state.charts.invCum.destroy();
-    const cumCtx = document.getElementById('chart-inv-cum');
-
-    document.getElementById('inv-cum-legend').innerHTML = mode === 'roi'
-      ? '<span><i style="background:#c9a227"></i>원금 대비 수익률(%)</span>'
-      : '<span><i style="background:#4c8c6b"></i>투자자산 평가액</span><span><i style="background:#e0c766"></i>누적 이체 원금</span>';
-    document.getElementById('inv-cum-note').innerHTML = mode === 'roi'
-      ? `각 시점의 <b>(평가액 − 누적 원금) ÷ 누적 원금</b>이에요. 0% 선 위에 있으면 넣은 돈보다 많이 갖고 있다는 뜻. 현재 <b style="color:${roiPct !== null && roiPct >= 0 ? 'var(--green)' : 'var(--red)'}">${fmtPct(roiPct)}</b>${valueRatioPct !== null ? ` · 넣은 돈의 ${valueRatioPct.toFixed(1)}%` : ''}`
-      : '두 선의 차이(평가액 − 누적 원금)가 곧 대략적인 누적 손익이에요.';
-
-    if (mode === 'roi') {
-      let labels, roiData;
-      if (period === 'year') {
-        const map = {};
-        roiSeries.forEach(s => { map[assetMonthYear(s.month)] = s; });
-        const years = Object.keys(map).sort();
-        labels = years.map(y => y + '년');
-        roiData = years.map(y => map[y].roi);
-      } else {
-        const slice = sliceByRange(roiSeries, state.invRange);
-        labels = slice.map(s => assetMonthLabel(s.month));
-        roiData = slice.map(s => s.roi);
-      }
-      state.charts.invCum = new Chart(cumCtx, {
-        type: 'line',
-        data: {
-          labels,
-          datasets: [{
-            label: '원금 대비 수익률', data: roiData, borderColor: '#c9a227',
-            backgroundColor: 'rgba(201,162,39,0.12)', fill: true, tension: 0.3, pointRadius: 2,
-            spanGaps: true, labelColor: '#efdfa0', labelOffset: -10,
-            labelFormatter: (v) => `${v.toFixed(1)}%`
-          }]
-        },
-        options: {
-          responsive: true, maintainAspectRatio: false, layout: { padding: { top: 26 } },
-          plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` 수익률: ${c.raw === null ? '—' : fmtPct(c.raw)}` } } },
-          scales: {
-            x: { ticks: MONO_TICK, grid: { display: false } },
-            y: { ticks: { ...MONO_TICK, callback: (v) => `${v}%` }, grid: GRID_FAINT }
-          }
-        },
-        plugins: [valueLabelPlugin]
-      });
-      return;
-    }
-
-    let labels, balanceData, contribData;
-    if (period === 'year') {
-      const map = {};
-      cumSeries.forEach(s => { map[assetMonthYear(s.month)] = s; });
-      const years = Object.keys(map).sort();
-      labels = years.map(y => y + '년');
-      balanceData = years.map(y => map[y].balance);
-      contribData = years.map(y => map[y].cumContribution);
-    } else {
-      const cumSlice = sliceByRange(cumSeries, state.invRange);
-      labels = cumSlice.map(s => assetMonthLabel(s.month));
-      balanceData = cumSlice.map(s => s.balance);
-      contribData = cumSlice.map(s => s.cumContribution);
-    }
-    state.charts.invCum = new Chart(cumCtx, {
-      type: 'line',
-      data: {
-        labels,
-        datasets: [
-          { label: '평가액', data: balanceData, borderColor: '#4c8c6b', backgroundColor: 'rgba(76,140,107,0.12)', fill: true, tension: 0.3, pointRadius: 2, labelColor: '#c7e4d4', labelOffset: -20 },
-          { label: '누적 원금', data: contribData, borderColor: '#e0c766', backgroundColor: 'transparent', borderDash: [5, 4], tension: 0.3, pointRadius: 2, labelColor: '#efdfa0', labelOffset: 14 }
-        ]
-      },
-      options: {
-        responsive: true, maintainAspectRatio: false, layout: { padding: { top: 26 } },
-        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` ${c.dataset.label}: ${formatWon(c.raw)}` } } },
-        scales: { x: { ticks: MONO_TICK, grid: { display: false } }, y: { ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT } }
-      },
-      plugins: [valueLabelPlugin]
-    });
-  };
-  document.getElementById('inv-cum-mode-toggle').addEventListener('click', (e) => {
-    const btn = e.target.closest('button');
-    if (!btn) return;
-    state.invCumMode = btn.dataset.mode;
-    document.querySelectorAll('#inv-cum-mode-toggle button').forEach(b => b.classList.toggle('active', b === btn));
-    drawCum();
-  });
-  drawCum();
-
-  const drawContrib = () => {
-    const period = state.invPeriod || 'month';
-    if (state.charts.invContrib) state.charts.invContrib.destroy();
-    const contribCtx = document.getElementById('chart-inv-contrib');
-    let labels, values;
-    if (period === 'year') {
-      const map = {};
-      data.months.forEach((m, i) => {
-        const y = pivotYearMonth(m).year;
-        map[y] = (map[y] || 0) + ((data.transferCategories['투자 자산'] || [])[i] || 0);
-      });
-      const years = Object.keys(map).sort();
-      labels = years.map(y => y + '년');
-      values = years.map(y => map[y]);
-    } else {
-      const monthsSlice = sliceByRange(data.months, state.invRange);
-      labels = monthsSlice.map(pivotMonthLabel);
-      values = sliceByRange(data.transferCategories['투자 자산'] || [], state.invRange).map(v => v || 0);
-    }
-    state.charts.invContrib = new Chart(contribCtx, {
-      data: {
-        labels,
-        datasets: [
-          { type: 'bar', label: '투자 이체', data: values, backgroundColor: 'rgba(76,140,107,0.75)', borderRadius: 3, labelColor: '#c7e4d4' }
-        ]
-      },
-      options: {
-        responsive: true, maintainAspectRatio: false, layout: { padding: { top: 18 } },
-        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` ${formatWon(c.raw)}` } } },
-        scales: { x: { ticks: MONO_TICK, grid: { display: false } }, y: { ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT } }
-      },
-      plugins: [valueLabelPlugin, avgLinePlugin(values)]
-    });
-  };
-  drawContrib();
-
   const returnsDataFull = getInvestmentIncomeMonthly(data.ledger);
-  const returnsPalette = ['#e0c766', '#4c8c6b', '#5b8fc7', '#9b7fc2', '#c1483f'];
-  document.getElementById('inv-returns-legend').innerHTML = returnsDataFull.items.map((n, i) => `<span><i style="background:${returnsPalette[i % returnsPalette.length]}"></i>${n}</span>`).join('');
-  const drawReturns = () => {
+  /* --- 통합 추이 차트 --- */
+  const amToYM = (am) => {
+    const pk = assetMonthToPivotKey(am);
+    if (!pk) return null;
+    const ym = pivotYearMonth(pk);
+    return ym.year ? `${ym.year}-${String(ym.month).padStart(2, '0')}` : null;
+  };
+  const transferByYM = {};
+  data.months.forEach((pm, i) => {
+    const ym = pivotYearMonth(pm);
+    if (!ym.year) return;
+    transferByYM[`${ym.year}-${String(ym.month).padStart(2, '0')}`] = (data.transferCategories['투자 자산'] || [])[i] || 0;
+  });
+  const returnsByYM = {};
+  Object.keys(returnsDataFull.byMonthItem).forEach(k => {
+    returnsByYM[k] = Object.values(returnsDataFull.byMonthItem[k]).reduce((a, v) => a + v, 0);
+  });
+
+  const drawInvMain = () => {
+    const ctx = document.getElementById('chart-inv-main');
+    if (!ctx) return;
+    if (state.charts.invMain) state.charts.invMain.destroy();
     const period = state.invPeriod || 'month';
-    if (state.charts.invReturns) state.charts.invReturns.destroy();
-    const returnsCtx = document.getElementById('chart-inv-returns');
-    let labels, datasets;
+    const src = period === 'year' ? months : sliceByRange(months, state.invRange);
+
+    let labels, pick;
     if (period === 'year') {
-      const yearSet = new Set(returnsDataFull.months.map(m => m.slice(0, 4)));
-      const years = [...yearSet].sort();
+      const byYear = {};
+      months.forEach(am => { byYear[assetMonthYear(am)] = am; });   /* 연말 스냅샷 */
+      const years = Object.keys(byYear).sort();
       labels = years.map(y => y + '년');
-      datasets = returnsDataFull.items.map((name, i) => ({
-        label: name, backgroundColor: returnsPalette[i % returnsPalette.length], stack: 's',
-        data: years.map(y => returnsDataFull.months.filter(m => m.startsWith(y)).reduce((sum, m) => sum + ((returnsDataFull.byMonthItem[m] && returnsDataFull.byMonthItem[m][name]) || 0), 0))
-      }));
+      pick = years.map(y => byYear[y]);
+      /* 연 단위 흐름 항목(이체·실현)은 그 해 합계 */
+      var flowAgg = (mapByYM) => years.map(y => months.filter(am => assetMonthYear(am) === y)
+        .reduce((a, am) => a + ((mapByYM[amToYM(am)] || 0)), 0));
     } else {
-      const returnsMonths = sliceByRange(returnsDataFull.months, state.invRange);
-      labels = returnsMonths;
-      datasets = returnsDataFull.items.map((name, i) => ({ label: name, data: returnsMonths.map(m => (returnsDataFull.byMonthItem[m] && returnsDataFull.byMonthItem[m][name]) || 0), backgroundColor: returnsPalette[i % returnsPalette.length], stack: 's' }));
+      labels = src.map(assetMonthLabel);
+      pick = src;
+      var flowAgg = (mapByYM) => src.map(am => mapByYM[amToYM(am)] || 0);
     }
-    state.charts.invReturns = new Chart(returnsCtx, {
-      type: 'bar',
-      data: { labels, datasets },
+
+    const cumMap = {}; cumSeries.forEach(x => { cumMap[x.month] = x; });
+    const roiMap = {}; roiSeries.forEach(x => { roiMap[x.month] = x.roi; });
+
+    const S = state.invSeries;
+    const ds = [];
+    if (S.transfer) ds.push({ type: 'bar', label: '투자 이체', data: flowAgg(transferByYM), backgroundColor: 'rgba(57,168,189,0.65)', borderRadius: 3, yAxisID: 'y', order: 4 });
+    if (S.returns) ds.push({ type: 'bar', label: '실현 수익', data: flowAgg(returnsByYM), backgroundColor: 'rgba(224,199,102,0.8)', borderRadius: 3, yAxisID: 'y', order: 3 });
+    if (S.balance) ds.push({ type: 'line', label: '평가액', data: pick.map(am => (cumMap[am] ? cumMap[am].balance : 0)), borderColor: '#4c8c6b', backgroundColor: 'rgba(76,140,107,0.10)', fill: true, tension: 0.3, pointRadius: 2, yAxisID: 'y', order: 1 });
+    if (S.contrib) ds.push({ type: 'line', label: '누적 원금', data: pick.map(am => (cumMap[am] ? cumMap[am].cumContribution : 0)), borderColor: '#e0c766', borderDash: [5, 4], backgroundColor: 'transparent', tension: 0.3, pointRadius: 2, yAxisID: 'y', order: 2 });
+    if (S.roi) ds.push({ type: 'line', label: '원금 대비 수익률', data: pick.map(am => (roiMap[am] === undefined ? null : roiMap[am])), borderColor: '#9b7fc2', backgroundColor: 'transparent', tension: 0.3, pointRadius: 2, spanGaps: true, yAxisID: 'y1', order: 0 });
+
+    state.charts.invMain = new Chart(ctx, {
+      data: { labels, datasets: ds },
       options: {
-        responsive: true, maintainAspectRatio: false, layout: { padding: { top: 18 } },
-        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` ${c.dataset.label}: ${formatWon(c.raw)}` } } },
-        scales: { x: { stacked: true, ticks: MONO_TICK, grid: { display: false } }, y: { stacked: true, ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT } }
-      },
-      plugins: [stackTotalLabelPlugin]
+        responsive: true, maintainAspectRatio: false, layout: { padding: { top: 16 } },
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: (c) => ` ${c.dataset.label}: ${c.dataset.yAxisID === 'y1' ? (c.raw === null ? '—' : fmtPct(c.raw)) : formatWon(c.raw)}` } }
+        },
+        scales: {
+          x: { ticks: { ...MONO_TICK, autoSkip: true, maxRotation: 0 }, grid: { display: false } },
+          y: { ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT },
+          y1: { display: S.roi, position: 'right', ticks: { ...MONO_TICK, callback: (v) => `${v}%` }, grid: { display: false } }
+        }
+      }
     });
   };
-  drawReturns();
+  drawInvMain();
 
-  /* 세 차트 공통 기간·범위 컨트롤 */
-  const drawAllInv = () => { drawCum(); drawContrib(); drawReturns(); };
   function onInvRangePick(v) {
     state.invRange = v === 'all' ? 'all' : parseInt(v, 10);
     bindRangeToggle('inv-range-toggle', RANGE_OPTIONS, state.invRange, onInvRangePick);
-    drawAllInv();
+    drawInvMain();
   }
   bindRangeToggle('inv-range-toggle', RANGE_OPTIONS, state.invRange, onInvRangePick);
   document.getElementById('inv-period-toggle').addEventListener('click', (e) => {
@@ -7375,7 +7445,14 @@ function renderInvestmentPage(container, data, d) {
     if (!btn) return;
     state.invPeriod = btn.dataset.period;
     document.querySelectorAll('#inv-period-toggle button').forEach(b => b.classList.toggle('active', b === btn));
-    drawAllInv();
+    drawInvMain();
+  });
+  document.getElementById('inv-series-toggles').addEventListener('change', (e) => {
+    const cb = e.target.closest('input[type="checkbox"]');
+    if (!cb) return;
+    state.invSeries[cb.dataset.key] = cb.checked;
+    cb.closest('.series-chk').classList.toggle('on', cb.checked);
+    drawInvMain();
   });
   }
 
@@ -7448,8 +7525,6 @@ function renderInvestmentPage(container, data, d) {
     </div>
   `).join('') || '<div class="empty-state">종목별 수익 데이터가 없어요.</div>';
   }
-
-  renderAdvancedTable('investment-table', investLedger, { majorOptions: [['all', '전체'], ['이체', '이체'], ['수입', '투자수익']], defaultGroup: 'none' });
 }
 
 /* ---------------- page: 저축 ---------------- */
@@ -7594,10 +7669,6 @@ function renderSavingsPage(container, data, d, scopeKey) {
         <div class="chart-wrap tall"><canvas id="chart-sav-contrib"></canvas></div>
       </div>
     </div>
-    <details class="rawbox">
-      <summary>${S.label} 관련 내역</summary>
-      <div class="rawbody"><div id="savings-table"></div></div>
-    </details>
   `;
 
   const drawSavTrend = () => {
@@ -7656,8 +7727,6 @@ function renderSavingsPage(container, data, d, scopeKey) {
   }
   bindRangeToggle('sav-contrib-range-toggle', RANGE_OPTIONS, state.savContribRange, onSavContribRangePick);
   drawSavContrib();
-
-  renderAdvancedTable('savings-table', scopeLedger, { majorOptions: [['all', '전체'], ['이체', '이체']], defaultGroup: 'none' });
 }
 
 async function loadBudgets() {
