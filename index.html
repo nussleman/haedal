@@ -1261,43 +1261,60 @@ body{font-variant-numeric:tabular-nums;}
 .gb-metric.good .gb-verdict{background:var(--green-soft);color:#8fd0ac;}
 .gb-metric.bad .gb-verdict{background:var(--red-soft);color:#eb9891;}
 .gb-bar i.bad{background:linear-gradient(90deg,var(--red),#d9756c);}
+.gb-ov{font-size:10px;color:var(--gold-soft);margin-left:4px;}
 .gb-nolink{font-family:var(--mono);font-size:9.5px;padding:2px 6px;border-radius:5px;background:rgba(255,255,255,.05);color:var(--text-faint);}
 
-/* ---------- 증식 구조: 유입 / 누수 ---------- */
-.fl-col.inflow{border-top:2px solid rgba(76,140,107,.55);}
-.fl-col.leak{border-top:2px solid rgba(193,72,63,.55);}
-.fl-item{padding:13px 0;border-bottom:1px dotted var(--border);}
-.fl-item:last-child{border-bottom:none;padding-bottom:2px;}
-.fl-item-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;}
-.fl-nm{font-size:14px;font-weight:600;color:var(--text);}
-.fl-amt{font-family:var(--mono);font-size:17px;font-weight:600;}
-.fl-amt em{font-style:normal;font-size:10px;color:var(--text-faint);margin-left:3px;}
-.fl-amt.inc{color:#7fbf9c;}
-.fl-amt.exp{color:#e08a82;}
-.fl-bar{display:flex;align-items:center;gap:8px;margin-top:7px;}
-.fl-bar i{flex:1;height:5px;border-radius:3px;background:rgba(255,255,255,.06);position:relative;overflow:hidden;}
-.fl-bar i::after{content:'';position:absolute;inset:0;width:100%;border-radius:3px;}
-.fl-bar i.inc::after{background:#4c8c6b;}
-.fl-bar i.exp::after{background:#c1483f;}
-.fl-bar span{font-family:var(--mono);font-size:10px;color:var(--text-faint);width:32px;text-align:right;}
-.fl-act{display:grid;grid-template-columns:20px 1fr auto 46px;gap:9px;align-items:center;
-  margin-top:7px;padding:7px 9px;border-radius:8px;background:var(--panel-2);
-  border:1px solid var(--border);font-size:12.5px;}
-.fl-act.p1{border-color:var(--gold);background:rgba(201,162,39,.09);}
-.fl-rank{font-family:var(--mono);font-size:10px;font-weight:700;width:18px;height:18px;line-height:18px;
+/* ---------- 증식 구조: 시뮬레이터 ---------- */
+.sim-kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:10px;margin-top:12px;
+  padding-top:12px;border-top:1px solid var(--border);}
+.sim-kpi span{display:flex;flex-direction:column;gap:2px;}
+.sim-kpi em{font-style:normal;font-family:var(--mono);font-size:9.5px;letter-spacing:.05em;color:var(--text-faint);}
+.sim-kpi b{font-family:var(--mono);font-size:17px;font-weight:600;color:var(--text);}
+.sim-kpi i{font-style:normal;font-family:var(--mono);font-size:9.5px;color:var(--text-faint);}
+
+.lv-group{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;color:var(--text-faint);
+  margin:12px 0 5px;padding-bottom:4px;border-bottom:1px solid var(--border);}
+.lv-group:first-of-type{margin-top:2px;}
+.lv{display:grid;grid-template-columns:1fr auto;grid-template-areas:'nm cur' 'in delta';
+  gap:3px 8px;padding:7px 0;border-bottom:1px dotted var(--border);}
+.lv:last-child{border-bottom:none;}
+.lv-nm{grid-area:nm;font-size:12.5px;color:var(--text);}
+.lv-nm em{font-style:normal;font-family:var(--mono);font-size:9.5px;color:var(--text-faint);margin-left:6px;}
+.lv-cur{grid-area:cur;font-family:var(--mono);font-size:10px;color:var(--text-faint);align-self:center;}
+.lv-in{grid-area:in;display:flex;align-items:center;gap:4px;}
+.lv-in input{width:110px;background:var(--panel-2);border:1px solid var(--border-strong);color:var(--text);
+  font-family:var(--mono);font-size:12.5px;border-radius:6px;padding:5px 8px;text-align:right;}
+.lv-in input:focus{outline:none;border-color:var(--gold-soft);}
+.lv-in i{font-style:normal;font-family:var(--mono);font-size:10px;color:var(--text-faint);}
+.lv-delta{grid-area:delta;font-family:var(--mono);font-size:11px;color:var(--text-faint);align-self:center;text-align:right;}
+.lv.up .lv-delta{color:var(--green);}
+.lv.down .lv-delta{color:var(--red);}
+.lv.up .lv-in input{border-color:rgba(76,140,107,.6);}
+.lv.down .lv-in input{border-color:rgba(193,72,63,.6);}
+
+.pri-list{display:flex;flex-direction:column;}
+.pri{display:grid;grid-template-columns:26px 1fr 120px 52px 1.1fr;gap:12px;align-items:center;
+  padding:9px 2px;border-bottom:1px dotted var(--border);}
+.pri:last-child{border-bottom:none;}
+.pri-rank{font-family:var(--mono);font-size:11px;font-weight:700;width:24px;height:24px;line-height:24px;
   text-align:center;border-radius:50%;background:rgba(255,255,255,.07);color:var(--text-dim);}
-.fl-act.p1 .fl-rank{background:var(--gold);color:#1a1508;}
-.fl-act-nm{color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.fl-act-imp{font-family:var(--mono);font-size:12.5px;font-weight:600;color:var(--gold-soft);white-space:nowrap;}
-.fl-act-ctrl{height:4px;border-radius:2px;background:rgba(255,255,255,.07);overflow:hidden;}
-.fl-act-ctrl i{display:block;height:100%;border-radius:2px;}
-.fl-act-ctrl.hi i{background:var(--green);}
-.fl-act-ctrl.mid i{background:var(--gold);}
-.fl-act-ctrl.lo i{background:var(--text-faint);}
-.fl-noact{font-family:var(--mono);font-size:10.5px;color:var(--text-faint);margin-top:6px;}
-.fl-risk{border-color:rgba(193,72,63,.45)!important;background:rgba(193,72,63,.08);
-  font-size:12.5px;line-height:1.7;color:#e39a93;}
-.fl-risk b{color:#f0b8b2;margin-right:6px;}
+.pri.p1 .pri-rank{background:var(--gold);color:#1a1508;}
+.pri.risk .pri-rank{background:var(--red-soft);color:#eb9891;}
+.pri-body b{display:block;font-size:13.5px;font-weight:600;color:var(--text);}
+.pri-body em{font-style:normal;font-family:var(--mono);font-size:10px;color:var(--text-faint);}
+.pri-imp{font-family:var(--mono);font-size:14px;font-weight:600;color:var(--gold-soft);text-align:right;}
+.pri-imp i{font-style:normal;font-size:9.5px;color:var(--text-faint);margin-left:3px;}
+.pri-ctrl{font-family:var(--mono);font-size:10px;text-align:center;border-radius:5px;padding:3px 0;}
+.pri-ctrl.hi{background:var(--green-soft);color:#8fd0ac;}
+.pri-ctrl.mid{background:rgba(201,162,39,.18);color:var(--gold-soft);}
+.pri-ctrl.lo{background:rgba(255,255,255,.05);color:var(--text-faint);}
+.pri-goal-chip{font-family:var(--mono);font-size:10px;color:var(--gold-soft);
+  background:rgba(201,162,39,.12);border-radius:5px;padding:3px 7px;display:inline-block;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;}
+@media (max-width:1100px){
+  .pri{grid-template-columns:26px 1fr auto;row-gap:5px;}
+  .pri-ctrl,.pri-goal{grid-column:2 / -1;text-align:left;}
+}
 
 /* ---------- 카테고리별 예산 ---------- */
 .bg-total{border:1px solid var(--border-strong);border-radius:11px;background:var(--panel-2);padding:13px 15px;margin-bottom:14px;}
@@ -1340,6 +1357,21 @@ body{font-variant-numeric:tabular-nums;}
 .gb-rec-title{font-size:12.5px;font-weight:600;color:var(--text);line-height:1.4;}
 .gb-rec-why{font-family:var(--mono);font-size:10px;color:var(--text-faint);line-height:1.6;margin-top:4px;}
 .gb-rec .btn{margin-top:8px;width:100%;}
+
+.thm-row{display:grid;grid-template-columns:1.2fr 1.4fr 96px 1.3fr;gap:12px;align-items:center;
+  padding:7px 2px;border-bottom:1px dotted var(--border);font-size:12.5px;}
+.thm-row:last-child{border-bottom:none;}
+.thm-nm{color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.thm-nm em{font-style:normal;font-family:var(--mono);font-size:9.5px;color:var(--text-faint);margin-left:6px;}
+.thm-track{height:6px;border-radius:3px;background:rgba(255,255,255,.06);overflow:hidden;}
+.thm-track i{display:block;height:100%;border-radius:3px;background:var(--green);}
+.thm-track i.neg{background:var(--red);}
+.thm-amt{font-family:var(--mono);text-align:right;}
+.thm-top{font-family:var(--mono);font-size:10px;color:var(--text-faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+@media (max-width:1100px){
+  .thm-row{grid-template-columns:1fr 90px;row-gap:4px;}
+  .thm-track,.thm-top{grid-column:1 / -1;}
+}
 
 /* 차트 시리즈 체크박스 */
 .series-toggles{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:9px;}
@@ -1502,6 +1534,9 @@ const state = {
   homeSub: 'goals',        // 현황 하위 탭: goals | structure
   goalMoves: {},           // 드래그로 옮긴 목표 시기 (시트 반영 전 로컬 오버라이드)
   goalMetric: {},          // 목표 행별 수동 연동 지표 key
+  goalTarget: {},          // 목표 행별 수동 목표값 (문구 대신 이 값을 씀)
+  simLevers: {},           // 증식 구조 시뮬레이터 레버 입력
+  simYears: 10,
   nowMonthKey: null,       // '이번달' 탭에서 보고 있는 달 (YYYY-MM)
   nowWeekIdx: null,        // null = 그 달 전체, 0.. = 해당 주차만
   nowGranularity: 'week',  // 'week' | 'day'
@@ -1754,8 +1789,15 @@ function goalMetricExtra(data, d) {
   };
 }
 
-function computeGoalProgress(title, d, extra, forceKey) {
+function computeGoalProgress(title, d, extra, forceKey, targetOverride) {
   if (!title) return null;
+  const withOv = (p) => {
+    if (!p) return p;
+    if (targetOverride !== null && targetOverride !== undefined && targetOverride !== '' && !isNaN(Number(targetOverride))) {
+      return { ...p, target: Number(targetOverride), overridden: true };
+    }
+    return p;
+  };
   for (const m of GOAL_METRIC_MATCHERS) {
     if (forceKey && m.key !== forceKey) continue;
     const match = title.match(m.re);
@@ -1763,15 +1805,16 @@ function computeGoalProgress(title, d, extra, forceKey) {
     const target = m.target(match);
     const current = m.current(d, extra || {});
     if (target === null || target === undefined || isNaN(target)) continue;
-    return { current, target, invert: !!m.invert, isPct: !!m.isPct, type: m.type, key: m.key, name: m.name, dir: m.dir };
+    return withOv({ current, target, invert: !!m.invert, isPct: !!m.isPct, type: m.type, key: m.key, name: m.name, dir: m.dir });
   }
-  /* 수동으로 지표를 지정했는데 전용 패턴이 안 맞으면, 문구의 숫자를 목표값으로 쓴다 */
+  /* 수동으로 지표를 지정했는데 전용 패턴이 안 맞으면, 목표값 입력 → 문구의 숫자 순으로 쓴다 */
   if (forceKey) {
     const m = GOAL_METRIC_MATCHERS.find(x => x.key === forceKey);
     if (m) {
-      const target = parseGoalTargetValue(title, m.unit);
+      const ov = (targetOverride !== null && targetOverride !== undefined && targetOverride !== '' && !isNaN(Number(targetOverride))) ? Number(targetOverride) : null;
+      const target = ov !== null ? ov : parseGoalTargetValue(title, m.unit);
       if (target !== null && !isNaN(target)) {
-        return { current: m.current(d, extra || {}), target, invert: !!m.invert, isPct: !!m.isPct, type: m.type, key: m.key, name: m.name, dir: m.dir };
+        return withOv({ current: m.current(d, extra || {}), target, invert: !!m.invert, isPct: !!m.isPct, type: m.type, key: m.key, name: m.name, dir: m.dir });
       }
     }
   }
@@ -2012,6 +2055,11 @@ function aggregateByTag(tagRows) {
 /* ---------------- derived analysis ---------------- */
 
 function computeDerived(data) {
+  /* 오늘 이후의 달은 자산 스냅샷에 행만 있고 금액이 비어 있는 경우가 있어 전부 제외한다 */
+  const _now = new Date();
+  const nowAssetKey = _now.getFullYear() * 100 + (_now.getMonth() + 1);
+  data = { ...data, assetRows: (data.assetRows || []).filter(r => assetMonthKey(r.date) <= nowAssetKey) };
+
   const byMonth = {};
   data.assetRows.forEach(r => {
     if (r.amount === null) return;
@@ -2670,7 +2718,11 @@ function renderNav() {
 }
 
 function renderPage() {
-  const data = state.data;
+  const _now = new Date();
+  const _nowKey = _now.getFullYear() * 100 + (_now.getMonth() + 1);
+  const raw = state.data;
+  /* 미래(오늘 이후) 자산 스냅샷 행은 화면 전체에서 제외 */
+  const data = { ...raw, assetRows: (raw.assetRows || []).filter(r => assetMonthKey(r.date) <= _nowKey) };
   const d = computeDerived(data);
   destroyPageCharts();
   const body = document.getElementById('page-content');
@@ -2839,7 +2891,7 @@ function renderGoalBoard(data, d) {
     const doneDate = pickGoalField(g, 'doneDate');
     const vClass = goalStatusClass(status) || 'pending';
     /* 완료 = 초록 체크·취소선, 대기 = 점선 테두리·흐림 (둘을 다르게 보이게) */
-    const progress = computeGoalProgress(title, d, extra, (state.goalMetric || {})[g.__row] || null);
+    const progress = computeGoalProgress(title, d, extra, (state.goalMetric || {})[g.__row] || null, (state.goalTarget || {})[g.__row]);
 
     let metricHtml = '';
     if (progress) {
@@ -2863,6 +2915,7 @@ function renderGoalBoard(data, d) {
           <span class="gb-arrow">/</span>
           <span class="gb-tgt">${fmt(progress.target)}</span>
           <span class="gb-verdict">${good ? '달성' : '미달'}</span>
+          ${progress.overridden ? '<span class="gb-ov" title="목표 수치 직접 지정">✎</span>' : ''}
         </div>
         <div class="gb-bar"><i class="${good ? 'good' : 'bad'}" style="width:${pct}%"></i></div>
         <div class="gb-figs"><span>${progress.name}</span><span>${gapTxt}</span></div>`;
@@ -3134,6 +3187,7 @@ function openGoalEditor(goal, data, d, fmtPeriod) {
     memo: pickGoalField(g, 'memo') || ''
   };
   const savedKey = (state.goalMetric || {})[g.__row] || '';
+  const savedTarget = (state.goalTarget || {})[g.__row];
 
   const nowY = new Date().getFullYear();
   const periodOpts = [];
@@ -3174,6 +3228,11 @@ function openGoalEditor(goal, data, d, fmtPeriod) {
             </select>
           </label>
         </div>
+        <div class="fld-row">
+          <label class="fld"><span>목표 수치 (비우면 문구에서 인식)</span>
+            <input type="text" inputmode="numeric" id="ge-target" value="${savedTarget === undefined || savedTarget === null ? '' : wonComma(savedTarget)}" placeholder="예) 10000000 또는 40" />
+          </label>
+        </div>
         <label class="fld"><span>메모</span><input type="text" id="ge-memo" value="${cur.memo.replace(/"/g, '&quot;')}" /></label>
         <div class="ge-link" id="ge-link"></div>
       </div>
@@ -3191,7 +3250,8 @@ function openGoalEditor(goal, data, d, fmtPeriod) {
   const refreshLink = () => {
     const title = $('ge-title').value;
     const key = $('ge-metric').value || null;
-    const p = computeGoalProgress(title, d, extra, key);
+    const tv = $('ge-target').value.replace(/[^0-9.]/g, '');
+    const p = computeGoalProgress(title, d, extra, key, tv === '' ? null : tv);
     const box = $('ge-link');
     if (!p) {
       box.className = 'ge-link none';
@@ -3206,6 +3266,7 @@ function openGoalEditor(goal, data, d, fmtPeriod) {
   };
   $('ge-title').addEventListener('input', refreshLink);
   $('ge-metric').addEventListener('change', refreshLink);
+  $('ge-target').addEventListener('input', refreshLink);
   refreshLink();
 
   const close = () => back.remove();
@@ -3232,6 +3293,8 @@ function openGoalEditor(goal, data, d, fmtPeriod) {
       };
       if (!patch.title) { showToast('목표 문구를 입력해 주세요.', 'warn'); return; }
       if (!state.goalMetric) state.goalMetric = {};
+      if (!state.goalTarget) state.goalTarget = {};
+      const tvRaw = $('ge-target').value.replace(/[^0-9.]/g, '');
 
       if (isNew) {
         const rows = (state.data.goals || []).map(x => x.__row || 0);
@@ -3244,6 +3307,7 @@ function openGoalEditor(goal, data, d, fmtPeriod) {
         obj[goalFieldKeyFor(null, 'memo')] = patch.memo;
         state.data.goals = (state.data.goals || []).concat([obj]);
         if ($('ge-metric').value) state.goalMetric[newRow] = $('ge-metric').value;
+        if (tvRaw !== '') state.goalTarget[newRow] = Number(tvRaw);
         pushGoalOp({ action: 'addGoal', ...patch });
       } else {
         g[goalFieldKeyFor(g, 'title')] = patch.title;
@@ -3254,6 +3318,8 @@ function openGoalEditor(goal, data, d, fmtPeriod) {
         if (state.goalMoves) delete state.goalMoves[g.__row];
         if ($('ge-metric').value) state.goalMetric[g.__row] = $('ge-metric').value;
         else delete state.goalMetric[g.__row];
+        if (tvRaw !== '') state.goalTarget[g.__row] = Number(tvRaw);
+        else delete state.goalTarget[g.__row];
         pushGoalOp({ action: 'updateGoal', row: g.__row, ...patch });
       }
       close(); renderPage();
@@ -5285,107 +5351,194 @@ function renderStructurePage(container, data, d) {
 
   const risk = AC.list.find(a => a.risk && !(d.emergencyFund >= emgTargetV));
 
-  /* --- 유입 / 누수 두 축만. 액션은 각 항목에 붙인다. --- */
-  const byNode = {};
-  AC.list.forEach(a => { (byNode[a.node] = byNode[a.node] || []).push(a); });
-
-  const INFLOW = [
-    { nm: '근로소득', amt: m.per(m.inc.work), base: m.inc.total },
-    { nm: '부수입', amt: m.per(m.inc.side), base: m.inc.total },
-    { nm: '투자 수익', amt: m.per(m.inc.invest), base: m.inc.total }
+  /* ================= 시뮬레이터 =================
+     레버 6개를 조정하면 순저축이 바뀌고, 그게 20년 자산 곡선에 반영된다.
+     현재값 = 최근 n개월 월평균. 레버는 '얼마로 바꿀지' 절대값으로 입력한다. */
+  const LEVERS = [
+    { key: 'work',   side: 'in',  nm: '근로소득',   cur: m.per(m.inc.work),     unit: 'won', hint: '연봉 협상·이직' },
+    { key: 'side',   side: 'in',  nm: '부수입',     cur: m.per(m.inc.side),     unit: 'won', hint: '두 번째 채널' },
+    { key: 'invinc', side: 'in',  nm: '투자 수익',  cur: m.per(m.inc.invest),   unit: 'won', hint: '배당·실현' },
+    { key: 'fixed',  side: 'out', nm: '고정비',     cur: m.per(m.exp.fixed),    unit: 'won', hint: '한 번 끊으면 매달' },
+    { key: 'var',    side: 'out', nm: '변동비',     cur: m.per(m.exp.variable), unit: 'won', hint: '매달 판단' },
+    { key: 'tax',    side: 'out', nm: '세금',       cur: m.per(m.exp.tax),      unit: 'won', hint: '양도세·연금공제' }
   ];
-  const LEAK = [
-    { nm: '고정비', amt: m.per(m.exp.fixed), base: m.exp.total },
-    { nm: '변동비', amt: m.per(m.exp.variable), base: m.exp.total },
-    { nm: '세금', amt: m.per(m.exp.tax), base: m.exp.total }
-  ];
-  const maxImpact = Math.max(...AC.list.map(a => a.impact || 0), 1);
-  const ctrlPct = { '높음': 100, '중간': 60, '낮음': 20 };
+  const RET = { key: 'ret', nm: '연 수익률', cur: 6, unit: 'pct', hint: '투자성 자산 기대수익' };
 
-  const actionRow = (a) => `
-    <div class="fl-act ${a.rank === 1 ? 'p1' : ''}" title="${(a.todo || '').replace(/"/g, '&quot;')}">
-      <span class="fl-rank">${a.rank}</span>
-      <span class="fl-act-nm">${a.short}</span>
-      <span class="fl-act-imp">${a.impact ? '+' + formatCompactWon(a.impact) : '—'}</span>
-      <span class="fl-act-ctrl ${a.control === '높음' ? 'hi' : a.control === '중간' ? 'mid' : 'lo'}" title="통제력 ${a.control}">
-        <i style="width:${ctrlPct[a.control] || 50}%"></i>
-      </span>
-    </div>`;
+  if (!state.simLevers) state.simLevers = {};
+  const lvVal = (k, def) => (state.simLevers[k] === undefined || state.simLevers[k] === null || state.simLevers[k] === '')
+    ? def : Number(state.simLevers[k]);
 
-  const itemBlock = (it, tone) => {
-    const pct = it.base ? (Math.abs(it.amt) / (m.per(it.base) || 1)) * 100 : 0;
-    const acts = (byNode[it.nm] || []).sort((x, y) => x.rank - y.rank);
-    return `
-      <div class="fl-item">
-        <div class="fl-item-head">
-          <span class="fl-nm">${it.nm}</span>
-          <span class="fl-amt ${tone}">${formatCompactWon(it.amt)}<em>/월</em></span>
-        </div>
-        <div class="fl-bar"><i class="${tone}" style="width:${Math.min(pct, 100)}%"></i><span>${pct.toFixed(0)}%</span></div>
-        ${acts.map(actionRow).join('') || '<div class="fl-noact">액션 없음</div>'}
+  const simNow = () => {
+    const inc = LEVERS.filter(l => l.side === 'in').reduce((a, l) => a + lvVal(l.key, l.cur), 0);
+    const out = LEVERS.filter(l => l.side === 'out').reduce((a, l) => a + lvVal(l.key, l.cur), 0);
+    return { inc, out, net: inc - out, ret: lvVal('ret', RET.cur) / 100 };
+  };
+  const baseNet = m.per(m.netSave);
+  const startAssets = m.stock.total;
+
+  /* 월 복리 시뮬 (연 수익률은 투자성 자산 비중만큼만 적용) */
+  const riskShare = m.stock.total ? Math.min(m.riskAssets / m.stock.total, 1) : 0;
+  const project = (monthlyNet, annualRet, years) => {
+    const r = Math.pow(1 + annualRet * riskShare, 1 / 12) - 1;
+    const out = [startAssets];
+    let v = startAssets;
+    for (let i = 1; i <= years * 12; i++) { v = v * (1 + r) + monthlyNet; out.push(v); }
+    return out;
+  };
+
+  const drawSim = () => {
+    const ctx = document.getElementById('chart-sim');
+    if (!ctx) return;
+    if (state.charts.sim) state.charts.sim.destroy();
+    const yrs = state.simYears || 10;
+    const cur = simNow();
+    const baseLine = project(baseNet, RET.cur / 100, yrs);
+    const simLine = project(cur.net, cur.ret, yrs);
+    const labels = baseLine.map((_, i) => (i % 12 === 0 ? `${i / 12}년` : ''));
+    const mileLines = (tg.milestones || []).filter(v => v > startAssets).slice(0, 2);
+    state.charts.sim = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          { label: '지금 이대로', data: baseLine, borderColor: 'rgba(154,163,182,.75)', borderDash: [5, 4], backgroundColor: 'transparent', pointRadius: 0, tension: .25, borderWidth: 2 },
+          { label: '레버 적용', data: simLine, borderColor: '#c9a227', backgroundColor: 'rgba(201,162,39,.12)', fill: true, pointRadius: 0, tension: .25, borderWidth: 2.5 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, layout: { padding: { top: 10 } },
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: {
+            title: (it) => `${(it[0].dataIndex / 12).toFixed(1)}년 후`,
+            label: (c) => ` ${c.dataset.label}: ${formatCompactWon(c.raw)}원`
+          } },
+          annotation: undefined
+        },
+        scales: {
+          x: { ticks: { ...MONO_TICK, autoSkip: false, maxRotation: 0 }, grid: { display: false } },
+          y: { ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT }
+        }
+      }
+    });
+
+    /* 결과 요약 */
+    const endBase = baseLine[baseLine.length - 1];
+    const endSim = simLine[simLine.length - 1];
+    const diff = endSim - endBase;
+    const yearsTo = (target) => {
+      if (!target) return null;
+      const idx = simLine.findIndex(v => v >= target);
+      return idx === -1 ? null : (idx / 12);
+    };
+    const mile = (tg.milestones || []).find(v => v > startAssets);
+    document.getElementById('sim-out').innerHTML = `
+      <div class="sim-kpi">
+        <span><em>${yrs}년 후 자산</em><b>${formatCompactWon(endSim)}원</b></span>
+        <span><em>지금 이대로 대비</em><b style="color:${diff >= 0 ? 'var(--net)' : 'var(--red)'}">${diff >= 0 ? '+' : '−'}${formatCompactWon(Math.abs(diff))}원</b></span>
+        <span><em>월 순저축</em><b style="color:${cur.net >= baseNet ? 'var(--net)' : 'var(--red)'}">${formatCompactWon(cur.net)}원</b><i>현재 ${formatCompactWon(baseNet)}</i></span>
+        <span><em>저축률</em><b>${cur.inc > 0 ? ((cur.net / cur.inc) * 100).toFixed(1) : '—'}%</b><i>현재 ${m.saveRate.toFixed(1)}%</i></span>
+        ${mile ? `<span><em>${formatCompactWon(mile)}원 도달</em><b>${yearsTo(mile) === null ? `${yrs}년 내 미달` : yearsTo(mile).toFixed(1) + '년'}</b></span>` : ''}
       </div>`;
+  };
+
+  const leverRow = (l) => {
+    const v = lvVal(l.key, l.cur);
+    const changed = Math.round(v) !== Math.round(l.cur);
+    const delta = v - l.cur;
+    const good = l.side === 'in' ? delta > 0 : delta < 0;
+    return `<div class="lv ${changed ? (good ? 'up' : 'down') : ''}">
+      <span class="lv-nm">${l.nm}<em>${l.hint}</em></span>
+      <span class="lv-cur">현재 ${l.unit === 'pct' ? l.cur + '%' : formatCompactWon(l.cur)}</span>
+      <span class="lv-in">
+        <input type="text" inputmode="numeric" data-lv="${l.key}" value="${l.unit === 'pct' ? v : wonComma(Math.round(v))}" />
+        <i>${l.unit === 'pct' ? '%' : '원'}</i>
+      </span>
+      <span class="lv-delta">${changed ? `${delta > 0 ? '+' : '−'}${l.unit === 'pct' ? Math.abs(delta).toFixed(1) + '%p' : formatCompactWon(Math.abs(delta))}` : '—'}</span>
+    </div>`;
+  };
+
+  /* 우선순위 액션 (레버리지 통합) */
+  const actions = AC.list.slice();
+  const goalFor = (a) => {
+    const gs = (data.goals || []).filter(g => pickGoalField(g, 'title'));
+    const kw = { '고정비': /고정비/, '변동비': /지출/, '세금': /(연금|양도|세금)/, '비상금': /비상금/, '근로소득': /(수입|소득|연봉)/, '투자 수익': /(수익률|투자)/ };
+    const re = kw[a.node];
+    if (!re) return null;
+    const hit = gs.find(g => re.test(String(pickGoalField(g, 'title'))));
+    return hit ? { title: pickGoalField(hit, 'title'), status: pickGoalField(hit, 'status') } : null;
   };
 
   container.innerHTML = `
     <div class="g">
-      <div class="stat-grid s12" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:0;">
-        <div class="stat-card">
-          <div class="label">유입 / 월</div>
-          <div class="value" style="color:var(--green)">${formatCompactWon(m.per(m.inc.total))}원</div>
-          <div class="sub">근로 ${(m.inc.total ? (m.inc.work / m.inc.total) * 100 : 0).toFixed(0)}%</div>
+      <div class="panel s8">
+        <div class="panel-title">
+          <div>자산 시뮬레이션</div>
+          <div class="range-toggle" id="sim-years">
+            ${[5, 10, 20].map(y => `<button data-y="${y}" class="${(state.simYears || 10) === y ? 'active' : ''}">${y}년</button>`).join('')}
+          </div>
         </div>
-        <div class="stat-card">
-          <div class="label">누수 / 월</div>
-          <div class="value" style="color:var(--red)">${formatCompactWon(m.per(m.exp.total))}원</div>
-          <div class="sub">고정 ${(m.exp.total ? (m.exp.fixed / m.exp.total) * 100 : 0).toFixed(0)}%</div>
+        <div class="chart-legend" style="margin-bottom:6px;">
+          <span><i style="background:rgba(154,163,182,.75)"></i>지금 이대로</span>
+          <span><i style="background:#c9a227"></i>레버 적용</span>
         </div>
-        <div class="stat-card">
-          <div class="label">= 순저축 / 월</div>
-          <div class="value" style="color:${m.netSave >= 0 ? 'var(--net)' : 'var(--red)'}">${formatCompactWon(m.per(m.netSave))}원</div>
-          <div class="sub ${m.saveRate >= state.goals.savingsRateTarget ? 'up' : 'down'}">저축률 ${m.saveRate.toFixed(1)}% / 목표 ${state.goals.savingsRateTarget}%</div>
-        </div>
-        <div class="stat-card">
-          <div class="label">액션 다 하면</div>
-          <div class="value" style="color:var(--gold-soft)">+${formatCompactWon(AC.list.reduce((a, x) => a + (x.impact || 0), 0))}원</div>
-          <div class="sub">연 환산 · 순저축 ${formatCompactWon(annNet)}원 대비</div>
-        </div>
-        <div class="stat-card">
-          <div class="label">다음 마일스톤</div>
-          <div class="value">${nextMile ? formatCompactWon(nextMile) + '원' : '—'}</div>
-          <div class="sub">${nextMile ? `${annNet > 0 ? ((nextMile - m.stock.total) / annNet).toFixed(1) + '년 남음' : '—'}` : '목표 탭 미설정'}</div>
-        </div>
+        <div class="chart-wrap" style="min-height:250px;"><canvas id="chart-sim"></canvas></div>
+        <div id="sim-out"></div>
+      </div>
+
+      <div class="panel s4">
+        <div class="panel-title"><div>레버</div><button class="btn small" id="sim-reset">되돌리기</button></div>
+        <div class="lv-group">유입 · 월</div>
+        ${LEVERS.filter(l => l.side === 'in').map(leverRow).join('')}
+        <div class="lv-group">누수 · 월</div>
+        ${LEVERS.filter(l => l.side === 'out').map(leverRow).join('')}
+        <div class="lv-group">수익률 · 연</div>
+        ${leverRow(RET)}
       </div>
     </div>
-
-    <div class="g">
-      <div class="panel s6 fl-col inflow">
-        <div class="panel-title"><div>유입을 키운다</div><span class="ptag">최근 ${m.n}개월 월평균</span></div>
-        ${INFLOW.map(it => itemBlock(it, 'inc')).join('')}
-      </div>
-      <div class="panel s6 fl-col leak">
-        <div class="panel-title"><div>누수를 줄인다</div><span class="ptag">최근 ${m.n}개월 월평균</span></div>
-        ${LEAK.map(it => itemBlock(it, 'exp')).join('')}
-      </div>
-    </div>
-
-    ${risk ? `<div class="g"><div class="panel s12 fl-risk">
-      <b>방어선</b> 비상금 ${formatCompactWon(d.emergencyFund)}원 / 목표 ${formatCompactWon(emgTargetV)}원 — 여기가 얇으면 하락장에서 투자 자산을 팔게 되고, 위 액션이 전부 무의미해집니다.
-    </div></div>` : ''}
 
     <div class="g">
       <div class="panel s12">
-        <div class="panel-title"><div>구조 점검</div><span class="ptag">${checks.length - failCount} / ${checks.length} 통과</span></div>
-        <div class="st-checks">
-          ${checks.map(c => `
-            <div class="st-chk ${c.ok === null ? 'na' : c.ok ? 'ok' : 'no'}">
-              <span class="st-chk-nm">${c.nm}</span>
-              <span class="st-chk-cur">${c.cur}</span>
-              <span class="st-chk-tgt">${c.tgt}</span>
-            </div>`).join('')}
+        <div class="panel-title"><div>지금 할 일</div><span class="ptag">연 환산 임팩트 × 통제력 순</span></div>
+        <div class="pri-list">
+          ${actions.map(a => {
+            const gl = goalFor(a);
+            return `<div class="pri ${a.rank === 1 ? 'p1' : ''} ${a.risk ? 'risk' : ''}">
+              <span class="pri-rank">${a.risk ? '!' : a.rank}</span>
+              <span class="pri-body">
+                <b>${a.short}</b>
+                <em>${a.node} · ${a.stage}</em>
+              </span>
+              <span class="pri-imp">${a.impact ? '+' + formatCompactWon(a.impact) + '원' : '—'}<i>/ 연</i></span>
+              <span class="pri-ctrl ${a.control === '높음' ? 'hi' : a.control === '중간' ? 'mid' : 'lo'}">${a.control}</span>
+              <span class="pri-goal">${gl ? `<span class="pri-goal-chip">🎯 ${gl.title}${gl.status ? ` · ${gl.status}` : ''}</span>` : ''}</span>
+            </div>`;
+          }).join('')}
         </div>
       </div>
     </div>
   `;
+
+  drawSim();
+  document.getElementById('sim-years').addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    state.simYears = Number(b.dataset.y);
+    document.querySelectorAll('#sim-years button').forEach(x => x.classList.toggle('active', x === b));
+    drawSim();
+  });
+  container.querySelectorAll('input[data-lv]').forEach(inp => {
+    inp.addEventListener('change', () => {
+      const raw = inp.value.replace(/[^0-9.]/g, '');
+      state.simLevers[inp.dataset.lv] = raw === '' ? undefined : Number(raw);
+      renderPage();
+    });
+  });
+  document.getElementById('sim-reset').addEventListener('click', () => {
+    state.simLevers = {};
+    renderPage();
+  });
 }
 
 /* ---------------- page: 자산 ---------------- */
@@ -7233,13 +7386,16 @@ function renderInvestmentPage(container, data, d) {
 
 
   const stockCategoryMap = data.stockCategoryMap || {};
+  /* 한 종목이 '우주, 레버리지'처럼 여러 테마를 가지면 각 테마에 모두 집계한다(합계는 중복). */
+  const stockTags = (name) => String(stockCategoryMap[name] || '').split(',').map(x => x.trim()).filter(Boolean);
   const stockCatAgg = (() => {
     const m = {};
     stockProfit.forEach(([name, amt]) => {
-      const cat = stockCategoryMap[name] || '미분류';
-      m[cat] = (m[cat] || 0) + amt;
+      const tags = stockTags(name);
+      if (!tags.length) { m['미분류'] = (m['미분류'] || 0) + amt; return; }
+      tags.forEach(t => { m[t] = (m[t] || 0) + amt; });
     });
-    return Object.entries(m).sort((a, b) => b[1] - a[1]);
+    return Object.entries(m).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]));
   })();
 
   const returnsDataFull0 = getInvestmentIncomeMonthly(data.ledger);
@@ -7301,39 +7457,34 @@ function renderInvestmentPage(container, data, d) {
 
     ${SUB === 'holdings' ? `
     <div class="g">
-      <div class="panel s8">
+      <div class="panel s12">
         <div class="panel-title">
-          <div>월간 수익 추이</div>
-          <div class="income-cat-btns" id="inv-pick-type-btns" style="margin:0;">
-            <button data-type="stock" class="income-cat-btn ${state.invPickType !== 'category' ? 'active' : ''}">종목</button>
-            <button data-type="category" class="income-cat-btn ${state.invPickType === 'category' ? 'active' : ''}">카테고리</button>
-          </div>
+          <div>테마별 실현 수익</div>
+          <span class="ptag">누적 · 한 종목이 여러 테마면 각 테마에 모두 집계 (합계 ≠ 총합)</span>
         </div>
-        <select id="inv-pick-name" class="month-nav-select-standalone"></select>
-        <div class="chart-wrap tall"><canvas id="chart-inv-pick"></canvas></div>
-      </div>
-      <div class="panel s4">
-        <div class="panel-title"><div>${hasTags ? '태그별 실현 수익' : '주식 카테고리별 수익'}</div></div>
-        <div id="${hasTags ? 'tag-profit-list' : 'stock-cat-list'}">
-          ${hasTags ? '' : (stockCatAgg.map(([name, amt]) => `
-            <div class="acct-row"><span></span><span class="acct-name">${name}</span><span class="acct-amt" style="color:${amt >= 0 ? 'var(--green)' : 'var(--red)'}">${formatWon(amt)}</span></div>
-          `).join('') || '<div class="empty-state">주식 카테고리 매핑을 찾지 못했어요.</div>')}
-        </div>
+        <div id="theme-list"></div>
       </div>
     </div>
 
     <div class="g">
-      <div class="panel s6">
-        <div class="panel-title"><div>종목별 누적 수익</div></div>
+      <div class="panel s7">
+        <div class="panel-title">
+          <div>종목별 누적 실현 수익</div>
+          <span class="ptag">상위 15</span>
+        </div>
         <div id="stock-profit-list"></div>
       </div>
-      <div class="panel s6">
-        <div class="panel-title"><div>주식 카테고리별 수익</div></div>
-        <div id="${hasTags ? 'stock-cat-list' : 'stock-cat-list-2'}">
-          ${stockCatAgg.map(([name, amt]) => `
-            <div class="acct-row"><span></span><span class="acct-name">${name}</span><span class="acct-amt" style="color:${amt >= 0 ? 'var(--green)' : 'var(--red)'}">${formatWon(amt)}</span></div>
-          `).join('') || '<div class="empty-state">주식 카테고리 매핑을 찾지 못했어요.</div>'}
+      <div class="panel s5">
+        <div class="panel-title">
+          <div>월별 실현손익 추이</div>
+          <div class="income-cat-btns" id="inv-pick-type-btns" style="margin:0;">
+            <button data-type="stock" class="income-cat-btn ${state.invPickType !== 'category' ? 'active' : ''}">종목</button>
+            <button data-type="category" class="income-cat-btn ${state.invPickType === 'category' ? 'active' : ''}">테마</button>
+          </div>
         </div>
+        <select id="inv-pick-name" class="month-nav-select-standalone"></select>
+        <div class="chart-wrap tall"><canvas id="chart-inv-pick"></canvas></div>
+        <div class="settings-note">고른 종목·테마가 <b>어느 달에 벌고 어느 달에 까먹었는지</b>를 봅니다. 한 달에 몰린 이익은 운, 여러 달에 퍼진 이익은 실력에 가깝습니다.</div>
       </div>
     </div>` : ''}
 
@@ -7409,11 +7560,11 @@ function renderInvestmentPage(container, data, d) {
 
     const S = state.invSeries;
     const ds = [];
-    if (S.transfer) ds.push({ type: 'bar', label: '투자 이체', data: flowAgg(transferByYM), backgroundColor: 'rgba(57,168,189,0.65)', borderRadius: 3, yAxisID: 'y', order: 4 });
-    if (S.returns) ds.push({ type: 'bar', label: '실현 수익', data: flowAgg(returnsByYM), backgroundColor: 'rgba(224,199,102,0.8)', borderRadius: 3, yAxisID: 'y', order: 3 });
+    if (S.transfer) ds.push({ type: 'bar', label: '투자 이체', data: flowAgg(transferByYM), backgroundColor: 'rgba(57,168,189,0.65)', borderRadius: 3, yAxisID: 'yFlow', order: 4 });
+    if (S.returns) ds.push({ type: 'bar', label: '실현 수익', data: flowAgg(returnsByYM), backgroundColor: 'rgba(224,199,102,0.85)', borderRadius: 3, yAxisID: 'yFlow', order: 3 });
     if (S.balance) ds.push({ type: 'line', label: '평가액', data: pick.map(am => (cumMap[am] ? cumMap[am].balance : 0)), borderColor: '#4c8c6b', backgroundColor: 'rgba(76,140,107,0.10)', fill: true, tension: 0.3, pointRadius: 2, yAxisID: 'y', order: 1 });
     if (S.contrib) ds.push({ type: 'line', label: '누적 원금', data: pick.map(am => (cumMap[am] ? cumMap[am].cumContribution : 0)), borderColor: '#e0c766', borderDash: [5, 4], backgroundColor: 'transparent', tension: 0.3, pointRadius: 2, yAxisID: 'y', order: 2 });
-    if (S.roi) ds.push({ type: 'line', label: '원금 대비 수익률', data: pick.map(am => (roiMap[am] === undefined ? null : roiMap[am])), borderColor: '#9b7fc2', backgroundColor: 'transparent', tension: 0.3, pointRadius: 2, spanGaps: true, yAxisID: 'y1', order: 0 });
+    if (S.roi) ds.push({ type: 'line', label: '원금 대비 수익률', data: pick.map(am => (roiMap[am] === undefined ? null : roiMap[am])), borderColor: '#9b7fc2', backgroundColor: 'transparent', borderDash: [3, 3], tension: 0.3, pointRadius: 0, spanGaps: true, yAxisID: 'yRoi', order: 0 });
 
     state.charts.invMain = new Chart(ctx, {
       data: { labels, datasets: ds },
@@ -7422,12 +7573,14 @@ function renderInvestmentPage(container, data, d) {
         interaction: { mode: 'index', intersect: false },
         plugins: {
           legend: { display: false },
-          tooltip: { callbacks: { label: (c) => ` ${c.dataset.label}: ${c.dataset.yAxisID === 'y1' ? (c.raw === null ? '—' : fmtPct(c.raw)) : formatWon(c.raw)}` } }
+          tooltip: { callbacks: { label: (c) => ` ${c.dataset.label}: ${c.dataset.yAxisID === 'yRoi' ? (c.raw === null ? '—' : fmtPct(c.raw)) : formatWon(c.raw)}` } }
         },
         scales: {
           x: { ticks: { ...MONO_TICK, autoSkip: true, maxRotation: 0 }, grid: { display: false } },
-          y: { ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT },
-          y1: { display: S.roi, position: 'right', ticks: { ...MONO_TICK, callback: (v) => `${v}%` }, grid: { display: false } }
+          /* 좌축 = 잔액성(평가액·원금), 우축 = 흐름성(이체·실현수익) — 자릿수가 달라 축을 나눈다 */
+          y: { display: S.balance || S.contrib, position: 'left', ticks: { ...MONO_TICK, color: '#7fbf9c', callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT, title: { display: true, text: '잔액', color: '#7fbf9c', font: { family: 'IBM Plex Mono', size: 9 } } },
+          yFlow: { display: S.transfer || S.returns, position: 'right', beginAtZero: true, ticks: { ...MONO_TICK, color: '#e0c766', callback: (v) => formatCompactWon(v) }, grid: { display: false }, title: { display: true, text: '월/연 흐름', color: '#e0c766', font: { family: 'IBM Plex Mono', size: 9 } } },
+          yRoi: { display: S.roi, position: 'right', ticks: { ...MONO_TICK, color: '#b79ede', callback: (v) => `${v}%` }, grid: { display: false } }
         }
       }
     });
@@ -7504,26 +7657,38 @@ function renderInvestmentPage(container, data, d) {
     drawPickChart();
   });
 
-  if (hasTags) {
-    const maxTag = Math.max(...tagAgg.map(t => Math.abs(t[1])), 1);
-    document.getElementById('tag-profit-list').innerHTML = tagAgg.map(([name, amt]) => `
-      <div class="budget-row-compact">
-        <span class="b-name" title="${name}">${name}</span>
-        <div class="b-bar-track"><div class="b-bar-fill ${amt < 0 ? 'over' : ''}" style="width:${(Math.abs(amt) / maxTag) * 100}%"></div></div>
-        <span class="b-figures" style="color:${amt >= 0 ? 'var(--green)' : 'var(--red)'}">${formatWon(amt)}</span>
-      </div>
-    `).join('') || '<div class="empty-state">태그 데이터가 없어요.</div>';
-  }
+  /* 테마별: 종목 수·대표 종목까지 같이 (한 종목이 여러 테마면 중복 집계) */
+  const themeAgg = {};
+  stockProfit.forEach(([name, amt]) => {
+    const tags = stockTags(name);
+    (tags.length ? tags : ['미분류']).forEach(t => {
+      themeAgg[t] = themeAgg[t] || { amt: 0, stocks: [] };
+      themeAgg[t].amt += amt;
+      themeAgg[t].stocks.push([name, amt]);
+    });
+  });
+  const themeRows = Object.entries(themeAgg).sort((a, b) => Math.abs(b[1].amt) - Math.abs(a[1].amt));
+  const maxTheme = Math.max(...themeRows.map(t => Math.abs(t[1].amt)), 1);
+  document.getElementById('theme-list').innerHTML = themeRows.map(([name, v]) => {
+    const top = v.stocks.slice().sort((a, b) => Math.abs(b[1]) - Math.abs(a[1])).slice(0, 3);
+    return `<div class="thm-row">
+      <span class="thm-nm">${name}<em>${v.stocks.length}종목</em></span>
+      <span class="thm-track"><i class="${v.amt < 0 ? 'neg' : ''}" style="width:${(Math.abs(v.amt) / maxTheme) * 100}%"></i></span>
+      <span class="thm-amt" style="color:${v.amt >= 0 ? 'var(--green)' : 'var(--red)'}">${formatWon(v.amt)}</span>
+      <span class="thm-top">${top.map(([n, a]) => `<b style="color:${a >= 0 ? '#8fd0ac' : '#eb9891'}">${n}</b>`).join(' · ')}</span>
+    </div>`;
+  }).join('') || '<div class="empty-state">주식 카테고리 매핑을 찾지 못했어요.</div>';
 
   const stockRows = stockProfit.filter(([, v]) => v !== 0).slice(0, 15);
   const maxStock = Math.max(...stockRows.map(r => Math.abs(r[1])), 1);
-  document.getElementById('stock-profit-list').innerHTML = stockRows.map(([name, amt]) => `
-    <div class="budget-row-compact">
-      <span class="b-name" title="${name}">${name}</span>
-      <div class="b-bar-track"><div class="b-bar-fill ${amt < 0 ? 'over' : ''}" style="width:${(Math.abs(amt) / maxStock) * 100}%"></div></div>
-      <span class="b-figures" style="color:${amt >= 0 ? 'var(--green)' : 'var(--red)'}">${formatWon(amt)}</span>
-    </div>
-  `).join('') || '<div class="empty-state">종목별 수익 데이터가 없어요.</div>';
+  document.getElementById('stock-profit-list').innerHTML = stockRows.map(([name, amt]) => {
+    const tags = stockTags(name);
+    return `<div class="thm-row">
+      <span class="thm-nm">${name}${tags.length ? `<em>${tags.join(' · ')}</em>` : ''}</span>
+      <span class="thm-track"><i class="${amt < 0 ? 'neg' : ''}" style="width:${(Math.abs(amt) / maxStock) * 100}%"></i></span>
+      <span class="thm-amt" style="color:${amt >= 0 ? 'var(--green)' : 'var(--red)'}">${formatWon(amt)}</span>
+    </div>`;
+  }).join('') || '<div class="empty-state">종목별 수익 데이터가 없어요.</div>';
   }
 }
 
