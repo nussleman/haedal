@@ -70,7 +70,6 @@ body{
   margin:0 calc(-1 * clamp(16px, 2.5vw, 40px));
   padding-left:clamp(16px, 2.5vw, 40px);
   padding-right:clamp(16px, 2.5vw, 40px);
-  border-bottom:1px solid var(--border);
 }
 #page-content{padding-top:22px;display:flex;flex-direction:column;gap:16px;}
 .grid-top{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;align-items:stretch;}
@@ -172,7 +171,7 @@ body{
   margin-bottom:6px;
 }
 .hero-amount{
-  font-family:var(--serif);
+  font-family:var(--sans);
   font-weight:900;
   font-size:clamp(34px,5.4vw,54px);
   color:var(--ink);
@@ -212,7 +211,7 @@ body{
   flex-direction:column;
   transform:rotate(-9deg);
   opacity:0.9;
-  font-family:var(--serif);
+  font-family:var(--sans);
   position:relative;
   flex-shrink:0;
 }
@@ -246,7 +245,7 @@ body{
   padding:20px 20px 22px;
 }
 .panel-title{
-  font-family:var(--serif);
+  font-family:var(--sans);
   font-weight:700;
   font-size:15.5px;
   display:flex;
@@ -333,6 +332,7 @@ body{
   color:var(--text-dim);padding:3px 8px;border-radius:5px;cursor:pointer;
 }
 .range-toggle button.active{background:var(--gold);color:#1a1508;border-color:var(--gold);font-weight:600;}
+.range-toggle.mini button{font-size:9.5px;padding:2px 6px;}
 
 /* ---------- allocation list ---------- */
 .alloc-row{
@@ -399,7 +399,7 @@ body{
 .overlay-toggles{display:flex;gap:16px;margin-bottom:10px;flex-wrap:wrap;}
 .overlay-toggles label{display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--text-dim);cursor:pointer;}
 .overlay-toggles input[type="checkbox"]{accent-color:var(--gold-soft);cursor:pointer;}
-.compact-stat-value{font-family:var(--serif);font-weight:800;font-size:22px;color:var(--text);margin-top:4px;}
+.compact-stat-value{font-family:var(--sans);font-weight:800;font-size:22px;color:var(--text);margin-top:4px;}
 #top-expenses-body{padding-left:18px;}
 .month-nav-select-standalone{
   background:var(--panel-2);border:1px solid var(--border-strong);color:var(--text);
@@ -479,7 +479,7 @@ body{
 .today-datewrap{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
 /* 오늘 탭: 패널 밖으로 뺀 날짜 헤더 */
 .page-daybar{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:2px 2px 0;}
-.page-daybar .day-title{font-family:var(--serif);font-weight:800;font-size:30px;line-height:1.15;color:var(--text);letter-spacing:-.01em;}
+.page-daybar .day-title{font-family:var(--sans);font-weight:800;font-size:30px;line-height:1.15;color:var(--text);letter-spacing:-.01em;}
 .page-daybar .day-title .today-dow{color:var(--gold-soft);}
 .page-daybar .today-verdict{flex:1 1 260px;min-width:220px;}
 @media (max-width:820px){.page-daybar .day-title{font-size:23px;}}
@@ -500,10 +500,10 @@ body{
 .budget-basis{font-family:var(--mono);font-size:11px;line-height:1.7;color:var(--text-faint);margin-top:9px;}
 .budget-basis b{color:var(--gold-soft);font-weight:600;}
 .budget-basis em{font-style:normal;color:var(--text-dim);}
-.today-date{font-family:var(--serif);font-weight:800;font-size:25px;line-height:1.2;color:var(--text);}
+.today-date{font-family:var(--sans);font-weight:800;font-size:25px;line-height:1.2;color:var(--text);}
 .today-date .today-dow{color:var(--gold-soft);}
 .today-date small{display:block;font-family:var(--mono);font-size:11px;font-weight:400;color:var(--text-faint);letter-spacing:.04em;margin-top:6px;}
-.today-verdict{font-family:var(--serif);font-weight:700;font-size:15px;line-height:1.55;margin-top:2px;}
+.today-verdict{font-family:var(--sans);font-weight:700;font-size:15px;line-height:1.55;margin-top:2px;}
 .today-verdict.good{color:var(--green);}
 .today-verdict.warn{color:var(--red);}
 .today-verdict.neutral{color:var(--gold-soft);}
@@ -600,7 +600,7 @@ body{
 .eng-stage{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:7px;}
 .eng-stage-head{display:flex;align-items:baseline;gap:7px;padding-bottom:5px;border-bottom:1px solid var(--border-strong);}
 .eng-stage-head span{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;color:var(--text-faint);}
-.eng-stage-head b{font-family:var(--serif);font-size:13.5px;font-weight:700;color:var(--text);}
+.eng-stage-head b{font-family:var(--sans);font-size:13.5px;font-weight:700;color:var(--text);}
 .eng-arrow{flex:0 0 12px;display:flex;align-items:center;justify-content:center;color:var(--gold-soft);font-size:14px;opacity:.65;padding-top:26px;}
 .eng-node{border:1px solid var(--border);border-radius:10px;background:var(--panel-2);padding:8px 9px 9px;display:flex;flex-direction:column;gap:4px;}
 .eng-node.leak{border-color:rgba(193,72,63,.3);}
@@ -662,31 +662,35 @@ body{
 
 /* ---------- nav ---------- */
 .navbar{
-  display:flex;align-items:stretch;gap:26px;
+  display:flex;align-items:stretch;gap:22px;
   margin:26px 0 0;
   overflow-x:auto;scrollbar-width:thin;
+  border-bottom:2px solid var(--border-strong);
 }
 .navbar::-webkit-scrollbar{height:5px;}
 .navbar::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:3px;}
 .nav-group{display:flex;align-items:center;gap:1px;flex:0 0 auto;}
+/* 상위 탭 = 누르는 버튼이 아니라 '분류 라벨'. 하이라이트 없이 형태로만 구분한다. */
 .nav-group-label{
-  font-family:var(--serif);font-weight:800;font-size:15px;letter-spacing:-.01em;
-  color:var(--text-dim);white-space:nowrap;margin-right:11px;transition:color .15s;
+  font-family:var(--sans);font-weight:700;font-size:11px;letter-spacing:.08em;
+  color:var(--text-faint);white-space:nowrap;
+  padding:3px 9px;margin-right:9px;border-radius:5px;
+  background:var(--panel-2);border:1px solid var(--border);
 }
-.nav-group.on .nav-group-label{color:var(--gold-soft);}
-.nav-div{flex:0 0 auto;width:1px;background:var(--border);margin:6px 0;}
+.nav-div{flex:0 0 auto;width:1px;background:var(--border);margin:8px 0;}
 .nav-btn{
   font-family:var(--sans);font-weight:500;font-size:13px;
   background:transparent;border:none;color:var(--text-faint);
-  padding:9px 12px;cursor:pointer;white-space:nowrap;
-  border-bottom:2px solid transparent;transition:color .15s,border-color .15s;
+  padding:9px 12px 10px;cursor:pointer;white-space:nowrap;
+  border-bottom:2px solid transparent;margin-bottom:-2px;
+  transition:color .15s,border-color .15s;
 }
 .nav-btn:hover{color:var(--text);}
 .nav-btn.active{color:var(--gold-soft);border-bottom-color:var(--gold);font-weight:700;}
 @media (max-width:900px){
-  .navbar{gap:16px;margin-top:18px;}
-  .nav-group-label{font-size:13px;margin-right:7px;}
-  .nav-btn{font-size:12.5px;padding:8px 9px;}
+  .navbar{gap:14px;margin-top:18px;}
+  .nav-group-label{font-size:10px;padding:2px 7px;margin-right:6px;}
+  .nav-btn{font-size:12.5px;padding:8px 9px 9px;}
 }
 
 /* ---------- stat cards ---------- */
@@ -699,7 +703,7 @@ body{
   padding:15px 16px;
 }
 .stat-card .label{font-family:var(--mono);font-size:10.5px;color:var(--text-faint);letter-spacing:.05em;}
-.stat-card .value{font-family:var(--serif);font-weight:800;font-size:21px;margin-top:5px;color:var(--text);}
+.stat-card .value{font-family:var(--sans);font-weight:800;font-size:21px;margin-top:5px;color:var(--text);}
 .stat-card .sub{font-size:11px;color:var(--text-dim);margin-top:4px;font-family:var(--mono);}
 .stat-card .sub.up{color:var(--green);}
 .stat-card .sub.down{color:var(--red);}
@@ -758,7 +762,7 @@ body{
 .gauge-label{
   position:absolute;left:0;right:0;top:60%;text-align:center;pointer-events:none;
 }
-.gauge-value{font-family:var(--serif);font-weight:800;font-size:26px;}
+.gauge-value{font-family:var(--sans);font-weight:800;font-size:26px;}
 .gauge-target{font-family:var(--mono);font-size:11px;color:var(--text-dim);margin-top:2px;}
 
 /* ---------- category flex (pie + bars) ---------- */
@@ -820,7 +824,7 @@ body{
 }
 .callout.good{background:rgba(76,140,107,0.1);border-color:rgba(76,140,107,0.35);}
 .callout.warn{background:rgba(193,72,63,0.1);border-color:rgba(193,72,63,0.35);}
-.callout-title{font-family:var(--serif);font-weight:700;font-size:15px;margin-bottom:6px;}
+.callout-title{font-family:var(--sans);font-weight:700;font-size:15px;margin-bottom:6px;}
 .callout-body{font-size:13px;line-height:1.6;color:var(--text-dim);}
 
 /* ---------- advanced table (group/sort/filter) ---------- */
@@ -874,7 +878,7 @@ body{
   border-radius:8px;padding:10px 12px;box-shadow:0 8px 24px rgba(0,0,0,0.4);pointer-events:auto;
   max-width:280px;font-size:11.5px;
 }
-.vtip-title{font-family:var(--serif);font-weight:700;font-size:12.5px;color:var(--text);margin-bottom:6px;}
+.vtip-title{font-family:var(--sans);font-weight:700;font-size:12.5px;color:var(--text);margin-bottom:6px;}
 .vtip-scroll{max-height:220px;overflow-y:auto;}
 .vtip-row{display:flex;gap:8px;padding:3px 0;color:var(--text-dim);white-space:nowrap;}
 .vtip-date{font-family:var(--mono);font-size:10px;color:var(--text-faint);flex-shrink:0;}
@@ -915,7 +919,7 @@ body{font-variant-numeric:tabular-nums;}
 .brand h1{font-size:18px;}
 .brand .tagline{display:none;}
 .sync-box{font-size:11.5px;}
-.navbar{margin:26px 0 0;gap:26px;}
+.navbar{margin:26px 0 0;gap:22px;}
 .nav-btn{padding:9px 12px;font-size:13px;}
 #page-content{padding-top:12px;gap:var(--gap);}
 
@@ -1027,7 +1031,7 @@ body{font-variant-numeric:tabular-nums;}
 }
 .rawbox>summary{
   list-style:none;cursor:pointer;padding:11px 13px;
-  font-family:var(--serif);font-weight:700;font-size:13px;color:var(--text-dim);
+  font-family:var(--sans);font-weight:700;font-size:13px;color:var(--text-dim);
   display:flex;align-items:center;justify-content:space-between;gap:10px;
 }
 .rawbox>summary::-webkit-details-marker{display:none;}
@@ -1114,6 +1118,59 @@ body{font-variant-numeric:tabular-nums;}
 #home-structure{display:flex;flex-direction:column;gap:var(--gap);}
 #home-structure:empty{display:none;}
 
+/* ---------- 증식 구조: 진단 + 할 일 ---------- */
+.st-diag{justify-content:flex-start;}
+.st-diag-eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.12em;color:var(--text-faint);}
+.st-diag-title{font-size:27px;font-weight:800;letter-spacing:-.02em;line-height:1.15;margin-top:5px;color:var(--text);}
+.st-diag.input .st-diag-title{color:var(--gold-soft);}
+.st-diag.market .st-diag-title{color:#8fb4dd;}
+.st-diag-lead{font-size:12.5px;color:var(--text-dim);margin-top:5px;line-height:1.5;}
+.st-diag-kv{display:grid;grid-template-columns:1fr 1fr;gap:9px 12px;margin-top:15px;}
+.st-diag-kv span{display:flex;flex-direction:column;gap:2px;}
+.st-diag-kv em{font-style:normal;font-family:var(--mono);font-size:10px;color:var(--text-faint);}
+.st-diag-kv b{font-family:var(--mono);font-size:16px;font-weight:600;color:var(--text);}
+.st-diag-mile{margin-top:14px;padding-top:11px;border-top:1px solid var(--border);
+  font-family:var(--mono);font-size:11px;color:var(--text-faint);}
+.st-diag-mile b{color:var(--gold-soft);}
+
+.st-todo{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;}
+.st-todo-card{border:1px solid var(--border);border-radius:11px;background:var(--panel-2);padding:13px 14px 14px;}
+.st-todo-card.p1{border-color:var(--gold);background:rgba(201,162,39,.08);}
+.st-todo-top{display:flex;align-items:center;gap:7px;}
+.st-rank{font-family:var(--mono);font-size:11px;font-weight:700;width:19px;height:19px;line-height:19px;text-align:center;
+  border-radius:50%;background:rgba(255,255,255,.07);color:var(--text-dim);}
+.st-todo-card.p1 .st-rank{background:var(--gold);color:#1a1508;}
+.st-stage{font-family:var(--mono);font-size:9.5px;padding:2px 7px;border-radius:10px;}
+.st-stage.income{background:var(--green-soft);color:#8fd0ac;}
+.st-stage.expense{background:var(--red-soft);color:#eb9891;}
+.st-stage.transfer{background:rgba(201,162,39,.2);color:var(--gold-soft);}
+.st-todo-name{font-size:14px;font-weight:600;color:var(--text);line-height:1.4;margin-top:9px;min-height:39px;}
+.st-todo-imp{font-family:var(--mono);font-size:19px;font-weight:600;color:var(--gold-soft);margin-top:4px;}
+.st-todo-imp em{font-style:normal;font-size:10px;color:var(--text-faint);margin-left:4px;}
+.st-todo-bar{height:5px;border-radius:3px;background:rgba(255,255,255,.06);overflow:hidden;margin-top:8px;}
+.st-todo-bar i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,var(--gold),var(--gold-soft));}
+.st-todo-ctrl{display:flex;align-items:center;gap:8px;margin-top:9px;font-family:var(--mono);font-size:10px;color:var(--text-faint);}
+.st-todo-ctrl i{flex:1;height:4px;border-radius:2px;background:rgba(255,255,255,.06);overflow:hidden;}
+.st-todo-ctrl b{display:block;height:100%;border-radius:2px;background:var(--green);}
+.st-risk{margin-top:11px;border:1px dashed rgba(193,72,63,.45);background:rgba(193,72,63,.09);
+  border-radius:9px;padding:9px 12px;font-size:12px;color:#e39a93;font-family:var(--mono);}
+
+.st-checks{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:9px;}
+.st-chk{display:flex;flex-direction:column;gap:3px;border-radius:9px;padding:10px 12px;
+  border:1px solid var(--border);background:var(--panel-2);border-left-width:3px;}
+.st-chk.ok{border-left-color:var(--green);}
+.st-chk.no{border-left-color:var(--red);}
+.st-chk.na{border-left-color:var(--text-faint);opacity:.7;}
+.st-chk-nm{font-size:11.5px;color:var(--text-dim);}
+.st-chk-cur{font-family:var(--mono);font-size:16px;font-weight:600;color:var(--text);}
+.st-chk.ok .st-chk-cur{color:var(--green);}
+.st-chk.no .st-chk-cur{color:var(--red);}
+.st-chk-tgt{font-family:var(--mono);font-size:10px;color:var(--text-faint);}
+@media (max-width:900px){
+  .st-todo{grid-template-columns:1fr;}
+  .st-todo-name{min-height:0;}
+}
+
 /* ---------- 체크 배지 (후회·고정비·환급·재분류) ---------- */
 .chk-strip{display:flex;gap:4px;flex-wrap:wrap;align-items:center;}
 .chk-pill{font-family:var(--mono);font-size:9.5px;letter-spacing:.02em;padding:2px 6px;border-radius:5px;white-space:nowrap;}
@@ -1127,7 +1184,7 @@ body{font-variant-numeric:tabular-nums;}
 #today-cards .mininote{margin-top:8px;}
 
 /* ---------- 목표 보드 (좌 → 우 시간순 · 가로 스크롤) ---------- */
-#goal-board-wrap{min-width:0;}
+#goal-board-wrap{min-width:0;padding-left:14px;}
 .gb-board{display:flex;gap:20px;overflow-x:auto;overflow-y:hidden;padding:2px 2px 10px;scroll-snap-type:x proximity;}
 .gb-board::-webkit-scrollbar{height:9px;}
 .gb-board::-webkit-scrollbar-track{background:var(--panel-2);border-radius:5px;}
@@ -1138,7 +1195,7 @@ body{font-variant-numeric:tabular-nums;}
 .gb-col.undated{flex-basis:218px;}
 .gb-colhead{display:flex;align-items:baseline;justify-content:space-between;gap:6px;
   padding:0 2px 8px;margin-bottom:9px;border-bottom:1px solid var(--border-strong);}
-.gb-colhead b{font-family:var(--serif);font-size:15px;font-weight:800;color:var(--text-dim);line-height:1.2;white-space:nowrap;letter-spacing:-.01em;}
+.gb-colhead b{font-family:var(--sans);font-size:15px;font-weight:800;color:var(--text-dim);line-height:1.2;white-space:nowrap;letter-spacing:-.01em;}
 .gb-colhead span{font-family:var(--mono);font-size:10.5px;color:var(--text-faint);}
 .gb-col.now .gb-colhead b{color:var(--gold-soft);}
 .gb-col.undated .gb-colhead b{color:var(--text-faint);}
@@ -1194,7 +1251,7 @@ body{font-variant-numeric:tabular-nums;}
 .eng-stage-head span{font-family:var(--mono);font-size:11px;color:var(--text-dim);margin-left:auto;}
 
 /* 캘린더 월 타이틀 */
-.cal-month-title{font-family:var(--serif);font-weight:800;font-size:27px;line-height:1.15;color:var(--text);letter-spacing:-.01em;}
+.cal-month-title{font-family:var(--sans);font-weight:800;font-size:27px;line-height:1.15;color:var(--text);letter-spacing:-.01em;}
 @media (max-width:820px){.cal-month-title{font-size:22px;}}
 
 /* 캘린더 우측 내역 패널 */
@@ -1296,11 +1353,14 @@ const state = {
   assetTrendRange: 12,
   assetTrendMode: 'total',
   assetTrendFilter: 'all',
+  incomePieRange: 12,
   savTrendRange: 12,
   savContribRange: 12,
   flowSub: 'today',        // 흐름 하위 탭: today | now | calendar | income | expense
+  expSub: 'summary',       // 지출 하위: summary | fixed | budget
+  nowSub: 'summary',       // 이번달 하위: summary | detail
   assetSub: 'overview',    // 자산 하위 탭: overview | investment | savings
-  homeSub: 'insights',     // 현황 하위 탭: insights | goals | structure
+  homeSub: 'goals',        // 현황 하위 탭: goals | structure
   goalMoves: {},           // 드래그로 옮긴 목표 시기 (시트 반영 전 로컬 오버라이드)
   nowMonthKey: null,       // '이번달' 탭에서 보고 있는 달 (YYYY-MM)
   nowWeekIdx: null,        // null = 그 달 전체, 0.. = 해당 주차만
@@ -2320,7 +2380,6 @@ const SECTION_SUBS = {
     ['pension', '연금']
   ],
   status: [
-    ['insights', '인사이트'],
     ['goals', '목표'],
     ['structure', '증식 구조']
   ]
@@ -2450,21 +2509,9 @@ function renderPage() {
     else if (SUB === 'pension') renderSavingsPage(body, data, d, 'pension');
     else renderSavingsPage(body, data, d, 'saving');
   } else {
-    if (SUB === 'insights') renderStatusInsights(body, data, d);
-    else if (SUB === 'goals') { body.innerHTML = '<div id="home-goals"></div>'; renderGoalBoard(data, d); }
+    if (SUB === 'goals') { body.innerHTML = '<div id="home-goals"></div>'; renderGoalBoard(data, d); }
     else renderStructurePage(body, data, d);
   }
-}
-
-/* 현황 › 인사이트 */
-function renderStatusInsights(host, data, d) {
-  host.innerHTML = `
-    <div class="g">
-      <div class="panel s5" id="panel-priority-insights"></div>
-      <div class="stat-grid s7" style="grid-template-columns:repeat(2,1fr);" id="home-status"></div>
-    </div>`;
-  renderHomeStatus(data, d);
-  renderPriorityInsights(data, d);
 }
 
 function renderAll() {
@@ -2644,8 +2691,8 @@ function renderGoalBoard(data, d) {
 
   host.innerHTML = `
     <div class="g">
-      <div class="panel s3" id="panel-goal-side"></div>
-      <div class="s9" id="goal-board-wrap">
+      <div class="panel s2" id="panel-goal-side"></div>
+      <div class="s10" id="goal-board-wrap">
         <div class="gb-board" id="goal-board">
           ${buckets.map(b => `
             <div class="gb-col ${b.key === curKey ? 'now' : ''} ${b.key === 'none' ? 'undated' : ''}" data-bucket="${b.key}">
@@ -2966,7 +3013,7 @@ function renderTrend(data, d) {
     </div>
     <div class="income-cat-btns" id="asset-trend-filter-btns" style="display:none;"></div>
     <div class="overlay-toggles" id="asset-trend-overlay-toggles" style="display:none;">
-      <label><input type="checkbox" id="asset-net-toggle" /> 월별 순익 표시</label>
+      <label><input type="checkbox" id="asset-net-toggle" checked /> 월별 순익 표시</label>
       <label><input type="checkbox" id="asset-cumnet-toggle" /> 누적 순익 표시</label>
     </div>
     <div class="chart-wrap tall"><canvas id="chart-trend"></canvas></div>
@@ -3523,6 +3570,9 @@ function renderNowPage(container, data, d) {
 
   const monthOptions = availableKeys.slice().reverse().map(k => `<option value="${k}" ${k === monthKey ? 'selected' : ''}>${monthKeyLabel(k)}</option>`).join('');
 
+  const NOW_SUBS = [['summary', '요약'], ['detail', '상세']];
+  const NSUB = NOW_SUBS.some(x => x[0] === state.nowSub) ? state.nowSub : 'summary';
+
   container.innerHTML = `
     <div class="page-daybar">
       <div class="today-datewrap">
@@ -3533,6 +3583,34 @@ function renderNowPage(container, data, d) {
           <button id="now-next" ${availableKeys.indexOf(monthKey) >= availableKeys.length - 1 ? 'disabled' : ''}>▶</button>
           <button class="btn small" id="now-thismonth">이번 달</button>
         </div>
+      </div>
+    </div>
+
+    <div class="subnav sub2" id="now-subnav">${NOW_SUBS.map(([v, l]) =>
+      `<button data-sub="${v}" class="${v === NSUB ? 'active' : ''}">${l}</button>`).join('')}</div>
+
+    ${NSUB === 'summary' ? `
+    <div class="g">
+      <div class="panel s8">
+        <div class="panel-title">
+          <div>${monthKeyLabel(monthKey)} 흐름</div>
+          <div class="range-toggle" id="now-granularity">
+            <button data-g="week" class="${state.nowGranularity === 'week' ? 'active' : ''}">주별</button>
+            <button data-g="day" class="${state.nowGranularity === 'day' ? 'active' : ''}">일별</button>
+          </div>
+        </div>
+        <div class="chart-wrap tall"><canvas id="chart-now-flow"></canvas></div>
+        <div class="chart-legend">
+          <span><i style="background:rgba(76,140,107,0.8)"></i>수입</span>
+          <span><i style="background:rgba(193,72,63,0.8)"></i>지출</span>
+          <span><i style="background:#39a8bd"></i>순저축</span>
+          <span><i style="background:#c9a227"></i>누적 지출</span>
+        </div>
+        <div id="now-week-chips"></div>
+      </div>
+      <div class="panel s4">
+        <div class="panel-title"><div>지출 페이스</div></div>
+        <div id="now-pace-body"></div>
       </div>
     </div>
 
@@ -3573,69 +3651,57 @@ function renderNowPage(container, data, d) {
     </div>
 
     <div class="g">
-      <div class="panel s3">
-        <div class="panel-title"><div>지출 페이스</div></div>
-        <div id="now-pace-body"></div>
-      </div>
-      <div class="panel s3">
+      <div class="panel s6">
         <div class="panel-title"><div>고정비</div></div>
         <div id="now-fixed-body"></div>
       </div>
-      <div class="panel s3">
+      <div class="panel s6">
         <div class="panel-title"><div>이체</div><span class="ptag">${week ? week.label : monthKeyLabel(monthKey)}</span></div>
         <div id="now-transfer-body"></div>
       </div>
-      <div class="panel s3">
-        <div class="panel-title"><div>요일별 평균 지출</div></div>
-        <div id="now-dow-body"></div>
-      </div>
-    </div>
+    </div>` : ''}
 
+    ${NSUB === 'detail' ? `
     <div class="g">
-      <div class="panel s6">
-        <div class="panel-title">
-          <div>${monthKeyLabel(monthKey)} 흐름</div>
-          <div class="range-toggle" id="now-granularity">
-            <button data-g="week" class="${state.nowGranularity === 'week' ? 'active' : ''}">주별</button>
-            <button data-g="day" class="${state.nowGranularity === 'day' ? 'active' : ''}">일별</button>
-          </div>
-        </div>
-        <div class="chart-wrap tall"><canvas id="chart-now-flow"></canvas></div>
-        <div class="chart-legend">
-          <span><i style="background:rgba(76,140,107,0.8)"></i>수입</span>
-          <span><i style="background:rgba(193,72,63,0.8)"></i>지출</span>
-          <span><i style="background:#c9a227"></i>누적 지출</span>
-        </div>
-        <div id="now-week-chips"></div>
-      </div>
-      <div class="panel s6">
-        <div class="panel-title"><div>주차별 요약</div></div>
-        <div id="now-week-body"></div>
-      </div>
-    </div>
-
-    <div class="g">
-      <div class="panel s6">
+      <div class="panel s7">
         <div class="panel-title"><div>카테고리별 지출</div></div>
         <div id="now-cat-body"></div>
       </div>
-      <div class="panel s6">
+      <div class="panel s5">
         <div class="panel-title"><div>큰 지출 TOP 8</div></div>
         <div id="now-top-body"></div>
       </div>
     </div>
 
-    <details class="rawbox">
+    <div class="g">
+      <div class="panel s7">
+        <div class="panel-title"><div>주차별 요약</div></div>
+        <div id="now-week-body"></div>
+      </div>
+      <div class="panel s5">
+        <div class="panel-title"><div>요일별 평균 지출</div></div>
+        <div id="now-dow-body"></div>
+      </div>
+    </div>
+
+    <details class="rawbox" open>
       <summary>${scopeLabel} 전체 내역 · ${scopeRows.length}건</summary>
       <div class="rawbody"><div id="now-ledger-table"></div></div>
-    </details>
+    </details>` : ''}
   `;
+
+  document.getElementById('now-subnav').addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    state.nowSub = btn.dataset.sub;
+    renderPage();
+  });
 
   /* --- 페이스 --- */
   const paceBody = document.getElementById('now-pace-body');
   const remainingDays = Math.max(M.days - elapsed, 0);
   const dailyAvg = elapsed > 0 ? M.expense / elapsed : 0;
-  paceBody.innerHTML = `
+  if (paceBody) paceBody.innerHTML = `
     <div class="now-kv"><span>하루 평균 지출</span><b>${formatWon(Math.round(dailyAvg))}</b></div>
     ${peerAvg !== null ? `<div class="now-kv"><span>최근 3개월 같은 시점</span><b>${formatWon(Math.round(peerAvg))}</b></div>` : ''}
     ${paceDiff !== null ? `<div class="insight ${paceDiff > 0 ? 'warn' : 'good'}"><span class="dot"></span><span>
@@ -3648,7 +3714,7 @@ function renderNowPage(container, data, d) {
 
   /* --- 고정비 --- */
   const fixedBody = document.getElementById('now-fixed-body');
-  fixedBody.innerHTML = `
+  if (fixedBody) fixedBody.innerHTML = `
     <div class="now-kv"><span>완료 ${fixedRows.length - fixedPending.length}건</span><b>${formatWon(fixedPaidSum)}</b></div>
     <div class="now-kv"><span>미결제 ${fixedPending.length}건</span><b style="color:${fixedPending.length ? 'var(--red)' : 'var(--green)'}">${formatWon(fixedPendingSum)}</b></div>
     <div style="max-height:220px;overflow-y:auto;margin-top:10px;">
@@ -3663,7 +3729,7 @@ function renderNowPage(container, data, d) {
 
   /* --- 이체 --- */
   const trBody = document.getElementById('now-transfer-body');
-  trBody.innerHTML = `
+  if (trBody) trBody.innerHTML = `
     <div class="now-kv"><span>합계</span><b style="color:var(--gold-soft)">${formatWon(transferTotal)}</b></div>
     <div style="margin-top:8px;">
       ${transferRows.length ? transferRows.map(t => `
@@ -3678,7 +3744,7 @@ function renderNowPage(container, data, d) {
   const catBody = document.getElementById('now-cat-body');
   const catMax = Math.max(...catRows.map(r => Math.max(r.cur, r.prev)), 1);
   const showCatDelta = !week;
-  catBody.innerHTML = (catRows.length ? catRows.map(r => {
+  if (catBody) catBody.innerHTML = (catRows.length ? catRows.map(r => {
     const diff = r.cur - r.prev;
     let deltaHtml = '';
     if (showCatDelta) {
@@ -3695,7 +3761,7 @@ function renderNowPage(container, data, d) {
   + (showCatDelta ? `<div class="settings-note">비교 기준 · ${cmpRange}${isThisMonth ? ' 같은 기간' : ''}</div>` : '');
 
   /* --- TOP 지출 --- */
-  document.getElementById('now-top-body').innerHTML = `
+  if (document.getElementById('now-top-body')) document.getElementById('now-top-body').innerHTML = `
     <div class="table-scroll" style="max-height:320px;">
       <table class="data-table">
         <thead><tr><th>날짜</th><th>항목</th><th>사용처</th><th style="text-align:right">금액</th></tr></thead>
@@ -3707,7 +3773,7 @@ function renderNowPage(container, data, d) {
 
   /* --- 주차별 요약 --- */
   const weekMax = Math.max(...M.weeks.map(w => w.expense), 1);
-  document.getElementById('now-week-body').innerHTML = `
+  if (document.getElementById('now-week-body')) document.getElementById('now-week-body').innerHTML = `
     <div class="table-scroll" style="max-height:none;">
       <table class="data-table">
         <thead><tr><th>주차</th><th>기간</th><th style="text-align:right">수입</th><th style="text-align:right">지출</th><th style="text-align:right">순액</th></tr></thead>
@@ -3735,7 +3801,7 @@ function renderNowPage(container, data, d) {
   const dowAvg = dowAgg.map((a, i) => ({ name: ['월', '화', '수', '목', '금', '토', '일'][i], avg: a.n ? a.sum / a.n : 0 }));
   const dowMax = Math.max(...dowAvg.map(x => x.avg), 1);
   const dowTop = dowAvg.reduce((a, b) => b.avg > a.avg ? b : a, dowAvg[0]);
-  document.getElementById('now-dow-body').innerHTML = `
+  if (document.getElementById('now-dow-body')) document.getElementById('now-dow-body').innerHTML = `
     ${dowAvg.map(x => `
       <div class="dow-avg-row">
         <span class="nm">${x.name}</span>
@@ -3747,6 +3813,7 @@ function renderNowPage(container, data, d) {
 
   /* --- 주차 칩 --- */
   const chips = document.getElementById('now-week-chips');
+  if (chips) {
   chips.innerHTML = `
     <div class="now-chip-row">
       <button class="now-chip ${state.nowWeekIdx === null ? 'active' : ''}" data-w="all">전체 월</button>
@@ -3761,9 +3828,10 @@ function renderNowPage(container, data, d) {
     state.nowWeekIdx = btn.dataset.w === 'all' ? null : parseInt(btn.dataset.w, 10);
     renderPage();
   });
+  }
 
   /* --- 내역 테이블 --- */
-  renderAdvancedTable('now-ledger-table', scopeRows, {
+  if (document.getElementById('now-ledger-table')) renderAdvancedTable('now-ledger-table', scopeRows, {
     defaultSort: 'date-desc',
     groupOptions: [['none', '그룹 없음'], ['category', '카테고리별']],
     pageSize: 30
@@ -3771,6 +3839,7 @@ function renderNowPage(container, data, d) {
 
   /* --- 차트 --- */
   const drawNowFlow = () => {
+    if (!document.getElementById('chart-now-flow')) return;
     if (state.charts.nowFlow) state.charts.nowFlow.destroy();
     const byWeek = state.nowGranularity === 'week';
     const buckets = byWeek ? M.weeks : M.daily;
@@ -3801,7 +3870,7 @@ function renderNowPage(container, data, d) {
       }
     });
   };
-  document.getElementById('now-granularity').addEventListener('click', (e) => {
+  if (document.getElementById('now-granularity')) document.getElementById('now-granularity').addEventListener('click', (e) => {
     const btn = e.target.closest('button');
     if (!btn) return;
     state.nowGranularity = btn.dataset.g;
@@ -4732,45 +4801,81 @@ function renderStructurePage(container, data, d) {
   const monthlyFixed = m.per(m.exp.fixed);
   const loopC = Math.max(m.loop.contribution, 0);
   const loopK = m.loop.market;
-  const loopBase = (loopC + Math.abs(loopK)) || 1;
+  const engineIsInput = loopC > Math.abs(loopK);
+
+  /* --- 진단: 지금 어느 단계인가 --- */
+  const phase = !m.loop.covered ? { key: 'na', title: '데이터 부족', lead: '투자 자산 스냅샷이 이 기간을 덮지 못해요' }
+    : engineIsInput
+      ? { key: 'input', title: '투입이 엔진', lead: '저축률이 성과를 결정하는 구간' }
+      : { key: 'market', title: '시장이 엔진', lead: '배분·변동성 관리가 성과를 결정하는 구간' };
+
+  /* --- 구조 점검 6항목 (통과/미달) --- */
+  const checks = [
+    { nm: '저축률', cur: `${m.saveRate.toFixed(1)}%`, tgt: `${state.goals.savingsRateTarget}%`, ok: m.saveRate >= state.goals.savingsRateTarget },
+    { nm: '월 고정비', cur: formatCompactWon(monthlyFixed), tgt: tg.fixed ? formatCompactWon(tg.fixed) : '—', ok: tg.fixed ? monthlyFixed <= tg.fixed : null },
+    { nm: '비상금', cur: formatCompactWon(d.emergencyFund), tgt: formatCompactWon(emgTargetV), ok: d.emergencyFund >= emgTargetV },
+    { nm: '현금 비율', cur: `${cashRatio.toFixed(1)}%`, tgt: tg.cashPct ? `${tg.cashPct}%` : '—', ok: tg.cashPct ? cashRatio >= tg.cashPct : null },
+    { nm: '연금 한도', cur: `${Math.max(pensionFill, 0).toFixed(0)}%`, tgt: '100%', ok: pensionFill >= 100 },
+    { nm: '유입 집중도', cur: `${workShare.toFixed(0)}%`, tgt: '≤90%', ok: workShare <= 90 }
+  ];
+  const failCount = checks.filter(c => c.ok === false).length;
+
+  /* --- 할 일 TOP 3 --- */
+  const top3 = AC.list.filter(a => !a.risk).slice(0, 3);
+  const risk = AC.list.find(a => a.risk && !(d.emergencyFund >= emgTargetV));
+  const ctrlPct = { '높음': 100, '중간': 60, '낮음': 20 };
+  const maxImpact = Math.max(...top3.map(a => a.impact || 0), 1);
 
   container.innerHTML = `
     <div class="g">
-      <div class="stat-grid s12" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:0;">
-        <div class="stat-card">
-          <div class="label">순저축 / 월</div>
-          <div class="value" style="color:var(--net)">${formatCompactWon(m.per(m.netSave))}원</div>
-          <div class="sub">저축률 ${m.saveRate.toFixed(1)}% / 목표 ${state.goals.savingsRateTarget}%</div>
+      <div class="panel s4 st-diag ${phase.key}">
+        <div class="st-diag-eyebrow">지금 단계</div>
+        <div class="st-diag-title">${phase.title}</div>
+        <div class="st-diag-lead">${phase.lead}</div>
+        <div class="st-diag-kv">
+          <span><em>저축률</em><b style="color:${m.saveRate >= state.goals.savingsRateTarget ? 'var(--net)' : 'var(--red)'}">${m.saveRate.toFixed(1)}%</b></span>
+          <span><em>순저축 / 월</em><b>${formatCompactWon(m.per(m.netSave))}</b></span>
+          <span><em>투자성 ÷ 연수입</em><b>${crossPct.toFixed(0)}%</b></span>
+          <span><em>코어 : 위성</em><b>${coreShare.toFixed(0)} : ${(100 - coreShare).toFixed(0)}</b></span>
         </div>
-        <div class="stat-card">
-          <div class="label">엔진</div>
-          <div class="value" style="color:${loopC > Math.abs(loopK) ? 'var(--gold-soft)' : '#8fb4dd'}">${!m.loop.covered ? '—' : loopC > Math.abs(loopK) ? '투입' : '시장'}</div>
-          <div class="sub">${!m.loop.covered ? '스냅샷 부족' : `투입 ${formatCompactWon(loopC)} · 시장 ${loopK >= 0 ? '+' : '−'}${formatCompactWon(Math.abs(loopK))}`}</div>
+        <div class="st-diag-mile">${nextMile
+          ? `다음 마일스톤 <b>${formatCompactWon(nextMile)}원</b> · ${annNet > 0 ? ((nextMile - m.stock.total) / annNet).toFixed(1) + '년' : '—'}`
+          : '마일스톤 미설정'}</div>
+      </div>
+
+      <div class="panel s8">
+        <div class="panel-title"><div>지금 할 일</div><span class="ptag">연 환산 임팩트 × 통제력</span></div>
+        <div class="st-todo">
+          ${top3.map(a => `
+            <div class="st-todo-card ${a.rank === 1 ? 'p1' : ''}">
+              <div class="st-todo-top"><span class="st-rank">${a.rank}</span><span class="st-stage ${a.stage === '유입' ? 'income' : a.stage === '누수' ? 'expense' : 'transfer'}">${a.stage}</span></div>
+              <div class="st-todo-name">${a.short}</div>
+              <div class="st-todo-imp">${a.impact ? '+' + formatCompactWon(a.impact) + '원' : '—'}<em>/ 연</em></div>
+              <div class="st-todo-bar"><i style="width:${((a.impact || 0) / maxImpact) * 100}%"></i></div>
+              <div class="st-todo-ctrl"><span>통제력 ${a.control}</span><i><b style="width:${ctrlPct[a.control] || 50}%"></b></i></div>
+            </div>`).join('')}
         </div>
-        <div class="stat-card">
-          <div class="label">투자성 / 연수입</div>
-          <div class="value" style="color:${crossPct >= 100 ? 'var(--green)' : 'var(--text)'}">${crossPct.toFixed(0)}%</div>
-          <div class="sub">${formatCompactWon(m.riskAssets)} / ${formatCompactWon(annIncome)}</div>
-        </div>
-        <div class="stat-card">
-          <div class="label">코어 / 위성</div>
-          <div class="value">${coreShare.toFixed(0)} : ${(100 - coreShare).toFixed(0)}</div>
-          <div class="sub">연금 ${formatCompactWon(m.stock.pension)} · 투자 ${formatCompactWon(m.stock.invest)}</div>
-        </div>
-        <div class="stat-card">
-          <div class="label">다음 마일스톤</div>
-          <div class="value">${nextMile ? formatCompactWon(nextMile) + '원' : '—'}</div>
-          <div class="sub">${nextMile ? `${formatCompactWon(nextMile - m.stock.total)} 남음 · ${annNet > 0 ? ((nextMile - m.stock.total) / annNet).toFixed(1) + '년' : '—'}` : '목표 탭 미설정'}</div>
-        </div>
+        ${risk ? `<div class="st-risk">방어 · ${risk.short} — 비상금 ${formatCompactWon(d.emergencyFund)} / ${formatCompactWon(emgTargetV)}</div>` : ''}
       </div>
     </div>
 
     <div class="g">
       <div class="panel s12">
-        <div class="panel-title">
-          <div>흐름</div>
-          <span class="ptag">최근 ${m.n}개월 월평균 · ${winLabel}</span>
+        <div class="panel-title"><div>구조 점검</div><span class="ptag">${checks.length - failCount} / ${checks.length} 통과</span></div>
+        <div class="st-checks">
+          ${checks.map(c => `
+            <div class="st-chk ${c.ok === null ? 'na' : c.ok ? 'ok' : 'no'}">
+              <span class="st-chk-nm">${c.nm}</span>
+              <span class="st-chk-cur">${c.cur}</span>
+              <span class="st-chk-tgt">${c.tgt}</span>
+            </div>`).join('')}
         </div>
+      </div>
+    </div>
+
+    <details class="rawbox">
+      <summary>전체 흐름 · 최근 ${m.n}개월 월평균</summary>
+      <div class="rawbody">
         <div class="eng-board">
           <div class="eng-stage">
             <div class="eng-stage-head"><b>유입</b><span>${formatCompactWon(m.per(m.inc.total))}</span></div>
@@ -4779,7 +4884,6 @@ function renderStructurePage(container, data, d) {
             ${node({ nm: '투자 수익', amount: m.per(m.inc.invest), pct: pctOf(m.inc.invest, m.inc.total), tone: 'inc' })}
           </div>
           <div class="eng-arrow">▶</div>
-
           <div class="eng-stage">
             <div class="eng-stage-head"><b>누수</b><span>${formatCompactWon(m.per(m.exp.total))}</span></div>
             ${node({ nm: '고정비', amount: m.per(m.exp.fixed), pct: pctOf(m.exp.fixed, m.exp.total), tone: 'exp', cls: 'leak' })}
@@ -4787,7 +4891,6 @@ function renderStructurePage(container, data, d) {
             ${node({ nm: '양도세', amount: m.per(m.exp.tax), pct: pctOf(m.exp.tax, m.exp.total), tone: 'exp', cls: 'leak' })}
           </div>
           <div class="eng-arrow">▶</div>
-
           <div class="eng-stage">
             <div class="eng-stage-head"><b>연료</b><span>${formatCompactWon(m.per(m.netSave))}</span></div>
             ${node({ nm: '순저축', amount: m.per(m.netSave), pct: null, tone: 'trf' })}
@@ -4798,7 +4901,6 @@ function renderStructurePage(container, data, d) {
             </div>
           </div>
           <div class="eng-arrow">▶</div>
-
           <div class="eng-stage">
             <div class="eng-stage-head"><b>배분</b><span>${formatCompactWon(m.per(m.trf.total))}</span></div>
             ${node({ nm: '연금(코어)', amount: m.per(m.trf.pension), pct: pctOf(m.trf.pension, m.trf.total), tone: 'trf' })}
@@ -4807,7 +4909,6 @@ function renderStructurePage(container, data, d) {
             ${node({ nm: '비상금', amount: m.per(m.trf.emergency), pct: pctOf(m.trf.emergency, m.trf.total), tone: 'trf' })}
           </div>
           <div class="eng-arrow">▶</div>
-
           <div class="eng-stage">
             <div class="eng-stage-head"><b>축적</b><span>${formatCompactWon(m.stock.total)}</span></div>
             ${node({ nm: '투자 자산', amount: m.stock.invest, pct: pctOf(m.stock.invest, m.stock.total), tone: 'stk' })}
@@ -4817,18 +4918,16 @@ function renderStructurePage(container, data, d) {
           </div>
         </div>
       </div>
-    </div>
+    </details>
 
-    <div class="g">
-      <div class="panel s7" id="panel-struct-actions"></div>
-      <div class="panel s5" id="panel-struct-check"></div>
-    </div>
+    <details class="rawbox">
+      <summary>레버리지 순위 전체 · ${AC.list.length}건</summary>
+      <div class="rawbody"><div id="panel-struct-actions"></div></div>
+    </details>
   `;
 
-  /* --- 레버리지 순위 --- */
   const ctrlCls = (c) => c === '높음' ? 'hi' : c === '중간' ? 'mid' : 'lo';
   document.getElementById('panel-struct-actions').innerHTML = `
-    <div class="panel-title"><div>레버리지 순위</div><span class="ptag">연 환산 임팩트 × 통제력</span></div>
     <div class="table-scroll" style="max-height:none;">
       <table class="data-table">
         <thead><tr>
@@ -4847,24 +4946,6 @@ function renderStructurePage(container, data, d) {
       </table>
     </div>
   `;
-
-  /* --- 구조 점검 --- */
-  const row = (label, cur, tgt, ok) => `
-    <div class="chk-row">
-      <span class="mk ${ok === null ? 'na' : ok ? 'ok' : 'no'}">${ok === null ? '—' : ok ? '통과' : '미달'}</span>
-      <span class="nm">${label}</span>
-      <span class="fig">${cur}${tgt ? `<em>${tgt}</em>` : ''}</span>
-    </div>`;
-
-  document.getElementById('panel-struct-check').innerHTML = `
-    <div class="panel-title"><div>구조 점검</div></div>
-    ${row('저축률', `${m.saveRate.toFixed(1)}%`, `${state.goals.savingsRateTarget}%`, m.saveRate >= state.goals.savingsRateTarget)}
-    ${row('월 고정비', `${formatCompactWon(monthlyFixed)}원`, tg.fixed ? `${formatCompactWon(tg.fixed)}원` : '—', tg.fixed ? monthlyFixed <= tg.fixed : null)}
-    ${row('비상금', `${formatCompactWon(d.emergencyFund)}원`, `${formatCompactWon(emgTargetV)}원`, d.emergencyFund >= emgTargetV)}
-    ${row('현금 비율', `${cashRatio.toFixed(1)}%`, tg.cashPct ? `${tg.cashPct}%` : '—', tg.cashPct ? cashRatio >= tg.cashPct : null)}
-    ${row('연금 한도', `${pensionFill.toFixed(0)}%`, '100%', pensionFill >= 100)}
-    ${row('유입 집중도', `${workShare.toFixed(0)}%`, '≤90%', workShare <= 90)}
-  `;
 }
 
 /* ---------------- page: 자산 ---------------- */
@@ -4873,7 +4954,7 @@ function renderStructurePage(container, data, d) {
 function renderAssetsPage(container, data, d) {
   container.innerHTML = `
     <div class="g">
-      <div class="panel s3" id="panel-asset-stats"></div>
+      <div class="stat-grid s3" style="grid-template-columns:1fr;" id="panel-asset-stats"></div>
       <div class="panel s9" id="panel-trend"></div>
     </div>
     <div class="g">
@@ -4901,10 +4982,8 @@ function renderAssetStats(data, d) {
   const pct = (v) => d.totalAssets ? ((v / d.totalAssets) * 100).toFixed(0) + '%' : '—';
 
   box.innerHTML = `
-    <div class="panel-title"><div>주요 수치</div><span class="ptag">${latestMonth || ''}</span></div>
-    <div class="stat-grid" style="grid-template-columns:1fr;margin-bottom:0;">
       <div class="stat-card">
-        <div class="label">총자산</div>
+        <div class="label">총자산 <em style="font-style:normal;color:var(--text-faint);font-size:10px;">${latestMonth || ''}</em></div>
         <div class="value">${formatCompactWon(d.totalAssets)}원</div>
         <div class="sub ${d.deltaAssets >= 0 ? 'up' : 'down'}">전월 ${d.deltaAssets >= 0 ? '▲' : '▼'} ${formatCompactWon(Math.abs(d.deltaAssets))}원 (${d.deltaPct === null ? '—' : d.deltaPct.toFixed(1) + '%'})</div>
       </div>
@@ -4927,7 +5006,6 @@ function renderAssetStats(data, d) {
         <div class="value" style="color:#9b7fc2">${formatCompactWon(pension)}원</div>
         <div class="sub">총자산의 ${pct(pension)}</div>
       </div>
-    </div>
   `;
 }
 
@@ -4985,14 +5063,49 @@ function renderIncomePage(container, data, d) {
   const catNames = Object.keys(data.incomeCategories);
   const palette = ['#4c8c6b', '#c9a227', '#5b8fc7', '#9b7fc2', '#c1483f'];
 
+  /* --- 요약 지표 --- */
+  const last12 = incomeSeries.slice(-12);
+  const sum12 = last12.reduce((a, x) => a + x.total, 0);
+  const sorted12 = last12.map(x => x.total).sort((a, b) => a - b);
+  const med12 = sorted12.length ? (sorted12.length % 2
+    ? sorted12[(sorted12.length - 1) / 2]
+    : (sorted12[sorted12.length / 2 - 1] + sorted12[sorted12.length / 2]) / 2) : 0;
+  const catSum12 = {};
+  catNames.forEach(n => { catSum12[n] = (data.incomeCategories[n] || []).slice(-12).reduce((a, v) => a + (v || 0), 0); });
+  const workSum = catSum12['근로소득'] || 0;
+  const nonWork = sum12 - workSum;
+  const nonWorkPct = sum12 ? (nonWork / sum12) * 100 : 0;
+  const best = last12.reduce((a, x) => (!a || x.total > a.total) ? x : a, null);
+  const worst = last12.reduce((a, x) => (!a || x.total < a.total) ? x : a, null);
+  const volat = med12 ? ((best && worst) ? ((best.total - worst.total) / med12) * 100 : 0) : 0;
+
   container.innerHTML = `
     <div class="g">
-      <div class="panel s5">
-        <div class="panel-title"><div>수입처 비중</div><span class="ptag">${latest ? latest.month : ''}</span></div>
-        <div class="chart-wrap" style="min-height:150px;"><canvas id="chart-income-pie"></canvas></div>
-        <div id="income-pie-legend"></div>
+      <div class="stat-grid s12" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:0;">
+        <div class="stat-card">
+          <div class="label">최근 12개월 수입</div>
+          <div class="value" style="color:var(--green)">${formatCompactWon(sum12)}원</div>
+          <div class="sub">월 평균 ${formatCompactWon(Math.round(sum12 / (last12.length || 1)))}원</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">월 중앙값</div>
+          <div class="value">${formatCompactWon(Math.round(med12))}원</div>
+          <div class="sub">보너스 왜곡 제거 기준</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">근로 외 수입 비중</div>
+          <div class="value" style="color:${nonWorkPct >= 10 ? 'var(--net)' : 'var(--text)'}">${nonWorkPct.toFixed(0)}%</div>
+          <div class="sub">${formatCompactWon(nonWork)}원 / 12개월</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">수입 변동폭</div>
+          <div class="value">${volat.toFixed(0)}%</div>
+          <div class="sub">최고 ${best ? formatCompactWon(best.total) : '—'} · 최저 ${worst ? formatCompactWon(worst.total) : '—'}</div>
+        </div>
       </div>
-      <div class="panel s7">
+    </div>
+    <div class="g">
+      <div class="panel s8">
         <div class="panel-title">
           <div>총수입 추이</div>
           <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
@@ -5010,6 +5123,14 @@ function renderIncomePage(container, data, d) {
         <div class="income-cat-btns" id="income-cat-btns" style="display:none;"></div>
         <div class="chart-wrap tall"><canvas id="chart-income-total"></canvas></div>
         <div class="chart-legend" id="income-total-legend"><span><i style="background:#c9a227"></i>이번 달</span><span><i style="background:#4c8c6b"></i>그 외</span></div>
+      </div>
+      <div class="panel s4">
+        <div class="panel-title">
+          <div>수입처 비중</div>
+          <div class="range-toggle" id="income-pie-range-toggle"></div>
+        </div>
+        <div class="chart-wrap" style="min-height:150px;"><canvas id="chart-income-pie"></canvas></div>
+        <div id="income-pie-legend"></div>
       </div>
     </div>
     <details class="rawbox">
@@ -5149,23 +5270,36 @@ function renderIncomePage(container, data, d) {
   });
   drawIncomeTotal();
 
-  const pieIdx = d.latestPivotIdx;
-  const pieRows = catNames.map(name => ({ name, v: (data.incomeCategories[name] || [])[pieIdx] || 0 })).filter(r => r.v > 0);
-  const pieCtx = document.getElementById('chart-income-pie');
-  state.charts.incomePie = new Chart(pieCtx, {
-    type: 'doughnut',
-    data: { labels: pieRows.map(r => r.name), datasets: [{ data: pieRows.map(r => r.v), backgroundColor: pieRows.map((_, i) => palette[i % palette.length]), borderColor: '#171e2b', borderWidth: 2 }] },
-    options: { responsive: true, maintainAspectRatio: false, cutout: '55%', plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` ${c.label}: ${formatCompactWon(c.raw)}원` } } } }
-  });
-  const pieTotal = pieRows.reduce((a, r) => a + r.v, 0);
-  document.getElementById('income-pie-legend').innerHTML = pieRows.map((r, i) => {
-    const pct = pieTotal ? ((r.v / pieTotal) * 100).toFixed(1) : '0.0';
-    return `<div class="pie-legend-row">
-      <span class="pie-legend-swatch" style="background:${palette[i % palette.length]}"></span>
-      <span class="pie-legend-name">${r.name}</span>
-      <span class="pie-legend-val">${formatCompactWon(r.v)}원 · ${pct}%</span>
-    </div>`;
-  }).join('') || '<div class="empty-state">데이터가 없어요.</div>';
+  const drawIncomePie = () => {
+    const range = state.incomePieRange;
+    const n = range === 'all' ? data.months.length : range;
+    const pieRows = catNames
+      .map(name => ({ name, v: (data.incomeCategories[name] || []).slice(-n).reduce((a, x) => a + (x || 0), 0) }))
+      .filter(r => r.v > 0)
+      .sort((a, b) => b.v - a.v);
+    if (state.charts.incomePie) state.charts.incomePie.destroy();
+    state.charts.incomePie = new Chart(document.getElementById('chart-income-pie'), {
+      type: 'doughnut',
+      data: { labels: pieRows.map(r => r.name), datasets: [{ data: pieRows.map(r => r.v), backgroundColor: pieRows.map((_, i) => palette[i % palette.length]), borderColor: '#171e2b', borderWidth: 2 }] },
+      options: { responsive: true, maintainAspectRatio: false, cutout: '55%', plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` ${c.label}: ${formatCompactWon(c.raw)}원` } } } }
+    });
+    const pieTotal = pieRows.reduce((a, r) => a + r.v, 0);
+    document.getElementById('income-pie-legend').innerHTML = pieRows.map((r, i) => {
+      const pct = pieTotal ? ((r.v / pieTotal) * 100).toFixed(1) : '0.0';
+      return `<div class="pie-legend-row">
+        <span class="pie-legend-swatch" style="background:${palette[i % palette.length]}"></span>
+        <span class="pie-legend-name">${r.name}</span>
+        <span class="pie-legend-val">${formatCompactWon(r.v)}원 · ${pct}%</span>
+      </div>`;
+    }).join('') || '<div class="empty-state">데이터가 없어요.</div>';
+  };
+  function onIncomePieRangePick(v) {
+    state.incomePieRange = v === 'all' ? 'all' : parseInt(v, 10);
+    bindRangeToggle('income-pie-range-toggle', RANGE_OPTIONS, state.incomePieRange, onIncomePieRangePick);
+    drawIncomePie();
+  }
+  bindRangeToggle('income-pie-range-toggle', RANGE_OPTIONS, state.incomePieRange, onIncomePieRangePick);
+  drawIncomePie();
 
   renderAdvancedTable('income-table', incomeLedger, { majorOptions: [['수입', '전체']], defaultGroup: 'none' });
 }
@@ -5244,16 +5378,17 @@ function getFixedByPivotMonth(ledger, series) {
 
 function renderExpenseAvgCard(panelId, series, label, rangeKey) {
   const panel = document.getElementById(panelId);
+  if (!panel) return;
   const draw = () => {
     const range = state[rangeKey];
     const slice = sliceByRange(series, range);
     const avg = avgOf(slice.map(s => s.expense));
+    const last = slice.length ? slice[slice.length - 1].expense : null;
     panel.innerHTML = `
-      <div class="panel-title">
-        <div>${label}</div>
-        <div class="range-toggle" id="${panelId}-toggle"></div>
-      </div>
-      <div class="compact-stat-value">${formatCompactWon(avg)}원</div>
+      <div class="label">${label}</div>
+      <div class="value">${formatCompactWon(avg)}원</div>
+      <div class="sub ${last === null ? '' : last <= avg ? 'up' : 'down'}">최근 달 ${last === null ? '—' : formatCompactWon(last) + '원'}</div>
+      <div class="range-toggle mini" id="${panelId}-toggle" style="margin-top:7px;"></div>
     `;
     bindRangeToggle(`${panelId}-toggle`, RANGE_OPTIONS, state[rangeKey], onPick);
   };
@@ -5264,26 +5399,21 @@ function renderExpenseAvgCard(panelId, series, label, rangeKey) {
   draw();
 }
 
+const EXP_SUBS = [['summary', '요약'], ['fixed', '고정비'], ['budget', '예산']];
+
 function renderExpensePage(container, data, d) {
   const cf = d.cashflow;
   const expenseLedger = data.ledger.filter(r => r.major.includes('지출'));
   const fixedSeries = getFixedByPivotMonth(data.ledger, cf);
   const hasFixed = fixedSeries.some(s => s.expense > 0);
+  const SUB = EXP_SUBS.some(x => x[0] === state.expSub) ? state.expSub : 'summary';
+  const subnav = `<div class="subnav sub2" id="exp-subnav">${EXP_SUBS.map(([v, l]) =>
+    `<button data-sub="${v}" class="${v === SUB ? 'active' : ''}">${l}</button>`).join('')}</div>`;
 
-  container.innerHTML = `
+  container.innerHTML = subnav + `
+    ${SUB === 'summary' ? `
     <div class="g">
-      <div class="panel s3" id="panel-avg-expense"></div>
-      <div class="panel s3" id="panel-avg-fixed"></div>
-      <div class="panel s6" id="panel-top-vendors">
-        <div class="panel-title">
-          <div>주요 지출처</div>
-          <div class="range-toggle" id="vendor-range-toggle"></div>
-        </div>
-        <div id="top-vendors-list"></div>
-      </div>
-    </div>
-    <div class="g">
-      <div class="panel s5">
+      <div class="panel s7">
         <div class="panel-title">
           <div>월별 총지출</div>
           <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
@@ -5298,33 +5428,69 @@ function renderExpensePage(container, data, d) {
         <div class="settings-note" id="expense-trend-hint" style="display:none;">막대 클릭 → 해당 월 고정비 상세</div>
         <div id="fixed-breakdown"></div>
       </div>
-      <div class="panel s4" id="panel-budget-month-section">
+      <div class="stat-grid s5" style="grid-template-columns:1fr 1fr;">
+        <div class="stat-card" id="panel-avg-expense"></div>
+        <div class="stat-card" id="panel-avg-fixed"></div>
+      </div>
+    </div>
+    <div class="g">
+      <div class="panel s7" id="panel-top-vendors">
+        <div class="panel-title">
+          <div>주요 지출처</div>
+          <div class="range-toggle" id="vendor-range-toggle"></div>
+        </div>
+        <div id="top-vendors-list"></div>
+      </div>
+      <div class="panel s5">
+        <div class="panel-title"><div>큰 지출</div></div>
+        <div id="top-expenses-body"></div>
+      </div>
+    </div>` : ''}
+
+    ${SUB === 'fixed' ? `
+    <div class="g">
+      <div class="panel s7" id="panel-fixed-detail"></div>
+      <div class="panel s5" id="panel-invest-cost"></div>
+    </div>` : ''}
+
+    ${SUB === 'budget' ? `
+    <div class="g">
+      <div class="panel s7" id="panel-budget-month-section">
         <div class="panel-title">
           <div>카테고리별 예산</div>
           <div id="expense-month-nav-slot"></div>
         </div>
         <div id="cat-budget-body"></div>
       </div>
-      <div class="panel s3">
+      <div class="panel s5">
         <div class="panel-title"><div>큰 지출</div></div>
         <div id="top-expenses-body"></div>
       </div>
-    </div>
-    <div class="g">
-      <div class="panel s7" id="panel-fixed-detail"></div>
-      <div class="panel s5" id="panel-invest-cost"></div>
-    </div>
+    </div>` : ''}
+
     <details class="rawbox">
       <summary>지출 내역</summary>
       <div class="rawbody"><div id="expense-table"></div></div>
     </details>
   `;
-  renderExpenseAvgCard('panel-avg-expense', cf, '평균 월 지출', 'expenseAvgExpenseRange');
-  renderExpenseAvgCard('panel-avg-fixed', fixedSeries, '평균 월 고정비', 'expenseAvgFixedRange');
-  renderFixedDetailSection(data, cf, fixedSeries);
-  renderInvestCostPanel('panel-invest-cost', data.ledger, cf);
+  document.getElementById('exp-subnav').addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    state.expSub = btn.dataset.sub;
+    renderPage();
+  });
+
+  if (SUB === 'summary') {
+    renderExpenseAvgCard('panel-avg-expense', cf, '평균 월 지출', 'expenseAvgExpenseRange');
+    renderExpenseAvgCard('panel-avg-fixed', fixedSeries, '평균 월 고정비', 'expenseAvgFixedRange');
+  }
+  if (SUB === 'fixed') {
+    renderFixedDetailSection(data, cf, fixedSeries);
+    renderInvestCostPanel('panel-invest-cost', data.ledger, cf);
+  }
 
   const drawExpenseTrend = () => {
+    if (!document.getElementById('chart-expense-trend')) return;
     const mode = hasFixed ? state.expenseTrendMode : 'total';
     const baseSeries = mode === 'fixed' ? fixedSeries : cf;
     const series = sliceByRange(baseSeries, state.expenseRange);
@@ -5358,6 +5524,7 @@ function renderExpensePage(container, data, d) {
     bindRangeToggle('expense-range-toggle', RANGE_OPTIONS, state.expenseRange, onExpenseRangePick);
     drawExpenseTrend();
   }
+  if (SUB === 'summary') {
   bindRangeToggle('expense-range-toggle', RANGE_OPTIONS, state.expenseRange, onExpenseRangePick);
   if (hasFixed) {
     document.getElementById('expense-trend-mode-toggle').addEventListener('click', (e) => {
@@ -5371,6 +5538,7 @@ function renderExpensePage(container, data, d) {
   drawExpenseTrend();
 
   const drawTopVendors = () => {
+    if (!document.getElementById('top-vendors-list')) return;
     const filtered = filterLedgerByRange(expenseLedger, data.months, state.vendorRange);
     const topVendors = computeTopVendors(filtered, 10);
     const topVendorMax = Math.max(...topVendors.map(v => v[1]), 1);
@@ -5403,6 +5571,7 @@ function renderExpensePage(container, data, d) {
   }
   bindRangeToggle('vendor-range-toggle', RANGE_OPTIONS, state.vendorRange, onVendorRangePick);
   drawTopVendors();
+  }
 
   renderExpenseMonthSection(data, d);
   renderAdvancedTable('expense-table', expenseLedger, { majorOptions: [['지출', '전체']], defaultGroup: 'none' });
@@ -5466,6 +5635,7 @@ function bindMonthNavControls(data, d) {
 }
 
 function renderCategoryBudgetPanel(data, d) {
+  if (!document.getElementById('cat-budget-body')) return;
   const body = document.getElementById('cat-budget-body');
   if (!body) return;
   const catNames = Object.keys(data.expenseCategories);
@@ -5508,6 +5678,7 @@ function renderCategoryBudgetPanel(data, d) {
 }
 
 function renderTopExpensesPanel(data, d) {
+  if (!document.getElementById('top-expenses-body')) return;
   const body = document.getElementById('top-expenses-body');
   if (!body) return;
   const idx = state.expenseMonthIdx;
