@@ -662,31 +662,31 @@ body{
 
 /* ---------- nav ---------- */
 .navbar{
-  display:flex;align-items:center;gap:9px;
-  margin:14px 0 0;padding-bottom:11px;
+  display:flex;align-items:stretch;gap:26px;
+  margin:26px 0 0;
   overflow-x:auto;scrollbar-width:thin;
 }
 .navbar::-webkit-scrollbar{height:5px;}
 .navbar::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:3px;}
-.nav-group{display:flex;align-items:center;gap:3px;flex:0 0 auto;}
+.nav-group{display:flex;align-items:center;gap:1px;flex:0 0 auto;}
 .nav-group-label{
-  font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;
-  color:var(--text-faint);white-space:nowrap;margin-right:5px;transition:color .15s;
+  font-family:var(--serif);font-weight:800;font-size:15px;letter-spacing:-.01em;
+  color:var(--text-dim);white-space:nowrap;margin-right:11px;transition:color .15s;
 }
 .nav-group.on .nav-group-label{color:var(--gold-soft);}
-.nav-div{flex:0 0 auto;width:1px;height:17px;background:var(--border-strong);margin:0 2px;}
+.nav-div{flex:0 0 auto;width:1px;background:var(--border);margin:6px 0;}
 .nav-btn{
-  font-family:var(--sans);font-weight:500;font-size:12.5px;
-  background:transparent;border:1px solid transparent;color:var(--text-dim);
-  padding:6px 13px;border-radius:20px;cursor:pointer;white-space:nowrap;
-  transition:all .15s;
+  font-family:var(--sans);font-weight:500;font-size:13px;
+  background:transparent;border:none;color:var(--text-faint);
+  padding:9px 12px;cursor:pointer;white-space:nowrap;
+  border-bottom:2px solid transparent;transition:color .15s,border-color .15s;
 }
-.nav-btn:hover{color:var(--text);background:var(--panel-2);}
-.nav-btn.active{background:var(--gold);border-color:var(--gold);color:#1a1508;font-weight:700;}
+.nav-btn:hover{color:var(--text);}
+.nav-btn.active{color:var(--gold-soft);border-bottom-color:var(--gold);font-weight:700;}
 @media (max-width:900px){
-  .navbar{gap:7px;}
-  .nav-group-label{display:none;}
-  .nav-btn{font-size:12px;padding:5px 11px;}
+  .navbar{gap:16px;margin-top:18px;}
+  .nav-group-label{font-size:13px;margin-right:7px;}
+  .nav-btn{font-size:12.5px;padding:8px 9px;}
 }
 
 /* ---------- stat cards ---------- */
@@ -910,13 +910,13 @@ body{font-variant-numeric:tabular-nums;}
 /* ---------- 화면 밀도 ---------- */
 #app{padding:0 clamp(12px,1.6vw,26px) 36px;}
 .site-header{padding-top:12px;}
-.topbar{margin-bottom:8px;gap:12px;align-items:center;}
+.topbar{margin-bottom:0;gap:12px;align-items:center;}
 .brand .mark{font-size:19px;}
 .brand h1{font-size:18px;}
 .brand .tagline{display:none;}
 .sync-box{font-size:11.5px;}
-.navbar{margin:8px 0 0;gap:9px;padding-bottom:9px;}
-.nav-btn{padding:6px 12px;font-size:12.5px;}
+.navbar{margin:26px 0 0;gap:26px;}
+.nav-btn{padding:9px 12px;font-size:13px;}
 #page-content{padding-top:12px;gap:var(--gap);}
 
 .panel{
@@ -1128,20 +1128,20 @@ body{font-variant-numeric:tabular-nums;}
 
 /* ---------- 목표 보드 (좌 → 우 시간순 · 가로 스크롤) ---------- */
 #goal-board-wrap{min-width:0;}
-.gb-board{display:flex;gap:10px;overflow-x:auto;overflow-y:hidden;padding:2px 2px 10px;scroll-snap-type:x proximity;}
+.gb-board{display:flex;gap:20px;overflow-x:auto;overflow-y:hidden;padding:2px 2px 10px;scroll-snap-type:x proximity;}
 .gb-board::-webkit-scrollbar{height:9px;}
 .gb-board::-webkit-scrollbar-track{background:var(--panel-2);border-radius:5px;}
 .gb-board::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:5px;}
 .gb-board::-webkit-scrollbar-thumb:hover{background:var(--gold-soft);}
-.gb-col{flex:0 0 246px;display:flex;flex-direction:column;scroll-snap-align:start;
-  border:1px solid var(--border);border-radius:10px;background:var(--panel-2);padding:9px 9px 6px;}
-.gb-col.now{border-color:var(--gold);background:rgba(201,162,39,0.07);}
-.gb-col.undated{border-style:dashed;flex-basis:214px;}
+.gb-col{flex:0 0 250px;display:flex;flex-direction:column;scroll-snap-align:start;
+  border:none;background:transparent;padding:0;}
+.gb-col.undated{flex-basis:218px;}
 .gb-colhead{display:flex;align-items:baseline;justify-content:space-between;gap:6px;
-  padding-bottom:7px;margin-bottom:7px;border-bottom:1px solid var(--border);}
-.gb-colhead b{font-family:var(--serif);font-size:14px;font-weight:700;color:var(--text);line-height:1.2;white-space:nowrap;}
+  padding:0 2px 8px;margin-bottom:9px;border-bottom:1px solid var(--border-strong);}
+.gb-colhead b{font-family:var(--serif);font-size:15px;font-weight:800;color:var(--text-dim);line-height:1.2;white-space:nowrap;letter-spacing:-.01em;}
 .gb-colhead span{font-family:var(--mono);font-size:10.5px;color:var(--text-faint);}
 .gb-col.now .gb-colhead b{color:var(--gold-soft);}
+.gb-col.undated .gb-colhead b{color:var(--text-faint);}
 .gb-lane{display:flex;flex-direction:column;gap:7px;flex:1;min-height:110px;
   border-radius:8px;padding:2px;transition:background .15s;}
 .gb-lane.over{background:rgba(201,162,39,0.14);outline:1px dashed var(--gold-soft);}
@@ -2316,7 +2316,8 @@ const SECTION_SUBS = {
   assets: [
     ['overview', '전체'],
     ['investment', '투자'],
-    ['savings', '저축·연금']
+    ['savings', '저축'],
+    ['pension', '연금']
   ],
   status: [
     ['insights', '인사이트'],
@@ -2446,7 +2447,8 @@ function renderPage() {
   } else if (section === 'assets') {
     if (SUB === 'overview') renderAssetsPage(body, data, d);
     else if (SUB === 'investment') renderInvestmentPage(body, data, d);
-    else renderSavingsPage(body, data, d);
+    else if (SUB === 'pension') renderSavingsPage(body, data, d, 'pension');
+    else renderSavingsPage(body, data, d, 'saving');
   } else {
     if (SUB === 'insights') renderStatusInsights(body, data, d);
     else if (SUB === 'goals') { body.innerHTML = '<div id="home-goals"></div>'; renderGoalBoard(data, d); }
@@ -3522,9 +3524,9 @@ function renderNowPage(container, data, d) {
   const monthOptions = availableKeys.slice().reverse().map(k => `<option value="${k}" ${k === monthKey ? 'selected' : ''}>${monthKeyLabel(k)}</option>`).join('');
 
   container.innerHTML = `
-    <div class="panel full">
-      <div class="panel-title">
-        <div>${scopeLabel}</div>
+    <div class="page-daybar">
+      <div class="today-datewrap">
+        <div class="day-title">${scopeLabel}</div>
         <div class="month-nav">
           <button id="now-prev" ${availableKeys.indexOf(monthKey) <= 0 ? 'disabled' : ''}>◀</button>
           <select id="now-month-select">${monthOptions}</select>
@@ -3532,7 +3534,9 @@ function renderNowPage(container, data, d) {
           <button class="btn small" id="now-thismonth">이번 달</button>
         </div>
       </div>
+    </div>
 
+    <div class="panel full">
       <div class="now-progress">
         <div class="now-progress-track"><div class="now-progress-fill" style="width:${progressPct}%"></div></div>
         <span class="now-progress-text">${isThisMonth ? `D+${elapsed} / ${M.days}일 · 남은 ${M.days - elapsed}일` : `${M.days}일 · 마감`}</span>
@@ -4337,10 +4341,9 @@ function renderCalendarPage(container, data, d) {
   });
 
   container.innerHTML = `
-    <div class="g">
-    <div class="panel s7">
-      <div class="panel-title">
-        <div class="cal-month-title">${monthKeyLabel(monthKey)}</div>
+    <div class="page-daybar">
+      <div class="today-datewrap">
+        <div class="day-title">${monthKeyLabel(monthKey)}</div>
         <div class="month-nav">
           <button id="cal-prev" ${availableKeys.indexOf(monthKey) <= 0 ? 'disabled' : ''}>◀</button>
           <select id="cal-month-select">${monthOptions}</select>
@@ -4348,7 +4351,10 @@ function renderCalendarPage(container, data, d) {
           <button class="btn small" id="cal-thismonth">이번 달</button>
         </div>
       </div>
+    </div>
 
+    <div class="g">
+    <div class="panel s7">
       <div class="stat-grid" style="margin-bottom:0;">
         <div class="stat-card">
           <div class="label">수입</div>
@@ -7081,50 +7087,102 @@ function computeSavingsInsights(data, d, latestSaving, latestPension, months, by
   return insights;
 }
 
-function renderSavingsPage(container, data, d) {
-  const invCategories = ['저축 자산', '연금 자산'];
-  const byMonthCat = {};
+/* 저축 / 연금 탭 공통 렌더러.
+   scope = 'saving' | 'pension' — 카테고리·이체 채널·색만 다르고 구조는 같다. */
+const SAV_SCOPES = {
+  saving: {
+    cat: '저축 자산', label: '저축', color: '#5b8fc7',
+    transfers: ['비상금'], transferLabel: { '비상금': '저축(CMA 등)' },
+    minors: ['저축 자산', '비상금']
+  },
+  pension: {
+    cat: '연금 자산', label: '연금', color: '#9b7fc2',
+    transfers: ['연금 자산'], transferLabel: { '연금 자산': '연금 이체' },
+    minors: ['연금 자산']
+  }
+};
+
+function renderSavingsPage(container, data, d, scopeKey) {
+  const S = SAV_SCOPES[scopeKey] || SAV_SCOPES.saving;
+  const byMonth = {};
   data.assetRows.forEach(r => {
-    if (!invCategories.includes(r.category) || r.amount === null) return;
-    byMonthCat[r.date] = byMonthCat[r.date] || {};
-    byMonthCat[r.date][r.category] = (byMonthCat[r.date][r.category] || 0) + r.amount;
+    if (r.category !== S.cat || r.amount === null) return;
+    byMonth[r.date] = (byMonth[r.date] || 0) + r.amount;
   });
   const months = d.assetMonths;
   const latestMonth = d.latestMonth;
-  const latestSaving = (byMonthCat[latestMonth] && byMonthCat[latestMonth]['저축 자산']) || 0;
-  const latestPension = (byMonthCat[latestMonth] && byMonthCat[latestMonth]['연금 자산']) || 0;
+  const total = byMonth[latestMonth] || 0;
+  const prevMonth = months[months.indexOf(latestMonth) - 1];
+  const prev = prevMonth ? (byMonth[prevMonth] || 0) : null;
+  const delta = prev === null ? null : total - prev;
+  const sharePct = d.totalAssets ? (total / d.totalAssets) * 100 : 0;
 
   const latestTransferIdx = d.latestPivotIdx;
-  const cmaTransfer = (data.transferCategories['비상금'] || [])[latestTransferIdx] || 0;
-  const pensionTransfer = (data.transferCategories['연금 자산'] || [])[latestTransferIdx] || 0;
+  const transferNames = S.transfers.filter(n => data.transferCategories[n]);
+  const monthTransfer = transferNames.reduce((a, n) => a + ((data.transferCategories[n] || [])[latestTransferIdx] || 0), 0);
+  const yearTransfer = transferNames.reduce((a, n) => a + (data.transferCategories[n] || []).slice(-12).reduce((x, v) => x + (v || 0), 0), 0);
 
   const accounts = {};
-  data.assetRows.filter(r => r.date === latestMonth && invCategories.includes(r.category)).forEach(r => {
-    accounts[r.account] = { amount: r.amount, category: r.category };
+  data.assetRows.filter(r => r.date === latestMonth && r.category === S.cat).forEach(r => {
+    accounts[r.account] = (accounts[r.account] || 0) + r.amount;
   });
-  const accountList = Object.entries(accounts).sort((a, b) => b[1].amount - a[1].amount);
-  const cmaAmount = accounts['NH-CMA'] ? accounts['NH-CMA'].amount : (accounts['NH(CMA)'] ? accounts['NH(CMA)'].amount : null);
+  const accountList = Object.entries(accounts).sort((a, b) => b[1] - a[1]);
 
-  const savingsLedger = data.ledger.filter(r => r.minor === '저축 자산' || r.minor === '연금 자산' || r.minor === '비상금');
-  const transferNames = ['비상금', '연금 자산'].filter(n => data.transferCategories[n]);
-  const total = latestSaving + latestPension;
+  const scopeLedger = data.ledger.filter(r => S.minors.includes(r.minor));
+
+  /* 저축: 비상금 목표 / 연금: 세액공제 한도 */
+  let gaugeHtml = '';
+  if (scopeKey === 'saving') {
+    const cma = accounts['NH-CMA'] !== undefined ? accounts['NH-CMA'] : (accounts['NH(CMA)'] || 0);
+    const tgt = state.goals.emergencyFundTarget || 0;
+    const pct = tgt ? Math.min((cma / tgt) * 100, 100) : 0;
+    gaugeHtml = `
+      <div class="stat-card">
+        <div class="label">비상금 (NH-CMA)</div>
+        <div class="value" style="color:${tgt && cma >= tgt ? 'var(--green)' : 'var(--gold-soft)'}">${formatCompactWon(cma)}원</div>
+        <div class="allow-track" style="margin-top:8px;height:7px;"><div class="allow-fill" style="width:${pct}%;${tgt && cma >= tgt ? '' : 'background:linear-gradient(90deg,var(--gold),var(--gold-soft));'}"></div></div>
+        <div class="allow-legend"><span>목표 ${formatCompactWon(tgt)}원</span><span>${tgt ? Math.round((cma / tgt) * 100) : 0}%</span></div>
+      </div>`;
+  } else {
+    const annPension = (data.transferCategories['연금 자산'] || []).slice(-12).reduce((a, v) => a + (v || 0), 0);
+    const pct = Math.max(0, Math.min((annPension / PENSION_LIMIT) * 100, 100));
+    gaugeHtml = `
+      <div class="stat-card">
+        <div class="label">세액공제 한도</div>
+        <div class="value" style="color:${pct >= 100 ? 'var(--green)' : annPension <= 0 ? 'var(--red)' : 'var(--gold-soft)'}">${pct.toFixed(0)}%</div>
+        <div class="allow-track" style="margin-top:8px;height:7px;"><div class="allow-fill" style="width:${pct}%;${pct >= 100 ? '' : 'background:linear-gradient(90deg,var(--gold),var(--gold-soft));'}"></div></div>
+        <div class="allow-legend"><span>최근 12개월 ${formatCompactWon(annPension)}원</span><span>한도 ${formatCompactWon(PENSION_LIMIT)}원</span></div>
+      </div>`;
+  }
 
   container.innerHTML = `
     <div class="g">
       <div class="stat-grid s5" style="grid-template-columns:1fr 1fr;">
-        <div class="stat-card"><div class="label">저축 자산</div><div class="value">${formatCompactWon(latestSaving)}원</div></div>
-        <div class="stat-card"><div class="label">연금 자산</div><div class="value">${formatCompactWon(latestPension)}원</div></div>
-        <div class="stat-card"><div class="label">합계</div><div class="value" style="color:#5b8fc7">${formatCompactWon(total)}원</div></div>
-        ${cmaAmount !== null ? `<div class="stat-card"><div class="label">비상금 (NH-CMA)</div><div class="value">${formatCompactWon(cmaAmount)}원</div></div>` : ''}
+        <div class="stat-card">
+          <div class="label">${S.label} 자산</div>
+          <div class="value" style="color:${S.color}">${formatCompactWon(total)}원</div>
+          <div class="sub ${delta === null ? '' : delta >= 0 ? 'up' : 'down'}">${delta === null ? latestMonth || '' : `전월 ${delta >= 0 ? '▲' : '▼'} ${formatCompactWon(Math.abs(delta))}원`}</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">총자산 비중</div>
+          <div class="value">${sharePct.toFixed(0)}%</div>
+          <div class="sub">총자산 ${formatCompactWon(d.totalAssets)}원</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">이번 달 이체</div>
+          <div class="value" style="color:var(--gold-soft)">${formatCompactWon(monthTransfer)}원</div>
+          <div class="sub">최근 12개월 ${formatCompactWon(yearTransfer)}원</div>
+        </div>
+        ${gaugeHtml}
       </div>
       <div class="panel s7">
         <div class="panel-title"><div>계좌별 잔액</div><span class="ptag">${latestMonth || ''}</span></div>
-        ${accountList.map(([name, v]) => {
-          const pct = total ? (v.amount / total) * 100 : 0;
+        ${accountList.map(([name, amt]) => {
+          const pct = total ? (amt / total) * 100 : 0;
           return `<div class="acct-row">
-            <span class="alloc-swatch" style="background:${v.category === '저축 자산' ? '#5b8fc7' : '#9b7fc2'}"></span>
-            <span class="acct-name">${name}<div class="acct-cat">${v.category}</div></span>
-            <span class="acct-amt">${amtPct(v.amount, pct)}</span>
+            <span class="alloc-swatch" style="background:${S.color}"></span>
+            <span class="acct-name">${name}</span>
+            <span class="acct-amt">${amtPct(amt, pct)}</span>
           </div>`;
         }).join('') || '<div class="empty-state">계좌 데이터가 없어요.</div>'}
       </div>
@@ -7132,25 +7190,21 @@ function renderSavingsPage(container, data, d) {
     <div class="g">
       <div class="panel s6">
         <div class="panel-title">
-          <div>자산 추이</div>
+          <div>${S.label} 자산 추이</div>
           <div class="range-toggle" id="sav-trend-range-toggle"></div>
         </div>
         <div class="chart-wrap tall"><canvas id="chart-sav-trend"></canvas></div>
-        <div class="chart-legend">
-          <span><i style="background:#5b8fc7"></i>저축 자산</span>
-          <span><i style="background:#9b7fc2"></i>연금 자산</span>
-        </div>
       </div>
       <div class="panel s6">
         <div class="panel-title">
-          <div>월별 저축·연금 이체</div>
+          <div>월별 ${S.label} 이체</div>
           <div class="range-toggle" id="sav-contrib-range-toggle"></div>
         </div>
         <div class="chart-wrap tall"><canvas id="chart-sav-contrib"></canvas></div>
       </div>
     </div>
     <details class="rawbox">
-      <summary>저축·연금 관련 내역</summary>
+      <summary>${S.label} 관련 내역</summary>
       <div class="rawbody"><div id="savings-table"></div></div>
     </details>
   `;
@@ -7158,14 +7212,12 @@ function renderSavingsPage(container, data, d) {
   const drawSavTrend = () => {
     const monthsSlice = sliceByRange(months, state.savTrendRange);
     if (state.charts.savTrend) state.charts.savTrend.destroy();
-    const trendCtx = document.getElementById('chart-sav-trend');
-    state.charts.savTrend = new Chart(trendCtx, {
+    state.charts.savTrend = new Chart(document.getElementById('chart-sav-trend'), {
       type: 'line',
       data: {
         labels: monthsSlice.map(assetMonthLabel),
         datasets: [
-          { label: '저축 자산', data: monthsSlice.map(m => (byMonthCat[m] && byMonthCat[m]['저축 자산']) || 0), borderColor: '#5b8fc7', backgroundColor: 'transparent', tension: 0.3, pointRadius: 2, labelColor: '#a9c3e0' },
-          { label: '연금 자산', data: monthsSlice.map(m => (byMonthCat[m] && byMonthCat[m]['연금 자산']) || 0), borderColor: '#9b7fc2', backgroundColor: 'transparent', tension: 0.3, pointRadius: 2, labelColor: '#cbb8e0' }
+          { label: `${S.label} 자산`, data: monthsSlice.map(m => byMonth[m] || 0), borderColor: S.color, backgroundColor: 'transparent', tension: 0.3, pointRadius: 2, labelColor: S.color }
         ]
       },
       options: {
@@ -7188,16 +7240,19 @@ function renderSavingsPage(container, data, d) {
     const monthsSlice = sliceByRange(data.months, state.savContribRange);
     const n = monthsSlice.length;
     if (state.charts.savContrib) state.charts.savContrib.destroy();
-    const contribCtx = document.getElementById('chart-sav-contrib');
-    state.charts.savContrib = new Chart(contribCtx, {
+    state.charts.savContrib = new Chart(document.getElementById('chart-sav-contrib'), {
       type: 'bar',
       data: {
         labels: monthsSlice.map(pivotMonthLabel),
-        datasets: transferNames.map((name, i) => ({ label: name === '비상금' ? '저축(CMA 등)' : name, data: data.transferCategories[name].slice(-n).map(v => v || 0), backgroundColor: ['#5b8fc7', '#9b7fc2'][i % 2], stack: 's' }))
+        datasets: transferNames.map(name => ({
+          label: S.transferLabel[name] || name,
+          data: (data.transferCategories[name] || []).slice(-n).map(v => v || 0),
+          backgroundColor: S.color, stack: 's'
+        }))
       },
       options: {
         responsive: true, maintainAspectRatio: false, layout: { padding: { top: 16 } },
-        plugins: { legend: { position: 'bottom', labels: { color: '#9aa3b6', font: { family: 'IBM Plex Mono', size: 10 } } }, tooltip: { callbacks: { label: (c) => ` ${c.dataset.label}: ${formatWon(c.raw)}` } } },
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` ${c.dataset.label}: ${formatWon(c.raw)}` } } },
         scales: { x: { stacked: true, ticks: MONO_TICK, grid: { display: false } }, y: { stacked: true, ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT } }
       },
       plugins: [stackTotalLabelPlugin]
@@ -7211,7 +7266,7 @@ function renderSavingsPage(container, data, d) {
   bindRangeToggle('sav-contrib-range-toggle', RANGE_OPTIONS, state.savContribRange, onSavContribRangePick);
   drawSavContrib();
 
-  renderAdvancedTable('savings-table', savingsLedger, { majorOptions: [['all', '전체'], ['이체', '이체']], defaultGroup: 'none' });
+  renderAdvancedTable('savings-table', scopeLedger, { majorOptions: [['all', '전체'], ['이체', '이체']], defaultGroup: 'none' });
 }
 
 async function loadBudgets() {
