@@ -1632,55 +1632,73 @@ body{font-variant-numeric:tabular-nums;}
 .sug-vals>span>em{font-style:normal;display:block;font-size:9.5px;color:var(--text-faint);letter-spacing:.04em;}
 
 /* ---------- 예산 표 (예산 + 실적 통합) ---------- */
-.bt2-wrap{max-width:760px;margin:0 auto;}
-.bt2-bar{display:flex;justify-content:flex-end;margin-bottom:10px;}
-.bt2{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed;}
+.bt2-wrap{max-width:820px;margin:0 auto;}
+.bt2{width:100%;border-collapse:collapse;font-size:14px;table-layout:fixed;}
 .bt2 col.w-nm{width:auto;}
-.bt2 col.w-in{width:124px;}
-.bt2 col.w-num{width:108px;}
-.bt2 th{font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;color:var(--text-faint);
-  font-weight:400;text-align:right;padding:0 10px 7px;border-bottom:1px solid var(--border-strong);}
+.bt2 col.w-in{width:132px;}
+.bt2 col.w-act{width:130px;}
+.bt2 col.w-num{width:150px;}
+.bt2 th{font-family:var(--sans);font-size:11.5px;font-weight:600;letter-spacing:.01em;
+  color:var(--text-dim);text-align:right;padding:0 10px 8px;border-bottom:1px solid var(--border-strong);
+  vertical-align:bottom;}
 .bt2 th.c-nm{text-align:left;padding-left:2px;}
-.bt2 td{padding:0 10px;height:34px;vertical-align:middle;}
-.bt2 td.c-num,.bt2 td.c-in{text-align:right;font-family:var(--mono);font-size:12px;white-space:nowrap;}
-.bt2 td.c-nm{color:var(--text-dim);padding-left:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-/* 열 구분 — 예산 | 실적 | 남음 사이에 얇은 세로선 */
+.bt2 th em{font-style:normal;display:block;font-family:var(--mono);font-size:9px;
+  color:var(--text-faint);font-weight:400;letter-spacing:.05em;margin-top:2px;}
+/* 실적 열은 '월에 따라 바뀌는 값'이라는 걸 배경·헤더로 드러낸다 */
+.bt2 th.c-act{background:rgba(201,162,39,.07);border-bottom-color:var(--gold-soft);
+  color:var(--gold-soft);padding-bottom:6px;border-radius:8px 8px 0 0;}
+.bt2 th.c-act .month-nav{margin-top:4px;justify-content:flex-end;}
+.bt2 th.c-act .month-nav select{font-size:10.5px;padding:2px 4px;}
+.bt2 th.c-act .month-nav button{font-size:10px;padding:2px 6px;}
+.bt2 .bt2-mlabel{display:block;font-family:var(--mono);font-size:10px;color:var(--text-faint);
+  font-weight:400;margin-top:3px;}
+.bt2 td{padding:0 10px;height:36px;vertical-align:middle;}
+.bt2 td.c-num,.bt2 td.c-in,.bt2 td.c-act{text-align:right;font-family:var(--mono);font-size:13px;white-space:nowrap;}
+.bt2 td.c-nm{color:var(--text-dim);padding-left:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13.5px;}
 .bt2 td.c-in,.bt2 th.c-in{border-left:1px solid var(--border);}
+.bt2 td.c-act{background:rgba(201,162,39,.055);border-left:1px solid var(--border);}
 .bt2 td.c-num:last-child,.bt2 th.c-num:last-child{border-left:1px solid var(--border);}
 
-/* 상위 행: 진하게 + 배경 + 위 여백으로 그룹 구분 */
 .bt2-g{cursor:pointer;}
 .bt2-g td{background:rgba(255,255,255,.05);border-top:1px solid var(--border-strong);
-  color:var(--text);height:38px;}
-.bt2-g td.c-nm b{font-weight:700;font-size:13.5px;}
-.bt2-g td.c-in{color:var(--text);font-size:12.5px;}
+  color:var(--text);height:40px;}
+.bt2-g td.c-act{background:rgba(201,162,39,.11);}
+.bt2-g td.c-nm b{font-weight:700;font-size:14px;}
 .bt2-g:hover td{background:rgba(255,255,255,.085);}
+.bt2-g:hover td.c-act{background:rgba(201,162,39,.15);}
 .bt2-g td.c-nm em{font-style:normal;font-family:var(--mono);font-size:9.5px;color:var(--text-faint);margin-left:7px;}
 .bt2-caret{display:inline-block;width:15px;color:var(--gold-soft);font-size:10px;}
 
-/* 하위 행: 두 칸 더 들여쓰고 흐리게 */
-.bt2-i td{background:transparent;border-bottom:1px solid var(--border);}
-.bt2-i td.c-nm{font-size:12px;color:var(--text-faint);}
-.bt2-i td.c-num{color:var(--text-dim);}
+.bt2-i td{border-bottom:1px solid var(--border);}
+.bt2-i td.c-nm{font-size:12.5px;color:var(--text-faint);}
+.bt2-i td.c-act{color:var(--text-dim);}
 .bt2-ind{display:inline-block;width:34px;padding-left:19px;color:var(--border-strong);font-size:10px;}
 .bt2-auto{font-style:normal;font-family:var(--mono);font-size:9px;color:var(--text-faint);
   border:1px solid var(--border);border-radius:3px;padding:1px 3px;margin-left:6px;}
-.bt2-input{width:100px;background:var(--panel-2);border:1px solid var(--border);color:var(--text);
-  font-family:var(--mono);font-size:12px;border-radius:5px;padding:4px 7px;text-align:right;}
+.bt2-input{width:104px;background:var(--panel-2);border:1px solid var(--border);color:var(--text);
+  font-family:var(--mono);font-size:12.5px;border-radius:5px;padding:4px 7px;text-align:right;}
 .bt2-input:focus{outline:none;border-color:var(--gold-soft);}
 
-.bt2-diff.ok{color:var(--text-faint);}
-.bt2-diff.over{color:#d9884f;}
-.bt2 tr.over td.c-num:nth-child(3){color:#d9884f;}
-.bt2 tfoot td{height:42px;border-top:2px solid var(--border-strong);border-bottom:none;
-  font-family:var(--mono);font-size:13px;color:var(--text);background:transparent;}
+/* 남음 / 초과 — 게이지로 사용률을 같이 보여준다 */
+.bt2-gauge{display:flex;align-items:center;gap:7px;justify-content:flex-end;}
+.bt2-gauge .g-track{position:relative;flex:0 0 46px;height:6px;border-radius:3px;
+  background:rgba(255,255,255,.07);overflow:hidden;display:flex;}
+.bt2-gauge .g-track i{display:block;height:100%;background:#5b8fc7;opacity:.75;}
+.bt2-gauge .g-track u{display:block;height:100%;background:#d9884f;text-decoration:none;}
+.bt2-gauge .g-txt{font-family:var(--mono);font-size:12px;color:var(--text-dim);white-space:nowrap;}
+.bt2-gauge.over .g-track i{background:#d9884f;opacity:.9;}
+.bt2-gauge.over .g-txt{color:#d9884f;}
+
+.bt2 tfoot td{height:44px;border-top:2px solid var(--border-strong);border-bottom:none;
+  font-family:var(--mono);font-size:14px;color:var(--text);}
 .bt2 tfoot td.c-nm{font-family:var(--sans);font-weight:700;}
-@media (max-width:720px){
-  .bt2 col.w-in{width:96px;} .bt2 col.w-num{width:82px;}
+.bt2 tfoot td.c-act{background:rgba(201,162,39,.11);border-radius:0 0 8px 8px;}
+@media (max-width:760px){
+  .bt2 col.w-in{width:98px;} .bt2 col.w-act{width:96px;} .bt2 col.w-num{width:118px;}
   .bt2-input{width:80px;} .bt2 td{font-size:12px;padding:0 6px;}
   .bt2-ind{width:24px;padding-left:12px;}
+  .bt2-gauge .g-track{flex-basis:32px;}
 }
-
 /* ---------- 자산 배분 ---------- */
 .al-split{display:grid;grid-template-columns:132px 1fr;gap:16px;align-items:center;}
 .al-donut{height:132px;position:relative;}
@@ -1716,6 +1734,16 @@ body{font-variant-numeric:tabular-nums;}
 
 
 .stat-card .value .v-note{font-family:var(--mono);font-size:11px;color:var(--text-dim);margin-left:7px;font-weight:400;}
+
+/* ---------- 오늘: 중앙 1열 ---------- */
+.today-center{max-width:820px;margin:0 auto;}
+
+.pace-tag{font-family:var(--sans);font-size:14px;font-weight:600;color:var(--text-dim);white-space:nowrap;}
+.kpi-mini.one{grid-template-columns:1fr;}
+.kpi-mini.one>div{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:10px 12px;}
+.kpi-mini.one .k{margin-bottom:0;}
+.kpi-mini.one .v{font-size:16px;}
+@media (max-width:900px){.kpi-mini.one{grid-template-columns:repeat(2,1fr);}}
 </style>
 </head>
 <body>
@@ -1812,7 +1840,8 @@ const state = {
   savContribRange: 12,
   flowSub: 'today',        // 흐름 하위 탭: today | now | calendar | income | expense
   expSub: 'summary',       // 지출 하위: summary | fixed | budget
-  nowSub: 'summary',       // 이번달 하위: summary | detail
+  nowSub: 'summary',       // 이번달 하위: summary | budget | detail
+  nowSeries: { cum: true, budget: true, pace: false, daily: false, income: false },
   assetSub: 'overview',    // 자산 하위 탭: overview | investment | savings
   homeSub: 'goals',        // 현황 하위 탭: goals | structure
   goalMoves: {},           // 드래그로 옮긴 목표 시기 (시트 반영 전 로컬 오버라이드)
@@ -5787,6 +5816,14 @@ function nowDeltaSub(cur, prev, invert, note) {
   return `<div class="sub ${cls}">${note || '전월 대비'} ${sign}${wonComma(diff)}원 (${sign}${Math.abs(pct).toFixed(1)}%)</div>`;
 }
 
+const NOW_SERIES = [
+  { key: 'cum', label: '이번 달 누적 지출', color: '#c1483f' },
+  { key: 'budget', label: '예산 페이스', color: '#c9a227' },
+  { key: 'pace', label: '최근 3개월 평균 페이스', color: '#9aa3b6' },
+  { key: 'daily', label: '일별 지출', color: 'rgba(193,72,63,.45)' },
+  { key: 'income', label: '누적 수입', color: '#4c8c6b' }
+];
+
 function renderNowPage(container, data, d) {
   const ledger = data.ledger || [];
   if (!ledger.length) {
@@ -5872,45 +5909,33 @@ function renderNowPage(container, data, d) {
 
     ${NSUB === 'summary' ? `
     <div class="g">
-      <div class="s4">
-        <div class="kpi-mini">
+      <div class="panel s3">
+        <div class="kpi-mini one">
           <div><div class="k">수입</div><div class="v" style="color:var(--green)">${formatCompactWon(sIncome)}</div></div>
           <div><div class="k">지출</div><div class="v" style="color:var(--red)">${formatCompactWon(sExpense)}</div></div>
           <div><div class="k">순저축</div><div class="v" style="color:${sNet >= 0 ? 'var(--net)' : 'var(--red)'}">${formatCompactWon(sNet)}</div></div>
           <div><div class="k">저축률</div><div class="v">${sRate === null ? '—' : sRate.toFixed(0) + '%'}<em>목표 ${rateTarget}%</em></div></div>
           <div><div class="k">하루 평균 지출</div><div class="v">${formatCompactWon(Math.round(elapsed > 0 ? M.expense / elapsed : 0))}</div></div>
-          <div><div class="k">이체</div><div class="v" style="color:var(--gold-soft)">${formatCompactWon(transferTotal)}</div></div>
-          <div><div class="k">고정비</div><div class="v">${formatCompactWon(fixedPaidSum)}<em>미결 ${fixedPending.length}</em></div></div>
           <div><div class="k">월말 예상 지출</div><div class="v">${projected === null ? '—' : formatCompactWon(projected + fixedPendingSum)}</div></div>
         </div>
-        <div class="now-progress" style="margin-top:10px;">
+        <div class="now-progress" style="margin-top:11px;">
           <div class="now-progress-track"><div class="now-progress-fill" style="width:${progressPct}%"></div></div>
           <span class="now-progress-text">${isThisMonth ? `D+${elapsed} / ${M.days}일 · 남은 ${M.days - elapsed}일` : `${M.days}일 · 마감`}</span>
         </div>
-        <div id="now-week-chips"></div>
       </div>
-      <div class="panel s8">
+      <div class="panel s9">
         <div class="panel-title">
           <div>지출 흐름</div>
-          <span class="ptag" id="now-pace-tag"></span>
+          <span class="pace-tag" id="now-pace-tag"></span>
+        </div>
+        <div class="series-toggles" id="now-series-toggles">
+          ${NOW_SERIES.map(sr => `<label class="series-chk ${state.nowSeries[sr.key] ? 'on' : ''}">
+            <input type="checkbox" data-key="${sr.key}" ${state.nowSeries[sr.key] ? 'checked' : ''} />
+            <i style="background:${sr.color}"></i>${sr.label}
+          </label>`).join('')}
         </div>
         <div class="chart-wrap tall" style="min-height:300px;"><canvas id="chart-now-flow"></canvas></div>
-        <div class="chart-legend">
-          <span><i style="background:#c1483f"></i>이번 달 누적 지출</span>
-          <span><i style="background:#9aa3b6"></i>최근 3개월 평균 페이스</span>
-          <span><i style="background:rgba(193,72,63,.45)"></i>일별 지출</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="g">
-      <div class="panel s6">
-        <div class="panel-title"><div>고정비</div></div>
-        <div id="now-fixed-body"></div>
-      </div>
-      <div class="panel s6">
-        <div class="panel-title"><div>이체</div><span class="ptag">${week ? week.label : monthKeyLabel(monthKey)}</span></div>
-        <div id="now-transfer-body"></div>
+        <div id="now-week-chips"></div>
       </div>
     </div>` : ''}
 
@@ -5920,6 +5945,17 @@ function renderNowPage(container, data, d) {
     </div>` : ''}
 
     ${NSUB === 'detail' ? `
+    <div class="g">
+      <div class="panel s6">
+        <div class="panel-title"><div>고정비</div></div>
+        <div id="now-fixed-body"></div>
+      </div>
+      <div class="panel s6">
+        <div class="panel-title"><div>이체</div><span class="ptag">${week ? week.label : monthKeyLabel(monthKey)}</span></div>
+        <div id="now-transfer-body"></div>
+      </div>
+    </div>
+
     <div class="g">
       <div class="panel s7">
         <div class="panel-title"><div>카테고리별 지출</div></div>
@@ -5959,7 +5995,7 @@ function renderNowPage(container, data, d) {
   if (paceTag) {
     paceTag.textContent = paceDiff === null ? monthKeyLabel(monthKey)
       : `평소보다 ${wonComma(Math.abs(Math.round(paceDiff)))}원 ${paceDiff > 0 ? '더 쓰는' : '덜 쓰는'} 페이스`;
-    paceTag.style.color = paceDiff === null ? '' : (paceDiff > 0 ? '#d9884f' : 'var(--green)');
+    paceTag.style.color = paceDiff === null ? 'var(--text-dim)' : (paceDiff > 0 ? '#d9884f' : 'var(--green)');
   }
 
   /* --- 고정비 --- */
@@ -6109,12 +6145,19 @@ function renderNowPage(container, data, d) {
     })();
     const budgetLine = budgetTotal > 0 ? days.map(b => Math.round(budgetTotal / M.days * b.day)) : null;
 
-    const ds = [
-      { type: 'bar', label: '일별 지출', data: days.map(b => b.expense), backgroundColor: 'rgba(193,72,63,.45)', borderRadius: 2, yAxisID: 'y1', order: 3 },
-      { type: 'line', label: '최근 3개월 평균 페이스', data: pace, borderColor: '#9aa3b6', borderDash: [5, 4], backgroundColor: 'transparent', borderWidth: 1.6, pointRadius: 0, tension: 0.25, spanGaps: true, yAxisID: 'y', order: 2 },
-      { type: 'line', label: '이번 달 누적 지출', data: cum, borderColor: '#c1483f', backgroundColor: 'rgba(193,72,63,0.10)', fill: true, borderWidth: 2.2, pointRadius: 0, tension: 0.25, spanGaps: false, yAxisID: 'y', order: 1 }
-    ];
-    if (budgetLine) ds.push({ type: 'line', label: '예산 페이스', data: budgetLine, borderColor: '#c9a227', borderDash: [2, 3], backgroundColor: 'transparent', borderWidth: 1.4, pointRadius: 0, tension: 0, yAxisID: 'y', order: 2 });
+    let irun = 0;
+    const cumIncome = days.map(b => {
+      if (isThisMonth && b.day > elapsed) return null;
+      irun += b.income;
+      return irun;
+    });
+    const S = state.nowSeries;
+    const ds = [];
+    if (S.daily) ds.push({ type: 'bar', label: '일별 지출', data: days.map(b => b.expense), backgroundColor: 'rgba(193,72,63,.45)', borderRadius: 2, yAxisID: 'y1', order: 4 });
+    if (S.pace) ds.push({ type: 'line', label: '최근 3개월 평균 페이스', data: pace, borderColor: '#9aa3b6', borderDash: [5, 4], backgroundColor: 'transparent', borderWidth: 1.6, pointRadius: 0, tension: 0.25, spanGaps: true, yAxisID: 'y', order: 3 });
+    if (S.budget && budgetLine) ds.push({ type: 'line', label: '예산 페이스', data: budgetLine, borderColor: '#c9a227', borderDash: [2, 3], backgroundColor: 'transparent', borderWidth: 1.5, pointRadius: 0, tension: 0, yAxisID: 'y', order: 2 });
+    if (S.income) ds.push({ type: 'line', label: '누적 수입', data: cumIncome, borderColor: '#4c8c6b', backgroundColor: 'transparent', borderWidth: 1.6, pointRadius: 0, tension: 0.25, spanGaps: false, yAxisID: 'y', order: 2 });
+    if (S.cum) ds.push({ type: 'line', label: '이번 달 누적 지출', data: cum, borderColor: '#c1483f', backgroundColor: 'rgba(193,72,63,0.10)', fill: true, borderWidth: 2.4, pointRadius: 0, tension: 0.25, spanGaps: false, yAxisID: 'y', order: 1 });
 
     state.charts.nowFlow = new Chart(document.getElementById('chart-now-flow'), {
       data: { labels, datasets: ds },
@@ -6128,19 +6171,19 @@ function renderNowPage(container, data, d) {
         scales: {
           x: { ticks: { ...MONO_TICK, autoSkip: true, maxRotation: 0 }, grid: { display: false } },
           y: { ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT },
-          y1: { position: 'right', ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: { display: false } }
+          y1: { display: !!S.daily, position: 'right', ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: { display: false } }
         }
       }
     });
-    const lg = document.querySelector('#chart-now-flow');
-    if (lg && budgetLine) {
-      const box = lg.closest('.panel').querySelector('.chart-legend');
-      if (box && !box.dataset.budgetAdded) {
-        box.insertAdjacentHTML('beforeend', '<span><i style="background:#c9a227"></i>예산 페이스</span>');
-        box.dataset.budgetAdded = '1';
-      }
-    }
   };
+  const nowToggles = document.getElementById('now-series-toggles');
+  if (nowToggles) nowToggles.addEventListener('change', (e) => {
+    const inp = e.target.closest('input[data-key]');
+    if (!inp) return;
+    state.nowSeries[inp.dataset.key] = inp.checked;
+    inp.closest('.series-chk').classList.toggle('on', inp.checked);
+    drawNowFlow();
+  });
   drawNowFlow();
 
   /* --- 월 이동 --- */
@@ -6420,8 +6463,8 @@ function renderTodayPage(container, data, d) {
       ${dataQualityHtml(computeDataQuality(data, d))}
     </div>
 
-    <div class="g">
-      <div class="s5" id="today-left">
+    <div class="today-center">
+      <div class="stat-grid" style="grid-template-columns:1fr 1fr;margin-bottom:14px;">
         <div class="stat-card">
           <div class="label">수입</div>
           <div class="value" style="color:var(--green)">${formatWon(today.income)}</div>
@@ -6439,28 +6482,10 @@ function renderTodayPage(container, data, d) {
             ${todayRefund ? `<span class="chk-pill refund">환급 ${formatWon(todayRefund)}</span>` : ''}
           </div>` : ''}
         </div>
-        <div class="panel">
-          <div class="panel-title"><div>내역</div><span class="ptag">${today.rows.length}건</span></div>
-          <div id="today-rows-body"></div>
-        </div>
       </div>
-
-      <div class="panel s7">
-        <div class="panel-title">
-          <div>일별 지출</div>
-          <div class="range-toggle" id="today-trend-range">
-            <button data-n="14" class="${state.todayTrendRange === 14 ? 'active' : ''}">14일</button>
-            <button data-n="30" class="${state.todayTrendRange === 30 ? 'active' : ''}">30일</button>
-            <button data-n="60" class="${state.todayTrendRange === 60 ? 'active' : ''}">60일</button>
-          </div>
-        </div>
-        <div class="chart-wrap tall" style="min-height:300px;"><canvas id="chart-today-trend"></canvas></div>
-        <div class="chart-legend">
-          <span><i style="background:rgba(193,72,63,0.8)"></i>일별 지출</span>
-          <span><i style="background:#c9a227"></i>선택한 날</span>
-          <span><i style="background:#e0c766"></i>7일 이동평균</span>
-          <span style="color:var(--text-faint)">막대 클릭 → 그 날짜로 이동</span>
-        </div>
+      <div class="panel">
+        <div class="panel-title"><div>내역</div><span class="ptag">${today.rows.length}건</span></div>
+        <div id="today-rows-body"></div>
       </div>
     </div>
   `;
@@ -6485,67 +6510,6 @@ function renderTodayPage(container, data, d) {
       </table>
     </div>
   `;
-
-  /* --- 추이 차트 --- */
-  const drawTodayTrend = () => {
-    if (state.charts.todayTrend) state.charts.todayTrend.destroy();
-    const n = state.todayTrendRange;
-    const keys = [];
-    for (let i = n - 1; i >= 0; i--) keys.push(shiftDayKey(key, -i));
-    const vals = keys.map(k => dayOf(k).expense);
-    const ma = vals.map((_, i) => {
-      const from = Math.max(0, i - 6);
-      const slice = vals.slice(from, i + 1);
-      return slice.reduce((a, b) => a + b, 0) / slice.length;
-    });
-    state.charts.todayTrend = new Chart(document.getElementById('chart-today-trend'), {
-      data: {
-        labels: keys.map(dayKeyShort),
-        datasets: [
-          {
-            type: 'bar', label: '일별 지출', data: vals, borderRadius: 3, order: 2,
-            backgroundColor: keys.map(k => k === key ? '#c9a227' : 'rgba(193,72,63,0.7)')
-          },
-          {
-            type: 'line', label: '7일 이동평균', data: ma, borderColor: '#e0c766',
-            borderWidth: 2, pointRadius: 0, tension: 0.3, order: 1
-          }
-        ]
-      },
-      options: {
-        responsive: true, maintainAspectRatio: false, layout: { padding: { top: 14 } },
-        interaction: { mode: 'index', intersect: false },
-        onClick: (evt, els) => {
-          if (!els || !els.length) return;
-          const k = keys[els[0].index];
-          if (k > realToday) return;
-          state.todayDayKey = k;
-          renderPage();
-        },
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            callbacks: {
-              title: (items) => dayKeyLabel(keys[items[0].dataIndex]) + ` (${DOW_KR[dowOfDayKey(keys[items[0].dataIndex])]})`,
-              label: (c) => ` ${c.dataset.label}: ${formatWon(c.raw)}`
-            }
-          }
-        },
-        scales: {
-          x: { ticks: { ...MONO_TICK, autoSkip: true, maxRotation: 0 }, grid: { display: false } },
-          y: { ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT }
-        }
-      }
-    });
-  };
-  document.getElementById('today-trend-range').addEventListener('click', (e) => {
-    const btn = e.target.closest('button');
-    if (!btn) return;
-    state.todayTrendRange = parseInt(btn.dataset.n, 10);
-    document.querySelectorAll('#today-trend-range button').forEach(b => b.classList.toggle('active', b === btn));
-    drawTodayTrend();
-  });
-  drawTodayTrend();
 
   /* --- 날짜 이동 --- */
   const setDay = (k) => {
@@ -6656,18 +6620,17 @@ function renderYearPage(container, data, d) {
       <div class="panel s12">
         <div class="panel-title">
           <div>${Y}년 월별 흐름</div>
-          <div class="range-toggle" id="yr-mode">
-            <button data-m="flow" class="${(state.yearMode || 'flow') === 'flow' ? 'active' : ''}">월별</button>
-            <button data-m="cum" class="${state.yearMode === 'cum' ? 'active' : ''}">누적</button>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <span class="pace-tag" id="yr-pace-tag"></span>
+            <div class="range-toggle" id="yr-mode">
+              <button data-m="flow" class="${(state.yearMode || 'flow') === 'flow' ? 'active' : ''}">월별</button>
+              <button data-m="cum" class="${state.yearMode === 'cum' ? 'active' : ''}">누적</button>
+              <button data-m="pace" class="${state.yearMode === 'pace' ? 'active' : ''}">페이스</button>
+            </div>
           </div>
         </div>
         <div class="chart-wrap tall"><canvas id="chart-year"></canvas></div>
-        <div class="chart-legend">
-          <span><i style="background:rgba(76,140,107,0.8)"></i>수입</span>
-          <span><i style="background:rgba(193,72,63,0.8)"></i>지출</span>
-          <span><i style="background:#39a8bd"></i>순익</span>
-          <span style="color:var(--text-faint)">점선 = ${prevY}년</span>
-        </div>
+        <div class="chart-legend" id="yr-legend"></div>
       </div>
     </div>
 
@@ -6718,6 +6681,60 @@ function renderYearPage(container, data, d) {
       nt.push(mode === 'cum' ? (live ? ci - ce : null) : i0 - e0);
       pnt.push(mode === 'cum' ? cp : p0);
     }
+    if (mode === 'pace') {
+      /* 누적 지출 vs 작년 같은 시점 누적 지출 vs 연 예산 페이스 */
+      const budgetTotal = (() => {
+        try {
+          const { groups } = buildBudgetTree(data);
+          return groups.reduce((a, g) => a + g.items.reduce((x, it) => x + budgetOf(g.name, it.name, it.avg), 0), 0) * 12;
+        } catch (e) { return 0; }
+      })();
+      let ce2 = 0, cp2 = 0, ci2 = 0;
+      const curCum = [], prevCum = [], incCum = [], budLine = [];
+      for (let mo = 1; mo <= 12; mo++) {
+        const c = cur.find(r => r.m === mo) || { income: 0, expense: 0 };
+        const p = prev.find(r => r.m === mo) || { income: 0, expense: 0 };
+        ce2 += c.expense; cp2 += p.expense; ci2 += c.income;
+        const live = has(mo) || !isThisYear;
+        curCum.push(live ? ce2 : null);
+        incCum.push(live ? ci2 : null);
+        prevCum.push(cp2);
+        budLine.push(budgetTotal > 0 ? Math.round(budgetTotal / 12 * mo) : null);
+      }
+      const lastLive = curCum.filter(v => v !== null).length;
+      const diff = lastLive > 0 ? curCum[lastLive - 1] - prevCum[lastLive - 1] : null;
+      const tag = document.getElementById('yr-pace-tag');
+      if (tag) {
+        tag.textContent = diff === null ? '' : `${prevY}년 같은 시점보다 ${wonComma(Math.abs(Math.round(diff)))}원 ${diff > 0 ? '더 쓰는' : '덜 쓰는'} 페이스`;
+        tag.style.color = diff === null ? 'var(--text-dim)' : (diff > 0 ? '#d9884f' : 'var(--green)');
+      }
+      const dsP = [
+        { type: 'line', label: `${prevY}년 누적 지출`, data: prevCum, borderColor: '#9aa3b6', borderDash: [5, 4], backgroundColor: 'transparent', borderWidth: 1.6, pointRadius: 0, tension: .25, order: 3 },
+        { type: 'line', label: '누적 수입', data: incCum, borderColor: '#4c8c6b', backgroundColor: 'transparent', borderWidth: 1.6, pointRadius: 0, tension: .25, spanGaps: false, order: 2 },
+        { type: 'line', label: `${Y}년 누적 지출`, data: curCum, borderColor: '#c1483f', backgroundColor: 'rgba(193,72,63,0.10)', fill: true, borderWidth: 2.4, pointRadius: 0, tension: .25, spanGaps: false, order: 1 }
+      ];
+      if (budgetTotal > 0) dsP.splice(1, 0, { type: 'line', label: '예산 페이스', data: budLine, borderColor: '#c9a227', borderDash: [2, 3], backgroundColor: 'transparent', borderWidth: 1.5, pointRadius: 0, tension: 0, order: 3 });
+      document.getElementById('yr-legend').innerHTML = dsP.slice().reverse().map(x =>
+        `<span><i style="background:${x.borderColor}"></i>${x.label}</span>`).join('');
+      state.charts.year = new Chart(document.getElementById('chart-year'), {
+        data: { labels, datasets: dsP },
+        options: {
+          responsive: true, maintainAspectRatio: false, layout: { padding: { top: 18 } },
+          interaction: { mode: 'index', intersect: false },
+          plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => (c.raw === null ? null : ` ${c.dataset.label}: ${formatWon(c.raw)}`) } } },
+          scales: { x: { ticks: MONO_TICK, grid: { display: false } }, y: { ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT } }
+        }
+      });
+      return;
+    }
+
+    const tag0 = document.getElementById('yr-pace-tag');
+    if (tag0) tag0.textContent = '';
+    document.getElementById('yr-legend').innerHTML = `
+      <span><i style="background:rgba(76,140,107,0.8)"></i>수입</span>
+      <span><i style="background:rgba(193,72,63,0.8)"></i>지출</span>
+      <span><i style="background:#39a8bd"></i>순익</span>
+      <span style="color:var(--text-faint)">점선 = ${prevY}년</span>`;
     state.charts.year = new Chart(document.getElementById('chart-year'), {
       data: {
         labels,
@@ -8142,7 +8159,6 @@ function renderExpensePage(container, data, d) {
 
     ${SUB === 'budget' ? `
     <div class="bt2-wrap" id="panel-budget-month-section">
-      <div class="bt2-bar"><div id="expense-month-nav-slot"></div></div>
       <div id="budget-table-body"></div>
     </div>` : ''}
 
@@ -8259,10 +8275,6 @@ function renderExpenseMonthSection(data, d) {
   if (state.expenseMonthIdx === undefined || state.expenseMonthIdx === null) {
     state.expenseMonthIdx = d.latestPivotIdx;
   }
-  const idx = state.expenseMonthIdx;
-  const navSlot = document.getElementById('expense-month-nav-slot');
-  if (navSlot) navSlot.innerHTML = renderMonthNavControls(idx, data, d);
-  bindMonthNavControls(data, d);
   renderBudgetTable(data, d);
 }
 
@@ -8373,20 +8385,26 @@ function renderBudgetTable(data, d, forceMonthKey, hostId) {
 
   const tB = rows.reduce((a, r) => a + r.budget, 0);
   const tU = rows.reduce((a, r) => a + r.used, 0);
+  /* 남음 / 초과 — 숫자만으로는 안 읽혀서 사용률 게이지 + 방향 기호를 같이 준다.
+     초과분은 게이지가 100%를 넘어 빨갛게 넘치는 걸로 표현. */
   const diffCell = (b, u) => {
     const gap = b - u;
-    if (gap >= 0) return `<span class="bt2-diff ok">${wonComma(Math.round(gap))}</span>`;
-    return `<span class="bt2-diff over">+${wonComma(Math.round(-gap))}</span>`;
+    const pct = b > 0 ? (u / b) * 100 : (u > 0 ? 200 : 0);
+    const over = gap < 0;
+    return `<div class="bt2-gauge ${over ? 'over' : ''}" title="${b > 0 ? Math.round(pct) + '% 사용' : ''}">
+      <span class="g-track"><i style="width:${Math.min(pct, 100)}%"></i>${over ? `<u style="width:${Math.min(pct - 100, 100)}%"></u>` : ''}</span>
+      <span class="g-txt">${over ? '▲' : '▼'} ${wonComma(Math.round(Math.abs(gap)))}</span>
+    </div>`;
   };
 
   body.innerHTML = `
     <table class="bt2">
-      <colgroup><col class="w-nm"/><col class="w-in"/><col class="w-num"/><col class="w-num"/></colgroup>
+      <colgroup><col class="w-nm"/><col class="w-in"/><col class="w-act"/><col class="w-num"/></colgroup>
       <thead>
         <tr>
           <th class="c-nm">항목</th>
-          <th class="c-in">예산</th>
-          <th class="c-num">실적</th>
+          <th class="c-in">예산 <em>월 기준</em></th>
+          <th class="c-act">실적 ${forceMonthKey ? `<span class="bt2-mlabel">${monthKeyLabel(mk)}</span>` : '<span id="expense-month-nav-slot"></span>'}</th>
           <th class="c-num">남음 / 초과</th>
         </tr>
       </thead>
@@ -8397,14 +8415,14 @@ function renderBudgetTable(data, d, forceMonthKey, hostId) {
           <tr class="bt2-g ${open ? 'open' : ''} ${g.used > g.budget ? 'over' : ''}" data-g="${g.name}">
             <td class="c-nm"><span class="bt2-caret">${open ? '▾' : '▸'}</span><b>${g.name}</b><em>${g.items.length}</em></td>
             <td class="c-in">${wonComma(Math.round(g.budget))}</td>
-            <td class="c-num">${wonComma(Math.round(g.used))}</td>
+            <td class="c-act">${wonComma(Math.round(g.used))}</td>
             <td class="c-num">${diffCell(g.budget, g.used)}</td>
           </tr>
           ${open ? g.items.map(it => `
             <tr class="bt2-i ${it.used > it.budget ? 'over' : ''}">
               <td class="c-nm"><span class="bt2-ind">└</span>${it.name}${it.custom ? '' : '<i class="bt2-auto" title="최근 12개월 평균">자동</i>'}</td>
               <td class="c-in"><input type="text" inputmode="numeric" class="bt2-input" data-cat="${g.name}" data-item="${it.name}" value="${wonComma(Math.round(it.budget))}" /></td>
-              <td class="c-num">${wonComma(Math.round(it.used))}</td>
+              <td class="c-act">${wonComma(Math.round(it.used))}</td>
               <td class="c-num">${diffCell(it.budget, it.used)}</td>
             </tr>`).join('') : ''}`;
         }).join('') || '<tr><td colspan="4"><div class="empty-state">지출 데이터가 없어요.</div></td></tr>'}
@@ -8413,12 +8431,20 @@ function renderBudgetTable(data, d, forceMonthKey, hostId) {
         <tr class="${tU > tB ? 'over' : ''}">
           <td class="c-nm"><b>합계</b></td>
           <td class="c-in">${wonComma(Math.round(tB))}</td>
-          <td class="c-num">${wonComma(Math.round(tU))}</td>
+          <td class="c-act">${wonComma(Math.round(tU))}</td>
           <td class="c-num">${diffCell(tB, tU)}</td>
         </tr>
       </tfoot>
     </table>
   `;
+
+  if (!forceMonthKey) {
+    const navSlot = document.getElementById('expense-month-nav-slot');
+    if (navSlot) {
+      navSlot.innerHTML = renderMonthNavControls(state.expenseMonthIdx, data, d);
+      bindMonthNavControls(data, d);
+    }
+  }
 
   body.querySelectorAll('.bt2-g').forEach(tr => tr.addEventListener('click', (e) => {
     if (e.target.closest('input')) return;
