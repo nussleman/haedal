@@ -1744,6 +1744,32 @@ body{font-variant-numeric:tabular-nums;}
 .kpi-mini.one .k{margin-bottom:0;}
 .kpi-mini.one .v{font-size:16px;}
 @media (max-width:900px){.kpi-mini.one{grid-template-columns:repeat(2,1fr);}}
+
+/* ---------- 오늘: 좌우 2단, 화면 중앙 ---------- */
+.today-center{display:flex;gap:16px;align-items:center;justify-content:center;
+  max-width:1060px;margin:0 auto;min-height:min(62vh,620px);}
+.today-col{flex:0 0 300px;display:flex;flex-direction:column;gap:12px;}
+.today-list{flex:1 1 auto;min-width:0;}
+@media (max-width:820px){
+  .today-center{flex-direction:column;align-items:stretch;min-height:0;}
+  .today-col{flex:none;}
+}
+/* 지표 아래 비교 줄 */
+.cmp-list{margin-top:14px;padding-top:11px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:7px;}
+.cmp-row{display:grid;grid-template-columns:1fr auto auto;gap:9px;align-items:baseline;font-size:11.5px;}
+.cmp-row .cl-l{color:var(--text-faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cmp-row .cl-b{font-family:var(--mono);font-size:11.5px;color:var(--text-dim);}
+.cmp-row .cl-d{font-family:var(--mono);font-size:11.5px;font-weight:600;white-space:nowrap;min-width:78px;text-align:right;}
+.cmp-row.good .cl-d{color:#7fc0a0;}
+.cmp-row.bad .cl-d{color:#e08a5f;}
+.cmp-row.same .cl-d,.cmp-row.none .cl-d{color:var(--text-faint);font-weight:400;}
+/* 체크 배지 가독성 */
+.chk-pill{font-size:11px;padding:3px 8px;font-weight:500;}
+.chk-pill.regret{background:rgba(193,72,63,0.30);color:#f5b4ae;}
+.chk-pill.fixed{background:rgba(91,143,199,0.28);color:#b6d5f2;}
+.chk-pill.refund{background:rgba(76,140,107,0.28);color:#a6dcbf;}
+
+.panel-title .pace-tag{margin-left:12px;padding-left:12px;border-left:1px solid var(--border-strong);}
 </style>
 </head>
 <body>
@@ -1841,7 +1867,8 @@ const state = {
   flowSub: 'today',        // 흐름 하위 탭: today | now | calendar | income | expense
   expSub: 'summary',       // 지출 하위: summary | fixed | budget
   nowSub: 'summary',       // 이번달 하위: summary | budget | detail
-  nowSeries: { cum: true, budget: true, pace: false, daily: false, income: false },
+  nowSeries: { cum: true, budget: true, pace: false, income: false, net: false, daily: false },
+  yearSeries: { expense: true, budget: true, prevExpense: true, income: false, net: false },
   assetSub: 'overview',    // 자산 하위 탭: overview | investment | savings
   homeSub: 'goals',        // 현황 하위 탭: goals | structure
   goalMoves: {},           // 드래그로 옮긴 목표 시기 (시트 반영 전 로컬 오버라이드)
@@ -1850,7 +1877,7 @@ const state = {
   simLevers: {},           // 증식 구조 시뮬레이터 레버 입력
   simYears: 10,
   yearKey: null,
-  yearMode: 'flow',
+  yearMode: 'pace',
   nowMonthKey: null,       // '이번달' 탭에서 보고 있는 달 (YYYY-MM)
   nowWeekIdx: null,        // null = 그 달 전체, 0.. = 해당 주차만
   nowGranularity: 'week',  // 'week' | 'day'
@@ -5817,11 +5844,12 @@ function nowDeltaSub(cur, prev, invert, note) {
 }
 
 const NOW_SERIES = [
-  { key: 'cum', label: '이번 달 누적 지출', color: '#c1483f' },
+  { key: 'cum', label: '누적 지출', color: '#c1483f' },
   { key: 'budget', label: '예산 페이스', color: '#c9a227' },
   { key: 'pace', label: '최근 3개월 평균 페이스', color: '#9aa3b6' },
-  { key: 'daily', label: '일별 지출', color: 'rgba(193,72,63,.45)' },
-  { key: 'income', label: '누적 수입', color: '#4c8c6b' }
+  { key: 'income', label: '누적 수입 · 예상', color: '#4c8c6b' },
+  { key: 'net', label: '누적 순저축 · 예상', color: '#39a8bd' },
+  { key: 'daily', label: '일별 지출', color: 'rgba(193,72,63,.45)' }
 ];
 
 function renderNowPage(container, data, d) {
@@ -5908,25 +5936,44 @@ function renderNowPage(container, data, d) {
       `<button data-sub="${v}" class="${v === NSUB ? 'active' : ''}">${l}</button>`).join('')}</div>
 
     ${NSUB === 'summary' ? `
-    <div class="g">
-      <div class="panel s3">
-        <div class="kpi-mini one">
-          <div><div class="k">수입</div><div class="v" style="color:var(--green)">${formatCompactWon(sIncome)}</div></div>
-          <div><div class="k">지출</div><div class="v" style="color:var(--red)">${formatCompactWon(sExpense)}</div></div>
-          <div><div class="k">순저축</div><div class="v" style="color:${sNet >= 0 ? 'var(--net)' : 'var(--red)'}">${formatCompactWon(sNet)}</div></div>
-          <div><div class="k">저축률</div><div class="v">${sRate === null ? '—' : sRate.toFixed(0) + '%'}<em>목표 ${rateTarget}%</em></div></div>
-          <div><div class="k">하루 평균 지출</div><div class="v">${formatCompactWon(Math.round(elapsed > 0 ? M.expense / elapsed : 0))}</div></div>
-          <div><div class="k">월말 예상 지출</div><div class="v">${projected === null ? '—' : formatCompactWon(projected + fixedPendingSum)}</div></div>
-        </div>
-        <div class="now-progress" style="margin-top:11px;">
-          <div class="now-progress-track"><div class="now-progress-fill" style="width:${progressPct}%"></div></div>
-          <span class="now-progress-text">${isThisMonth ? `D+${elapsed} / ${M.days}일 · 남은 ${M.days - elapsed}일` : `${M.days}일 · 마감`}</span>
-        </div>
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="label">수입</div>
+        <div class="value" style="color:var(--green)">${formatWon(sIncome)}</div>
+        ${week ? `<div class="sub">${week.label}</div>` : nowDeltaSub(sIncome, prevIncomeSame, false, cmpNote)}
       </div>
-      <div class="panel s9">
+      <div class="stat-card">
+        <div class="label">지출</div>
+        <div class="value" style="color:var(--red)">${formatWon(sExpense)}</div>
+        ${week ? `<div class="sub">${week.label}</div>` : nowDeltaSub(sExpense, prevExpenseSame, true, cmpNote)}
+      </div>
+      <div class="stat-card">
+        <div class="label">순저축</div>
+        <div class="value" style="color:${sNet >= 0 ? 'var(--net)' : 'var(--red)'}">${formatWon(sNet)}</div>
+        ${week ? '' : cmpSub(sNet, avgNet, false, avgNote)}
+      </div>
+      <div class="stat-card">
+        <div class="label">저축률</div>
+        <div class="value" style="color:${sRate === null ? 'var(--text)' : sRate >= rateTarget ? 'var(--net)' : 'var(--red)'}">${sRate === null ? '—' : sRate.toFixed(1) + '%'}</div>
+        ${cmpSubPp(sRate, rateTarget, `목표 ${rateTarget}% 대비`)}
+      </div>
+      <div class="stat-card">
+        <div class="label">하루 평균 지출</div>
+        <div class="value">${formatWon(Math.round(elapsed > 0 ? M.expense / elapsed : 0))}</div>
+        ${peerAvg === null ? '' : cmpSub(Math.round(elapsed > 0 ? M.expense / elapsed : 0), Math.round(peerAvg / Math.max(elapsed, 1)), true, '최근 3개월 같은 시점')}
+      </div>
+      <div class="stat-card">
+        <div class="label">월말 예상 지출</div>
+        <div class="value">${projected === null ? '—' : formatWon(projected + fixedPendingSum)}</div>
+        <div class="sub">미결 고정비 ${formatWon(fixedPendingSum)} 포함</div>
+      </div>
+    </div>
+
+    <div class="g">
+      <div class="panel s12">
         <div class="panel-title">
-          <div>지출 흐름</div>
-          <span class="pace-tag" id="now-pace-tag"></span>
+          <div>지출 흐름<span class="pace-tag" id="now-pace-tag"></span></div>
+          <span class="ptag">${isThisMonth ? `D+${elapsed} / ${M.days}일` : `${M.days}일 · 마감`}</span>
         </div>
         <div class="series-toggles" id="now-series-toggles">
           ${NOW_SERIES.map(sr => `<label class="series-chk ${state.nowSeries[sr.key] ? 'on' : ''}">
@@ -5934,8 +5981,11 @@ function renderNowPage(container, data, d) {
             <i style="background:${sr.color}"></i>${sr.label}
           </label>`).join('')}
         </div>
-        <div class="chart-wrap tall" style="min-height:300px;"><canvas id="chart-now-flow"></canvas></div>
-        <div id="now-week-chips"></div>
+        <div class="chart-wrap tall" style="min-height:320px;"><canvas id="chart-now-flow"></canvas></div>
+        <div class="now-progress" style="margin-top:10px;">
+          <div class="now-progress-track"><div class="now-progress-fill" style="width:${progressPct}%"></div></div>
+          <span class="now-progress-text">${isThisMonth ? `D+${elapsed} / ${M.days}일 · 남은 ${M.days - elapsed}일` : `${M.days}일 · 마감`}</span>
+        </div>
       </div>
     </div>` : ''}
 
@@ -6097,25 +6147,6 @@ function renderNowPage(container, data, d) {
     <div class="settings-note">${dowTop && dowTop.avg > 0 ? `최다 · <b style="color:var(--gold-soft)">${dowTop.name}요일</b> 평균 ${formatWon(Math.round(dowTop.avg))}` : '계산할 지출이 없어요.'}</div>
   `;
 
-  /* --- 주차 칩 --- */
-  const chips = document.getElementById('now-week-chips');
-  if (chips) {
-  chips.innerHTML = `
-    <div class="now-chip-row">
-      <button class="now-chip ${state.nowWeekIdx === null ? 'active' : ''}" data-w="all">전체 월</button>
-      ${M.weeks.map(w => `<button class="now-chip ${state.nowWeekIdx === w.idx ? 'active' : ''} ${isThisMonth && w.from > elapsed ? 'future' : ''}" data-w="${w.idx}">
-        ${w.label} <em>${w.range}</em><span>${formatCompactWon(w.expense)}</span>
-      </button>`).join('')}
-    </div>
-  `;
-  chips.querySelector('.now-chip-row').addEventListener('click', (e) => {
-    const btn = e.target.closest('.now-chip');
-    if (!btn) return;
-    state.nowWeekIdx = btn.dataset.w === 'all' ? null : parseInt(btn.dataset.w, 10);
-    renderPage();
-  });
-  }
-
   /* --- 내역 테이블 --- */
 
   /* --- 지출 흐름: 일별 누적 실적 vs 최근 3개월 평균 페이스 --- */
@@ -6151,13 +6182,41 @@ function renderNowPage(container, data, d) {
       irun += b.income;
       return irun;
     });
+    let nrun = 0;
+    const cumNet = days.map(b => {
+      if (isThisMonth && b.day > elapsed) return null;
+      nrun += (b.income - b.expense);
+      return nrun;
+    });
+    /* 남은 날은 현재 속도로 연장한 '예상' 점선 */
+    const lastIdx = isThisMonth ? Math.max(elapsed - 1, 0) : days.length - 1;
+    const projLine = (arr) => {
+      if (!isThisMonth || elapsed <= 0 || elapsed >= days.length) return null;
+      const base = arr[lastIdx];
+      if (base === null || base === undefined) return null;
+      const perDay = base / (lastIdx + 1);
+      return days.map((b, i) => (i < lastIdx ? null : Math.round(perDay * (i + 1))));
+    };
+    const projExpense = projLine(cum), projIncome = projLine(cumIncome), projNet = projLine(cumNet);
+
     const S = state.nowSeries;
     const ds = [];
-    if (S.daily) ds.push({ type: 'bar', label: '일별 지출', data: days.map(b => b.expense), backgroundColor: 'rgba(193,72,63,.45)', borderRadius: 2, yAxisID: 'y1', order: 4 });
-    if (S.pace) ds.push({ type: 'line', label: '최근 3개월 평균 페이스', data: pace, borderColor: '#9aa3b6', borderDash: [5, 4], backgroundColor: 'transparent', borderWidth: 1.6, pointRadius: 0, tension: 0.25, spanGaps: true, yAxisID: 'y', order: 3 });
-    if (S.budget && budgetLine) ds.push({ type: 'line', label: '예산 페이스', data: budgetLine, borderColor: '#c9a227', borderDash: [2, 3], backgroundColor: 'transparent', borderWidth: 1.5, pointRadius: 0, tension: 0, yAxisID: 'y', order: 2 });
-    if (S.income) ds.push({ type: 'line', label: '누적 수입', data: cumIncome, borderColor: '#4c8c6b', backgroundColor: 'transparent', borderWidth: 1.6, pointRadius: 0, tension: 0.25, spanGaps: false, yAxisID: 'y', order: 2 });
-    if (S.cum) ds.push({ type: 'line', label: '이번 달 누적 지출', data: cum, borderColor: '#c1483f', backgroundColor: 'rgba(193,72,63,0.10)', fill: true, borderWidth: 2.4, pointRadius: 0, tension: 0.25, spanGaps: false, yAxisID: 'y', order: 1 });
+    const dash = (label, data, color) => ({ type: 'line', label, data, borderColor: color, borderDash: [3, 3], backgroundColor: 'transparent', borderWidth: 1.4, pointRadius: 0, tension: 0.25, spanGaps: true, yAxisID: 'y', order: 5 });
+    if (S.daily) ds.push({ type: 'bar', label: '일별 지출', data: days.map(b => b.expense), backgroundColor: 'rgba(193,72,63,.45)', borderRadius: 2, yAxisID: 'y1', order: 6 });
+    if (S.pace) ds.push({ type: 'line', label: '최근 3개월 평균 페이스', data: pace, borderColor: '#9aa3b6', borderDash: [5, 4], backgroundColor: 'transparent', borderWidth: 1.6, pointRadius: 0, tension: 0.25, spanGaps: true, yAxisID: 'y', order: 4 });
+    if (S.budget && budgetLine) ds.push({ type: 'line', label: '예산 페이스', data: budgetLine, borderColor: '#c9a227', borderDash: [2, 3], backgroundColor: 'transparent', borderWidth: 1.5, pointRadius: 0, tension: 0, yAxisID: 'y', order: 4 });
+    if (S.net) {
+      ds.push({ type: 'line', label: '누적 순저축', data: cumNet, borderColor: '#39a8bd', backgroundColor: 'transparent', borderWidth: 1.8, pointRadius: 0, tension: 0.25, spanGaps: false, yAxisID: 'y', order: 2 });
+      if (projNet) ds.push(dash('예상 순저축', projNet, '#39a8bd'));
+    }
+    if (S.income) {
+      ds.push({ type: 'line', label: '누적 수입', data: cumIncome, borderColor: '#4c8c6b', backgroundColor: 'transparent', borderWidth: 1.8, pointRadius: 0, tension: 0.25, spanGaps: false, yAxisID: 'y', order: 2 });
+      if (projIncome) ds.push(dash('예상 수입', projIncome, '#4c8c6b'));
+    }
+    if (S.cum) {
+      ds.push({ type: 'line', label: '누적 지출', data: cum, borderColor: '#c1483f', backgroundColor: 'rgba(193,72,63,0.10)', fill: true, borderWidth: 2.4, pointRadius: 0, tension: 0.25, spanGaps: false, yAxisID: 'y', order: 1 });
+      if (projExpense) ds.push(dash('예상 지출', projExpense, '#c1483f'));
+    }
 
     state.charts.nowFlow = new Chart(document.getElementById('chart-now-flow'), {
       data: { labels, datasets: ds },
@@ -6320,6 +6379,22 @@ function fixedScheduleStatus(ledger, monthKey) {
   }).sort((a, b) => (a.expectedDay || 99) - (b.expectedDay || 99));
 }
 
+/* 지표 아래 비교 한 줄 — 기준값 · 차이 · 방향을 색과 함께 준다 (적을수록 좋은 지표 기준) */
+function cmpLine(label, cur, base) {
+  if (base === null || base === undefined || isNaN(base)) {
+    return `<div class="cmp-row none"><span class="cl-l">${label}</span><span class="cl-b">—</span><span class="cl-d">기준 없음</span></div>`;
+  }
+  const diff = cur - base;
+  const good = diff <= 0;
+  const cls = diff === 0 ? 'same' : (good ? 'good' : 'bad');
+  const arrow = diff === 0 ? '=' : (diff > 0 ? '▲' : '▼');
+  return `<div class="cmp-row ${cls}">
+    <span class="cl-l">${label}</span>
+    <span class="cl-b">${formatWon(base)}</span>
+    <span class="cl-d">${arrow} ${diff === 0 ? '동일' : formatWon(Math.abs(diff))}</span>
+  </div>`;
+}
+
 function renderTodayPage(container, data, d) {
   const ledger = data.ledger || [];
   if (!ledger.length) {
@@ -6464,7 +6539,7 @@ function renderTodayPage(container, data, d) {
     </div>
 
     <div class="today-center">
-      <div class="stat-grid" style="grid-template-columns:1fr 1fr;margin-bottom:14px;">
+      <div class="today-col">
         <div class="stat-card">
           <div class="label">수입</div>
           <div class="value" style="color:var(--green)">${formatWon(today.income)}</div>
@@ -6473,9 +6548,11 @@ function renderTodayPage(container, data, d) {
         <div class="stat-card">
           <div class="label">지출</div>
           <div class="value" style="color:var(--red)">${formatWon(todayNetExpense)}</div>
-          <div class="sub ${todayNetExpense <= avgDaily12 ? 'up' : 'down'}">최근 12개월 하루 평균 ${formatWon(Math.round(avgDaily12))}</div>
-          <div class="sub ${targetDaily === null ? '' : todayNetExpense <= targetDaily ? 'up' : 'down'}">${targetDaily === null ? '지출 목표 미설정' : `지출 목표 기준 하루 ${formatWon(targetDaily)}`}</div>
-          <div class="sub ${sameDowAvg !== null && todayNetExpense <= sameDowAvg ? 'up' : 'down'}">${sameDowAvg !== null ? `${DOW_KR[dowOfDayKey(key)]}요일 평균 ${formatWon(Math.round(sameDowAvg))}` : '요일 비교 데이터 없음'}</div>
+          <div class="cmp-list">
+            ${cmpLine('최근 12개월 하루 평균', todayNetExpense, Math.round(avgDaily12))}
+            ${cmpLine('하루 예산', todayNetExpense, targetDaily)}
+            ${cmpLine(`${DOW_KR[dowOfDayKey(key)]}요일 평균`, todayNetExpense, sameDowAvg === null ? null : Math.round(sameDowAvg))}
+          </div>
           ${(todayFixed || todayRegret || todayRefund) ? `<div class="chk-strip">
             ${todayFixed ? `<span class="chk-pill fixed">고정비 ${formatWon(todayFixed)}</span>` : ''}
             ${todayRegret ? `<span class="chk-pill regret">후회 ${formatWon(todayRegret)}</span>` : ''}
@@ -6483,7 +6560,7 @@ function renderTodayPage(container, data, d) {
           </div>` : ''}
         </div>
       </div>
-      <div class="panel">
+      <div class="panel today-list">
         <div class="panel-title"><div>내역</div><span class="ptag">${today.rows.length}건</span></div>
         <div id="today-rows-body"></div>
       </div>
@@ -6526,6 +6603,14 @@ function renderTodayPage(container, data, d) {
 
 /* ---------------- page: 올해 ---------------- */
 
+const YEAR_SERIES = [
+  { key: 'expense', label: '누적 지출 · 예상', color: '#c1483f' },
+  { key: 'budget', label: '예산 페이스', color: '#c9a227' },
+  { key: 'prevExpense', label: '작년 같은 시점 지출', color: '#9aa3b6' },
+  { key: 'income', label: '누적 수입 · 예상', color: '#4c8c6b' },
+  { key: 'net', label: '누적 순저축 · 예상', color: '#39a8bd' }
+];
+
 function renderYearPage(container, data, d) {
   const rows = data.months.map((m, i) => {
     const ym = pivotYearMonth(m);
@@ -6541,6 +6626,7 @@ function renderYearPage(container, data, d) {
   const prevY = String(Number(Y) - 1);
   const isThisYear = Y === String(new Date().getFullYear());
 
+  const YMODE = (state.yearMode === 'flow') ? 'flow' : 'pace';
   const cur = rows.filter(r => r.year === Y).sort((a, b) => a.month - b.month);
   const lastMonthWithData = cur.reduce((a, r) => (r.income > 0 || r.expense > 0) ? r.month : a, 0);
   const throughMonth = isThisYear ? Math.max(new Date().getMonth() + 1, lastMonthWithData) : 12;
@@ -6619,16 +6705,18 @@ function renderYearPage(container, data, d) {
     <div class="g">
       <div class="panel s12">
         <div class="panel-title">
-          <div>${Y}년 월별 흐름</div>
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-            <span class="pace-tag" id="yr-pace-tag"></span>
-            <div class="range-toggle" id="yr-mode">
-              <button data-m="flow" class="${(state.yearMode || 'flow') === 'flow' ? 'active' : ''}">월별</button>
-              <button data-m="cum" class="${state.yearMode === 'cum' ? 'active' : ''}">누적</button>
-              <button data-m="pace" class="${state.yearMode === 'pace' ? 'active' : ''}">페이스</button>
-            </div>
+          <div>${Y}년 흐름<span class="pace-tag" id="yr-pace-tag"></span></div>
+          <div class="range-toggle" id="yr-mode">
+            <button data-m="pace" class="${YMODE === 'pace' ? 'active' : ''}">페이스</button>
+            <button data-m="flow" class="${YMODE === 'flow' ? 'active' : ''}">월별</button>
           </div>
         </div>
+        ${YMODE === 'pace' ? `<div class="series-toggles" id="yr-series-toggles">
+          ${YEAR_SERIES.map(sr => `<label class="series-chk ${state.yearSeries[sr.key] ? 'on' : ''}">
+            <input type="checkbox" data-key="${sr.key}" ${state.yearSeries[sr.key] ? 'checked' : ''} />
+            <i style="background:${sr.color}"></i>${sr.label}
+          </label>`).join('')}
+        </div>` : ''}
         <div class="chart-wrap tall"><canvas id="chart-year"></canvas></div>
         <div class="chart-legend" id="yr-legend"></div>
       </div>
@@ -6664,7 +6752,7 @@ function renderYearPage(container, data, d) {
 
   const drawYear = () => {
     if (state.charts.year) state.charts.year.destroy();
-    const mode = state.yearMode || 'flow';
+    const mode = YMODE;
     const labels = [];
     for (let i = 1; i <= 12; i++) labels.push(i + '월');
     const get = (arr, mo, k) => { const r = arr.find(x => x.month === mo); return r ? r[k] : 0; };
@@ -6682,40 +6770,64 @@ function renderYearPage(container, data, d) {
       pnt.push(mode === 'cum' ? cp : p0);
     }
     if (mode === 'pace') {
-      /* 누적 지출 vs 작년 같은 시점 누적 지출 vs 연 예산 페이스 */
       const budgetTotal = (() => {
         try {
           const { groups } = buildBudgetTree(data);
           return groups.reduce((a, g) => a + g.items.reduce((x, it) => x + budgetOf(g.name, it.name, it.avg), 0), 0) * 12;
         } catch (e) { return 0; }
       })();
-      let ce2 = 0, cp2 = 0, ci2 = 0;
-      const curCum = [], prevCum = [], incCum = [], budLine = [];
+      let ce2 = 0, cp2 = 0, ci2 = 0, cn2 = 0;
+      const curCum = [], prevCum = [], incCum = [], netCum = [], budLine = [];
+      let lastLive = 0;
       for (let mo = 1; mo <= 12; mo++) {
-        const c = cur.find(r => r.m === mo) || { income: 0, expense: 0 };
-        const p = prev.find(r => r.m === mo) || { income: 0, expense: 0 };
-        ce2 += c.expense; cp2 += p.expense; ci2 += c.income;
+        const i0 = get(cur, mo, 'income'), e0 = get(cur, mo, 'expense');
+        ce2 += e0; ci2 += i0; cn2 += (i0 - e0);
+        cp2 += get(prev, mo, 'expense');
         const live = has(mo) || !isThisYear;
+        if (live) lastLive = mo;
         curCum.push(live ? ce2 : null);
         incCum.push(live ? ci2 : null);
+        netCum.push(live ? cn2 : null);
         prevCum.push(cp2);
         budLine.push(budgetTotal > 0 ? Math.round(budgetTotal / 12 * mo) : null);
       }
-      const lastLive = curCum.filter(v => v !== null).length;
+
+      /* 남은 달은 현재 속도로 연장한 '예상' 점선 */
+      const proj = (arr) => {
+        if (!isThisYear || lastLive <= 0 || lastLive >= 12) return null;
+        const base = arr[lastLive - 1];
+        if (base === null || base === undefined) return null;
+        const perMonth = base / lastLive;
+        return arr.map((_, i) => (i < lastLive - 1 ? null : Math.round(perMonth * (i + 1))));
+      };
+      const pE = proj(curCum), pI = proj(incCum), pN = proj(netCum);
+
       const diff = lastLive > 0 ? curCum[lastLive - 1] - prevCum[lastLive - 1] : null;
       const tag = document.getElementById('yr-pace-tag');
       if (tag) {
         tag.textContent = diff === null ? '' : `${prevY}년 같은 시점보다 ${wonComma(Math.abs(Math.round(diff)))}원 ${diff > 0 ? '더 쓰는' : '덜 쓰는'} 페이스`;
         tag.style.color = diff === null ? 'var(--text-dim)' : (diff > 0 ? '#d9884f' : 'var(--green)');
       }
-      const dsP = [
-        { type: 'line', label: `${prevY}년 누적 지출`, data: prevCum, borderColor: '#9aa3b6', borderDash: [5, 4], backgroundColor: 'transparent', borderWidth: 1.6, pointRadius: 0, tension: .25, order: 3 },
-        { type: 'line', label: '누적 수입', data: incCum, borderColor: '#4c8c6b', backgroundColor: 'transparent', borderWidth: 1.6, pointRadius: 0, tension: .25, spanGaps: false, order: 2 },
-        { type: 'line', label: `${Y}년 누적 지출`, data: curCum, borderColor: '#c1483f', backgroundColor: 'rgba(193,72,63,0.10)', fill: true, borderWidth: 2.4, pointRadius: 0, tension: .25, spanGaps: false, order: 1 }
-      ];
-      if (budgetTotal > 0) dsP.splice(1, 0, { type: 'line', label: '예산 페이스', data: budLine, borderColor: '#c9a227', borderDash: [2, 3], backgroundColor: 'transparent', borderWidth: 1.5, pointRadius: 0, tension: 0, order: 3 });
-      document.getElementById('yr-legend').innerHTML = dsP.slice().reverse().map(x =>
-        `<span><i style="background:${x.borderColor}"></i>${x.label}</span>`).join('');
+
+      const S = state.yearSeries;
+      const dsP = [];
+      const dash = (label, arr, color) => ({ type: 'line', label, data: arr, borderColor: color, borderDash: [3, 3], backgroundColor: 'transparent', borderWidth: 1.4, pointRadius: 0, tension: .25, spanGaps: true, order: 6 });
+      if (S.prevExpense) dsP.push({ type: 'line', label: `${prevY}년 누적 지출`, data: prevCum, borderColor: '#9aa3b6', borderDash: [5, 4], backgroundColor: 'transparent', borderWidth: 1.6, pointRadius: 0, tension: .25, order: 5 });
+      if (S.budget && budgetTotal > 0) dsP.push({ type: 'line', label: '예산 페이스', data: budLine, borderColor: '#c9a227', borderDash: [2, 3], backgroundColor: 'transparent', borderWidth: 1.5, pointRadius: 0, tension: 0, order: 5 });
+      if (S.net) {
+        dsP.push({ type: 'line', label: '누적 순저축', data: netCum, borderColor: '#39a8bd', backgroundColor: 'transparent', borderWidth: 1.8, pointRadius: 2, tension: .25, spanGaps: false, order: 3 });
+        if (pN) dsP.push(dash('예상 순저축', pN, '#39a8bd'));
+      }
+      if (S.income) {
+        dsP.push({ type: 'line', label: '누적 수입', data: incCum, borderColor: '#4c8c6b', backgroundColor: 'transparent', borderWidth: 1.8, pointRadius: 2, tension: .25, spanGaps: false, order: 3 });
+        if (pI) dsP.push(dash('예상 수입', pI, '#4c8c6b'));
+      }
+      if (S.expense) {
+        dsP.push({ type: 'line', label: `${Y}년 누적 지출`, data: curCum, borderColor: '#c1483f', backgroundColor: 'rgba(193,72,63,0.10)', fill: true, borderWidth: 2.4, pointRadius: 2, tension: .25, spanGaps: false, order: 1 });
+        if (pE) dsP.push(dash('예상 지출', pE, '#c1483f'));
+      }
+      document.getElementById('yr-legend').innerHTML =
+        '<span style="color:var(--text-faint)">점선 = 현재 속도 기준 예상</span>';
       state.charts.year = new Chart(document.getElementById('chart-year'), {
         data: { labels, datasets: dsP },
         options: {
@@ -6756,12 +6868,20 @@ function renderYearPage(container, data, d) {
   };
   drawYear();
 
+  const yrToggles = document.getElementById('yr-series-toggles');
+  if (yrToggles) yrToggles.addEventListener('change', (e) => {
+    const inp = e.target.closest('input[data-key]');
+    if (!inp) return;
+    state.yearSeries[inp.dataset.key] = inp.checked;
+    inp.closest('.series-chk').classList.toggle('on', inp.checked);
+    drawYear();
+  });
+
   document.getElementById('yr-mode').addEventListener('click', (e) => {
     const b = e.target.closest('button');
     if (!b) return;
     state.yearMode = b.dataset.m;
-    document.querySelectorAll('#yr-mode button').forEach(x => x.classList.toggle('active', x === b));
-    drawYear();
+    renderPage();
   });
   const setYear = (y) => { state.yearKey = y; renderPage(); };
   document.getElementById('yr-select').addEventListener('change', (e) => setYear(e.target.value));
