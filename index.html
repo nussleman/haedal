@@ -356,7 +356,15 @@ body{
   color:var(--text);font-family:var(--mono);font-size:12.5px;
   border-radius:6px;padding:6px 8px;text-align:right;
 }
-.settings-note{font-size:11px;color:var(--text-faint);line-height:1.6;margin-top:10px;}
+/* 보조 설명 문구 — 흐름표 인사이트(.fm-ins)와 같은 톤으로 통일 */
+.settings-note{position:relative;font-size:12px;color:var(--text-dim);line-height:1.65;
+  margin-top:12px;padding-left:13px;}
+.settings-note:before{content:'';position:absolute;left:0;top:8px;width:4px;height:4px;
+  border-radius:50%;background:var(--text-faint);}
+.settings-note b{color:var(--text);font-weight:600;}
+/* 버튼·입력이 들어 있는 안내줄은 불릿 없이 */
+.settings-note:has(button),.settings-note:has(input),.settings-note:has(pre){padding-left:0;}
+.settings-note:has(button):before,.settings-note:has(input):before,.settings-note:has(pre):before{display:none;}
 
 /* ---------- category bars ---------- */
 .cat-row{margin:12px 0;}
@@ -704,11 +712,17 @@ body{
 }
 .stat-card .label{font-family:var(--mono);font-size:10.5px;color:var(--text-faint);letter-spacing:.05em;}
 .stat-card .value{font-family:var(--sans);font-weight:800;font-size:21px;margin-top:5px;color:var(--text);}
-.stat-card .sub{font-size:11px;color:var(--text-dim);margin-top:9px;font-family:var(--mono);line-height:1.55;}
+.stat-card .sub{position:relative;font-size:11.5px;color:var(--text-dim);margin-top:9px;
+  font-family:var(--mono);line-height:1.65;padding-left:11px;}
+.stat-card .sub:before{content:'';position:absolute;left:0;top:7px;width:3.5px;height:3.5px;
+  border-radius:50%;background:var(--text-faint);}
+.stat-card .sub b{color:var(--text);font-weight:600;}
 .stat-card .sub + .sub{margin-top:3px;}
 /* 좋음/나쁨은 수입(초록)·지출(빨강)과 겹치지 않게 중립 회색 + 주의는 앰버로만 구분 */
 .stat-card .sub.up{color:var(--text-dim);}
-.stat-card .sub.down{color:#d9884f;}
+.stat-card .sub.down{color:#e6b48f;}
+.stat-card .sub.down:before{background:#d9884f;}
+.stat-card .sub.up:before{background:var(--text-faint);}
 .stat-card .value + .sub{margin-top:10px;}
 
 /* ---------- data table (가계부) ---------- */
@@ -1017,7 +1031,7 @@ body{font-variant-numeric:tabular-nums;}
 .goal-progress-figures,.goal-cap-text,.mini-goal-period,.act-ctrl,
 .chk-row .nm i,.chk-row .fig em,.eng-node-top .pct,.eng-stage-head span,
 .vtip-date,.vtip-amt,.tag-pill,.alloc-amt{font-size:10.5px;}
-.settings-note{font-size:11px;color:var(--text-faint);line-height:1.6;margin-top:8px;}
+.settings-note{font-size:11.5px;margin-top:10px;padding-left:12px;}
 .empty-state{padding:14px 0;font-size:12px;}
 
 /* ---------- 버튼 · 컨트롤 ---------- */
@@ -1395,15 +1409,16 @@ body{font-variant-numeric:tabular-nums;}
 /* ---------- 비중 도넛 ---------- */
 /* 트리맵 + 목록 */
 .share-split{display:grid;grid-template-columns:1fr 220px;gap:14px;align-items:stretch;}
-.share-tmap{position:relative;min-height:230px;}
+.share-tmap{position:relative;min-height:340px;}
 .tmap{position:absolute;inset:0;}
 .tm-cell{position:absolute;overflow:hidden;border:1.5px solid var(--panel);border-radius:3px;
   padding:5px 6px;display:flex;flex-direction:column;justify-content:flex-start;gap:1px;cursor:default;}
-.tm-cell b{font-size:10.5px;font-weight:700;color:rgba(15,20,29,.92);line-height:1.2;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;}
-.tm-cell em{font-style:normal;font-family:var(--mono);font-size:10px;color:rgba(15,20,29,.7);}
+.tm-cell b{font-size:10.5px;font-weight:700;color:rgba(15,20,29,.92);line-height:1.25;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;max-width:100%;}
+.tm-cell em{font-style:normal;font-family:var(--mono);font-size:10px;color:rgba(15,20,29,.72);
+  line-height:1.2;white-space:nowrap;}
 .share-donut{height:132px;position:relative;}
-.share-list{display:flex;flex-direction:column;}
+.share-list{display:flex;flex-direction:column;max-height:340px;overflow-y:auto;padding-right:4px;}
 .share-row{display:grid;grid-template-columns:9px 1fr 46px 62px;gap:8px;align-items:center;
   padding:4px 0;font-size:12px;}
 .share-sw{width:9px;height:9px;border-radius:2px;}
@@ -1757,12 +1772,15 @@ body{font-variant-numeric:tabular-nums;}
 @media (max-width:900px){.kpi-mini.one{grid-template-columns:repeat(2,1fr);}}
 
 /* ---------- 오늘: 좌우 2단, 화면 중앙 ---------- */
-.today-center{display:flex;gap:16px;align-items:flex-start;justify-content:center;
-  max-width:1060px;margin:0 auto;}
+/* 바깥은 화면 상하 중앙, 안쪽은 두 칼럼 윗선 정렬 */
+.today-center{display:flex;align-items:center;justify-content:center;min-height:min(66vh,660px);}
+.today-inner{display:flex;gap:16px;align-items:flex-start;justify-content:center;
+  width:100%;max-width:1060px;}
 .today-col{flex:0 0 300px;display:flex;flex-direction:column;gap:12px;}
 .today-list{flex:1 1 auto;min-width:0;}
 @media (max-width:820px){
-  .today-center{flex-direction:column;align-items:stretch;min-height:0;}
+  .today-center{min-height:0;}
+  .today-inner{flex-direction:column;align-items:stretch;}
   .today-col{flex:none;}
 }
 /* 지표 아래 비교 줄 */
@@ -1814,6 +1832,8 @@ body{font-variant-numeric:tabular-nums;}
 .fm-spark{display:flex;align-items:flex-end;gap:2px;height:46px;margin-top:4px;}
 .fs-bar{flex:1;height:100%;display:flex;align-items:flex-end;}
 .fs-bar i{display:block;width:100%;border-radius:2px 2px 0 0;}
+
+.al-notes li,.cmp-row{font-size:12px;line-height:1.65;}
 </style>
 </head>
 <body>
@@ -1911,9 +1931,9 @@ const state = {
   flowSub: 'today',        // 흐름 하위 탭: today | now | calendar | income | expense
   expSub: 'summary',       // 지출 하위: summary | fixed | budget
   nowSub: 'summary',       // 이번달 하위: summary | budget | detail
-  nowAxes: { income: false, expense: true, net: false },
+  nowAxis: 'expense',      // 페이스 차트 축: income | expense | net (하나만)
   nowOpts: { budget: true, daily: false },
-  yearAxes: { income: false, expense: true, net: false },
+  yearAxis: 'expense',
   yearOpts: { budget: true, prevYear: true },
   yearSeries: { expense: true, budget: true, prevExpense: true, income: false, net: false },
   assetSub: 'overview',    // 자산 하위 탭: overview | investment | savings
@@ -6142,6 +6162,11 @@ const FLOW_AXES = [
   { key: 'expense', label: '지출', color: '#c1483f' },
   { key: 'net', label: '순저축', color: '#39a8bd' }
 ];
+function hexToRgba(hex, a) {
+  const h = String(hex).replace('#', '');
+  const n = parseInt(h.length === 3 ? h.split('').map(c => c + c).join('') : h, 16);
+  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
+}
 const NOW_OPTS = [
   { key: 'budget', label: '예산 페이스', color: '#c9a227' },
   { key: 'daily', label: '일별 지출', color: 'rgba(193,72,63,.45)' }
@@ -6272,17 +6297,18 @@ function renderNowPage(container, data, d) {
         </div>
         <div class="axis-bar">
           <div class="axis-btns" id="now-axis-btns">
-            ${FLOW_AXES.map(a => `<button data-axis="${a.key}" class="axis-btn ${state.nowAxes[a.key] ? 'on' : ''}" style="--ac:${a.color}">
+            ${FLOW_AXES.map(a => `<button data-axis="${a.key}" class="axis-btn ${state.nowAxis === a.key ? 'on' : ''}" style="--ac:${a.color}">
               <i></i>${a.label}
             </button>`).join('')}
           </div>
-          <div class="series-toggles" id="now-series-toggles" style="margin-bottom:0;${state.nowAxes.expense ? '' : 'display:none;'}">
+          <div class="series-toggles" id="now-series-toggles" style="margin-bottom:0;${state.nowAxis === 'expense' ? '' : 'display:none;'}">
             ${NOW_OPTS.map(sr => `<label class="series-chk ${state.nowOpts[sr.key] ? 'on' : ''}">
               <input type="checkbox" data-key="${sr.key}" ${state.nowOpts[sr.key] ? 'checked' : ''} />
               <i style="background:${sr.color}"></i>${sr.label}
             </label>`).join('')}
           </div>
         </div>
+        <div class="chart-legend" id="now-flow-legend" style="margin-bottom:6px;"></div>
         <div class="chart-wrap tall" style="min-height:320px;"><canvas id="chart-now-flow"></canvas></div>
         <div class="now-progress" style="margin-top:10px;">
           <div class="now-progress-track"><div class="now-progress-fill" style="width:${progressPct}%"></div></div>
@@ -6342,13 +6368,6 @@ function renderNowPage(container, data, d) {
     renderPage();
   });
 
-  /* --- 페이스 요약 (차트 제목 옆) --- */
-  const paceTag = document.getElementById('now-pace-tag');
-  if (paceTag) {
-    paceTag.textContent = paceDiff === null ? monthKeyLabel(monthKey)
-      : `평소보다 ${wonComma(Math.abs(Math.round(paceDiff)))}원 ${paceDiff > 0 ? '더 쓰는' : '덜 쓰는'} 페이스`;
-    paceTag.style.color = paceDiff === null ? 'var(--text-dim)' : (paceDiff > 0 ? '#d9884f' : 'var(--green)');
-  }
 
   /* --- 고정비 --- */
   const fixedBody = document.getElementById('now-fixed-body');
@@ -6515,34 +6534,67 @@ function renderNowPage(container, data, d) {
       return days.map((b, i) => (i < lastIdx ? null : Math.round(perDay * (i + 1))));
     };
 
-    const A = state.nowAxes, O = state.nowOpts;
+    const AX = FLOW_AXES.find(a => a.key === state.nowAxis) || FLOW_AXES[1];
+    const O = state.nowOpts;
+    const SRC = {
+      income: { cum: cumIncome, pace: paceIncome, color: '#4c8c6b', label: '수입' },
+      expense: { cum, pace: paceExpense, color: '#c1483f', label: '지출' },
+      net: { cum: cumNet, pace: paceNet, color: '#39a8bd', label: '순저축' }
+    }[AX.key];
+    const proj = projLine(SRC.cum);
+
+    /* 페이스 문구 — 선택한 축에 맞게 */
+    const liveIdx = isThisMonth ? Math.max(elapsed - 1, 0) : days.length - 1;
+    const curV = SRC.cum[liveIdx], baseV = SRC.pace[liveIdx];
+    const tagEl = document.getElementById('now-pace-tag');
+    if (tagEl) {
+      if (curV === null || baseV === null || baseV === undefined) {
+        tagEl.textContent = ''; 
+      } else {
+        const dv = curV - baseV;
+        const better = AX.key === 'expense' ? dv < 0 : dv > 0;
+        const verb = AX.key === 'expense' ? (dv > 0 ? '더 쓰는' : '덜 쓰는')
+                   : AX.key === 'income' ? (dv > 0 ? '더 버는' : '덜 버는')
+                   : (dv > 0 ? '더 모으는' : '덜 모으는');
+        tagEl.textContent = `평소보다 ${wonComma(Math.abs(Math.round(dv)))}원 ${verb} 페이스`;
+        tagEl.style.color = Math.abs(dv) < 1 ? 'var(--text-dim)' : (better ? 'var(--green)' : '#d9884f');
+      }
+    }
+
     const ds = [];
-    const dash = (label, data, color) => ({ type: 'line', label, data, borderColor: color, borderDash: [3, 3], backgroundColor: 'transparent', borderWidth: 1.4, pointRadius: 0, tension: 0.25, spanGaps: true, yAxisID: 'y', order: 6 });
-    const paceDs = (label, data, color) => ({ type: 'line', label, data, borderColor: color, borderDash: [6, 4], backgroundColor: 'transparent', borderWidth: 1.5, pointRadius: 0, tension: 0.25, spanGaps: true, yAxisID: 'y', order: 5 });
+    /* 같은 축 안에서도 선/색/굵기로 역할을 구분한다:
+       실선+면적 = 이번 달 실제 · 같은 색 점선 = 예상 · 회색 긴점선 = 최근 3개월 평균 · 금색 촘촘점선 = 예산 */
+    if (AX.key === 'expense' && O.daily) {
+      ds.push({ type: 'bar', label: '일별 지출', data: days.map(b => b.expense), backgroundColor: 'rgba(193,72,63,.30)', borderRadius: 2, yAxisID: 'y1', order: 9, hideLabel: true });
+    }
+    ds.push({ type: 'line', label: `최근 3개월 평균 ${SRC.label} 페이스`, data: SRC.pace,
+      borderColor: '#9aa3b6', borderDash: [7, 4], backgroundColor: 'transparent', borderWidth: 1.6,
+      pointRadius: 0, tension: .25, spanGaps: true, yAxisID: 'y', order: 4,
+      labelColor: '#9aa3b6', labelStep: 999, labelOffset: 14 });
+    if (AX.key === 'expense' && O.budget && budgetLine) {
+      ds.push({ type: 'line', label: '예산 페이스', data: budgetLine, borderColor: '#c9a227',
+        borderDash: [2, 3], backgroundColor: 'transparent', borderWidth: 1.5, pointRadius: 0,
+        tension: 0, yAxisID: 'y', order: 5, hideLabel: true });
+    }
+    if (proj) {
+      ds.push({ type: 'line', label: `예상 ${SRC.label}`, data: proj, borderColor: SRC.color,
+        borderDash: [4, 4], backgroundColor: 'transparent', borderWidth: 1.6, pointRadius: 0,
+        tension: .25, spanGaps: true, yAxisID: 'y', order: 3,
+        labelColor: SRC.color, labelStep: 999, labelOffset: -14 });
+    }
+    ds.push({ type: 'line', label: `누적 ${SRC.label}`, data: SRC.cum, borderColor: SRC.color,
+      backgroundColor: hexToRgba(SRC.color, .12), fill: true, borderWidth: 2.6, pointRadius: 0,
+      tension: .25, spanGaps: false, yAxisID: 'y', order: 1,
+      labelColor: SRC.color, labelStep: Math.max(Math.ceil(days.length / 6), 1), labelOffset: -14 });
 
-    if (A.expense && O.daily) ds.push({ type: 'bar', label: '일별 지출', data: days.map(b => b.expense), backgroundColor: 'rgba(193,72,63,.45)', borderRadius: 2, yAxisID: 'y1', order: 8 });
-    if (A.expense && O.budget && budgetLine) ds.push({ type: 'line', label: '예산 페이스', data: budgetLine, borderColor: '#c9a227', borderDash: [2, 3], backgroundColor: 'transparent', borderWidth: 1.5, pointRadius: 0, tension: 0, yAxisID: 'y', order: 7 });
-
-    if (A.net) {
-      ds.push(paceDs('순저축 평균 페이스', paceNet, '#39a8bd'));
-      ds.push({ type: 'line', label: '누적 순저축', data: cumNet, borderColor: '#39a8bd', backgroundColor: 'transparent', borderWidth: 2, pointRadius: 0, tension: 0.25, spanGaps: false, yAxisID: 'y', order: 2 });
-      const pj = projLine(cumNet); if (pj) ds.push(dash('예상 순저축', pj, '#39a8bd'));
-    }
-    if (A.income) {
-      ds.push(paceDs('수입 평균 페이스', paceIncome, '#4c8c6b'));
-      ds.push({ type: 'line', label: '누적 수입', data: cumIncome, borderColor: '#4c8c6b', backgroundColor: 'transparent', borderWidth: 2, pointRadius: 0, tension: 0.25, spanGaps: false, yAxisID: 'y', order: 2 });
-      const pj = projLine(cumIncome); if (pj) ds.push(dash('예상 수입', pj, '#4c8c6b'));
-    }
-    if (A.expense) {
-      ds.push(paceDs('지출 평균 페이스', paceExpense, '#9aa3b6'));
-      ds.push({ type: 'line', label: '누적 지출', data: cum, borderColor: '#c1483f', backgroundColor: 'rgba(193,72,63,0.10)', fill: true, borderWidth: 2.4, pointRadius: 0, tension: 0.25, spanGaps: false, yAxisID: 'y', order: 1 });
-      const pj = projLine(cum); if (pj) ds.push(dash('예상 지출', pj, '#c1483f'));
-    }
+    const legendBox = document.getElementById('now-flow-legend');
+    if (legendBox) legendBox.innerHTML = ds.slice().reverse().map(x =>
+      `<span><i style="background:${x.borderColor || x.backgroundColor}"></i>${x.label}</span>`).join('');
 
     state.charts.nowFlow = new Chart(document.getElementById('chart-now-flow'), {
       data: { labels, datasets: ds },
       options: {
-        responsive: true, maintainAspectRatio: false, layout: { padding: { top: 14 } },
+        responsive: true, maintainAspectRatio: false, layout: { padding: { top: 22, right: 12 } },
         interaction: { mode: 'index', intersect: false },
         plugins: {
           legend: { display: false },
@@ -6551,9 +6603,10 @@ function renderNowPage(container, data, d) {
         scales: {
           x: { ticks: { ...MONO_TICK, autoSkip: true, maxRotation: 0 }, grid: { display: false } },
           y: { ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT },
-          y1: { display: !!(A.expense && O.daily), position: 'right', ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: { display: false } }
+          y1: { display: !!(AX.key === 'expense' && O.daily), position: 'right', ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: { display: false } }
         }
-      }
+      },
+      plugins: [valueLabelPlugin]
     });
   };
   const nowToggles = document.getElementById('now-series-toggles');
@@ -6567,13 +6620,10 @@ function renderNowPage(container, data, d) {
   const nowAxisBtns = document.getElementById('now-axis-btns');
   if (nowAxisBtns) nowAxisBtns.addEventListener('click', (e) => {
     const b = e.target.closest('.axis-btn');
-    if (!b) return;
-    const k = b.dataset.axis;
-    /* 최소 하나는 켜져 있게 */
-    if (state.nowAxes[k] && Object.values(state.nowAxes).filter(Boolean).length === 1) return;
-    state.nowAxes[k] = !state.nowAxes[k];
-    b.classList.toggle('on', state.nowAxes[k]);
-    if (nowToggles) nowToggles.style.display = state.nowAxes.expense ? '' : 'none';
+    if (!b || state.nowAxis === b.dataset.axis) return;
+    state.nowAxis = b.dataset.axis;
+    nowAxisBtns.querySelectorAll('.axis-btn').forEach(x => x.classList.toggle('on', x === b));
+    if (nowToggles) nowToggles.style.display = state.nowAxis === 'expense' ? '' : 'none';
     drawNowFlow();
   });
   drawNowFlow();
@@ -6872,6 +6922,7 @@ function renderTodayPage(container, data, d) {
     </div>
 
     <div class="today-center">
+      <div class="today-inner">
       <div class="today-col">
         <div class="stat-card">
           <div class="label">수입</div>
@@ -6896,6 +6947,7 @@ function renderTodayPage(container, data, d) {
       <div class="panel today-list">
         <div class="panel-title"><div>내역</div><span class="ptag">${today.rows.length}건</span></div>
         <div id="today-rows-body"></div>
+      </div>
       </div>
     </div>
   `;
@@ -7049,12 +7101,12 @@ function renderYearPage(container, data, d) {
         </div>
         ${YMODE === 'pace' ? `<div class="axis-bar">
           <div class="axis-btns" id="yr-axis-btns">
-            ${FLOW_AXES.map(a => `<button data-axis="${a.key}" class="axis-btn ${state.yearAxes[a.key] ? 'on' : ''}" style="--ac:${a.color}">
+            ${FLOW_AXES.map(a => `<button data-axis="${a.key}" class="axis-btn ${state.yearAxis === a.key ? 'on' : ''}" style="--ac:${a.color}">
               <i></i>${a.label}
             </button>`).join('')}
           </div>
           <div class="series-toggles" id="yr-series-toggles" style="margin-bottom:0;">
-            ${YEAR_OPTS.map(sr => `<label class="series-chk ${state.yearOpts[sr.key] ? 'on' : ''}">
+            ${YEAR_OPTS.filter(sr => sr.key !== 'budget' || state.yearAxis === 'expense').map(sr => `<label class="series-chk ${state.yearOpts[sr.key] ? 'on' : ''}">
               <input type="checkbox" data-key="${sr.key}" ${state.yearOpts[sr.key] ? 'checked' : ''} />
               <i style="background:${sr.color}"></i>${sr.label}
             </label>`).join('')}
@@ -7153,13 +7205,6 @@ function renderYearPage(container, data, d) {
       };
       const pE = proj(curCum), pI = proj(incCum), pN = proj(netCum);
 
-      const diff = lastLive > 0 ? curCum[lastLive - 1] - prevCum[lastLive - 1] : null;
-      const tag = document.getElementById('yr-pace-tag');
-      if (tag) {
-        tag.textContent = diff === null ? '' : `${prevY}년 같은 시점보다 ${wonComma(Math.abs(Math.round(diff)))}원 ${diff > 0 ? '더 쓰는' : '덜 쓰는'} 페이스`;
-        tag.style.color = diff === null ? 'var(--text-dim)' : (diff > 0 ? '#d9884f' : 'var(--green)');
-      }
-
       /* 작년 같은 시점 누적 (수입·순저축도) */
       let pi2 = 0, pn2 = 0;
       const prevInc = [], prevNet = [];
@@ -7169,37 +7214,59 @@ function renderYearPage(container, data, d) {
         prevInc.push(pi2); prevNet.push(pn2);
       }
 
-      const A = state.yearAxes, O = state.yearOpts;
-      const dsP = [];
-      const dash = (label, arr, color) => ({ type: 'line', label, data: arr, borderColor: color, borderDash: [3, 3], backgroundColor: 'transparent', borderWidth: 1.4, pointRadius: 0, tension: .25, spanGaps: true, order: 7 });
-      const prevDs = (label, arr, color) => ({ type: 'line', label, data: arr, borderColor: color, borderDash: [6, 4], backgroundColor: 'transparent', borderWidth: 1.5, pointRadius: 0, tension: .25, order: 6 });
+      const AX = FLOW_AXES.find(a => a.key === state.yearAxis) || FLOW_AXES[1];
+      const O = state.yearOpts;
+      const SRC = {
+        income: { cum: incCum, prev: prevInc, proj: pI, color: '#4c8c6b', label: '수입' },
+        expense: { cum: curCum, prev: prevCum, proj: pE, color: '#c1483f', label: '지출' },
+        net: { cum: netCum, prev: prevNet, proj: pN, color: '#39a8bd', label: '순저축' }
+      }[AX.key];
 
-      if (A.expense && O.budget && budgetTotal > 0) dsP.push({ type: 'line', label: '예산 페이스', data: budLine, borderColor: '#c9a227', borderDash: [2, 3], backgroundColor: 'transparent', borderWidth: 1.5, pointRadius: 0, tension: 0, order: 7 });
-      if (A.net) {
-        if (O.prevYear) dsP.push(prevDs(`${prevY}년 순저축`, prevNet, 'rgba(57,168,189,.5)'));
-        dsP.push({ type: 'line', label: '누적 순저축', data: netCum, borderColor: '#39a8bd', backgroundColor: 'transparent', borderWidth: 2, pointRadius: 2, tension: .25, spanGaps: false, order: 3 });
-        if (pN) dsP.push(dash('예상 순저축', pN, '#39a8bd'));
+      const curV = lastLive > 0 ? SRC.cum[lastLive - 1] : null;
+      const baseV = lastLive > 0 ? SRC.prev[lastLive - 1] : null;
+      const tag = document.getElementById('yr-pace-tag');
+      if (tag) {
+        if (curV === null || baseV === null) tag.textContent = '';
+        else {
+          const dv = curV - baseV;
+          const better = AX.key === 'expense' ? dv < 0 : dv > 0;
+          const verb = AX.key === 'expense' ? (dv > 0 ? '더 쓰는' : '덜 쓰는')
+                     : AX.key === 'income' ? (dv > 0 ? '더 버는' : '덜 버는')
+                     : (dv > 0 ? '더 모으는' : '덜 모으는');
+          tag.textContent = `${prevY}년 같은 시점보다 ${wonComma(Math.abs(Math.round(dv)))}원 ${verb} 페이스`;
+          tag.style.color = Math.abs(dv) < 1 ? 'var(--text-dim)' : (better ? 'var(--green)' : '#d9884f');
+        }
       }
-      if (A.income) {
-        if (O.prevYear) dsP.push(prevDs(`${prevY}년 수입`, prevInc, 'rgba(76,140,107,.5)'));
-        dsP.push({ type: 'line', label: '누적 수입', data: incCum, borderColor: '#4c8c6b', backgroundColor: 'transparent', borderWidth: 2, pointRadius: 2, tension: .25, spanGaps: false, order: 3 });
-        if (pI) dsP.push(dash('예상 수입', pI, '#4c8c6b'));
+
+      const dsP = [];
+      if (AX.key === 'expense' && O.budget && budgetTotal > 0) {
+        dsP.push({ type: 'line', label: '예산 페이스', data: budLine, borderColor: '#c9a227',
+          borderDash: [2, 3], backgroundColor: 'transparent', borderWidth: 1.5, pointRadius: 0, tension: 0, order: 6, hideLabel: true });
       }
-      if (A.expense) {
-        if (O.prevYear) dsP.push(prevDs(`${prevY}년 지출`, prevCum, '#9aa3b6'));
-        dsP.push({ type: 'line', label: `누적 지출`, data: curCum, borderColor: '#c1483f', backgroundColor: 'rgba(193,72,63,0.10)', fill: true, borderWidth: 2.4, pointRadius: 2, tension: .25, spanGaps: false, order: 1 });
-        if (pE) dsP.push(dash('예상 지출', pE, '#c1483f'));
+      if (O.prevYear) {
+        dsP.push({ type: 'line', label: `${prevY}년 ${SRC.label}`, data: SRC.prev, borderColor: '#9aa3b6',
+          borderDash: [7, 4], backgroundColor: 'transparent', borderWidth: 1.6, pointRadius: 0, tension: .25, order: 5,
+          labelColor: '#9aa3b6', labelStep: 999, labelOffset: 14 });
       }
-      document.getElementById('yr-legend').innerHTML =
-        '<span style="color:var(--text-faint)">점선 = 현재 속도 기준 예상</span>';
+      if (SRC.proj) {
+        dsP.push({ type: 'line', label: `예상 ${SRC.label}`, data: SRC.proj, borderColor: SRC.color,
+          borderDash: [4, 4], backgroundColor: 'transparent', borderWidth: 1.6, pointRadius: 0, tension: .25,
+          spanGaps: true, order: 3, labelColor: SRC.color, labelStep: 999, labelOffset: -14 });
+      }
+      dsP.push({ type: 'line', label: `${Y}년 누적 ${SRC.label}`, data: SRC.cum, borderColor: SRC.color,
+        backgroundColor: hexToRgba(SRC.color, .12), fill: true, borderWidth: 2.6, pointRadius: 2, tension: .25,
+        spanGaps: false, order: 1, labelColor: SRC.color, labelStep: 2, labelOffset: -14 });
+      document.getElementById('yr-legend').innerHTML = dsP.slice().reverse().map(x =>
+        `<span><i style="background:${x.borderColor}"></i>${x.label}</span>`).join('');
       state.charts.year = new Chart(document.getElementById('chart-year'), {
         data: { labels, datasets: dsP },
         options: {
-          responsive: true, maintainAspectRatio: false, layout: { padding: { top: 18 } },
+          responsive: true, maintainAspectRatio: false, layout: { padding: { top: 24, right: 12 } },
           interaction: { mode: 'index', intersect: false },
           plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => (c.raw === null ? null : ` ${c.dataset.label}: ${formatWon(c.raw)}`) } } },
           scales: { x: { ticks: MONO_TICK, grid: { display: false } }, y: { ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT } }
-        }
+        },
+        plugins: [valueLabelPlugin]
       });
       return;
     }
@@ -7252,12 +7319,9 @@ function renderYearPage(container, data, d) {
   const yrAxisBtns = document.getElementById('yr-axis-btns');
   if (yrAxisBtns) yrAxisBtns.addEventListener('click', (e) => {
     const b = e.target.closest('.axis-btn');
-    if (!b) return;
-    const k = b.dataset.axis;
-    if (state.yearAxes[k] && Object.values(state.yearAxes).filter(Boolean).length === 1) return;
-    state.yearAxes[k] = !state.yearAxes[k];
-    b.classList.toggle('on', state.yearAxes[k]);
-    drawYear();
+    if (!b || state.yearAxis === b.dataset.axis) return;
+    state.yearAxis = b.dataset.axis;
+    renderPage();
   });
 
   document.getElementById('yr-mode').addEventListener('click', (e) => {
@@ -10379,7 +10443,7 @@ function renderInvestmentPage(container, data, d) {
   const drawShare = (hostId, listId, pairs) => {
     const pos = pairs.filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
     const total = pos.reduce((a, x) => a + x[1], 0);
-    const TOP = 12;
+    const TOP = 16;
     const head = pos.slice(0, TOP);
     const restSum = pos.slice(TOP).reduce((a, x) => a + x[1], 0);
     const rows = restSum > 0 ? head.concat([['기타 ' + (pos.length - TOP) + '건', restSum]]) : head;
@@ -10393,8 +10457,9 @@ function renderInvestmentPage(container, data, d) {
     host.innerHTML = `<div class="tmap">${cells.map(c => {
       const pct = total ? (c.v / total) * 100 : 0;
       /* 칸이 너무 작으면 글자를 숨긴다 (가로 12% · 세로 10% 기준) */
-      const showName = c.w > 12 && c.h > 13;
-      const showPct = c.w > 9 && c.h > 9;
+      /* 이름 한 줄(약 15px) + % 한 줄(약 13px)이 들어갈 높이가 될 때만 각각 그린다 */
+      const showName = c.w > 8 && c.h > 8;
+      const showPct = c.w > 11 && c.h > 17;
       return `<div class="tm-cell" style="left:${c.x}%;top:${c.y}%;width:${c.w}%;height:${c.h}%;background:${c.color}"
         title="${c.name} · ${formatCompactWon(c.v)}원 · ${pct.toFixed(1)}%">
         ${showName ? `<b>${c.name}</b>` : ''}${showPct ? `<em>${pct.toFixed(0)}%</em>` : ''}
@@ -10402,7 +10467,7 @@ function renderInvestmentPage(container, data, d) {
     }).join('')}</div>`;
 
     const listEl = document.getElementById(listId);
-    if (listEl) listEl.innerHTML = rows.slice(0, 8).map((r, i) => {
+    if (listEl) listEl.innerHTML = rows.map((r, i) => {
       const pct = total ? (r[1] / total) * 100 : 0;
       return `<div class="share-row">
         <span class="share-sw" style="background:${SHARE_PALETTE[i % SHARE_PALETTE.length]}"></span>
