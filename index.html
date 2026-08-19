@@ -1442,7 +1442,10 @@ body{font-variant-numeric:tabular-nums;}
 .alloc-split .alloc-row{display:grid;grid-template-columns:10px 1fr auto;gap:9px;padding:5px 0;font-size:12.5px;}
 .alloc-split .alloc-amt{font-family:var(--mono);font-size:12.5px;color:var(--text);}
 .alloc-split .alloc-amt em{font-style:normal;font-size:10.5px;color:var(--text-faint);margin-left:6px;}
-.acct-board{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;align-items:start;}
+/* 카테고리 4개가 항상 같은 줄. 좁아지면 2×2로만 떨어지게 (하나만 밀려나는 일 방지) */
+.acct-board{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px 12px;align-items:start;}
+@media (max-width:1100px){.acct-board{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 12px;}}
+@media (max-width:520px){.acct-board{grid-template-columns:minmax(0,1fr);}}
 .acct-col{display:flex;flex-direction:column;gap:6px;}
 .acct-col-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;
   padding-bottom:6px;border-bottom:2px solid var(--catc);}
@@ -1549,15 +1552,16 @@ body{font-variant-numeric:tabular-nums;}
 .idle-row .st.bad{color:#eb9891;} .idle-row .st.ok{color:#8fd0ac;} .idle-row .st.warn{color:#e6d08f;}
 
 /* ---------- 돈의 흐름표 ---------- */
-.fm-wrap{position:relative;display:flex;flex-direction:column;gap:26px;max-width:760px;margin:0 auto;}
-.fm-box{border:2px solid var(--paper);border-radius:2px;background:var(--panel);}
-.fm-top{margin-left:22%;}
-/* 자산 | 부채 경계선이 위 박스(수입·지출)의 가로 중앙과 맞도록: 22% + 78%/2 = 61% */
-.fm-bot{display:grid;grid-template-columns:61% 39%;}
-.fm-cell{padding:12px 14px;min-height:150px;}
-.fm-cell + .fm-cell{border-top:2px solid var(--paper);}
-.fm-bot .fm-cell{border-top:none;}
-.fm-bot .fm-cell:first-child{border-right:2px solid var(--paper);background:rgba(255,255,255,.05);}
+/* 수입 · 지출 · 자산 · 부채를 왼쪽부터 한 줄로. 수입·자산은 살짝 위, 지출·부채는 살짝 아래 */
+.fm-wrap{position:relative;display:grid;grid-template-columns:repeat(4,1fr);gap:12px;align-items:start;padding:18px 0;}
+.fm-wrap>.fm-cell:nth-child(odd){transform:translateY(-14px);}
+.fm-wrap>.fm-cell:nth-child(even){transform:translateY(14px);}
+@media (max-width:900px){
+  .fm-wrap{grid-template-columns:repeat(2,1fr);}
+  .fm-wrap>.fm-cell{transform:none !important;}
+}
+.fm-cell{padding:12px 13px;min-height:170px;border:1px solid var(--border-strong);border-radius:10px;
+  background:var(--panel);border-top:3px solid var(--qc);}
 .fm-h{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:9px;}
 .fm-h b{font-family:var(--serif);font-size:16px;color:var(--text);}
 .fm-h span{font-family:var(--mono);font-size:11px;color:var(--text-dim);}
@@ -1627,43 +1631,80 @@ body{font-variant-numeric:tabular-nums;}
 .sug-vals>span>em{font-style:normal;display:block;font-size:9.5px;color:var(--text-faint);letter-spacing:.04em;}
 
 /* ---------- 예산 표 (예산 + 실적 통합) ---------- */
-.bt2{width:100%;border-collapse:collapse;font-size:13px;}
-.bt2 th{font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--text-faint);
-  font-weight:400;text-align:right;padding:0 8px 8px;border-bottom:1px solid var(--border-strong);}
-.bt2 th.c-nm{text-align:left;}
-.bt2 td{padding:0 8px;height:34px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.bt2-wrap{max-width:760px;margin:0 auto;}
+.bt2-bar{display:flex;justify-content:flex-end;margin-bottom:10px;}
+.bt2{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed;}
+.bt2 col.w-nm{width:auto;}
+.bt2 col.w-in{width:124px;}
+.bt2 col.w-num{width:108px;}
+.bt2 th{font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;color:var(--text-faint);
+  font-weight:400;text-align:right;padding:0 10px 7px;border-bottom:1px solid var(--border-strong);}
+.bt2 th.c-nm{text-align:left;padding-left:2px;}
+.bt2 td{padding:0 10px;height:34px;vertical-align:middle;}
 .bt2 td.c-num,.bt2 td.c-in{text-align:right;font-family:var(--mono);font-size:12px;white-space:nowrap;}
-.bt2 td.c-nm{color:var(--text-dim);}
-.bt2 .c-in{width:130px;}
-.bt2 .c-num{width:120px;}
+.bt2 td.c-nm{color:var(--text-dim);padding-left:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+/* 열 구분 — 예산 | 실적 | 남음 사이에 얇은 세로선 */
+.bt2 td.c-in,.bt2 th.c-in{border-left:1px solid var(--border);}
+.bt2 td.c-num:last-child,.bt2 th.c-num:last-child{border-left:1px solid var(--border);}
 
+/* 상위 행: 진하게 + 배경 + 위 여백으로 그룹 구분 */
 .bt2-g{cursor:pointer;}
-.bt2-g td{color:var(--text);}
-.bt2-g td.c-nm b{font-weight:600;}
-.bt2-g td.c-in{color:var(--text);}
-.bt2-g:hover td{background:rgba(255,255,255,.035);}
-.bt2-g td.c-nm em{font-style:normal;font-family:var(--mono);font-size:10px;color:var(--text-faint);margin-left:6px;}
-.bt2-caret{display:inline-block;width:14px;color:var(--text-faint);font-size:10px;}
+.bt2-g td{background:rgba(255,255,255,.05);border-top:1px solid var(--border-strong);
+  color:var(--text);height:38px;}
+.bt2-g td.c-nm b{font-weight:700;font-size:13.5px;}
+.bt2-g td.c-in{color:var(--text);font-size:12.5px;}
+.bt2-g:hover td{background:rgba(255,255,255,.085);}
+.bt2-g td.c-nm em{font-style:normal;font-family:var(--mono);font-size:9.5px;color:var(--text-faint);margin-left:7px;}
+.bt2-caret{display:inline-block;width:15px;color:var(--gold-soft);font-size:10px;}
 
-.bt2-i td{background:rgba(255,255,255,.02);}
-.bt2-i td.c-nm{font-size:12.5px;}
-.bt2-ind{display:inline-block;width:22px;}
+/* 하위 행: 두 칸 더 들여쓰고 흐리게 */
+.bt2-i td{background:transparent;border-bottom:1px solid var(--border);}
+.bt2-i td.c-nm{font-size:12px;color:var(--text-faint);}
+.bt2-i td.c-num{color:var(--text-dim);}
+.bt2-ind{display:inline-block;width:34px;padding-left:19px;color:var(--border-strong);font-size:10px;}
 .bt2-auto{font-style:normal;font-family:var(--mono);font-size:9px;color:var(--text-faint);
   border:1px solid var(--border);border-radius:3px;padding:1px 3px;margin-left:6px;}
-.bt2-input{width:110px;background:var(--panel-2);border:1px solid var(--border);color:var(--text);
+.bt2-input{width:100px;background:var(--panel-2);border:1px solid var(--border);color:var(--text);
   font-family:var(--mono);font-size:12px;border-radius:5px;padding:4px 7px;text-align:right;}
 .bt2-input:focus{outline:none;border-color:var(--gold-soft);}
 
-.bt2-diff.ok{color:var(--text-dim);}
+.bt2-diff.ok{color:var(--text-faint);}
 .bt2-diff.over{color:#d9884f;}
 .bt2 tr.over td.c-num:nth-child(3){color:#d9884f;}
-.bt2 tfoot td{height:40px;border-top:1px solid var(--border-strong);border-bottom:none;
-  font-family:var(--mono);font-size:13px;color:var(--text);}
-.bt2 tfoot td.c-nm{font-family:var(--sans);}
+.bt2 tfoot td{height:42px;border-top:2px solid var(--border-strong);border-bottom:none;
+  font-family:var(--mono);font-size:13px;color:var(--text);background:transparent;}
+.bt2 tfoot td.c-nm{font-family:var(--sans);font-weight:700;}
 @media (max-width:720px){
-  .bt2 .c-in{width:104px;} .bt2 .c-num{width:88px;}
-  .bt2-input{width:88px;} .bt2 td{font-size:12px;}
+  .bt2 col.w-in{width:96px;} .bt2 col.w-num{width:82px;}
+  .bt2-input{width:80px;} .bt2 td{font-size:12px;padding:0 6px;}
+  .bt2-ind{width:24px;padding-left:12px;}
 }
+
+/* ---------- 자산 배분 (압축) ---------- */
+.al{width:100%;border-collapse:collapse;font-size:12.5px;}
+.al th{font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;color:var(--text-faint);
+  font-weight:400;text-align:right;padding:0 0 6px;}
+.al th.c-nm{text-align:left;}
+.al td{padding:0;height:30px;vertical-align:middle;text-align:right;}
+.al td.c-nm{text-align:left;color:var(--text);white-space:nowrap;padding-right:10px;}
+.al td.c-nm i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:7px;}
+.al td.c-cur{display:flex;align-items:center;gap:8px;height:30px;padding-right:12px;}
+.al-bar{position:relative;flex:1;min-width:44px;height:7px;border-radius:4px;background:rgba(255,255,255,.05);}
+.al-bar b{position:absolute;left:0;top:0;bottom:0;border-radius:4px;}
+.al-bar u{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--paper);text-decoration:none;}
+.al-pct{font-family:var(--mono);font-size:12px;color:var(--text);width:34px;text-align:right;}
+.al-tgt{font-family:var(--mono);font-size:12px;color:var(--text-dim);width:44px;}
+.al-tgt.sug{color:var(--text-faint);}
+.al-gap{font-family:var(--mono);font-size:11.5px;width:74px;color:var(--text-dim);}
+.al-gap.over,.al-gap.under{color:#d9884f;}
+.al-gap.fit{color:var(--text-faint);}
+.al-axes{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;padding-top:9px;border-top:1px solid var(--border);
+  font-family:var(--mono);font-size:10px;color:var(--text-faint);}
+.al-axes b{color:var(--text-dim);font-weight:500;font-size:11.5px;margin-left:3px;}
+.al-note{margin-top:9px;font-size:11.5px;color:var(--text-dim);display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.al-note.ok{color:var(--text-faint);}
+.al-note span{font-size:10.5px;color:var(--text-faint);flex:1;min-width:160px;}
+.alloc-donut.compact{margin-top:12px;height:150px;}
 </style>
 </head>
 <body>
@@ -1734,7 +1775,7 @@ const state = {
   budgets: {},          // 카테고리별 사용자 지정 예산 (window.storage에 저장)
   budgetsLoaded: false,
   incomeRange: 12,
-  incomeTotalMode: 'total',
+  incomeTotalMode: 'category',
   incomeCatFilter: 'all',
   incomePeriod: 'month',
   expenseRange: 12,
@@ -3022,7 +3063,8 @@ const SECTION_SUBS = {
     ['year', '올해'],
     ['calendar', '캘린더'],
     ['income', '수입'],
-    ['expense', '지출']
+    ['expense', '지출'],
+    ['saving', '순저축']
   ],
   assets: [
     ['overview', '전체'],
@@ -3189,81 +3231,55 @@ function renderTargetAllocPanel(hostId, d) {
   if (!host) return;
   const total = d.totalAssets || 0;
   const target = state.settings.targetAlloc;
-  const cur = {};
-  ALLOC_CATS.forEach(c => { cur[c] = d.allocation[c] || 0; });
   const sug = suggestTargetAlloc(d);
-
-  /* 4개 대항목만으로는 안 보이는 두 축 — 위험도와 접근성 */
-  const risky = (cur['투자 자산'] || 0) + (cur['연금 자산'] || 0);
-  const locked = cur['연금 자산'] || 0;
-  const axisHtml = total ? `
-    <div class="ax-row">
-      <span class="ax-nm">위험 / 안전</span>
-      <span class="ax-bar"><i style="width:${(risky / total * 100).toFixed(1)}%"></i></span>
-      <span class="ax-vl">위험 ${(risky / total * 100).toFixed(0)}% · 안전 ${(100 - risky / total * 100).toFixed(0)}%</span>
-    </div>
-    <div class="ax-row">
-      <span class="ax-nm">지금 쓸 수 있는 돈</span>
-      <span class="ax-bar"><i class="lock" style="width:${(100 - locked / total * 100).toFixed(1)}%"></i></span>
-      <span class="ax-vl">가용 ${(100 - locked / total * 100).toFixed(0)}% · 연금 잠김 ${(locked / total * 100).toFixed(0)}%</span>
-    </div>` : '';
-
-  const sugHtml = sug ? `
-    <div class="sug-box">
-      <div class="sug-h">추천 목표 <button class="btn small" id="alloc-apply-sug">이 값으로 설정</button></div>
-      <div class="sug-vals">${ALLOC_CATS.map(c => `<span><em>${c.replace(' 자산', '')}</em>${sug.alloc[c]}%</span>`).join('')}</div>
-      <div class="settings-note" style="margin:6px 0 0;">${sug.why}</div>
-    </div>` : '';
-
-  const bindSug = () => {
-    const b = document.getElementById('alloc-apply-sug');
-    if (b) b.addEventListener('click', async () => {
-      state.settings.targetAlloc = sug.alloc;
-      await saveSettings();
-      renderPage();
-    });
-  };
-
-  if (!target) {
-    host.innerHTML = `
-      <div class="subhead">목표 배분</div>
-      <div class="empty-state" style="padding:10px 0;">아직 목표 배분이 없어요. 아래 추천값을 그대로 쓰거나 <b>목표 설정</b>에서 직접 정하세요.</div>
-      ${sugHtml}
-      ${axisHtml}`;
-    bindSug();
-    return;
-  }
-
-  const rows = ALLOC_CATS.map(c => {
-    const tp = Number(target[c]) || 0;
-    const cp = total ? (cur[c] / total) * 100 : 0;
-    return { cat: c, tp, cp, gapPct: cp - tp, gapWon: cur[c] - total * tp / 100 };
-  });
-  const worst = rows.slice().sort((a, b) => Math.abs(b.gapWon) - Math.abs(a.gapWon))[0];
-  const maxScale = Math.max(100, ...rows.map(r => Math.max(r.cp, r.tp)));
   const tol = 3;
 
+  const rows = ALLOC_CATS.map(c => {
+    const cur = d.allocation[c] || 0;
+    const cp = total ? (cur / total) * 100 : 0;
+    const tp = target ? (Number(target[c]) || 0) : (sug ? sug.alloc[c] : null);
+    return { cat: c, cur, cp, tp, gapPct: tp === null ? null : cp - tp, gapWon: tp === null ? null : cur - total * tp / 100 };
+  }).filter(r => r.cur > 0 || (r.tp || 0) > 0);
+
+  const risky = (d.allocation['투자 자산'] || 0) + (d.allocation['연금 자산'] || 0);
+  const locked = d.allocation['연금 자산'] || 0;
+  const worst = target ? rows.filter(r => r.gapPct !== null).sort((a, b) => Math.abs(b.gapWon) - Math.abs(a.gapWon))[0] : null;
+
   host.innerHTML = `
-    <div class="subhead">목표 배분 대비 갭</div>
-    ${rows.map(r => {
-      const cls = Math.abs(r.gapPct) <= tol ? 'fit' : (r.gapPct > 0 ? 'over' : 'under');
-      return `<div class="gap-row">
-        <span class="gap-nm">${r.cat.replace(' 자산', '')}</span>
-        <span class="gap-bar">
-          <i style="width:${Math.min(r.cp / maxScale * 100, 100)}%;background:${CAT_COLORS[r.cat] || '#888'}"></i>
-          <u style="left:${Math.min(r.tp / maxScale * 100, 100)}%"></u>
-        </span>
-        <span class="gap-val ${cls}">${r.cp.toFixed(0)}% <em>목표 ${r.tp}% · ${r.gapPct >= 0 ? '+' : '−'}${formatCompactWon(Math.abs(r.gapWon))}</em></span>
-      </div>`;
-    }).join('')}
-    ${worst && Math.abs(worst.gapPct) > tol ? `<div class="today-verdict ${Math.abs(worst.gapPct) > 10 ? 'warn' : ''}" style="margin-top:10px;">
-      가장 큰 갭은 <b>${worst.cat.replace(' 자산', '')}</b> — ${worst.gapPct > 0 ? `목표보다 ${formatCompactWon(Math.abs(worst.gapWon))}원 많아요.` : `목표보다 ${formatCompactWon(Math.abs(worst.gapWon))}원 부족해요. 다음 이체는 여기로.`}
-    </div>` : `<div class="today-verdict good" style="margin-top:10px;">모든 칸이 목표 ±${tol}%p 안에 있어요.</div>`}
-    ${axisHtml}
-    ${sugHtml}
-    <div class="settings-note">흰 세로선 = 목표 비중, 막대 = 현재 비중.</div>
+    <table class="al">
+      <thead><tr><th class="c-nm">${target ? '' : '추천 목표'}</th><th>현재</th><th>목표</th><th>갭</th></tr></thead>
+      <tbody>
+        ${rows.map(r => {
+          const cls = r.gapPct === null ? '' : (Math.abs(r.gapPct) <= tol ? 'fit' : (r.gapPct > 0 ? 'over' : 'under'));
+          return `<tr>
+            <td class="c-nm"><i style="background:${CAT_COLORS[r.cat] || '#888'}"></i>${r.cat.replace(' 자산', '')}</td>
+            <td class="c-cur">
+              <span class="al-bar"><b style="width:${Math.min(r.cp, 100)}%;background:${CAT_COLORS[r.cat] || '#888'}"></b>${r.tp !== null ? `<u style="left:${Math.min(r.tp, 100)}%"></u>` : ''}</span>
+              <span class="al-pct">${r.cp.toFixed(0)}%</span>
+            </td>
+            <td class="al-tgt ${target ? '' : 'sug'}">${r.tp === null ? '—' : r.tp + '%'}</td>
+            <td class="al-gap ${cls}">${r.gapWon === null ? '—' : (r.gapPct >= 0 ? '+' : '−') + formatCompactWon(Math.abs(r.gapWon))}</td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+    <div class="al-axes">
+      <span>위험 <b>${total ? Math.round(risky / total * 100) : 0}%</b></span>
+      <span>연금 잠김 <b>${total ? Math.round(locked / total * 100) : 0}%</b></span>
+      <span>지금 쓸 수 있는 돈 <b>${formatCompactWon(total - locked)}</b></span>
+    </div>
+    ${target
+      ? (worst && Math.abs(worst.gapPct) > tol
+        ? `<div class="al-note">${worst.cat.replace(' 자산', '')} ${worst.gapPct > 0 ? `${formatCompactWon(Math.abs(worst.gapWon))} 초과 — 다른 칸으로` : `${formatCompactWon(Math.abs(worst.gapWon))} 부족 — 다음 이체는 여기로`}</div>`
+        : `<div class="al-note ok">모든 칸이 목표 ±${tol}%p 안</div>`)
+      : `<div class="al-note"><button class="btn small" id="alloc-apply-sug">추천값으로 설정</button><span>${sug ? sug.why : ''}</span></div>`}
   `;
-  bindSug();
+  const b = document.getElementById('alloc-apply-sug');
+  if (b && sug) b.addEventListener('click', async () => {
+    state.settings.targetAlloc = sug.alloc;
+    await saveSettings();
+    renderPage();
+  });
 }
 
 function openAllocEditor(d) {
@@ -3801,12 +3817,7 @@ function renderFlowMapPage(container, data, d) {
           </div>
         </div>
         <div class="fm-wrap">
-          <div class="fm-box fm-top">
-            ${['income', 'expense'].map(k => fmCell(k, fm[k], sum(k))).join('')}
-          </div>
-          <div class="fm-box fm-bot">
-            ${['asset', 'liability'].map(k => fmCell(k, fm[k], sum(k))).join('')}
-          </div>
+          ${['income', 'expense', 'asset', 'liability'].map(k => fmCell(k, fm[k], sum(k))).join('')}
         </div>
         <div class="settings-note">${FM_QUADS.every(q => !fm[q.key].length) ? '<b>가계부에서 채우기</b>를 누르면 최근 6개월 평균 수입·지출과 현재 계좌 잔액으로 초안이 만들어져요. 그 다음 직접 고치면 됩니다.' : '각 칸의 항목을 클릭하면 오른쪽에 상세가 뜹니다. 수입·지출은 월 기준, 자산·부채는 잔액 기준으로 적어두면 읽기 편해요.'}</div>
       </div>
@@ -3835,7 +3846,7 @@ function renderFlowMapPage(container, data, d) {
 
 function fmCell(key, items, total) {
   const q = FM_QUADS.find(x => x.key === key);
-  return `<div class="fm-cell" data-quad="${key}">
+  return `<div class="fm-cell" data-quad="${key}" style="--qc:${q.color}">
     <div class="fm-h"><b style="color:${q.color}">${q.label}</b><span>${total ? formatCompactWon(total) : ''}</span></div>
     ${items.map(x => `<div class="fm-item ${(state.fmSel && state.fmSel.id === x.id) ? 'on' : ''}" data-fm-item="${x.id}" data-fm-quad="${key}">
       <span class="nm">${x.name}${x.linkedTo ? `<em style="font-style:normal;color:var(--text-faint);font-size:10.5px;"> → ${x.linkedTo}</em>` : ''}</span>
@@ -4152,6 +4163,7 @@ function renderPage() {
     else if (SUB === 'year') renderYearPage(body, data, d);
     else if (SUB === 'calendar') renderCalendarPage(body, data, d);
     else if (SUB === 'income') renderIncomePage(body, data, d);
+    else if (SUB === 'saving') renderSavingFlowPage(body, data, d);
     else renderExpensePage(body, data, d);
   } else if (section === 'assets') {
     if (SUB === 'overview') renderAssetsPage(body, data, d);
@@ -5091,20 +5103,8 @@ function renderAllocation(d) {
         <button class="btn small" id="alloc-edit">${state.settings.targetAlloc ? '목표 수정' : '목표 설정'}</button>
       </div>
     </div>
-    <div class="alloc-split">
-      <div class="alloc-donut"><canvas id="chart-alloc"></canvas></div>
-      <div class="alloc-legend">
-        ${entries.map(([cat, amt]) => {
-          const pct = d.totalAssets ? (amt / d.totalAssets) * 100 : 0;
-          return `<div class="alloc-row">
-            <span class="alloc-swatch" style="background:${CAT_COLORS[cat] || '#888'}"></span>
-            <span class="alloc-name">${cat.replace(' 자산', '')}</span>
-            <span class="alloc-amt">${formatCompactWon(amt)}<em>${pct.toFixed(0)}%</em></span>
-          </div>`;
-        }).join('')}
-      </div>
-    </div>
-    <div id="panel-target-alloc" style="margin-top:14px;"></div>
+    <div id="panel-target-alloc"></div>
+    <div class="alloc-donut compact"><canvas id="chart-alloc"></canvas></div>
   `;
   renderTargetAllocPanel('panel-target-alloc', d);
   const _ae = document.getElementById('alloc-edit');
@@ -5220,6 +5220,19 @@ function renderTrend(data, d) {
     });
   };
 
+  /* 카테고리·계좌별도 총자산과 같은 부드러운 선(누적 영역)으로 그린다 */
+  const hexA = (hex, a) => {
+    const h = hex.replace('#', '');
+    const n = parseInt(h.length === 3 ? h.split('').map(c => c + c).join('') : h, 16);
+    return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
+  };
+  const lineDs = (label, values, color, stack) => ({
+    type: 'line', label, data: values,
+    borderColor: color, backgroundColor: hexA(color, stack ? 0.5 : 0.14),
+    fill: stack ? '-1' : true, tension: 0.35, pointRadius: 0, pointHoverRadius: 3,
+    borderWidth: 2, labelColor: '#eae8e0', ...(stack ? { stack, fill: true } : {})
+  });
+
   const drawTrend = () => {
     const monthsSlice = sliceByRange(months, state.assetTrendRange);
     const mode = state.assetTrendMode;
@@ -5247,12 +5260,9 @@ function renderTrend(data, d) {
       renderFilterBtns(cats, '전체 카테고리');
       if (state.assetTrendFilter !== 'all' && cats.includes(state.assetTrendFilter)) {
         const cat = state.assetTrendFilter;
-        datasets = [{ type: 'bar', label: cat, data: monthsSlice.map(m => (series.catByMonth[m] && series.catByMonth[m][cat]) || 0), backgroundColor: CAT_COLORS[cat] || '#888', labelColor: '#eae8e0' }];
+        datasets = [lineDs(cat, monthsSlice.map(m => (series.catByMonth[m] && series.catByMonth[m][cat]) || 0), CAT_COLORS[cat] || '#888')];
       } else {
-        datasets = cats.map(cat => ({
-          type: 'bar', label: cat, data: monthsSlice.map(m => (series.catByMonth[m] && series.catByMonth[m][cat]) || 0),
-          backgroundColor: CAT_COLORS[cat] || '#888', stack: 's'
-        }));
+        datasets = cats.map(cat => lineDs(cat, monthsSlice.map(m => (series.catByMonth[m] && series.catByMonth[m][cat]) || 0), CAT_COLORS[cat] || '#888', 's'));
         legendHtml = cats.map(c => `<span><i style="background:${CAT_COLORS[c] || '#888'}"></i>${c}</span>`).join('');
       }
     } else {
@@ -5261,12 +5271,9 @@ function renderTrend(data, d) {
       if (state.assetTrendFilter !== 'all' && series.accounts.includes(state.assetTrendFilter)) {
         const acc = state.assetTrendFilter;
         const i = series.accounts.indexOf(acc);
-        datasets = [{ type: 'bar', label: acc, data: monthsSlice.map(m => (series.accByMonth[m] && series.accByMonth[m][acc]) || 0), backgroundColor: CAT_PIE_PALETTE_INV[i % CAT_PIE_PALETTE_INV.length], labelColor: '#eae8e0' }];
+        datasets = [lineDs(acc, monthsSlice.map(m => (series.accByMonth[m] && series.accByMonth[m][acc]) || 0), CAT_PIE_PALETTE_INV[i % CAT_PIE_PALETTE_INV.length])];
       } else {
-        datasets = series.accounts.map((acc, i) => ({
-          type: 'bar', label: acc, data: monthsSlice.map(m => (series.accByMonth[m] && series.accByMonth[m][acc]) || 0),
-          backgroundColor: CAT_PIE_PALETTE_INV[i % CAT_PIE_PALETTE_INV.length], stack: 's'
-        }));
+        datasets = series.accounts.map((acc, i) => lineDs(acc, monthsSlice.map(m => (series.accByMonth[m] && series.accByMonth[m][acc]) || 0), CAT_PIE_PALETTE_INV[i % CAT_PIE_PALETTE_INV.length], 's'));
         legendHtml = series.accounts.map((acc, i) => `<span><i style="background:${CAT_PIE_PALETTE_INV[i % CAT_PIE_PALETTE_INV.length]}"></i>${acc}</span>`).join('');
       }
     }
@@ -5276,7 +5283,7 @@ function renderTrend(data, d) {
     const hasOverlay = mode === 'total' && datasets.length > 1;
 
     state.charts.trend = new Chart(ctx, {
-      type: mode === 'total' ? 'line' : 'bar',
+      type: 'line',
       data: { labels: monthsSlice.map(assetMonthLabel), datasets },
       options: {
         responsive: true, maintainAspectRatio: false, layout: { padding: { top: 18 } },
@@ -5290,7 +5297,7 @@ function renderTrend(data, d) {
           y: { stacked, ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT }
         }
       },
-      plugins: (mode === 'total' || isolated) ? [valueLabelPlugin] : [stackTotalLabelPlugin]
+      plugins: (mode === 'total' || isolated) ? [valueLabelPlugin] : []
     });
     document.getElementById('asset-trend-legend').innerHTML = legendHtml;
   };
@@ -7351,6 +7358,53 @@ function renderStructurePage(container, data, d) {
 /* ---------------- page: 자산 ---------------- */
 
 
+/* 흐름 › 순저축 — 자산 증감이 저축 때문인지 시장 때문인지 */
+function renderSavingFlowPage(container, data, d) {
+  const list = (d.decomposition || []).filter(x => x.netSavings !== null);
+  const closed = list.filter(x => assetMonthKey(x.month) !== (new Date().getFullYear() * 100 + (new Date().getMonth() + 1)));
+  const last12 = closed.slice(-12);
+  const sumSave = last12.reduce((a, x) => a + x.netSavings, 0);
+  const sumMarket = last12.reduce((a, x) => a + x.marketOther, 0);
+  const sumDelta = last12.reduce((a, x) => a + x.totalDelta, 0);
+  const posMonths = last12.filter(x => x.netSavings > 0).length;
+  const cf12 = (d.cashflow || []).slice(-12);
+  const inc12 = cf12.reduce((a, c) => a + c.income, 0);
+  const rate = inc12 > 0 ? ((inc12 - cf12.reduce((a, c) => a + c.expense, 0)) / inc12) * 100 : 0;
+  const sign = (v) => (v >= 0 ? '+' : '−') + formatCompactWon(Math.abs(v));
+  const col = (v) => v >= 0 ? 'var(--green)' : 'var(--red)';
+
+  container.innerHTML = `
+    <div class="g">
+      <div class="stat-grid s12" style="grid-template-columns:repeat(4,1fr);">
+        <div class="stat-card">
+          <div class="label">최근 12개월 순저축</div>
+          <div class="value" style="color:var(--net)">${sign(sumSave)}</div>
+          <div class="sub">월평균 ${formatCompactWon(Math.round(sumSave / (last12.length || 1)))}원</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">최근 12개월 투자·평가손익</div>
+          <div class="value" style="color:${col(sumMarket)}">${sign(sumMarket)}</div>
+          <div class="sub">자산 증감의 ${sumDelta ? Math.round(Math.abs(sumMarket / sumDelta) * 100) : 0}%</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">저축률</div>
+          <div class="value">${rate.toFixed(1)}%</div>
+          <div class="sub">최근 12개월 수입 대비</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">순저축 플러스 달</div>
+          <div class="value">${posMonths} / ${last12.length}</div>
+          <div class="sub">마감월 기준</div>
+        </div>
+      </div>
+    </div>
+    <div class="g">
+      <div class="panel s12" id="panel-decomp"></div>
+    </div>
+  `;
+  renderDecompositionPanel('panel-decomp', data, d);
+}
+
 function renderAssetsPage(container, data, d) {
   container.innerHTML = `
     <div class="g">
@@ -7358,18 +7412,14 @@ function renderAssetsPage(container, data, d) {
       <div class="panel s9" id="panel-trend"></div>
     </div>
     <div class="g">
-      <div class="panel s12" id="panel-decomp"></div>
-    </div>
-    <div class="g">
-      <div class="panel s7" id="panel-allocation"></div>
-      <div class="panel s5" id="panel-accounts"></div>
+      <div class="panel s5" id="panel-allocation"></div>
+      <div class="panel s7" id="panel-accounts"></div>
     </div>
   `;
   renderAssetStats(data, d);
   renderAccountsPanel(data, d);
   renderTrend(data, d);
   renderAllocation(d);
-  renderDecompositionPanel('panel-decomp', data, d);
 }
 
 function renderAssetStats(data, d) {
@@ -7890,11 +7940,9 @@ function renderExpensePage(container, data, d) {
     ${SUB === 'regret' ? `<div id="panel-regret-wrap"></div>` : ''}
 
     ${SUB === 'budget' ? `
-    <div class="g">
-      <div class="panel s12" id="panel-budget-month-section">
-        <div class="panel-title"><div>예산</div><div id="expense-month-nav-slot"></div></div>
-        <div id="budget-table-body"></div>
-      </div>
+    <div class="bt2-wrap" id="panel-budget-month-section">
+      <div class="bt2-bar"><div id="expense-month-nav-slot"></div></div>
+      <div id="budget-table-body"></div>
     </div>` : ''}
 
   `;
@@ -8127,6 +8175,7 @@ function renderBudgetTable(data, d) {
 
   body.innerHTML = `
     <table class="bt2">
+      <colgroup><col class="w-nm"/><col class="w-in"/><col class="w-num"/><col class="w-num"/></colgroup>
       <thead>
         <tr>
           <th class="c-nm">항목</th>
@@ -8147,7 +8196,7 @@ function renderBudgetTable(data, d) {
           </tr>
           ${open ? g.items.map(it => `
             <tr class="bt2-i ${it.used > it.budget ? 'over' : ''}">
-              <td class="c-nm"><span class="bt2-ind"></span>${it.name}${it.custom ? '' : '<i class="bt2-auto" title="최근 12개월 평균">자동</i>'}</td>
+              <td class="c-nm"><span class="bt2-ind">└</span>${it.name}${it.custom ? '' : '<i class="bt2-auto" title="최근 12개월 평균">자동</i>'}</td>
               <td class="c-in"><input type="text" inputmode="numeric" class="bt2-input" data-cat="${g.name}" data-item="${it.name}" value="${wonComma(Math.round(it.budget))}" /></td>
               <td class="c-num">${wonComma(Math.round(it.used))}</td>
               <td class="c-num">${diffCell(it.budget, it.used)}</td>
