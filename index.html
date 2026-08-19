@@ -1547,10 +1547,11 @@ body{font-variant-numeric:tabular-nums;}
 .idle-row .st.bad{color:#eb9891;} .idle-row .st.ok{color:#8fd0ac;} .idle-row .st.warn{color:#e6d08f;}
 
 /* ---------- 돈의 흐름표 ---------- */
-.fm-wrap{position:relative;display:flex;flex-direction:column;gap:0;max-width:760px;margin:0 auto;padding:0 30px 0 16px;}
+.fm-wrap{position:relative;display:flex;flex-direction:column;gap:26px;max-width:760px;margin:0 auto;}
 .fm-box{border:2px solid var(--paper);border-radius:2px;background:var(--panel);}
 .fm-top{margin-left:22%;}
-.fm-bot{display:grid;grid-template-columns:1fr 1fr;}
+/* 자산 | 부채 경계선이 위 박스(수입·지출)의 가로 중앙과 맞도록: 22% + 78%/2 = 61% */
+.fm-bot{display:grid;grid-template-columns:61% 39%;}
 .fm-cell{padding:12px 14px;min-height:150px;}
 .fm-cell + .fm-cell{border-top:2px solid var(--paper);}
 .fm-bot .fm-cell{border-top:none;}
@@ -1566,10 +1567,14 @@ body{font-variant-numeric:tabular-nums;}
 .fm-add{margin-top:7px;font-family:var(--mono);font-size:10.5px;color:var(--text-faint);
   background:none;border:1px dashed var(--border-strong);border-radius:6px;padding:4px 8px;cursor:pointer;width:100%;}
 .fm-add:hover{color:var(--gold-soft);border-color:var(--gold-soft);}
-.fm-arrows{position:absolute;inset:0;pointer-events:none;overflow:visible;z-index:2;}
-.fm-arrows path{fill:none;stroke:var(--paper);stroke-width:2.4;stroke-linecap:round;}
-.fm-arrows circle{fill:var(--bg);stroke:var(--paper);stroke-width:2.2;}
-.fm-arrows text{fill:var(--text-faint);font-family:var(--sans);font-size:11px;}
+.fm-sub{margin-top:12px;}
+.fm-sub-h{font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--text-faint);margin-bottom:6px;}
+.fm-sub-row{display:flex;align-items:center;gap:8px;font-size:12.5px;padding:5px 0;border-bottom:1px solid var(--border);}
+.fm-sub-row:last-child{border-bottom:none;}
+.fm-sub-row .nm{flex:1;min-width:0;color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.fm-sub-row .bar{width:52px;height:5px;border-radius:3px;background:rgba(255,255,255,.06);overflow:hidden;flex-shrink:0;}
+.fm-sub-row .bar>i{display:block;height:100%;border-radius:3px;}
+.fm-sub-row .vl{font-family:var(--mono);font-size:11px;color:var(--text);white-space:nowrap;}
 .fm-detail .empty-state{padding:24px 0;}
 .fm-dt-h{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;}
 .fm-dt-h b{font-size:15px;}
@@ -1584,6 +1589,40 @@ body{font-variant-numeric:tabular-nums;}
 .rg-row .dt{font-family:var(--mono);font-size:10.5px;color:var(--text-faint);width:60px;flex-shrink:0;}
 .rg-row .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .rg-row .vl{font-family:var(--mono);font-size:11.5px;color:#eb9891;white-space:nowrap;}
+
+/* ---------- 목표 마일스톤 사다리 ---------- */
+.ld-now{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:10px;}
+.ld-now>b{font-family:var(--mono);font-size:22px;color:var(--text);}
+.ld-now>span{font-size:12.5px;color:var(--text-dim);}
+.ld-track{position:relative;height:14px;border-radius:7px;background:rgba(255,255,255,.05);margin:0 0 6px;}
+.ld-track>i{position:absolute;left:0;top:0;bottom:0;border-radius:7px;background:linear-gradient(90deg,var(--gold),var(--gold-soft));}
+.ld-track>u{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--text-faint);text-decoration:none;transform:translateX(-1px);}
+.ld-track>u.on{background:var(--paper);}
+.ld-track>u.next{background:var(--green);width:3px;}
+.ld-marks{display:flex;justify-content:space-between;gap:4px;font-family:var(--mono);font-size:10px;color:var(--text-faint);flex-wrap:wrap;}
+.ld-marks>span.on{color:var(--gold-soft);}
+.ld-eta{margin-top:12px;display:flex;gap:18px;flex-wrap:wrap;}
+.ld-eta>div{font-size:12px;color:var(--text-dim);}
+.ld-eta>div>span{display:block;font-family:var(--mono);font-size:10px;color:var(--text-faint);letter-spacing:.04em;}
+.ld-eta>div>b{font-size:14px;color:var(--text);font-weight:600;}
+.ld-eta .settings-note{flex-basis:100%;}
+.gb-warn{font-family:var(--mono);font-size:10px;color:#e6d08f;margin-top:4px;}
+.gb-freq{font-style:normal;font-family:var(--mono);font-size:9.5px;color:var(--text-faint);
+  border:1px solid var(--border);border-radius:4px;padding:1px 4px;margin-left:6px;}
+
+/* ---------- 배분 보조 축 · 추천 ---------- */
+.ax-row{display:grid;grid-template-columns:88px 1fr auto;gap:9px;align-items:center;padding:6px 0;font-size:11.5px;}
+.ax-nm{font-family:var(--mono);font-size:10px;color:var(--text-faint);}
+.ax-bar{position:relative;height:8px;border-radius:4px;background:rgba(76,140,107,.35);overflow:hidden;}
+.ax-bar>i{position:absolute;left:0;top:0;bottom:0;background:var(--gold);border-radius:4px;}
+.ax-bar>i.lock{background:var(--net);}
+.ax-vl{font-family:var(--mono);font-size:10.5px;color:var(--text-dim);white-space:nowrap;}
+.sug-box{margin-top:12px;border:1px dashed var(--border-strong);border-radius:9px;padding:10px 12px;}
+.sug-h{display:flex;align-items:center;justify-content:space-between;gap:8px;
+  font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--text-faint);margin-bottom:8px;}
+.sug-vals{display:flex;gap:14px;flex-wrap:wrap;}
+.sug-vals>span{font-family:var(--mono);font-size:14px;color:var(--gold-soft);}
+.sug-vals>span>em{font-style:normal;display:block;font-size:9.5px;color:var(--text-faint);letter-spacing:.04em;}
 </style>
 </head>
 <body>
@@ -1924,14 +1963,29 @@ function parseGoalsFromRows(rows) {
 }
 
 const GOAL_FIELD_ALIASES = {
-  period: ['시기', '연도', '기간', '일정', '분기', '목표시기'],
+  period: ['시기', '연도', '일정', '분기', '목표시기'],
   category: ['구분', '분류', '카테고리'],
-  title: ['목표', '항목', '내용', '제목'],
+  title: ['항목', '목표', '내용', '제목'],
+  freq: ['기간', '주기'],
+  amount: ['금액 or 비율', '금액/비율', '금액', '목표값', '목표 수치', '비율'],
   status: ['상태', '진행상태', '진행'],
   doneDate: ['달성한 날', '달성일'],
   memo: ['메모', '비고', '노트'],
   priority: ['우선순위']
 };
+
+/* '10,000,000' · '₩ 1,000만' · '40%' 등 → 숫자 */
+function parseGoalAmount(raw) {
+  if (raw === null || raw === undefined || raw === '') return null;
+  const t = String(raw).trim();
+  if (/%$/.test(t)) { const v = parseFloat(t.replace(/[^0-9.]/g, '')); return isNaN(v) ? null : v; }
+  let m = t.match(/^([\d.]+)\s*억/);
+  if (m) return parseFloat(m[1]) * 100000000;
+  m = t.match(/^([\d,.]+)\s*만/);
+  if (m) return parseFloat(m[1].replace(/,/g, '')) * 10000;
+  const v = parseFloat(t.replace(/[^0-9.-]/g, ''));
+  return isNaN(v) ? null : v;
+}
 
 function pickGoalField(goal, key) {
   const names = GOAL_FIELD_ALIASES[key] || [];
@@ -1951,22 +2005,113 @@ function goalStatusClass(status) {
   return '';
 }
 
-/* 목표 문구에서 흔한 패턴(총자산 N억, 비상금 N만원, 월 지출/고정비 N만원, 현금비율 N%)을
-   인식해서 실제 데이터(d)의 현재 값과 비교해 진행 상황을 계산한다.
-   invert:true 인 항목(지출/고정비처럼 "적을수록 좋음")은 "초과/여유"로 표시하고,
-   나머지(자산 쌓기, 비상금 모으기 등)는 0~100% 진행 바로 표시한다. */
-/* 목표 문구 ↔ 대시보드 실제 수치 연결 정의.
-   key = 수동 선택용 식별자, name = 화면 표시명, dir = 'up'(많을수록 좋음) | 'down'(적을수록 좋음) */
-const GOAL_METRIC_MATCHERS = [
-  { key: 'emergency', name: '비상금 (NH-CMA 잔액)', unit: 'won', dir: 'up', re: /비상금\s*([\d,]+)\s*만원/, target: (m) => parseFloat(m[1].replace(/,/g, '')) * 10000, current: (d) => d.emergencyFund, invert: false, type: 'accumulation' },
-  { key: 'totalAssets', name: '총자산', unit: 'won', dir: 'up', re: /총자산\s*([\d.]+)\s*억/, target: (m) => parseFloat(m[1]) * 100000000, current: (d) => d.totalAssets, invert: false, type: 'accumulation' },
-  { key: 'fixed', name: '월 고정비 (최근 12개월 평균)', unit: 'won', dir: 'down', re: /고정비\s*([\d,]+)\s*만원/, target: (m) => parseFloat(m[1].replace(/,/g, '')) * 10000, current: (d, extra) => extra.avgFixed12, invert: true, type: 'cap' },
-  { key: 'expense', name: '월 지출 (최근 12개월 평균)', unit: 'won', dir: 'down', re: /(?:월\s*)?지출\s*([\d,]+)\s*만원/, target: (m) => parseFloat(m[1].replace(/,/g, '')) * 10000, current: (d, extra) => extra.avgExpense12, invert: true, type: 'cap' },
-  { key: 'cashPct', name: '현금 비율', unit: 'pct', dir: 'up', re: /현금\s*비율.*?(\d+(?:\.\d+)?)\s*%/, target: (m) => parseFloat(m[1]), current: (d) => (d.totalAssets ? (d.emergencyFund / d.totalAssets) * 100 : 0), invert: false, isPct: true, type: 'ratio' }
+/* ── 목표 지표 정의 ──────────────────────────────────────────────
+   시트 '목표' 탭이 [시기 | 구분 | 항목 | 기간 | 금액 or 비율 | 상태 | 달성한 날 | 메모]
+   구조로 바뀌면서, 목표 문구를 정규식으로 긁는 대신 (구분 + 항목)으로 지표를 찾고
+   목표값은 '금액 or 비율' 칸에서 그대로 읽는다.
+   freq('월'|'연'|'')은 흐름형 지표에서 월평균/연합계 중 무엇과 비교할지를 정한다. */
+const GOAL_METRIC_DEFS = [
+  /* --- 자산 (스톡) --- */
+  { key: 'emergency', name: '비상금 (NH-CMA)', cat: /자산|저축/, item: /비상금/, unit: 'won', dir: 'up', type: 'accumulation',
+    current: (d) => d.emergencyFund },
+  { key: 'totalAssets', name: '총자산', cat: /자산/, item: /총\s*자산|전체\s*자산/, unit: 'won', dir: 'up', type: 'accumulation',
+    current: (d) => d.totalAssets },
+  { key: 'netWorth', name: '순자산', cat: /자산/, item: /순\s*자산/, unit: 'won', dir: 'up', type: 'accumulation',
+    current: (d) => d.totalAssets - totalDebt() },
+  { key: 'investAssets', name: '투자 자산', cat: /자산/, item: /투자/, unit: 'won', dir: 'up', type: 'accumulation',
+    current: (d) => (d.allocation || {})['투자 자산'] || 0 },
+  { key: 'pensionAssets', name: '연금 자산', cat: /자산/, item: /연금/, unit: 'won', dir: 'up', type: 'accumulation',
+    current: (d) => (d.allocation || {})['연금 자산'] || 0 },
+  { key: 'savingAssets', name: '저축 자산', cat: /자산/, item: /저축/, unit: 'won', dir: 'up', type: 'accumulation',
+    current: (d) => (d.allocation || {})['저축 자산'] || 0 },
+  { key: 'debt', name: '부채 잔액', cat: /부채/, item: /./, unit: 'won', dir: 'down', type: 'cap',
+    current: () => totalDebt() },
+  { key: 'investPct', name: '투자 비중', cat: /자산/, item: /투자\s*비[중율]/, unit: 'pct', dir: 'up', type: 'ratio',
+    current: (d) => d.totalAssets ? (((d.allocation || {})['투자 자산'] || 0) / d.totalAssets) * 100 : 0 },
+  { key: 'cashPct', name: '현금 비율', cat: null, item: /현금\s*비[중율]/, unit: 'pct', dir: 'up', type: 'ratio',
+    current: (d) => d.totalAssets ? (d.emergencyFund / d.totalAssets) * 100 : 0 },
+
+  /* --- 지출 (플로우) --- */
+  { key: 'fixed', name: '고정비', cat: /지출/, item: /고정비/, unit: 'won', dir: 'down', type: 'cap',
+    current: (d, e, f) => f === '연' ? e.sumFixed12 : e.avgFixed12 },
+  { key: 'regret', name: '후회 소비', cat: /지출/, item: /후회/, unit: 'won', dir: 'down', type: 'cap',
+    current: (d, e, f) => f === '연' ? e.sumRegret12 : e.avgRegret12 },
+  { key: 'expense', name: '총지출', cat: /지출/, item: /지출|생활비/, unit: 'won', dir: 'down', type: 'cap',
+    current: (d, e, f) => f === '연' ? e.sumExpense12 : e.avgExpense12 },
+
+  /* --- 수입 (플로우) --- */
+  { key: 'invIncome', name: '투자 수익', cat: /수입/, item: /투자\s*수익/, unit: 'won', dir: 'up', type: 'accumulation',
+    current: (d, e, f) => f === '월' ? e.avgInvIncome12 : e.sumInvIncome12 },
+  { key: 'laborIncome', name: '근로소득', cat: /수입/, item: /근로|급여|월급/, unit: 'won', dir: 'up', type: 'accumulation',
+    current: (d, e, f) => f === '연' ? e.sumLabor12 : e.avgLabor12 },
+  { key: 'income', name: '총수입', cat: /수입/, item: /수입/, unit: 'won', dir: 'up', type: 'accumulation',
+    current: (d, e, f) => f === '연' ? e.sumIncome12 : e.avgIncome12 },
+
+  /* --- 비율·흐름 --- */
+  { key: 'savingsRate', name: '저축률', cat: null, item: /저축률/, unit: 'pct', dir: 'up', type: 'ratio',
+    current: (d, e) => e.savingsRate12 },
+  { key: 'netSavings', name: '순저축', cat: null, item: /순\s*저축/, unit: 'won', dir: 'up', type: 'accumulation',
+    current: (d, e, f) => f === '연' ? e.sumNetSavings12 : e.avgNetSavings12 },
+  { key: 'passivePct', name: '근로 외 수입 비중', cat: null, item: /근로\s*외|패시브|비근로/, unit: 'pct', dir: 'up', type: 'ratio',
+    current: (d, e) => e.passivePct12 }
 ];
 
-/* 문구에서 목표값을 일반 규칙으로 뽑는다 (수동 연동 시 폴백)
-   "2억" → 200000000 · "1,010만원" → 10100000 · "12.5%" → 12.5 */
+function findGoalMetric(category, item) {
+  const c = String(category || ''), t = String(item || '');
+  if (!t) return null;
+  /* 항목 정규식이 더 좁은(구체적인) 정의가 앞에 오도록 배열 순서를 유지한다 */
+  for (const m of GOAL_METRIC_DEFS) {
+    if (m.cat && !m.cat.test(c)) continue;
+    if (!m.item.test(t)) continue;
+    return m;
+  }
+  return null;
+}
+
+/* 목표 지표에 쓰는 파생값 — 마감된 최근 12개월 기준 */
+function goalMetricExtra(data, d) {
+  const avg = (a) => a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0;
+  const sum = (a) => a.reduce((x, y) => x + y, 0);
+
+  const fixedTrend = getFixedMonthlyTrend(data.ledger) || [];
+  const f12 = fixedTrend.slice(-12).map(x => x.total);
+  const cf12 = (d.cashflow || []).slice(-12);
+  const exp12 = cf12.map(x => x.expense);
+  const inc12 = cf12.map(x => x.income);
+  const net12 = cf12.map(x => x.income - x.expense);
+
+  const i = d.latestPivotIdx;
+  const tail = (arr) => (arr || []).slice(Math.max(0, i - 11), i + 1).map(v => v || 0);
+  const invInc12 = tail(data.incomeCategories && data.incomeCategories['투자 수익']);
+  const labor12 = tail(data.incomeCategories && data.incomeCategories['근로소득']);
+
+  /* 후회 소비 월별 */
+  const rgByMonth = {};
+  (data.ledger || []).filter(r => r.major.includes('지출') && r.regret).forEach(r => {
+    const k = ledgerMonthKey(r.date);
+    if (!k) return;
+    rgByMonth[k] = (rgByMonth[k] || 0) + (r.amount - (r.refund || 0));
+  });
+  const rgKeys = Object.keys(rgByMonth).sort().slice(-12);
+  const rg12 = rgKeys.map(k => rgByMonth[k]);
+
+  const sumInc = sum(inc12), sumExp = sum(exp12), sumLabor = sum(labor12);
+
+  return {
+    latestFixed: fixedTrend.length ? fixedTrend[fixedTrend.length - 1].total : 0,
+    avgFixed12: avg(f12), sumFixed12: sum(f12),
+    avgExpense12: avg(exp12), sumExpense12: sumExp,
+    avgIncome12: avg(inc12), sumIncome12: sumInc,
+    avgLabor12: avg(labor12), sumLabor12: sumLabor,
+    avgInvIncome12: avg(invInc12), sumInvIncome12: sum(invInc12),
+    avgRegret12: avg(rg12), sumRegret12: sum(rg12),
+    avgNetSavings12: avg(net12), sumNetSavings12: sum(net12),
+    savingsRate12: sumInc > 0 ? ((sumInc - sumExp) / sumInc) * 100 : 0,
+    passivePct12: sumInc > 0 ? ((sumInc - sumLabor) / sumInc) * 100 : 0
+  };
+}
+
+/* 문구에서 목표값을 뽑는 구버전 폴백 ("2억" → 200000000 · "1,010만원" → 10100000 · "12.5%" → 12.5) */
 function parseGoalTargetValue(title, unit) {
   const t = String(title || '');
   if (unit === 'pct') {
@@ -1982,48 +2127,48 @@ function parseGoalTargetValue(title, unit) {
   return null;
 }
 
-/* 목표 지표에 쓰는 파생값 — 최근 12개월 평균 기준 */
-function goalMetricExtra(data, d) {
-  const fixedTrend = getFixedMonthlyTrend(data.ledger) || [];
-  const f12 = fixedTrend.slice(-12).map(x => x.total);
-  const cf12 = (d.cashflow || []).slice(-12).map(x => x.expense);
-  const avg = (a) => a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0;
+/* 목표 행 하나 → 진행 상황.
+   1순위: (구분+항목)으로 지표 결정 + '금액 or 비율' 칸 값이 목표
+   2순위: 수동 지정 지표(state.goalMetric) / 수동 목표값(state.goalTarget)
+   3순위: 항목 문구에서 숫자 추출 (구버전 호환) */
+function goalProgressOf(g, d, extra) {
+  if (!g) return null;
+  const item = pickGoalField(g, 'title') || '';
+  const category = pickGoalField(g, 'category') || '';
+  const freq = (pickGoalField(g, 'freq') || '').trim();
+  const forceKey = (state.goalMetric || {})[g.__row] || null;
+  const manual = (state.goalTarget || {})[g.__row];
+
+  const metric = forceKey
+    ? GOAL_METRIC_DEFS.find(m => m.key === forceKey)
+    : findGoalMetric(category, item);
+  if (!metric) return null;
+
+  let target = parseGoalAmount(pickGoalField(g, 'amount'));
+  if (manual !== undefined && manual !== null && manual !== '' && !isNaN(Number(manual))) target = Number(manual);
+  if (target === null || isNaN(target)) target = parseGoalTargetValue(item, metric.unit);
+  if (target === null || isNaN(target)) return null;
+
+  const isPct = metric.unit === 'pct';
+  const current = metric.current(d, extra || {}, freq) || 0;
+  const freqLabel = freq ? `${freq} 기준` : '';
   return {
-    latestFixed: fixedTrend.length ? fixedTrend[fixedTrend.length - 1].total : 0,
-    avgFixed12: avg(f12),
-    avgExpense12: avg(cf12)
+    current, target, isPct,
+    invert: metric.dir === 'down',
+    type: metric.type, key: metric.key, dir: metric.dir,
+    name: freqLabel ? `${metric.name} · ${freqLabel}` : metric.name,
+    shortName: metric.name,
+    freq,
+    overridden: manual !== undefined && manual !== null && manual !== ''
   };
 }
 
-function computeGoalProgress(title, d, extra, forceKey, targetOverride) {
-  if (!title) return null;
-  const withOv = (p) => {
-    if (!p) return p;
-    if (targetOverride !== null && targetOverride !== undefined && targetOverride !== '' && !isNaN(Number(targetOverride))) {
-      return { ...p, target: Number(targetOverride), overridden: true };
-    }
-    return p;
-  };
-  for (const m of GOAL_METRIC_MATCHERS) {
-    if (forceKey && m.key !== forceKey) continue;
-    const match = title.match(m.re);
-    if (!match) continue;
-    const target = m.target(match);
-    const current = m.current(d, extra || {});
-    if (target === null || target === undefined || isNaN(target)) continue;
-    return withOv({ current, target, invert: !!m.invert, isPct: !!m.isPct, type: m.type, key: m.key, name: m.name, dir: m.dir });
-  }
-  /* 수동으로 지표를 지정했는데 전용 패턴이 안 맞으면, 목표값 입력 → 문구의 숫자 순으로 쓴다 */
-  if (forceKey) {
-    const m = GOAL_METRIC_MATCHERS.find(x => x.key === forceKey);
-    if (m) {
-      const ov = (targetOverride !== null && targetOverride !== undefined && targetOverride !== '' && !isNaN(Number(targetOverride))) ? Number(targetOverride) : null;
-      const target = ov !== null ? ov : parseGoalTargetValue(title, m.unit);
-      if (target !== null && !isNaN(target)) {
-        return withOv({ current: m.current(d, extra || {}), target, invert: !!m.invert, isPct: !!m.isPct, type: m.type, key: m.key, name: m.name, dir: m.dir });
-      }
-    }
-  }
+/* 목표값이 현재 수준과 자릿수가 어긋나면(오타 의심) 표시용 플래그 */
+function goalSanityFlag(p) {
+  if (!p || p.isPct || !p.current || !p.target) return null;
+  const ratio = p.target / p.current;
+  if (p.invert && ratio >= 3) return `목표가 현재의 ${ratio.toFixed(0)}배 — 자릿수 확인`;
+  if (!p.invert && ratio > 0 && ratio <= 0.2 && p.type !== 'accumulation') return '목표가 현재보다 한참 낮아요';
   return null;
 }
 
@@ -2861,66 +3006,130 @@ function renderDecompositionPanel(hostId, data, d) {
   if (!host) return;
   const list = (d.decomposition || []).filter(x => x.netSavings !== null);
   if (!list.length) { host.innerHTML = '<div class="empty-state">분해할 자산 스냅샷이 부족해요.</div>'; return; }
-  const last = list[list.length - 1];
   const series = list.slice(-12);
-  const sign = (v) => (v >= 0 ? '+' : '−') + formatCompactWon(Math.abs(v));
-  const col = (v) => v >= 0 ? 'var(--green)' : 'var(--red)';
-  const driver = Math.abs(last.marketOther) > Math.abs(last.netSavings) ? '시장' : '저축';
-  const inProgress = assetMonthKey(last.month) === (new Date().getFullYear() * 100 + (new Date().getMonth() + 1));
-  const verdict = last.totalDelta >= 0
-    ? `${last.label} 자산은 ${formatCompactWon(last.totalDelta)}원 늘었고, ${driver}이 더 크게 움직였어요.`
-    : `${last.label} 자산은 ${formatCompactWon(Math.abs(last.totalDelta))}원 줄었어요. ${last.netSavings > 0 ? `저축은 ${formatCompactWon(last.netSavings)}원 들어왔지만 평가손익이 ${formatCompactWon(Math.abs(last.marketOther))}원 빠진 결과예요.` : '저축 유입도 마이너스였어요.'}`;
+  /* 선택한 달 (기본 = 가장 최근). 범위를 벗어나면 마지막으로 되돌린다. */
+  let selIdx = series.findIndex(x => x.month === state.decompMonth);
+  if (selIdx < 0) selIdx = series.length - 1;
+
+  const nowKey = new Date().getFullYear() * 100 + (new Date().getMonth() + 1);
+  const cumByMonth = {};
+  (d.assetMonths || []).forEach(m => { cumByMonth[m] = d.byMonth[m]; });
 
   host.innerHTML = `
-    <div class="panel-title"><div>자산 증감 분해</div><span class="ptag">${last.label}${inProgress ? ' · 진행 중' : ''}</span></div>
-    <div class="stat-grid" style="grid-template-columns:repeat(3,1fr);gap:8px;">
-      <div class="stat-card">
-        <div class="label">Δ 총자산</div>
-        <div class="value" style="color:${col(last.totalDelta)}">${sign(last.totalDelta)}</div>
-        <div class="sub">${formatCompactWon(d.totalAssets)}원</div>
-      </div>
-      <div class="stat-card">
-        <div class="label">순저축 (외부 유입)</div>
-        <div class="value" style="color:var(--net)">${sign(last.netSavings)}</div>
-        <div class="sub">근로·기타 수입 ${formatCompactWon(last.extIncome)} − 지출 ${formatCompactWon(last.expense)}</div>
-      </div>
-      <div class="stat-card">
-        <div class="label">투자·평가손익</div>
-        <div class="value" style="color:${col(last.marketOther)}">${sign(last.marketOther)}</div>
-        <div class="sub">실현수익 ${formatCompactWon(last.invIncome)} 포함</div>
-      </div>
+    <div class="panel-title">
+      <div>자산 증감 분해</div>
+      <span class="ptag" id="decomp-tag"></span>
     </div>
-    <div class="today-verdict ${last.totalDelta >= 0 ? 'good' : 'warn'}" style="margin:10px 0 4px;">${verdict}</div>
-    <div class="chart-wrap tall" style="min-height:230px;"><canvas id="chart-decomp"></canvas></div>
+    <div class="stat-grid" style="grid-template-columns:repeat(3,1fr);gap:8px;" id="decomp-cards"></div>
+    <div class="today-verdict" id="decomp-verdict" style="margin:10px 0 4px;"></div>
+    <div class="chart-wrap tall" style="min-height:240px;"><canvas id="chart-decomp"></canvas></div>
     <div class="chart-legend">
       <span><i style="background:rgba(57,168,189,.75)"></i>순저축</span>
       <span><i style="background:rgba(201,162,39,.7)"></i>투자·평가손익</span>
       <span><i style="background:#eae8e0"></i>Δ 총자산</span>
+      <span style="color:var(--text-faint)">막대 클릭 → 그 달 값으로 위 카드 전환</span>
     </div>
-    <div class="settings-note">Δ총자산 = 순저축(외부 유입) + 투자·평가손익. 투자 수익(판매수익·배당)은 계좌 안에서 생긴 돈이라 순저축이 아니라 평가손익 쪽에 잡혀요.${inProgress ? ' <b>이번 달은 아직 진행 중</b>이라 급여 등 미반영 수입이 있으면 순저축이 실제보다 낮게 나옵니다.' : ''}</div>
+    <div class="settings-note" id="decomp-note"></div>
   `;
+
+  const sign = (v) => (v >= 0 ? '+' : '−') + formatCompactWon(Math.abs(v));
+  const col = (v) => v >= 0 ? 'var(--green)' : 'var(--red)';
+
+  const paint = () => {
+    const x = series[selIdx];
+    const inProgress = assetMonthKey(x.month) === nowKey;
+    const driver = Math.abs(x.marketOther) > Math.abs(x.netSavings) ? '시장' : '저축';
+    document.getElementById('decomp-tag').textContent = `${x.label}${inProgress ? ' · 진행 중' : ''}`;
+    document.getElementById('decomp-cards').innerHTML = `
+      <div class="stat-card">
+        <div class="label">Δ 총자산</div>
+        <div class="value" style="color:${col(x.totalDelta)}">${sign(x.totalDelta)}</div>
+        <div class="sub">월말 ${formatCompactWon(cumByMonth[x.month] || 0)}원</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">순저축 (외부 유입)</div>
+        <div class="value" style="color:var(--net)">${sign(x.netSavings)}</div>
+        <div class="sub">근로·기타 수입 ${formatCompactWon(x.extIncome)} − 지출 ${formatCompactWon(x.expense)}</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">투자·평가손익</div>
+        <div class="value" style="color:${col(x.marketOther)}">${sign(x.marketOther)}</div>
+        <div class="sub">실현수익 ${formatCompactWon(x.invIncome)} 포함</div>
+      </div>`;
+    const v = document.getElementById('decomp-verdict');
+    v.className = 'today-verdict ' + (x.totalDelta >= 0 ? 'good' : 'warn');
+    v.innerHTML = x.totalDelta >= 0
+      ? `${x.label} 자산은 ${formatCompactWon(x.totalDelta)}원 늘었고, ${driver}이 더 크게 움직였어요.`
+      : `${x.label} 자산은 ${formatCompactWon(Math.abs(x.totalDelta))}원 줄었어요. ${x.netSavings > 0 ? `저축은 ${formatCompactWon(x.netSavings)}원 들어왔지만 평가손익이 ${formatCompactWon(Math.abs(x.marketOther))}원 빠진 결과예요.` : '저축 유입도 마이너스였어요.'}`;
+    document.getElementById('decomp-note').innerHTML =
+      `Δ총자산 = 순저축(외부 유입) + 투자·평가손익. 투자 수익(판매수익·배당)은 계좌 안에서 생긴 돈이라 순저축이 아니라 평가손익 쪽에 잡혀요.${inProgress ? ' <b>이 달은 아직 진행 중</b>이라 급여 등 미반영 수입이 있으면 순저축이 실제보다 낮게 나옵니다.' : ''}`;
+    if (state.charts.decomp && state.charts.decomp.data) {
+      state.charts.decomp.data.datasets[0].backgroundColor = series.map((_, i) => i === selIdx ? 'rgba(57,168,189,1)' : 'rgba(57,168,189,.45)');
+      state.charts.decomp.data.datasets[1].backgroundColor = series.map((_, i) => i === selIdx ? 'rgba(201,162,39,1)' : 'rgba(201,162,39,.42)');
+      state.charts.decomp.update();
+    }
+  };
 
   if (state.charts.decomp) state.charts.decomp.destroy();
   const ctx = document.getElementById('chart-decomp');
-  if (!ctx) return;
-  state.charts.decomp = new Chart(ctx, {
-    data: {
-      labels: series.map(s => s.label),
-      datasets: [
-        { type: 'bar', label: '순저축', data: series.map(s => s.netSavings), backgroundColor: 'rgba(57,168,189,.75)', stack: 'x', borderRadius: 2, labelColor: '#9ad9e5' },
-        { type: 'bar', label: '투자·평가손익', data: series.map(s => s.marketOther), backgroundColor: 'rgba(201,162,39,.7)', stack: 'x', borderRadius: 2, labelColor: '#e9dba8' },
-        { type: 'line', label: 'Δ 총자산', data: series.map(s => s.totalDelta), borderColor: '#eae8e0', backgroundColor: 'transparent', tension: .25, pointRadius: 2, borderWidth: 1.5, labelColor: '#eae8e0' }
-      ]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false, layout: { padding: { top: 16 } },
-      plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` ${c.dataset.label}: ${formatWon(c.raw)}` } } },
-      scales: { x: { stacked: true, ticks: MONO_TICK, grid: { display: false } }, y: { stacked: true, ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT } }
-    }
-  });
+  if (ctx) {
+    state.charts.decomp = new Chart(ctx, {
+      data: {
+        labels: series.map(s => s.label),
+        datasets: [
+          { type: 'bar', label: '순저축', data: series.map(s => s.netSavings), backgroundColor: 'rgba(57,168,189,.75)', stack: 'x', borderRadius: 2, labelColor: '#9ad9e5' },
+          { type: 'bar', label: '투자·평가손익', data: series.map(s => s.marketOther), backgroundColor: 'rgba(201,162,39,.7)', stack: 'x', borderRadius: 2, labelColor: '#e9dba8' },
+          { type: 'line', label: 'Δ 총자산', data: series.map(s => s.totalDelta), borderColor: '#eae8e0', backgroundColor: 'transparent', tension: .25, pointRadius: 2, borderWidth: 1.5, labelColor: '#eae8e0' }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, layout: { padding: { top: 16 } },
+        onClick: (evt, els) => {
+          if (!els || !els.length) return;
+          selIdx = els[0].index;
+          state.decompMonth = series[selIdx].month;
+          paint();
+        },
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` ${c.dataset.label}: ${formatWon(c.raw)}` } } },
+        scales: { x: { stacked: true, ticks: MONO_TICK, grid: { display: false } }, y: { stacked: true, ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT } }
+      }
+    });
+  }
+  paint();
 }
 
-/* ---------------- 목표 자산배분 + 갭 ---------------- */
+/* ---------------- 목표 자산배분 + 갭 (자산 배분 패널 안에 붙는다) ---------------- */
+
+/* 추천 목표 배분
+   - 안전자산(현금+저축) = 생활비 N개월치가 차지하는 비중 (최소 5%)
+   - 연금 = 55세까지 못 빼는 강제 저축이라 현재 비중을 그대로 존중
+   - 투자 = 나머지 전부
+   5% 단위로 반올림하고 합계를 100%로 맞춘다. */
+function suggestTargetAlloc(d, extra) {
+  const total = d.totalAssets || 0;
+  if (!total) return null;
+  const cfList = (d.cashflow || []).filter(c => c.expense > 0).slice(-6);
+  const monthlyExp = cfList.length ? cfList.reduce((a, c) => a + c.expense, 0) / cfList.length : 0;
+  const living = monthlyExp + monthlyDebtPayment();
+  const months = state.settings.emergencyMonths || 6;
+
+  const pensionPct = ((d.allocation || {})['연금 자산'] || 0) / total * 100;
+  let safePct = living > 0 ? Math.min((living * months) / total * 100, 45) : 10;
+  safePct = Math.max(safePct, 5);
+  /* 현금은 한 달치, 나머지는 저축(CMA·청약) */
+  let cashPct = living > 0 ? Math.min((living / total) * 100, safePct) : 2;
+  let savePct = Math.max(safePct - cashPct, 0);
+  let pen = Math.round(pensionPct / 5) * 5;
+  let cash = Math.max(Math.round(cashPct / 5) * 5, 0);
+  let save = Math.max(Math.round(savePct / 5) * 5, 0);
+  let inv = 100 - pen - cash - save;
+  if (inv < 0) { save = Math.max(save + inv, 0); inv = 100 - pen - cash - save; }
+  return {
+    alloc: { '현금 자산': cash, '저축 자산': save, '투자 자산': inv, '연금 자산': pen },
+    why: `생활비 ${formatCompactWon(Math.round(living))}원 × ${months}개월 = 안전자산 ${cash + save}% · 연금은 인출 제한이 있어 현재 비중(${pensionPct.toFixed(0)}%) 유지 · 나머지 투자`
+  };
+}
+
 function renderTargetAllocPanel(hostId, d) {
   const host = document.getElementById(hostId);
   if (!host) return;
@@ -2928,32 +3137,60 @@ function renderTargetAllocPanel(hostId, d) {
   const target = state.settings.targetAlloc;
   const cur = {};
   ALLOC_CATS.forEach(c => { cur[c] = d.allocation[c] || 0; });
+  const sug = suggestTargetAlloc(d);
+
+  /* 4개 대항목만으로는 안 보이는 두 축 — 위험도와 접근성 */
+  const risky = (cur['투자 자산'] || 0) + (cur['연금 자산'] || 0);
+  const locked = cur['연금 자산'] || 0;
+  const axisHtml = total ? `
+    <div class="ax-row">
+      <span class="ax-nm">위험 / 안전</span>
+      <span class="ax-bar"><i style="width:${(risky / total * 100).toFixed(1)}%"></i></span>
+      <span class="ax-vl">위험 ${(risky / total * 100).toFixed(0)}% · 안전 ${(100 - risky / total * 100).toFixed(0)}%</span>
+    </div>
+    <div class="ax-row">
+      <span class="ax-nm">지금 쓸 수 있는 돈</span>
+      <span class="ax-bar"><i class="lock" style="width:${(100 - locked / total * 100).toFixed(1)}%"></i></span>
+      <span class="ax-vl">가용 ${(100 - locked / total * 100).toFixed(0)}% · 연금 잠김 ${(locked / total * 100).toFixed(0)}%</span>
+    </div>` : '';
+
+  const sugHtml = sug ? `
+    <div class="sug-box">
+      <div class="sug-h">추천 목표 <button class="btn small" id="alloc-apply-sug">이 값으로 설정</button></div>
+      <div class="sug-vals">${ALLOC_CATS.map(c => `<span><em>${c.replace(' 자산', '')}</em>${sug.alloc[c]}%</span>`).join('')}</div>
+      <div class="settings-note" style="margin:6px 0 0;">${sug.why}</div>
+    </div>` : '';
+
+  const bindSug = () => {
+    const b = document.getElementById('alloc-apply-sug');
+    if (b) b.addEventListener('click', async () => {
+      state.settings.targetAlloc = sug.alloc;
+      await saveSettings();
+      renderPage();
+    });
+  };
 
   if (!target) {
     host.innerHTML = `
-      <div class="panel-title"><div>목표 자산배분</div><button class="btn small" id="alloc-edit">설정</button></div>
-      <div class="empty-state" style="line-height:1.8;">아직 목표 배분이 없어요.<br/>
-        <span style="color:var(--text-faint);font-size:11.5px;">지금 배분: ${ALLOC_CATS.map(c => `${c.replace(' 자산', '')} ${total ? Math.round(cur[c] / total * 100) : 0}%`).join(' · ')}</span>
-      </div>
-      <div class="settings-note">목표를 정해두면 매달 "얼마를 어디로 옮겨야 하는지"가 자동으로 계산돼요.</div>`;
-    const b = document.getElementById('alloc-edit');
-    if (b) b.addEventListener('click', () => openAllocEditor(d));
+      <div class="subhead">목표 배분</div>
+      <div class="empty-state" style="padding:10px 0;">아직 목표 배분이 없어요. 아래 추천값을 그대로 쓰거나 <b>목표 설정</b>에서 직접 정하세요.</div>
+      ${sugHtml}
+      ${axisHtml}`;
+    bindSug();
     return;
   }
 
   const rows = ALLOC_CATS.map(c => {
     const tp = Number(target[c]) || 0;
     const cp = total ? (cur[c] / total) * 100 : 0;
-    const gapPct = cp - tp;
-    const gapWon = cur[c] - total * tp / 100;
-    return { cat: c, tp, cp, gapPct, gapWon };
+    return { cat: c, tp, cp, gapPct: cp - tp, gapWon: cur[c] - total * tp / 100 };
   });
   const worst = rows.slice().sort((a, b) => Math.abs(b.gapWon) - Math.abs(a.gapWon))[0];
-  const maxScale = Math.max(100, ...rows.map(r => Math.max(r.cp, r.tp))) ;
-  const tol = 3; // %p 허용 오차
+  const maxScale = Math.max(100, ...rows.map(r => Math.max(r.cp, r.tp)));
+  const tol = 3;
 
   host.innerHTML = `
-    <div class="panel-title"><div>목표 자산배분</div><button class="btn small" id="alloc-edit">수정</button></div>
+    <div class="subhead">목표 배분 대비 갭</div>
     ${rows.map(r => {
       const cls = Math.abs(r.gapPct) <= tol ? 'fit' : (r.gapPct > 0 ? 'over' : 'under');
       return `<div class="gap-row">
@@ -2966,12 +3203,13 @@ function renderTargetAllocPanel(hostId, d) {
       </div>`;
     }).join('')}
     ${worst && Math.abs(worst.gapPct) > tol ? `<div class="today-verdict ${Math.abs(worst.gapPct) > 10 ? 'warn' : ''}" style="margin-top:10px;">
-      가장 큰 갭은 <b>${worst.cat.replace(' 자산', '')}</b> — ${worst.gapPct > 0 ? `목표보다 ${formatCompactWon(Math.abs(worst.gapWon))}원 많아요. 다른 칸으로 옮길 여지.` : `목표보다 ${formatCompactWon(Math.abs(worst.gapWon))}원 부족해요. 다음 이체는 여기로.`}
+      가장 큰 갭은 <b>${worst.cat.replace(' 자산', '')}</b> — ${worst.gapPct > 0 ? `목표보다 ${formatCompactWon(Math.abs(worst.gapWon))}원 많아요.` : `목표보다 ${formatCompactWon(Math.abs(worst.gapWon))}원 부족해요. 다음 이체는 여기로.`}
     </div>` : `<div class="today-verdict good" style="margin-top:10px;">모든 칸이 목표 ±${tol}%p 안에 있어요.</div>`}
-    <div class="settings-note">흰 세로선 = 목표 비중. 막대 = 현재 비중.</div>
+    ${axisHtml}
+    ${sugHtml}
+    <div class="settings-note">흰 세로선 = 목표 비중, 막대 = 현재 비중.</div>
   `;
-  const b = document.getElementById('alloc-edit');
-  if (b) b.addEventListener('click', () => openAllocEditor(d));
+  bindSug();
 }
 
 function openAllocEditor(d) {
@@ -3542,68 +3780,6 @@ function renderFlowMapPage(container, data, d) {
   const seedBtn = container.querySelector('#fm-seed');
   if (seedBtn) seedBtn.addEventListener('click', () => seedFlowMap(data, d));
 
-  drawFlowMapArrows();
-  if (state._fmResize) window.removeEventListener('resize', state._fmResize);
-  state._fmResize = () => drawFlowMapArrows();
-  window.addEventListener('resize', state._fmResize);
-}
-
-/* 로버트 기요사키식 흐름 화살표: 일자리 → 수입 → 부채 → 지출 → 밖으로.
-   칸 높이가 항목 수에 따라 달라지므로 렌더 뒤에 실제 좌표를 재서 그린다. */
-function drawFlowMapArrows() {
-  const wrap = document.querySelector('.fm-wrap');
-  if (!wrap) return;
-  const old = wrap.querySelector('.fm-arrows');
-  if (old) old.remove();
-  const W = wrap.getBoundingClientRect();
-  if (!W.width || W.width < 380) return;   // 좁은 화면·측정 불가 시 생략
-
-  const cell = (k) => wrap.querySelector(`.fm-cell[data-quad="${k}"]`);
-  const box = (el) => {
-    if (!el) return null;
-    const r = el.getBoundingClientRect();
-    return { l: r.left - W.left, r: r.right - W.left, t: r.top - W.top, b: r.bottom - W.top, w: r.width, h: r.height };
-  };
-  const inc = box(cell('income')), exp = box(cell('expense')), lia = box(cell('liability'));
-  if (!inc || !exp || !lia) return;
-
-  const firstItem = (k) => {
-    const el = cell(k) && cell(k).querySelector('.fm-item');
-    if (!el) return null;
-    const r = el.getBoundingClientRect();
-    return (r.top + r.bottom) / 2 - W.top;
-  };
-
-  const incY = firstItem('income') || (inc.t + 34);
-  const A = { x: inc.l + 4, y: incY };                 // 수입 첫 항목
-  const J = { x: 10, y: incY };                        // 일자리
-  const L = { x: lia.l + 46, y: lia.t + 10 };          // 부채 진입점
-  const E = { x: L.x, y: exp.t + Math.min(46, exp.h * 0.35) }; // 지출 안쪽 노드
-  const OUT = { x: Math.min(exp.r + 24, W.width - 4), y: E.y };   // 밖으로 나가는 화살표
-
-  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  svg.setAttribute('class', 'fm-arrows');
-  svg.setAttribute('width', W.width);
-  svg.setAttribute('height', W.height);
-  svg.setAttribute('viewBox', `0 0 ${W.width} ${W.height}`);
-  const bulge = Math.max(60, (A.x - 20));
-  svg.innerHTML = `
-    <defs>
-      <marker id="fm-ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-        <path d="M0,0 L10,5 L0,10 z" fill="var(--paper)" stroke="none"/>
-      </marker>
-    </defs>
-    <path d="M ${J.x + 8} ${J.y} L ${A.x - 9} ${A.y}" marker-end="url(#fm-ah)"/>
-    <path d="M ${A.x} ${A.y + 6} C ${A.x - bulge * 0.75} ${A.y + 40}, ${A.x - bulge * 0.55} ${L.y - 30}, ${L.x - 6} ${L.y - 4}" marker-end="url(#fm-ah)"/>
-    <path d="M ${L.x} ${L.y - 6} L ${E.x} ${E.y + 6}" marker-end="url(#fm-ah)"/>
-    <path d="M ${E.x + 6} ${E.y} L ${OUT.x} ${OUT.y}" marker-end="url(#fm-ah)"/>
-    <circle cx="${J.x}" cy="${J.y}" r="5"/>
-    <circle cx="${A.x}" cy="${A.y}" r="5"/>
-    <circle cx="${L.x}" cy="${L.y}" r="5"/>
-    <circle cx="${E.x}" cy="${E.y}" r="5"/>
-    <text x="${J.x - 2}" y="${J.y - 12}">일자리</text>
-  `;
-  wrap.appendChild(svg);
 }
 
 function fmCell(key, items, total) {
@@ -3616,6 +3792,46 @@ function fmCell(key, items, total) {
     </div>`).join('') || '<div class="empty-state" style="padding:10px 0;font-size:11.5px;">항목 없음</div>'}
     <button class="fm-add" data-fm-add="${key}">+ ${q.label} 항목 추가</button>
   </div>`;
+}
+
+/* 흐름표 항목의 세부 내역 — 최근 6개월 월평균.
+   '근로소득' 같은 소분류 이름이면 그 아래 세부 항목(급여·월급 외 …)을,
+   세부 항목 이름이면 사용처를 쪼개서 보여준다. */
+function flowBreakdown(data, d, quad, name) {
+  const major = quad === 'income' ? '수입' : quad === 'expense' ? '지출' : null;
+  if (!major) return null;
+  const nm = String(name || '').trim();
+  if (!nm) return null;
+
+  const months = (data.months || []);
+  const i = d.latestPivotIdx;
+  const keys = new Set();
+  for (let k = Math.max(0, i - 5); k <= i; k++) {
+    const m = months[k];
+    if (!m) continue;
+    const pk = pivotMonthKey(m);
+    keys.add(`${Math.floor(pk / 100)}-${String(pk % 100).padStart(2, '0')}`);
+  }
+  const nMonths = keys.size || 1;
+  const strip = (v) => String(v || '').replace(/[^\p{L}\p{N}]/gu, '');
+  const target = strip(nm);
+  const inWindow = (r) => keys.has(ledgerMonthKey(r.date));
+  const rows = (data.ledger || []).filter(r => r.major.includes(major) && inWindow(r));
+  const net = (r) => major === '지출' ? (r.amount - (r.refund || 0)) : r.amount;
+
+  let level = 'item', hits = rows.filter(r => strip(r.minor) === target);
+  if (!hits.length) { level = 'vendor'; hits = rows.filter(r => strip(r.item) === target); }
+  if (!hits.length) { level = 'vendor'; hits = rows.filter(r => strip(r.vendor).includes(target) || strip(r.memo).includes(target)); }
+  if (!hits.length) return null;
+
+  const agg = {};
+  hits.forEach(r => {
+    const raw = level === 'item' ? (r.item || '기타') : ((r.vendor || r.memo || r.item || '기타').split('›').pop().trim() || '기타');
+    agg[raw] = (agg[raw] || 0) + net(r);
+  });
+  const list = Object.entries(agg).sort((a, b) => b[1] - a[1]).map(([k, v]) => ({ name: k, avg: v / nMonths }));
+  const total = list.reduce((a, x) => a + x.avg, 0);
+  return { level, months: nMonths, total, list: list.slice(0, 10), count: hits.length };
 }
 
 function renderFmDetail(data, d) {
@@ -3653,7 +3869,26 @@ function renderFmDetail(data, d) {
     <div class="fm-kv"><span>${sel.quad === 'income' || sel.quad === 'expense' ? '월 금액' : '잔액'}</span><b>${item.amount ? formatWon(item.amount) : '—'}</b></div>
     ${item.tag ? `<div class="fm-kv"><span>태그</span><b>${item.tag}</b></div>` : ''}
     ${item.linkedTo ? `<div class="fm-kv"><span>연결</span><b>${item.linkedTo}</b></div>` : ''}
-    ${item.memo ? `<div class="fm-memo">${item.memo.replace(/</g, '&lt;')}</div>` : '<div class="fm-memo" style="color:var(--text-faint)">상세 메모가 없어요.</div>'}
+    ${item.memo ? `<div class="fm-memo">${item.memo.replace(/</g, '&lt;')}</div>` : ''}
+    ${(() => {
+      const bd = flowBreakdown(data, d, sel.quad, item.name);
+      if (!bd) return sel.quad === 'income' || sel.quad === 'expense'
+        ? '<div class="fm-sub"><div class="fm-sub-h">세부 항목</div><div class="empty-state" style="padding:10px 0;font-size:11.5px;">가계부에서 이 이름과 맞는 내역을 찾지 못했어요.</div></div>'
+        : '';
+      const max = Math.max(...bd.list.map(x => Math.abs(x.avg)), 1);
+      return `<div class="fm-sub">
+        <div class="fm-sub-h">세부 항목 · 최근 ${bd.months}개월 월평균 (${bd.level === 'item' ? '항목별' : '사용처별'})</div>
+        ${bd.list.map(x => `<div class="fm-sub-row">
+          <span class="nm">${x.name}</span>
+          <span class="bar"><i style="width:${Math.min(Math.abs(x.avg) / max * 100, 100)}%;background:${q.color}"></i></span>
+          <span class="vl">${formatCompactWon(Math.round(x.avg))}</span>
+        </div>`).join('')}
+        <div class="fm-sub-row" style="border-top:1px solid var(--border-strong);margin-top:2px;">
+          <span class="nm" style="color:var(--text)">합계</span><span class="bar"></span>
+          <span class="vl" style="color:${q.color}">${formatCompactWon(Math.round(bd.total))}</span>
+        </div>
+      </div>`;
+    })()}
   `;
   const ed = document.getElementById('fm-edit');
   if (ed) ed.addEventListener('click', () => openFlowItemEditor(sel.quad, item.id));
@@ -3962,6 +4197,82 @@ function goalPeriodFormatter(goals) {
 
 function goalBucketKey(p) { return p ? `${p.y}-${p.h || 0}` : 'none'; }
 
+/* ---------------- 목표: 마일스톤 사다리 ----------------
+   같은 지표에 목표가 여러 개 걸려 있으면(예: 총 자산 1억 → 1.5억 → 2억 …)
+   지금 어디쯤이고 다음 관문까지 얼마 남았는지, 현재 속도면 언제인지 보여준다. */
+function renderGoalLadder(hostId, allGoals, d, extra) {
+  const host = document.getElementById(hostId);
+  if (!host) return;
+
+  const groups = {};
+  allGoals.forEach(g => {
+    const p = goalProgressOf(g, d, extra);
+    if (!p || p.isPct || p.invert) return;
+    if (!groups[p.key]) groups[p.key] = { name: p.shortName, current: p.current, items: [] };
+    groups[p.key].items.push({ g, p, status: pickGoalField(g, 'status') || '' });
+  });
+  const ladders = Object.entries(groups)
+    .filter(([, v]) => v.items.length >= 2)
+    .map(([k, v]) => {
+      v.items.sort((a, b) => a.p.target - b.p.target);
+      return { key: k, ...v };
+    });
+
+  if (!ladders.length) { host.innerHTML = ''; host.style.display = 'none'; return; }
+  host.style.display = '';
+
+  /* 속도: 최근 6개월 Δ총자산 평균과 순저축 평균 */
+  const dec = (d.decomposition || []).filter(x => x.netSavings !== null).slice(-6);
+  const avgDelta = dec.length ? dec.reduce((a, x) => a + x.totalDelta, 0) / dec.length : 0;
+  const avgSave = dec.length ? dec.reduce((a, x) => a + x.netSavings, 0) / dec.length : 0;
+  const etaText = (gap, speed) => {
+    if (!(speed > 0)) return '현재 속도로는 계산 불가';
+    const m = Math.ceil(gap / speed);
+    if (m > 600) return '600개월 이상';
+    const yr = Math.floor(m / 12), mo = m % 12;
+    const when = new Date();
+    when.setMonth(when.getMonth() + m);
+    return `${yr ? yr + '년 ' : ''}${mo}개월 · ${when.getFullYear()}.${String(when.getMonth() + 1).padStart(2, '0')}`;
+  };
+
+  host.innerHTML = ladders.map(L => {
+    const max = L.items[L.items.length - 1].p.target;
+    const next = L.items.find(x => x.p.target > L.current);
+    const doneCnt = L.items.filter(x => x.p.target <= L.current).length;
+    const gap = next ? next.p.target - L.current : 0;
+    return `
+      <div class="panel-title" style="margin-bottom:6px;">
+        <div>${L.name} 마일스톤</div>
+        <span class="ptag">${doneCnt} / ${L.items.length} 통과</span>
+      </div>
+      <div class="ld-now">
+        <b>${formatCompactWon(L.current)}원</b>
+        ${next ? `<span>다음 관문 <b style="color:var(--gold-soft)">${formatCompactWon(next.p.target)}원</b> · ${formatCompactWon(gap)}원 남음</span>`
+               : '<span style="color:var(--green)">모든 관문 통과</span>'}
+      </div>
+      <div class="ld-track">
+        <i style="width:${max ? Math.min((L.current / max) * 100, 100) : 0}%"></i>
+        ${L.items.map(x => {
+          const pos = max ? Math.min((x.p.target / max) * 100, 100) : 0;
+          const passed = x.p.target <= L.current;
+          return `<u class="${passed ? 'on' : ''} ${next && x === next ? 'next' : ''}" style="left:${pos}%" title="${formatCompactWon(x.p.target)}원 · ${x.status}"></u>`;
+        }).join('')}
+      </div>
+      <div class="ld-marks">
+        ${L.items.map(x => {
+          const passed = x.p.target <= L.current;
+          return `<span class="${passed ? 'on' : ''}">${formatCompactWon(x.p.target)}</span>`;
+        }).join('')}
+      </div>
+      ${next ? `<div class="ld-eta">
+        <div><span>순저축만으로</span><b>${etaText(gap, avgSave)}</b></div>
+        <div><span>최근 6개월 실제 증가 속도</span><b>${etaText(gap, avgDelta)}</b></div>
+        <div class="settings-note" style="margin:6px 0 0;">최근 6개월 월평균 — 순저축 ${formatCompactWon(Math.round(avgSave))}원 · 실제 자산 증감 ${formatCompactWon(Math.round(avgDelta))}원</div>
+      </div>` : ''}
+    `;
+  }).join('<div style="height:16px"></div>');
+}
+
 function renderGoalBoard(data, d) {
   const host = document.getElementById('home-goals');
   if (!host) return;
@@ -3984,30 +4295,62 @@ function renderGoalBoard(data, d) {
     ? state.goalMoves[g.__row]
     : (pickGoalField(g, 'period') || '');
 
-  /* 버킷 구성: 데이터에 등장한 연도 + 올해~내년, 각 상/하반기 */
-  const years = new Set();
-  allGoals.forEach(g => { const p = parseGoalPeriod(periodOf(g)); if (p) years.add(p.y); });
+  /* 그룹 기준: 구분(기본) · 시기 · 상태.
+     시트가 정량 구조로 바뀌면서 '시기'가 비어 있는 목표가 많아 기본값을 '구분'으로 둔다. */
+  const GROUP_OPTS = [['category', '구분'], ['period', '시기'], ['status', '상태']];
+  const GRP = GROUP_OPTS.some(x => x[0] === state.goalGroup) ? state.goalGroup : 'category';
   const nowY = new Date().getFullYear();
-  years.add(nowY); years.add(nowY + 1);
-  const buckets = [];
-  [...years].sort((a, b) => a - b).forEach(y => {
-    buckets.push({ key: `${y}-1`, y, h: 1, label: `${y} 상반기` });
-    buckets.push({ key: `${y}-2`, y, h: 2, label: `${y} 하반기` });
-    /* 라벨은 컬럼 헤더에서 그대로 쓰되, 같은 해가 이어지면 연도 반복은 CSS가 아니라 데이터로 처리하지 않는다 */
-  });
-  buckets.push({ key: 'none', y: null, h: null, label: '시기 미정' });
-
-  const byBucket = {};
-  buckets.forEach(b => { byBucket[b.key] = []; });
-  allGoals.forEach(g => {
-    const p = parseGoalPeriod(periodOf(g));
-    let k = p ? (p.h ? `${p.y}-${p.h}` : `${p.y}-1`) : 'none';
-    if (!byBucket[k]) k = 'none';
-    byBucket[k].push(g);
-  });
-
   const curHalf = (new Date().getMonth() < 6) ? 1 : 2;
-  const curKey = `${nowY}-${curHalf}`;
+
+  let buckets = [], byBucket = {}, curKey = null, draggable = false;
+  if (GRP === 'period') {
+    draggable = true;
+    const years = new Set();
+    allGoals.forEach(g => { const p = parseGoalPeriod(periodOf(g)); if (p) years.add(p.y); });
+    years.add(nowY); years.add(nowY + 1);
+    [...years].sort((a, b) => a - b).forEach(y => {
+      buckets.push({ key: `${y}-1`, label: `${y} 상반기` });
+      buckets.push({ key: `${y}-2`, label: `${y} 하반기` });
+    });
+    buckets.push({ key: 'none', label: '시기 미정' });
+    buckets.forEach(b => { byBucket[b.key] = []; });
+    allGoals.forEach(g => {
+      const p = parseGoalPeriod(periodOf(g));
+      let k = p ? (p.h ? `${p.y}-${p.h}` : `${p.y}-1`) : 'none';
+      if (!byBucket[k]) k = 'none';
+      byBucket[k].push(g);
+    });
+    curKey = `${nowY}-${curHalf}`;
+  } else if (GRP === 'status') {
+    const order = ['진행중', '대기', '달성/완료', '완료', '보류'];
+    const seen = [];
+    allGoals.forEach(g => { const st = pickGoalField(g, 'status') || '미지정'; if (!seen.includes(st)) seen.push(st); });
+    seen.sort((a, b) => {
+      const ia = order.findIndex(o => a.includes(o)), ib = order.findIndex(o => b.includes(o));
+      return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
+    });
+    seen.forEach(st => { buckets.push({ key: st, label: st }); byBucket[st] = []; });
+    allGoals.forEach(g => byBucket[pickGoalField(g, 'status') || '미지정'].push(g));
+    curKey = seen.find(x => /진행/.test(x)) || null;
+  } else {
+    const seen = [];
+    allGoals.forEach(g => { const c = pickGoalField(g, 'category') || '기타'; if (!seen.includes(c)) seen.push(c); });
+    seen.forEach(c => { buckets.push({ key: c, label: c }); byBucket[c] = []; });
+    allGoals.forEach(g => byBucket[pickGoalField(g, 'category') || '기타'].push(g));
+  }
+  /* 각 칸 안에서는 '미달 → 달성' 순, 그 안에서 목표값 오름차순 */
+  const sortKeyOf = (g) => {
+    const p = goalProgressOf(g, d, extra);
+    if (!p) return [2, 0];
+    const good = p.invert ? p.current <= p.target : p.current >= p.target;
+    return [good ? 1 : 0, p.target];
+  };
+  Object.keys(byBucket).forEach(k => {
+    byBucket[k].sort((a, b) => {
+      const [ga, ta] = sortKeyOf(a), [gb, tb] = sortKeyOf(b);
+      return ga - gb || ta - tb;
+    });
+  });
 
   const total = allGoals.length;
   const done = allGoals.filter(g => goalStatusClass(pickGoalField(g, 'status')) === 'ok').length;
@@ -4021,7 +4364,9 @@ function renderGoalBoard(data, d) {
     const doneDate = pickGoalField(g, 'doneDate');
     const vClass = goalStatusClass(status) || 'pending';
     /* 완료 = 초록 체크·취소선, 대기 = 점선 테두리·흐림 (둘을 다르게 보이게) */
-    const progress = computeGoalProgress(title, d, extra, (state.goalMetric || {})[g.__row] || null, (state.goalTarget || {})[g.__row]);
+    const progress = goalProgressOf(g, d, extra);
+    const freq = pickGoalField(g, 'freq');
+    const sanity = goalSanityFlag(progress);
 
     let metricHtml = '';
     if (progress) {
@@ -4048,19 +4393,20 @@ function renderGoalBoard(data, d) {
           ${progress.overridden ? '<span class="gb-ov" title="목표 수치 직접 지정">✎</span>' : ''}
         </div>
         <div class="gb-bar"><i class="${good ? 'good' : 'bad'}" style="width:${pct}%"></i></div>
-        <div class="gb-figs"><span>${progress.name}</span><span>${gapTxt}</span></div>`;
+        <div class="gb-figs"><span>${progress.name}</span><span>${gapTxt}</span></div>
+        ${sanity ? `<div class="gb-warn">⚠ ${sanity}</div>` : ''}`;
     }
 
     const pending = state.goalMoves[g.__row] !== undefined || (state.goalEdits && state.goalEdits[g.__row]);
-    return `<div class="gb-card ${vClass}" draggable="true" data-row="${g.__row}" title="더블클릭 → 편집">
+    return `<div class="gb-card ${vClass}" ${draggable ? 'draggable="true"' : ''} data-row="${g.__row}" title="더블클릭 → 편집">
       <div class="gb-head">
         ${vClass === 'ok' ? '<span class="gb-check">✓</span>' : ''}
-        <span class="gb-title">${title}</span>
+        <span class="gb-title">${title}${freq ? `<em class="gb-freq">${freq}</em>` : ''}</span>
       </div>
       ${metricHtml}
       <div class="gb-foot">
         ${status ? `<span class="gb-status ${vClass}">${status}</span>` : ''}
-        ${category ? `<span class="gb-tag">${category}</span>` : ''}
+        ${GRP !== 'category' && category ? `<span class="gb-tag">${category}</span>` : ''}
         ${doneDate ? `<span class="gb-date">${doneDate}</span>` : ''}
         ${!progress ? '<span class="gb-nolink">수치 미연동</span>' : ''}
         ${pending ? '<span class="gb-pending">시트 반영 대기</span>' : ''}
@@ -4071,10 +4417,16 @@ function renderGoalBoard(data, d) {
 
   host.innerHTML = `
     <div class="g">
+      <div class="panel s12" id="panel-goal-ladder"></div>
+    </div>
+    <div class="g">
       <div class="panel s2" id="panel-goal-side"></div>
       <div class="s10" id="goal-board-wrap">
         <div class="gb-boardbar">
-          <span class="settings-note" style="margin:0;">카드 드래그 → 시기 이동 · 더블클릭 → 편집</span>
+          <div class="range-toggle" id="goal-group-toggle">
+            ${GROUP_OPTS.map(([v, l]) => `<button data-grp="${v}" class="${v === GRP ? 'active' : ''}">${l}</button>`).join('')}
+          </div>
+          <span class="settings-note" style="margin:0;">${draggable ? '카드 드래그 → 시기 이동 · ' : ''}더블클릭 → 편집</span>
           <button class="btn small" id="goal-add-btn">+ 목표 추가</button>
         </div>
         <div class="gb-board" id="goal-board">
@@ -4092,6 +4444,8 @@ function renderGoalBoard(data, d) {
       </div>
     </div>
   `;
+
+  renderGoalLadder('panel-goal-ladder', allGoals, d, extra);
 
   /* --- 사이드: 상태 요약 --- */
   const byStatus = {};
@@ -4131,14 +4485,14 @@ function renderGoalBoard(data, d) {
     if (!r) return;
     const rows = (state.data.goals || []).map(x => x.__row || 0);
     const newRow = (rows.length ? Math.max(...rows) : 1) + 1;
+    const payload = {
+      title: r.item, category: r.category, freq: r.freq || '',
+      amount: String(r.amount), period: '', status: '진행중', memo: r.why
+    };
     const obj = { __row: newRow, __local: true };
-    obj[goalFieldKeyFor(null, 'title')] = r.title;
-    obj[goalFieldKeyFor(null, 'period')] = fmtPeriod(nowY, curHalf);
-    obj[goalFieldKeyFor(null, 'category')] = r.category;
-    obj[goalFieldKeyFor(null, 'status')] = '진행중';
-    obj[goalFieldKeyFor(null, 'memo')] = r.why;
+    Object.keys(payload).forEach(f => { obj[goalFieldKeyFor(null, f)] = payload[f]; });
     state.data.goals = (state.data.goals || []).concat([obj]);
-    pushGoalOp({ action: 'addGoal', title: r.title, period: fmtPeriod(nowY, curHalf), category: r.category, status: '진행중', memo: r.why });
+    pushGoalOp({ action: 'addGoal', ...payload });
     renderPage();
   });
 
@@ -4149,6 +4503,14 @@ function renderGoalBoard(data, d) {
     if (!c) return;
     const g = allGoals.find(x => String(x.__row) === c.dataset.row);
     if (g) openGoalEditor(g, data, d, fmtPeriod);
+  });
+
+  const grpBox = document.getElementById('goal-group-toggle');
+  if (grpBox) grpBox.addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    state.goalGroup = b.dataset.grp;
+    renderPage();
   });
 
   /* --- 드래그 앤 드롭 --- */
@@ -4231,61 +4593,89 @@ function roundManwon(v, step) {
 function manwonText(v) { return `${Math.round(v / 10000).toLocaleString('ko-KR')}만원`; }
 
 function buildGoalRecommendations(data, d, extra, existingGoals) {
-  const has = (re) => (existingGoals || []).some(g => re.test(String(pickGoalField(g, 'title') || '')));
+  /* 이미 같은 (구분+항목) 목표가 있으면 추천하지 않는다 */
+  const taken = new Set((existingGoals || []).map(g => {
+    const m = findGoalMetric(pickGoalField(g, 'category') || '', pickGoalField(g, 'title') || '');
+    return m ? m.key : null;
+  }).filter(Boolean));
   const out = [];
+  const push = (key, o) => { if (!taken.has(key)) out.push({ metricKey: key, ...o }); };
 
-  /* 1. 비상금 — 월 지출 6개월치까지 */
   const monthlyExp = extra.avgExpense12 || 0;
-  const emgTarget = roundManwon(monthlyExp * 6, 50);
-  if (monthlyExp > 0 && d.emergencyFund < emgTarget && !has(/비상금/)) {
-    out.push({
+  const avgIncome = extra.avgIncome12 || 0;
+
+  /* 1. 비상금 — 월 지출 N개월치 */
+  const months = state.settings.emergencyMonths || 6;
+  const emgTarget = roundManwon(monthlyExp * months, 50);
+  if (monthlyExp > 0 && d.emergencyFund < emgTarget) {
+    push('emergency', {
+      category: '🏦자산', item: '비상금', freq: '', amount: emgTarget,
       title: `비상금 ${manwonText(emgTarget)}`,
-      category: '저축',
-      why: `현재 ${formatCompactWon(d.emergencyFund)}원 · 월 지출 ${(d.emergencyFund / monthlyExp).toFixed(1)}개월치 (권장 6개월)`
+      why: `현재 ${formatCompactWon(d.emergencyFund)}원 · 생활비 ${(d.emergencyFund / monthlyExp).toFixed(1)}개월치 (목표 ${months}개월)`
     });
   }
 
-  /* 2. 월 고정비 — 최근 12개월 평균에서 10% 낮추기 */
+  /* 2. 월 고정비 — 최근 12개월 평균에서 10% 절감 */
   const avgFixed = extra.avgFixed12 || 0;
-  if (avgFixed > 0 && !has(/고정비/)) {
+  if (avgFixed > 0) {
     const t = roundManwon(avgFixed * 0.9, 5);
-    out.push({
+    push('fixed', {
+      category: '💳지출', item: '고정비', freq: '월', amount: t,
       title: `월 고정비 ${manwonText(t)}`,
-      category: '지출',
       why: `최근 12개월 평균 ${formatCompactWon(avgFixed)}원 → 10% 절감`
     });
   }
 
   /* 3. 월 지출 — 목표 저축률을 맞추는 상한 */
-  const cf12 = (d.cashflow || []).slice(-12);
-  const avgIncome = cf12.length ? cf12.reduce((a, c) => a + c.income, 0) / cf12.length : 0;
   const rateTarget = state.goals.savingsRateTarget || 40;
   const expCap = avgIncome * (1 - rateTarget / 100);
-  if (avgIncome > 0 && monthlyExp > expCap && !has(/(월\s*)?지출/)) {
-    out.push({
-      title: `월 지출 ${manwonText(roundManwon(expCap, 10))}`,
-      category: '지출',
+  if (avgIncome > 0 && monthlyExp > expCap) {
+    const t = roundManwon(expCap, 10);
+    push('expense', {
+      category: '💳지출', item: '지출', freq: '월', amount: t,
+      title: `월 지출 ${manwonText(t)}`,
       why: `저축률 ${rateTarget}% 기준 상한 · 현재 평균 ${formatCompactWon(monthlyExp)}원`
     });
   }
 
-  /* 4. 총자산 다음 마일스톤 (5천만 단위) */
-  if (d.totalAssets > 0 && !has(/총자산/)) {
-    const step = 50000000;
-    const next = Math.ceil((d.totalAssets + 1) / step) * step;
-    out.push({
-      title: `총자산 ${(next / 100000000).toFixed(1)}억`,
-      category: '자산',
-      why: `현재 ${formatCompactWon(d.totalAssets)}원 · ${formatCompactWon(next - d.totalAssets)}원 남음`
+  /* 4. 후회 소비 — 최근 12개월 평균의 절반 */
+  const avgRegret = extra.avgRegret12 || 0;
+  if (avgRegret > 30000) {
+    const t = roundManwon(avgRegret * 0.5, 5);
+    push('regret', {
+      category: '💳지출', item: '후회 소비', freq: '월', amount: t,
+      title: `월 후회 소비 ${manwonText(t)}`,
+      why: `최근 12개월 평균 ${formatCompactWon(avgRegret)}원 → 절반으로`
     });
   }
 
-  /* 5. 연금 세액공제 한도 */
+  /* 5. 저축률 */
+  if (extra.savingsRate12 > 0 && extra.savingsRate12 < rateTarget) {
+    push('savingsRate', {
+      category: '👌수입', item: '저축률', freq: '연', amount: rateTarget,
+      title: `저축률 ${rateTarget}%`,
+      why: `최근 12개월 ${extra.savingsRate12.toFixed(1)}% · 목표까지 ${(rateTarget - extra.savingsRate12).toFixed(1)}%p`
+    });
+  }
+
+  /* 6. 순자산 다음 마일스톤 (5천만 단위) */
+  const nw = d.totalAssets - totalDebt();
+  if (nw > 0) {
+    const step = 50000000;
+    const next = Math.ceil((nw + 1) / step) * step;
+    push('netWorth', {
+      category: '🏦자산', item: '순 자산', freq: '', amount: next,
+      title: `순자산 ${(next / 100000000).toFixed(1)}억`,
+      why: `현재 ${formatCompactWon(nw)}원 · ${formatCompactWon(next - nw)}원 남음`
+    });
+  }
+
+  /* 7. 연금 세액공제 한도 */
   const annPension = (data.transferCategories['연금 자산'] || []).slice(-12).reduce((a, v) => a + (v || 0), 0);
-  if (annPension < PENSION_LIMIT && !has(/연금/)) {
-    out.push({
+  if (annPension < PENSION_LIMIT) {
+    push('pensionAssets', {
+      category: '🏦자산', item: '연금 납입', freq: '연', amount: PENSION_LIMIT,
       title: `연금 납입 ${manwonText(PENSION_LIMIT)}`,
-      category: '연금',
       why: `최근 12개월 ${formatCompactWon(Math.max(annPension, 0))}원 · 한도까지 ${formatCompactWon(PENSION_LIMIT - Math.max(annPension, 0))}원`
     });
   }
@@ -4308,16 +4698,17 @@ function openGoalEditor(goal, data, d, fmtPeriod) {
   const g = goal || {};
   const extra = goalMetricExtra(data, d);
   const cats = [...new Set((data.goals || []).map(x => pickGoalField(x, 'category')).filter(Boolean))];
-
+  const items = [...new Set((data.goals || []).map(x => pickGoalField(x, 'title')).filter(Boolean))];
   const cur = {
     title: pickGoalField(g, 'title') || '',
-    period: (state.goalMoves && state.goalMoves[g.__row] !== undefined) ? state.goalMoves[g.__row] : (pickGoalField(g, 'period') || ''),
+    period: pickGoalField(g, 'period') || '',
     category: pickGoalField(g, 'category') || '',
+    freq: pickGoalField(g, 'freq') || '',
+    amount: pickGoalField(g, 'amount') || '',
     status: pickGoalField(g, 'status') || (isNew ? '진행중' : ''),
     memo: pickGoalField(g, 'memo') || ''
   };
   const savedKey = (state.goalMetric || {})[g.__row] || '';
-  const savedTarget = (state.goalTarget || {})[g.__row];
 
   const nowY = new Date().getFullYear();
   const periodOpts = [];
@@ -4332,37 +4723,44 @@ function openGoalEditor(goal, data, d, fmtPeriod) {
         <button class="btn small" data-act="close">닫기</button>
       </div>
       <div class="modal-body">
-        <label class="fld"><span>목표</span><input type="text" id="ge-title" value="${cur.title.replace(/"/g, '&quot;')}" placeholder="예) 비상금 1000만원" /></label>
         <div class="fld-row">
-          <label class="fld"><span>시기</span>
+          <label class="fld"><span>구분</span><input type="text" id="ge-category" list="ge-cat-list" value="${cur.category.replace(/"/g, '&quot;')}" placeholder="예) 🏦자산" />
+            <datalist id="ge-cat-list">${cats.map(c => `<option value="${c}"></option>`).join('')}</datalist>
+          </label>
+          <label class="fld"><span>항목</span><input type="text" id="ge-title" list="ge-item-list" value="${cur.title.replace(/"/g, '&quot;')}" placeholder="예) 총 자산" />
+            <datalist id="ge-item-list">${items.map(c => `<option value="${c}"></option>`).join('')}</datalist>
+          </label>
+        </div>
+        <div class="fld-row">
+          <label class="fld"><span>기간</span>
+            <select id="ge-freq">
+              ${[['', '해당 없음 (잔액·누적)'], ['월', '월'], ['연', '연']].map(([v, l]) => `<option value="${v}" ${v === cur.freq ? 'selected' : ''}>${l}</option>`).join('')}
+            </select>
+          </label>
+          <label class="fld"><span>금액 or 비율</span>
+            <input type="text" inputmode="numeric" id="ge-amount" value="${cur.amount === '' ? '' : String(cur.amount)}" placeholder="예) 10000000 또는 40%" />
+          </label>
+        </div>
+        <div class="fld-row">
+          <label class="fld"><span>상태</span>
+            <select id="ge-status">
+              ${[...new Set([...GOAL_STATUS_OPTIONS, cur.status].filter(Boolean))].map(v => `<option value="${v}" ${v === cur.status ? 'selected' : ''}>${v}</option>`).join('')}
+            </select>
+          </label>
+          <label class="fld"><span>시기 (선택)</span>
             <select id="ge-period">
               <option value="">시기 미정</option>
               ${periodOpts.map(([v, l]) => `<option value="${v}" ${v === cur.period ? 'selected' : ''}>${l}</option>`).join('')}
               ${cur.period && !periodOpts.some(([v]) => v === cur.period) ? `<option value="${cur.period}" selected>${cur.period}</option>` : ''}
             </select>
           </label>
-          <label class="fld"><span>상태</span>
-            <select id="ge-status">
-              ${[...new Set([...GOAL_STATUS_OPTIONS, cur.status].filter(Boolean))].map(v => `<option value="${v}" ${v === cur.status ? 'selected' : ''}>${v}</option>`).join('')}
-            </select>
-          </label>
         </div>
-        <div class="fld-row">
-          <label class="fld"><span>구분</span><input type="text" id="ge-category" list="ge-cat-list" value="${cur.category.replace(/"/g, '&quot;')}" />
-            <datalist id="ge-cat-list">${cats.map(c => `<option value="${c}"></option>`).join('')}</datalist>
-          </label>
-          <label class="fld"><span>연동 지표</span>
-            <select id="ge-metric">
-              <option value="">자동 (문구에서 인식)</option>
-              ${GOAL_METRIC_MATCHERS.map(m => `<option value="${m.key}" ${m.key === savedKey ? 'selected' : ''}>${m.name} (${m.dir === 'up' ? '많을수록 좋음' : '적을수록 좋음'})</option>`).join('')}
-            </select>
-          </label>
-        </div>
-        <div class="fld-row">
-          <label class="fld"><span>목표 수치 (비우면 문구에서 인식)</span>
-            <input type="text" inputmode="numeric" id="ge-target" value="${savedTarget === undefined || savedTarget === null ? '' : wonComma(savedTarget)}" placeholder="예) 10000000 또는 40" />
-          </label>
-        </div>
+        <label class="fld"><span>연동 지표 (비우면 구분·항목으로 자동 인식)</span>
+          <select id="ge-metric">
+            <option value="">자동</option>
+            ${GOAL_METRIC_DEFS.map(m => `<option value="${m.key}" ${m.key === savedKey ? 'selected' : ''}>${m.name} (${m.dir === 'up' ? '많을수록 좋음' : '적을수록 좋음'})</option>`).join('')}
+          </select>
+        </label>
         <label class="fld"><span>메모</span><input type="text" id="ge-memo" value="${cur.memo.replace(/"/g, '&quot;')}" /></label>
         <div class="ge-link" id="ge-link"></div>
       </div>
@@ -4375,28 +4773,43 @@ function openGoalEditor(goal, data, d, fmtPeriod) {
       </div>
     </div>`;
   document.body.appendChild(back);
-
   const $ = (id) => back.querySelector('#' + id);
+
+  const draftGoal = () => ({
+    __row: g.__row || -1,
+    [goalFieldKeyFor(g, 'title')]: $('ge-title').value,
+    [goalFieldKeyFor(g, 'category')]: $('ge-category').value,
+    [goalFieldKeyFor(g, 'freq')]: $('ge-freq').value,
+    [goalFieldKeyFor(g, 'amount')]: $('ge-amount').value
+  });
+
   const refreshLink = () => {
-    const title = $('ge-title').value;
+    const draft = draftGoal();
     const key = $('ge-metric').value || null;
-    const tv = $('ge-target').value.replace(/[^0-9.]/g, '');
-    const p = computeGoalProgress(title, d, extra, key, tv === '' ? null : tv);
+    const savedMetric = state.goalMetric || {};
+    const prev = savedMetric[draft.__row];
+    if (key) savedMetric[draft.__row] = key; else delete savedMetric[draft.__row];
+    state.goalMetric = savedMetric;
+    const p = goalProgressOf(draft, d, extra);
+    if (prev === undefined) delete savedMetric[draft.__row]; else savedMetric[draft.__row] = prev;
+
     const box = $('ge-link');
     if (!p) {
       box.className = 'ge-link none';
-      box.innerHTML = `연동된 수치 없음 — 목표 문구에 <b>비상금 1000만원</b>, <b>총자산 1.5억</b>, <b>월 지출 220만원</b> 같은 형태가 있으면 자동으로 잡혀요.`;
+      box.innerHTML = `연동된 수치 없음 — <b>구분</b>과 <b>항목</b>이 인식되지 않거나 <b>금액 or 비율</b>이 비어 있어요.
+        (예: 구분 <b>🏦자산</b> · 항목 <b>총 자산</b> · 금액 <b>150000000</b>)`;
       return;
     }
     const good = p.invert ? p.current <= p.target : p.current >= p.target;
     const fmt = (v) => p.isPct ? `${v.toFixed(1)}%` : `${formatCompactWon(v)}원`;
+    const sanity = goalSanityFlag(p);
     box.className = `ge-link ${good ? 'good' : 'bad'}`;
     box.innerHTML = `<b>${p.name}</b> · ${p.invert ? '적을수록 좋음' : '많을수록 좋음'}<br/>
-      현재 <b>${fmt(p.current)}</b> / 목표 <b>${fmt(p.target)}</b> → <b>${good ? '달성' : '미달'}</b>`;
+      현재 <b>${fmt(p.current)}</b> / 목표 <b>${fmt(p.target)}</b> → <b>${good ? '달성' : '미달'}</b>
+      ${sanity ? `<br/><span style="color:var(--gold-soft)">⚠ ${sanity}</span>` : ''}`;
   };
-  $('ge-title').addEventListener('input', refreshLink);
-  $('ge-metric').addEventListener('change', refreshLink);
-  $('ge-target').addEventListener('input', refreshLink);
+  ['ge-title', 'ge-category', 'ge-amount'].forEach(id => $(id).addEventListener('input', refreshLink));
+  ['ge-metric', 'ge-freq'].forEach(id => $(id).addEventListener('change', refreshLink));
   refreshLink();
 
   const close = () => back.remove();
@@ -4416,40 +4829,32 @@ function openGoalEditor(goal, data, d, fmtPeriod) {
     if (act === 'save') {
       const patch = {
         title: $('ge-title').value.trim(),
-        period: $('ge-period').value,
         category: $('ge-category').value.trim(),
+        freq: $('ge-freq').value,
+        amount: $('ge-amount').value.trim(),
+        period: $('ge-period').value,
         status: $('ge-status').value,
         memo: $('ge-memo').value.trim()
       };
-      if (!patch.title) { showToast('목표 문구를 입력해 주세요.', 'warn'); return; }
+      if (!patch.title) { showToast('항목을 입력해 주세요.', 'warn'); return; }
       if (!state.goalMetric) state.goalMetric = {};
       if (!state.goalTarget) state.goalTarget = {};
-      const tvRaw = $('ge-target').value.replace(/[^0-9.]/g, '');
+      const FIELDS = ['title', 'category', 'freq', 'amount', 'period', 'status', 'memo'];
 
       if (isNew) {
         const rows = (state.data.goals || []).map(x => x.__row || 0);
         const newRow = (rows.length ? Math.max(...rows) : 1) + 1;
         const obj = { __row: newRow, __local: true };
-        obj[goalFieldKeyFor(null, 'title')] = patch.title;
-        obj[goalFieldKeyFor(null, 'period')] = patch.period;
-        obj[goalFieldKeyFor(null, 'category')] = patch.category;
-        obj[goalFieldKeyFor(null, 'status')] = patch.status;
-        obj[goalFieldKeyFor(null, 'memo')] = patch.memo;
+        FIELDS.forEach(f => { obj[goalFieldKeyFor(null, f)] = patch[f]; });
         state.data.goals = (state.data.goals || []).concat([obj]);
         if ($('ge-metric').value) state.goalMetric[newRow] = $('ge-metric').value;
-        if (tvRaw !== '') state.goalTarget[newRow] = Number(tvRaw);
         pushGoalOp({ action: 'addGoal', ...patch });
       } else {
-        g[goalFieldKeyFor(g, 'title')] = patch.title;
-        g[goalFieldKeyFor(g, 'period')] = patch.period;
-        g[goalFieldKeyFor(g, 'category')] = patch.category;
-        g[goalFieldKeyFor(g, 'status')] = patch.status;
-        g[goalFieldKeyFor(g, 'memo')] = patch.memo;
+        FIELDS.forEach(f => { g[goalFieldKeyFor(g, f)] = patch[f]; });
         if (state.goalMoves) delete state.goalMoves[g.__row];
         if ($('ge-metric').value) state.goalMetric[g.__row] = $('ge-metric').value;
         else delete state.goalMetric[g.__row];
-        if (tvRaw !== '') state.goalTarget[g.__row] = Number(tvRaw);
-        else delete state.goalTarget[g.__row];
+        delete state.goalTarget[g.__row];
         pushGoalOp({ action: 'updateGoal', row: g.__row, ...patch });
       }
       close(); renderPage();
@@ -4625,23 +5030,34 @@ async function renderPriorityInsights(data, d) {
 
 function renderAllocation(d) {
   const panel = document.getElementById('panel-allocation');
-  const entries = DISPLAY_ORDER.filter(c => d.displayAllocation[c] !== undefined).map(c => [c, d.displayAllocation[c]]);
+  /* 목표 배분 갭과 같은 축을 쓰려고 4개 실제 카테고리를 그대로 쓴다(연금을 저축에 합치지 않음) */
+  const entries = ALLOC_CATS.filter(c => (d.allocation[c] || 0) > 0).map(c => [c, d.allocation[c]]);
   panel.innerHTML = `
-    <div class="panel-title"><div>자산 배분</div><span class="ptag">${d.latestMonth || ''}</span></div>
+    <div class="panel-title">
+      <div>자산 배분</div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <span class="ptag">${d.latestMonth || ''}</span>
+        <button class="btn small" id="alloc-edit">${state.settings.targetAlloc ? '목표 수정' : '목표 설정'}</button>
+      </div>
+    </div>
     <div class="alloc-split">
       <div class="alloc-donut"><canvas id="chart-alloc"></canvas></div>
       <div class="alloc-legend">
         ${entries.map(([cat, amt]) => {
           const pct = d.totalAssets ? (amt / d.totalAssets) * 100 : 0;
           return `<div class="alloc-row">
-            <span class="alloc-swatch" style="background:${DISPLAY_COLORS[cat] || '#888'}"></span>
-            <span class="alloc-name">${cat}</span>
+            <span class="alloc-swatch" style="background:${CAT_COLORS[cat] || '#888'}"></span>
+            <span class="alloc-name">${cat.replace(' 자산', '')}</span>
             <span class="alloc-amt">${formatCompactWon(amt)}<em>${pct.toFixed(0)}%</em></span>
           </div>`;
         }).join('')}
       </div>
     </div>
+    <div id="panel-target-alloc" style="margin-top:14px;"></div>
   `;
+  renderTargetAllocPanel('panel-target-alloc', d);
+  const _ae = document.getElementById('alloc-edit');
+  if (_ae) _ae.addEventListener('click', () => openAllocEditor(d));
   /* 도넛 조각 위에 카테고리 · % 를 직접 찍는다 */
   const donutLabel = {
     id: 'donutLabel',
@@ -4674,7 +5090,7 @@ function renderAllocation(d) {
   const ctx = document.getElementById('chart-alloc');
   state.charts.alloc = new Chart(ctx, {
     type: 'doughnut',
-    data: { labels: entries.map(e => e[0]), datasets: [{ data: entries.map(e => e[1]), backgroundColor: entries.map(e => DISPLAY_COLORS[e[0]] || '#888'), borderColor: '#171e2b', borderWidth: 3 }] },
+    data: { labels: entries.map(e => e[0].replace(' 자산', '')), datasets: [{ data: entries.map(e => e[1]), backgroundColor: entries.map(e => CAT_COLORS[e[0]] || '#888'), borderColor: '#171e2b', borderWidth: 3 }] },
     options: { responsive: true, maintainAspectRatio: false, cutout: '58%', plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` ${c.label}: ${formatCompactWon(c.raw)}원` } } } },
     plugins: [donutLabel]
   });
@@ -6897,15 +7313,11 @@ function renderAssetsPage(container, data, d) {
       <div class="panel s9" id="panel-trend"></div>
     </div>
     <div class="g">
-      <div class="panel s7" id="panel-decomp"></div>
-      <div class="panel s5" id="panel-target-alloc"></div>
+      <div class="panel s12" id="panel-decomp"></div>
     </div>
     <div class="g">
-      <div class="panel s5" id="panel-allocation"></div>
-      <div class="panel s7" id="panel-accounts"></div>
-    </div>
-    <div class="g">
-      <div class="panel s12" id="panel-idle-all"></div>
+      <div class="panel s7" id="panel-allocation"></div>
+      <div class="panel s5" id="panel-accounts"></div>
     </div>
   `;
   renderAssetStats(data, d);
@@ -6913,8 +7325,6 @@ function renderAssetsPage(container, data, d) {
   renderTrend(data, d);
   renderAllocation(d);
   renderDecompositionPanel('panel-decomp', data, d);
-  renderTargetAllocPanel('panel-target-alloc', d);
-  renderIdlePanel('panel-idle-all', data, d, null, '운용 점검 — 방치된 계좌');
 }
 
 function renderAssetStats(data, d) {
