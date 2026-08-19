@@ -7652,7 +7652,9 @@ function yrStatCard(label, value, subs, color) {
   return `<div class="stat-card">
     <div class="label">${label}</div>
     <div class="value" ${color ? `style="color:${color}"` : ''}>${value}</div>
-    ${(subs || []).filter(Boolean).map(x => typeof x === 'string' ? `<div class="sub">${x}</div>` : `<div class="sub ${x.tone || ''}">${x.text}</div>`).join('')}
+    ${(subs || []).filter(Boolean).map(x => typeof x === 'string'
+      ? (x.trim().startsWith('<div') ? x : `<div class="sub">${x}</div>`)
+      : `<div class="sub ${x.tone || ''}">${x.text}</div>`).join('')}
   </div>`;
 }
 
@@ -7686,6 +7688,33 @@ function renderYearSubTab(sub, Y, data, d, yrRows, TOP_PCT) {
   const live = (arr) => arr.map((v, i) => (isThisYear && i + 1 > thruMonth) ? null : v);
   const cumOf = (arr) => { let c = 0; return arr.map((v, i) => { if (v === null) return null; c += v; return c; }); };
   const monthsWith = (arr) => arr.filter(v => v !== null && v !== 0).length || thruMonth;
+  /* ---- 다른 연도와의 비교 기준 ---- */
+  const allLedger = data.ledger || [];
+  const yearsAvail = [...new Set(allLedger.map(r => (ledgerMonthKey(r.date) || '').slice(0, 4)).filter(Boolean))].sort();
+  const cap = isThisYear ? thruMonth : null;
+  const rowsOfYear = (y) => allLedger.filter(r => {
+    const mk = ledgerMonthKey(r.date) || '';
+    if (mk.slice(0, 4) !== y) return false;
+    return cap ? (Number(mk.slice(5)) <= cap) : true;
+  });
+  const prevY = String(Number(Y) - 1);
+  const prevRows = rowsOfYear(prevY);
+  const priorYears = yearsAvail.filter(y => Number(y) < Number(Y));
+  const priorSets = priorYears.map(y => ({ y, rows: rowsOfYear(y) }));
+  const capNote = cap ? `1–${cap}월 기준` : '연간 기준';
+  const pvNote = `${prevY}년 ${cap ? `1–${cap}월 ` : ''}대비`;
+  /* 과거 연도 평균 — 값이 0인 해(데이터 없음)는 제외 */
+  const priorAvg = (fn) => {
+    const vs = priorSets.map(x => fn(x.rows)).filter(v => isFinite(v) && v !== 0);
+    return vs.length ? { v: vs.reduce((a, b) => a + b, 0) / vs.length, n: vs.length } : null;
+  };
+  const avgSub = (cur, fn, invert) => {
+    const a = priorAvg(fn);
+    if (!a) return '';
+    return cmpSub(cur, a.v, !!invert, `직전 ${a.n}년 평균 대비`);
+  };
+  const nMonthsOf = (rows, pred) => new Set(rows.filter(pred).map(moOf).filter(m => m >= 1 && m <= 12)).size || 1;
+
   if (state.charts.yrSub) { state.charts.yrSub.destroy(); state.charts.yrSub = null; }
   if (state.charts.yrPie) { state.charts.yrPie.destroy(); state.charts.yrPie = null; }
   const PALETTE = ['#4c8c6b', '#c9a227', '#5b8fc7', '#9b7fc2', '#c1483f', '#39a8bd', '#d9884f'];
@@ -7724,15 +7753,26 @@ function renderYearSubTab(sub, Y, data, d, yrRows, TOP_PCT) {
     const monthly = live(bucket(inc, r => r.amount));
     const nMonths = monthsWith(monthly);
     const nonWork = total - work;
+    const incOf = (rows, kw) => rows.filter(r => r.major.includes('수입') && (!kw || String(r.minor || '').includes(kw))).reduce((a, r) => a + r.amount, 0);
+    const incAvgOf = (rows) => { const t = incOf(rows); const n = nMonthsOf(rows, r => r.major.includes('수입')); return n ? t / n : 0; };
+    const shareOf = (rows) => { const t = incOf(rows); return t ? ((t - incOf(rows, '근로')) / t) * 100 : null; };
+    const pTotal = incOf(prevRows), pWork = incOf(prevRows, '근로'), pInv = incOf(prevRows, '투자'), pSide = incOf(prevRows, '부수입');
     statBox.innerHTML = [
-      yrStatCard('수입 합계', formatWon(total), [`월 평균 ${formatCompactWon(nMonths ? total / nMonths : 0)}원`], 'var(--green)'),
-      yrStatCard('월 평균', formatWon(Math.round(nMonths ? total / nMonths : 0)), [`${nMonths}개월 기준`]),
-      yrStatCard('근로소득', formatWon(work), [`전체의 <b>${total ? ((work / total) * 100).toFixed(0) : 0}%</b>`]),
-      yrStatCard('투자수익', formatWon(invest), [`전체의 <b>${total ? ((invest / total) * 100).toFixed(0) : 0}%</b>`]),
-      yrStatCard('부수입', formatWon(side), [`전체의 <b>${total ? ((side / total) * 100).toFixed(0) : 0}%</b>`]),
-      yrStatCard('그 외', formatWon(etc), [`전체의 <b>${total ? ((etc / total) * 100).toFixed(0) : 0}%</b>`]),
+      yrStatCard('수입 합계', formatWon(total),
+        [cmpSub(total, pTotal, false, pvNote), avgSub(total, incOf, false), `${capNote} · 월 평균 ${formatCompactWon(nMonths ? total / nMonths : 0)}원`], 'var(--green)'),
+      yrStatCard('월 평균', formatWon(Math.round(nMonths ? total / nMonths : 0)),
+        [cmpSub(Math.round(nMonths ? total / nMonths : 0), Math.round(incAvgOf(prevRows)), false, pvNote), avgSub(Math.round(nMonths ? total / nMonths : 0), (rows) => Math.round(incAvgOf(rows)), false), `${nMonths}개월 기준`]),
+      yrStatCard('근로소득', formatWon(work),
+        [cmpSub(work, pWork, false, pvNote), `전체의 <b>${total ? ((work / total) * 100).toFixed(0) : 0}%</b> · 작년 ${pTotal ? ((pWork / pTotal) * 100).toFixed(0) + '%' : '—'}`]),
+      yrStatCard('투자수익', formatWon(invest),
+        [cmpSub(invest, pInv, false, pvNote), avgSub(invest, (rows) => incOf(rows, '투자'), false), `전체의 <b>${total ? ((invest / total) * 100).toFixed(0) : 0}%</b>`]),
+      yrStatCard('부수입', formatWon(side),
+        [cmpSub(side, pSide, false, pvNote), `전체의 <b>${total ? ((side / total) * 100).toFixed(0) : 0}%</b>`]),
+      yrStatCard('그 외', formatWon(etc),
+        [cmpSub(etc, pTotal - pWork - pInv - pSide, false, pvNote), `전체의 <b>${total ? ((etc / total) * 100).toFixed(0) : 0}%</b>`]),
       yrStatCard('근로 외 수입 비중', (total ? ((nonWork / total) * 100).toFixed(1) : '0.0') + '%',
-        [{ text: `근로 외 <b>${formatCompactWon(nonWork)}원</b>`, tone: (total && nonWork / total >= 0.3) ? 'up' : '' }], 'var(--net)')
+        [cmpSubPp(total ? (nonWork / total) * 100 : null, shareOf(prevRows), pvNote),
+         { text: `근로 외 <b>${formatCompactWon(nonWork)}원</b> — 월급 밖에서 버는 힘`, tone: (total && nonWork / total >= 0.3) ? 'up' : '' }], 'var(--net)')
     ].join('');
 
     const cats = [...new Set(inc.map(r => r.minor || '기타'))];
@@ -7769,13 +7809,24 @@ function renderYearSubTab(sub, Y, data, d, yrRows, TOP_PCT) {
     const monthly = live(bucket(exp, netOfR));
     const nMonths = monthsWith(monthly);
     const fixedMonthly = live(bucket(exp.filter(r => r.fixed), netOfR));
+    const expOf = (rows, f) => rows.filter(r => r.major.includes('지출') && (!f || f(r))).reduce((a, r) => a + netOfR(r), 0);
+    const expAvgOf = (rows) => { const t = expOf(rows); const n = nMonthsOf(rows, r => r.major.includes('지출')); return n ? t / n : 0; };
+    const fixAvgOf = (rows) => { const t = expOf(rows, r => r.fixed); const n = nMonthsOf(rows, r => r.major.includes('지출')); return n ? t / n : 0; };
+    const pTotal = expOf(prevRows), pFixed = expOf(prevRows, r => r.fixed), pRegret = expOf(prevRows, r => r.regret);
+    const pRefund = prevRows.filter(r => r.major.includes('지출')).reduce((a, r) => a + (r.refund || 0), 0);
     statBox.innerHTML = [
-      yrStatCard('지출 합계', formatWon(total), [`월 평균 ${formatCompactWon(nMonths ? total / nMonths : 0)}원`], 'var(--red)'),
-      yrStatCard('월 평균 지출', formatWon(Math.round(nMonths ? total / nMonths : 0)), [`${nMonths}개월 기준`]),
-      yrStatCard('고정비', formatWon(fixed), [`지출의 <b>${total ? ((fixed / total) * 100).toFixed(0) : 0}%</b>`]),
-      yrStatCard('월 평균 고정비', formatWon(Math.round(nMonths ? fixed / nMonths : 0)), [`매달 반드시 나가는 돈`]),
-      yrStatCard('후회하는 소비', formatWon(regret), [{ text: `지출의 <b>${total ? ((regret / total) * 100).toFixed(1) : 0}%</b>`, tone: regret > 0 ? 'down' : 'up' }], '#e6b48f'),
-      yrStatCard('회사 환급', formatWon(refund), [`이미 지출에서 차감된 금액`], 'var(--green)')
+      yrStatCard('지출 합계', formatWon(total),
+        [cmpSub(total, pTotal, true, pvNote), avgSub(total, expOf, true), `${capNote} · 월 평균 ${formatCompactWon(nMonths ? total / nMonths : 0)}원`], 'var(--red)'),
+      yrStatCard('월 평균 지출', formatWon(Math.round(nMonths ? total / nMonths : 0)),
+        [cmpSub(Math.round(nMonths ? total / nMonths : 0), Math.round(expAvgOf(prevRows)), true, pvNote), avgSub(Math.round(nMonths ? total / nMonths : 0), (rows) => Math.round(expAvgOf(rows)), true), `${nMonths}개월 기준`]),
+      yrStatCard('고정비', formatWon(fixed),
+        [cmpSub(fixed, pFixed, true, pvNote), cmpSubPp(total ? (fixed / total) * 100 : null, pTotal ? (pFixed / pTotal) * 100 : null, '지출 내 비중 변화'), `지출의 <b>${total ? ((fixed / total) * 100).toFixed(0) : 0}%</b>`]),
+      yrStatCard('월 평균 고정비', formatWon(Math.round(nMonths ? fixed / nMonths : 0)),
+        [cmpSub(Math.round(nMonths ? fixed / nMonths : 0), Math.round(fixAvgOf(prevRows)), true, pvNote), `매달 반드시 나가는 돈 — 줄면 구조가 가벼워짐`]),
+      yrStatCard('후회하는 소비', formatWon(regret),
+        [cmpSub(regret, pRegret, true, pvNote), { text: `지출의 <b>${total ? ((regret / total) * 100).toFixed(1) : 0}%</b> · 작년 ${pTotal ? ((pRegret / pTotal) * 100).toFixed(1) + '%' : '—'}`, tone: (pTotal && total && (regret / total) <= (pRegret / pTotal)) ? 'up' : 'down' }], '#e6b48f'),
+      yrStatCard('회사 환급', formatWon(refund),
+        [cmpSub(refund, pRefund, false, pvNote), `이미 지출에서 차감된 금액`], 'var(--green)')
     ].join('');
     mkChart([
       { type: 'bar', label: '지출', data: monthly, backgroundColor: 'rgba(193,72,63,0.75)', borderRadius: 2, stack: 'e', order: 3, hideLabel: true },
@@ -7797,14 +7848,25 @@ function renderYearSubTab(sub, Y, data, d, yrRows, TOP_PCT) {
     const incTot = inc.reduce((a, r) => a + r.amount, 0);
     const nMonths = monthsWith(netM);
     const trTot = yrRows.filter(r => r.major.includes('이체')).reduce((a, r) => a + r.amount, 0);
-    const hasNet = netM.some(v => v !== null && v !== 0);
-    const best = !hasNet ? null : netM.reduce((a, v, i) => (v !== null && (a === null || v > netM[a])) ? i : a, null);
+    const activeM = incM.map((v, i) => (v !== 0 || expM[i] !== 0));
+    const best = netM.reduce((a, v, i) => (v !== null && activeM[i] && (a === null || v > netM[a])) ? i : a, null);
+    const netOfYear = (rows) => rows.filter(r => r.major.includes('수입')).reduce((a, r) => a + r.amount, 0)
+      - rows.filter(r => r.major.includes('지출')).reduce((a, r) => a + netOfR(r), 0);
+    const netAvgOf = (rows) => { const n = nMonthsOf(rows, r => r.major.includes('수입') || r.major.includes('지출')); return n ? netOfYear(rows) / n : 0; };
+    const rateOf = (rows) => { const i = rows.filter(r => r.major.includes('수입')).reduce((a, r) => a + r.amount, 0); return i > 0 ? (netOfYear(rows) / i) * 100 : null; };
+    const trOf = (rows) => rows.filter(r => r.major.includes('이체')).reduce((a, r) => a + r.amount, 0);
+    const pNetY = netOfYear(prevRows);
+    const curRate = incTot > 0 ? (total / incTot) * 100 : null;
     statBox.innerHTML = [
-      yrStatCard('순저축 합계', formatWon(total), [`수입 ${formatCompactWon(incTot)} − 지출 ${formatCompactWon(incTot - total)}`], total >= 0 ? 'var(--net)' : 'var(--red)'),
-      yrStatCard('월 평균 순저축', formatWon(Math.round(nMonths ? total / nMonths : 0)), [`${nMonths}개월 기준`]),
-      yrStatCard('저축률', incTot > 0 ? ((total / incTot) * 100).toFixed(1) + '%' : '—',
-        [{ text: `목표 ${state.goals.savingsRateTarget}% 대비 ${incTot > 0 ? (((total / incTot) * 100) - state.goals.savingsRateTarget).toFixed(1) : '—'}%p`, tone: incTot > 0 && (total / incTot) * 100 >= state.goals.savingsRateTarget ? 'up' : 'down' }]),
-      yrStatCard('자산으로 옮긴 돈', formatWon(trTot), [`순저축의 <b>${total > 0 ? ((trTot / total) * 100).toFixed(0) + '%' : '—'}</b> · 나머지는 통장에 남음`], 'var(--gold-soft)'),
+      yrStatCard('순저축 합계', formatWon(total),
+        [cmpSub(total, pNetY, false, pvNote), avgSub(total, netOfYear, false), `${capNote} · 수입 ${formatCompactWon(incTot)} − 지출 ${formatCompactWon(incTot - total)}`], total >= 0 ? 'var(--net)' : 'var(--red)'),
+      yrStatCard('월 평균 순저축', formatWon(Math.round(nMonths ? total / nMonths : 0)),
+        [cmpSub(Math.round(nMonths ? total / nMonths : 0), Math.round(netAvgOf(prevRows)), false, pvNote), avgSub(Math.round(nMonths ? total / nMonths : 0), (rows) => Math.round(netAvgOf(rows)), false), `${nMonths}개월 기준`]),
+      yrStatCard('저축률', curRate === null ? '—' : curRate.toFixed(1) + '%',
+        [cmpSubPp(curRate, rateOf(prevRows), pvNote),
+         { text: `목표 ${state.goals.savingsRateTarget}% 대비 ${curRate === null ? '—' : (curRate - state.goals.savingsRateTarget).toFixed(1) + '%p'}`, tone: curRate !== null && curRate >= state.goals.savingsRateTarget ? 'up' : 'down' }]),
+      yrStatCard('자산으로 옮긴 돈', formatWon(trTot),
+        [cmpSub(trTot, trOf(prevRows), false, pvNote), `순저축의 <b>${total > 0 ? ((trTot / total) * 100).toFixed(0) + '%' : '—'}</b> · 나머지는 통장에 남음`], 'var(--gold-soft)'),
       yrStatCard('가장 많이 모은 달', best === null ? '—' : (best + 1) + '월', [best === null ? '' : formatWon(netM[best]) + ' 저축'])
     ].join('');
     mkChart([
@@ -7831,15 +7893,33 @@ function renderYearSubTab(sub, Y, data, d, yrRows, TOP_PCT) {
     const ytdPL = (first !== undefined && first !== null && last !== null && lastIdx >= 0) ? (last - first - principal) : null;
     const monthly = live(bucket(inv, r => r.amount));
     const nMonths = monthsWith(monthly);
+    const invOf = (rows, kw) => rows.filter(r => r.major.includes('수입') && String(r.minor || '').includes('투자') && (!kw || String(r.item || '').includes(kw))).reduce((a, r) => a + r.amount, 0);
+    const invAvgOf = (rows) => { const n = nMonthsOf(rows, r => r.major.includes('수입') && String(r.minor || '').includes('투자')); return n ? invOf(rows) / n : 0; };
+    const prinOf = (rows) => rows.filter(r => r.major.includes('이체') && String(r.minor || '').includes('투자')).reduce((a, r) => a + r.amount, 0);
+    const pTotal = invOf(prevRows), pSale = invOf(prevRows, '판매수익'), pDiv = invOf(prevRows, '배당'), pPrin = prinOf(prevRows);
+    const pTax = t.paid[prevY] || 0;
+    /* 작년 같은 시점 평가손익 */
+    const pVal = yrAssetSeries(data.assetRows, prevY, /투자/);
+    const pFirst = pVal.find(v => v !== null && v !== undefined);
+    const pCapIdx = (cap ? cap : 12) - 1;
+    let pLastIdx = -1; for (let i = 0; i <= pCapIdx; i++) if (pVal[i] !== null) pLastIdx = i;
+    const pYtdPL = (pFirst != null && pLastIdx >= 0) ? (pVal[pLastIdx] - pFirst - pPrin) : null;
     statBox.innerHTML = [
-      yrStatCard('투자수익 합계', formatWon(total), [`판매 ${formatCompactWon(sale)} · 배당 ${formatCompactWon(dividend)}`], total >= 0 ? 'var(--green)' : 'var(--red)'),
-      yrStatCard('월 평균 투자수익', formatWon(Math.round(nMonths ? total / nMonths : 0)), [`${nMonths}개월 기준`]),
-      yrStatCard('판매수익', formatWon(sale), [`실현손익 · 양도세 과세 대상`]),
-      yrStatCard('배당금', formatWon(dividend), [`이자 ${formatCompactWon(interest)}원 별도`]),
-      yrStatCard('세금', formatWon(taxPaid), [taxRow ? `${Y}년 실현손익 기준 예상 ${formatCompactWon(Math.round(taxRow.est))}원` : '해당 연도 납부 내역'], 'var(--red)'),
-      yrStatCard('올해 누적 원금', formatWon(principal), [`투자 계좌로 새로 넣은 돈`], 'var(--gold-soft)'),
+      yrStatCard('투자수익 합계', formatWon(total),
+        [cmpSub(total, pTotal, false, pvNote), avgSub(total, invOf, false), `${capNote} · 판매 ${formatCompactWon(sale)} · 배당 ${formatCompactWon(dividend)}`], total >= 0 ? 'var(--green)' : 'var(--red)'),
+      yrStatCard('월 평균 투자수익', formatWon(Math.round(nMonths ? total / nMonths : 0)),
+        [cmpSub(Math.round(nMonths ? total / nMonths : 0), Math.round(invAvgOf(prevRows)), false, pvNote), `${nMonths}개월 기준`]),
+      yrStatCard('판매수익', formatWon(sale),
+        [cmpSub(sale, pSale, false, pvNote), `실현손익 · 양도세 과세 대상`]),
+      yrStatCard('배당금', formatWon(dividend),
+        [cmpSub(dividend, pDiv, false, pvNote), avgSub(dividend, (rows) => invOf(rows, '배당'), false), `이자 ${formatCompactWon(interest)}원 별도`]),
+      yrStatCard('세금', formatWon(taxPaid),
+        [cmpSub(taxPaid, pTax, true, `${prevY}년 납부액 대비`), taxRow ? `${Y}년 실현손익 기준 예상 ${formatCompactWon(Math.round(taxRow.est))}원` : '해당 연도 납부 내역'], 'var(--red)'),
+      yrStatCard('올해 누적 원금', formatWon(principal),
+        [cmpSub(principal, pPrin, false, pvNote), avgSub(principal, prinOf, false), `투자 계좌로 새로 넣은 돈`], 'var(--gold-soft)'),
       yrStatCard('연초 대비 평가손익', ytdPL === null ? '—' : formatWon(ytdPL),
-        [{ text: first == null ? '평가액 스냅샷 부족' : `${formatCompactWon(first)} → ${formatCompactWon(last)} (원금 유입 ${formatCompactWon(principal)} 제외)`, tone: (ytdPL || 0) >= 0 ? 'up' : 'down' }],
+        [cmpSub(ytdPL === null ? 0 : ytdPL, pYtdPL, false, `${prevY}년 같은 시점 대비`),
+         { text: first == null ? '평가액 스냅샷 부족' : `${formatCompactWon(first)} → ${formatCompactWon(last)} (원금 유입 ${formatCompactWon(principal)} 제외)`, tone: (ytdPL || 0) >= 0 ? 'up' : 'down' }],
         (ytdPL || 0) >= 0 ? 'var(--net)' : 'var(--red)')
     ].join('');
     mkChart([
