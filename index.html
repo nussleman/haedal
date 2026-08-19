@@ -704,9 +704,12 @@ body{
 }
 .stat-card .label{font-family:var(--mono);font-size:10.5px;color:var(--text-faint);letter-spacing:.05em;}
 .stat-card .value{font-family:var(--sans);font-weight:800;font-size:21px;margin-top:5px;color:var(--text);}
-.stat-card .sub{font-size:11px;color:var(--text-dim);margin-top:4px;font-family:var(--mono);}
-.stat-card .sub.up{color:var(--green);}
-.stat-card .sub.down{color:var(--red);}
+.stat-card .sub{font-size:11px;color:var(--text-dim);margin-top:9px;font-family:var(--mono);line-height:1.55;}
+.stat-card .sub + .sub{margin-top:3px;}
+/* 좋음/나쁨은 수입(초록)·지출(빨강)과 겹치지 않게 중립 회색 + 주의는 앰버로만 구분 */
+.stat-card .sub.up{color:var(--text-dim);}
+.stat-card .sub.down{color:#d9884f;}
+.stat-card .value + .sub{margin-top:10px;}
 
 /* ---------- data table (가계부) ---------- */
 .table-controls{
@@ -985,7 +988,7 @@ body{font-variant-numeric:tabular-nums;}
 .stat-card{padding:10px 11px;border-radius:9px;}
 .stat-card .label{font-size:11px;letter-spacing:0;color:var(--text-faint);}
 .stat-card .value{font-size:19px;margin-top:3px;line-height:1.15;}
-.stat-card .sub{font-size:11px;margin-top:3px;}
+.stat-card .sub{font-size:11px;margin-top:7px;}
 
 /* ---------- 정렬되는 표/행 ---------- */
 .acct-row{display:grid;grid-template-columns:auto 1fr auto;gap:8px;padding:6px 0;font-size:12.5px;align-items:center;}
@@ -1175,13 +1178,12 @@ body{font-variant-numeric:tabular-nums;}
   .st-todo-name{min-height:0;}
 }
 
-/* ---------- 체크 배지 (후회·고정비·환급·재분류) ---------- */
+/* ---------- 체크 배지 (후회·고정비·환급) ---------- */
 .chk-strip{display:flex;gap:4px;flex-wrap:wrap;align-items:center;}
 .chk-pill{font-family:var(--mono);font-size:9.5px;letter-spacing:.02em;padding:2px 6px;border-radius:5px;white-space:nowrap;}
 .chk-pill.fixed{background:rgba(91,143,199,0.18);color:#9dc2e8;}
 .chk-pill.regret{background:rgba(193,72,63,0.20);color:#eb9891;}
 .chk-pill.refund{background:rgba(76,140,107,0.20);color:#8fd0ac;}
-.chk-pill.reclass{background:rgba(255,255,255,0.06);color:var(--text-dim);}
 #today-left{display:flex;flex-direction:column;gap:var(--gap);min-width:0;}
 #today-left .stat-card{flex:0 0 auto;}
 #today-left .stat-card .chk-strip{margin-top:8px;}
@@ -1623,6 +1625,45 @@ body{font-variant-numeric:tabular-nums;}
 .sug-vals{display:flex;gap:14px;flex-wrap:wrap;}
 .sug-vals>span{font-family:var(--mono);font-size:14px;color:var(--gold-soft);}
 .sug-vals>span>em{font-style:normal;display:block;font-size:9.5px;color:var(--text-faint);letter-spacing:.04em;}
+
+/* ---------- 예산 표 (예산 + 실적 통합) ---------- */
+.bt2{width:100%;border-collapse:collapse;font-size:13px;}
+.bt2 th{font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--text-faint);
+  font-weight:400;text-align:right;padding:0 8px 8px;border-bottom:1px solid var(--border-strong);}
+.bt2 th.c-nm{text-align:left;}
+.bt2 td{padding:0 8px;height:34px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.bt2 td.c-num,.bt2 td.c-in{text-align:right;font-family:var(--mono);font-size:12px;white-space:nowrap;}
+.bt2 td.c-nm{color:var(--text-dim);}
+.bt2 .c-in{width:130px;}
+.bt2 .c-num{width:120px;}
+
+.bt2-g{cursor:pointer;}
+.bt2-g td{color:var(--text);}
+.bt2-g td.c-nm b{font-weight:600;}
+.bt2-g td.c-in{color:var(--text);}
+.bt2-g:hover td{background:rgba(255,255,255,.035);}
+.bt2-g td.c-nm em{font-style:normal;font-family:var(--mono);font-size:10px;color:var(--text-faint);margin-left:6px;}
+.bt2-caret{display:inline-block;width:14px;color:var(--text-faint);font-size:10px;}
+
+.bt2-i td{background:rgba(255,255,255,.02);}
+.bt2-i td.c-nm{font-size:12.5px;}
+.bt2-ind{display:inline-block;width:22px;}
+.bt2-auto{font-style:normal;font-family:var(--mono);font-size:9px;color:var(--text-faint);
+  border:1px solid var(--border);border-radius:3px;padding:1px 3px;margin-left:6px;}
+.bt2-input{width:110px;background:var(--panel-2);border:1px solid var(--border);color:var(--text);
+  font-family:var(--mono);font-size:12px;border-radius:5px;padding:4px 7px;text-align:right;}
+.bt2-input:focus{outline:none;border-color:var(--gold-soft);}
+
+.bt2-diff.ok{color:var(--text-dim);}
+.bt2-diff.over{color:#d9884f;}
+.bt2 tr.over td.c-num:nth-child(3){color:#d9884f;}
+.bt2 tfoot td{height:40px;border-top:1px solid var(--border-strong);border-bottom:none;
+  font-family:var(--mono);font-size:13px;color:var(--text);}
+.bt2 tfoot td.c-nm{font-family:var(--sans);}
+@media (max-width:720px){
+  .bt2 .c-in{width:104px;} .bt2 .c-num{width:88px;}
+  .bt2-input{width:88px;} .bt2 td{font-size:12px;}
+}
 </style>
 </head>
 <body>
@@ -1736,7 +1777,7 @@ const state = {
   todayTrendRange: 14,     // '오늘' 탭 일별 추이 기간 (일)
   calMonthKey: null,       // '캘린더' 탭에서 보고 있는 달 (YYYY-MM)
   calMode: 'all',
-  calHeat: true,          // 'all' | 'expense' | 'income' | 'transfer'
+  calHeat: false,         // 지출 진하기(히트맵) — 기본 끔
   calSelDay: null          // 캘린더에서 선택한 날 (YYYY-MM-DD)
 };
 
@@ -1932,7 +1973,7 @@ function parseIndexFromRows(rows) {
 
 /* 목표 탭: 시기 / 구분 / 목표 / 상태 / 달성한 날 / 메모 컬럼 구조.
    "시기"와 "상태"가 함께 있는 행만 헤더로 인정한다 — 가계부(D)의
-   헤더(날짜,대분류,소분류,항목,사용처,금액,메모,재분류,고정비)에는
+   헤더(날짜,대분류,소분류,항목,사용처,금액,메모,후회하는 소비,회사 환급,고정비)에는
    이 두 단어가 없어서, 다른 탭을 잘못 목표로 오인할 위험이 없다. */
 function parseGoalsFromRows(rows) {
   let headerRowIdx = -1, headerCols = [];
@@ -2220,6 +2261,15 @@ function isTruthyFlag(v) {
   return /^(true|1|y|yes|참|o|on|v|✓)$/i.test(String(v === null || v === undefined ? '' : v).trim());
 }
 
+/* 시트의 체크 칸(후회하는 소비 · 회사 환급)은 ✔️ ✅ ☑ 같은 이모지가 들어온다.
+   변이 셀렉터(U+FE0F)까지 붙어 오므로 '비어 있지 않고 명시적 거짓이 아니면 체크'로 본다. */
+function isCheckMark(v) {
+  const t = String(v === null || v === undefined ? '' : v).replace(/\uFE0F/g, '').trim();
+  if (!t) return false;
+  if (/^(false|0|n|no|아니오|-|—|x)$/i.test(t)) return false;
+  return true;
+}
+
 function parseLedgerFromRows(rows) {
   let r0 = -1, c0 = -1, header = null;
   for (let r = 0; r < rows.length; r++) {
@@ -2252,7 +2302,6 @@ function parseLedgerFromRows(rows) {
     amount: findCol(['금액'], c0 + 5),
     vendor: findCol([/^사용처/, /브랜드/], c0 + 6),
     memo: findCol(['내용', '메모'], c0 + 7),
-    reclass: findCol(['재분류'], c0 + 8),
     regret: findCol([/^후회/], -1),
     refund: findCol([/^회사환급/, /^환급/], -1),
     fixed: findCol([/^고정비/], -1)
@@ -2276,12 +2325,17 @@ function parseLedgerFromRows(rows) {
     const amount = parseWon(row[COL.amount]);
     const vendor = cleanLabel(row[COL.vendor] || '');
     const memo = (row[COL.memo] || '').trim();
-    const reclass = (row[COL.reclass] || '').trim();
     const fixed = COL.fixed >= 0 ? isTruthyFlag(row[COL.fixed]) : false;
-    const regret = COL.regret >= 0 ? isTruthyFlag(row[COL.regret]) : false;
-    const refund = COL.refund >= 0 ? (parseWon(row[COL.refund]) || 0) : 0;
+    const regret = COL.regret >= 0 ? isCheckMark(row[COL.regret]) : false;
+    /* 회사 환급 칸은 금액일 수도, 체크(=전액 환급)일 수도 있다 */
+    let refund = 0;
+    if (COL.refund >= 0) {
+      const raw = row[COL.refund];
+      const asWon = parseWon(raw);
+      refund = (asWon !== null && asWon !== 0) ? asWon : (isCheckMark(raw) && amount !== null ? amount : 0);
+    }
     if (amount === null || amount === 0) continue;
-    ledger.push({ date: dateCell, major, minor, item, amount, vendor, memo, reclass, fixed, regret, refund });
+    ledger.push({ date: dateCell, major, minor, item, amount, vendor, memo, fixed, regret, refund });
   }
   return ledger;
 }
@@ -3344,7 +3398,6 @@ function computeDataQuality(data, d, monthKey) {
   const mk = monthKey || thisMonthKey();
   const monthRows = ledger.filter(r => ledgerMonthKey(r.date) === mk);
   const expRows = monthRows.filter(r => r.major.includes('지출'));
-  const noReclass = expRows.filter(r => !r.reclass).length;
   const noVendor = expRows.filter(r => !r.vendor && !r.memo).length;
 
   const days = ledger.map(r => ledgerDayKey(r.date)).filter(Boolean).sort();
@@ -3360,7 +3413,7 @@ function computeDataQuality(data, d, monthKey) {
   })();
   const hasSnapshot = (data.assetRows || []).some(r => assetMonthKey(r.date) === snapKey);
 
-  return { mk, expCount: expRows.length, noReclass, noVendor, lastDay, daysSince, hasSnapshot };
+  return { mk, expCount: expRows.length, noVendor, lastDay, daysSince, hasSnapshot };
 }
 
 function dataQualityHtml(q) {
@@ -3369,7 +3422,6 @@ function dataQualityHtml(q) {
   if (q.daysSince === null) pills.push('<span class="dq-pill bad">기록 없음</span>');
   else if (q.daysSince <= 0) pills.push('<span class="dq-pill ok">오늘까지 기록됨</span>');
   else pills.push(`<span class="dq-pill ${q.daysSince >= 3 ? 'bad' : 'warn'}">마지막 기록 ${q.daysSince}일 전</span>`);
-  pills.push(`<span class="dq-pill ${lvl(q.noReclass)}">재분류 미입력 ${q.noReclass}건</span>`);
   pills.push(`<span class="dq-pill ${lvl(q.noVendor)}">사용처·메모 없음 ${q.noVendor}건</span>`);
   pills.push(`<span class="dq-pill ${q.hasSnapshot ? 'ok' : 'warn'}">자산 스냅샷 ${q.hasSnapshot ? '입력됨' : '미입력'}</span>`);
   return `<div class="dq-strip">${pills.join('')}</div>`;
@@ -3384,7 +3436,6 @@ function monthlyCheckHtml(data, d, monthKey) {
   if (q.daysSince !== null && mk === thisMonthKey()) {
     pills.push(`<span class="dq-pill ${q.daysSince >= 3 ? 'bad' : q.daysSince <= 0 ? 'ok' : 'warn'}">${q.daysSince <= 0 ? '오늘까지 기록됨' : `마지막 기록 ${q.daysSince}일 전`}</span>`);
   }
-  pills.push(`<span class="dq-pill ${lvl(q.noReclass)}">재분류 미입력 ${q.noReclass}건</span>`);
   pills.push(`<span class="dq-pill ${q.hasSnapshot ? 'ok' : 'warn'}">자산 스냅샷 ${q.hasSnapshot ? '입력됨' : '미입력'}</span>`);
 
   const netOf = (r) => r.amount - (r.refund || 0);
@@ -6012,13 +6063,12 @@ function renderNowPage(container, data, d) {
 
 /* ---------------- page: 오늘 (하루 단위) ---------------- */
 
-/* 시트의 체크 항목(후회하는 소비 · 고정비 · 회사 환급 · 재분류)을 배지로 */
+/* 시트의 체크 항목(후회하는 소비 · 고정비 · 회사 환급)을 배지로 */
 function checkPills(r) {
   const out = [];
   if (r.fixed) out.push('<span class="chk-pill fixed">고정</span>');
   if (r.regret) out.push('<span class="chk-pill regret">후회</span>');
   if (r.refund) out.push(`<span class="chk-pill refund">환급 ${formatCompactWon(r.refund)}</span>`);
-  if (r.reclass) out.push(`<span class="chk-pill reclass">${r.reclass}</span>`);
   return out.length ? `<span class="chk-strip">${out.join('')}</span>` : '<span style="color:var(--text-faint)">·</span>';
 }
 
@@ -6268,7 +6318,6 @@ function renderTodayPage(container, data, d) {
           <button class="btn small" id="today-jump">오늘</button>
         </div>
       </div>
-      <div class="today-verdict ${verdictCls}">${verdict}</div>
       ${dataQualityHtml(computeDataQuality(data, d))}
     </div>
 
@@ -6474,10 +6523,6 @@ function renderYearPage(container, data, d) {
           <select id="yr-select">${years.slice().reverse().map(y => `<option value="${y}" ${y === Y ? 'selected' : ''}>${y}년</option>`).join('')}</select>
           <button id="yr-next" ${years.indexOf(Y) >= years.length - 1 ? 'disabled' : ''}>▶</button>
         </div>
-      </div>
-      <div class="today-verdict ${net >= 0 ? 'good' : 'warn'}">
-        ${isThisYear ? `1–${throughMonth}월 동안` : `${Y}년 동안`} <b>${formatWon(income)}</b> 벌고 <b>${formatWon(expense)}</b> 써서
-        <b>${formatWon(net)}</b> 남았어요.
       </div>
     </div>
 
@@ -6709,11 +6754,11 @@ function renderCalendarPage(container, data, d) {
       <div class="today-datewrap">
         <div class="day-title">${monthKeyLabel(monthKey)}</div>
         <div class="month-nav">
-          <button class="btn small ${state.calHeat === false ? '' : 'on'}" id="cal-heat">${state.calHeat === false ? '지출 진하기 끔' : '지출 진하기 켬'}</button>
           <button id="cal-prev" ${availableKeys.indexOf(monthKey) <= 0 ? 'disabled' : ''}>◀</button>
           <select id="cal-month-select">${monthOptions}</select>
           <button id="cal-next" ${availableKeys.indexOf(monthKey) >= availableKeys.length - 1 ? 'disabled' : ''}>▶</button>
           <button class="btn small" id="cal-thismonth">이번 달</button>
+          <button class="btn small ${state.calHeat === false ? '' : 'on'}" id="cal-heat">${state.calHeat === false ? '지출 진하기 끔' : '지출 진하기 켬'}</button>
         </div>
       </div>
     </div>
@@ -7495,12 +7540,12 @@ function renderIncomePage(container, data, d) {
           <div>총수입 추이</div>
           <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
             <div class="range-toggle" id="income-total-mode-toggle">
-              <button data-mode="total" class="active">총액</button>
-              <button data-mode="category">카테고리</button>
+              <button data-mode="total" class="${(state.incomeTotalMode || 'total') === 'total' ? 'active' : ''}">총액</button>
+              <button data-mode="category" class="${state.incomeTotalMode === 'category' ? 'active' : ''}">카테고리</button>
             </div>
             <div class="range-toggle" id="income-period-toggle">
-              <button data-period="month" class="active">월</button>
-              <button data-period="year">연</button>
+              <button data-period="month" class="${(state.incomePeriod || 'month') === 'month' ? 'active' : ''}">월</button>
+              <button data-period="year" class="${state.incomePeriod === 'year' ? 'active' : ''}">연</button>
             </div>
             <div class="range-toggle" id="income-range-toggle"></div>
           </div>
@@ -7547,28 +7592,46 @@ function renderIncomePage(container, data, d) {
     catBtnsBox.style.display = mode === 'category' ? '' : 'none';
     document.getElementById('income-range-toggle').style.display = period === 'year' ? 'none' : '';
 
-    if (mode === 'total' && period === 'year') {
-      const yearMap = {};
-      incomeSeries.forEach(s => {
-        const y = pivotYearMonth(s.month).year;
-        yearMap[y] = (yearMap[y] || 0) + s.total;
-      });
-      const years = Object.keys(yearMap).sort();
+    if (period === 'year') {
+      /* 연 단위 집계 — 총액이면 막대 하나, 카테고리면 누적 막대 */
+      const years = [...new Set(data.months.map(m => pivotYearMonth(m).year))].filter(Boolean).sort();
       const curYear = String(new Date().getFullYear());
-      legendBox.innerHTML = `<span><i style="background:#c9a227"></i>올해</span><span><i style="background:#4c8c6b"></i>그 외</span>`;
+      const filterCat = state.incomeCatFilter && state.incomeCatFilter !== 'all' && catNames.includes(state.incomeCatFilter) ? state.incomeCatFilter : null;
+      const sumFor = (cat) => {
+        const map = {};
+        years.forEach(y => { map[y] = 0; });
+        data.months.forEach((m, i) => {
+          const y = pivotYearMonth(m).year;
+          if (map[y] === undefined) return;
+          map[y] += (cat ? ((data.incomeCategories[cat] || [])[i] || 0) : (data.incomeTotal[i] || 0));
+        });
+        return years.map(y => map[y]);
+      };
+      let datasets, legendHtml;
+      if (mode === 'total') {
+        datasets = [{ type: 'bar', label: '수입', data: sumFor(null),
+          backgroundColor: years.map(y => y === curYear ? 'rgba(201,162,39,0.9)' : 'rgba(76,140,107,0.75)'), borderRadius: 3, labelColor: '#c7e4d4' }];
+        legendHtml = `<span><i style="background:#c9a227"></i>올해</span><span><i style="background:#4c8c6b"></i>그 외</span>`;
+      } else if (filterCat) {
+        const color = palette[catNames.indexOf(filterCat) % palette.length];
+        datasets = [{ type: 'bar', label: filterCat, data: sumFor(filterCat), backgroundColor: color, borderRadius: 3, labelColor: '#eae8e0' }];
+        legendHtml = `<span><i style="background:${color}"></i>${filterCat}</span>`;
+      } else {
+        datasets = catNames.map((c, i) => ({
+          type: 'bar', label: c, data: sumFor(c), backgroundColor: palette[i % palette.length], stack: 's', labelColor: '#eae8e0'
+        }));
+        legendHtml = catNames.map((c, i) => `<span><i style="background:${palette[i % palette.length]}"></i>${c}</span>`).join('');
+      }
+      legendBox.innerHTML = legendHtml;
+      const stacked = mode === 'category' && !filterCat;
       state.charts.incomeTotal = new Chart(totalCtx, {
-        data: {
-          labels: years.map(y => y + '년'),
-          datasets: [
-            { type: 'bar', label: '수입', data: years.map(y => yearMap[y]), backgroundColor: years.map(y => y === curYear ? 'rgba(201,162,39,0.9)' : 'rgba(76,140,107,0.75)'), borderRadius: 3, labelColor: '#c7e4d4' }
-          ]
-        },
+        data: { labels: years.map(y => y + '년'), datasets },
         options: {
           responsive: true, maintainAspectRatio: false, layout: { padding: { top: 18 } },
-          plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` ${formatWon(c.raw)}` } } },
-          scales: { x: { ticks: MONO_TICK, grid: { display: false } }, y: { ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT } }
+          plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` ${c.dataset.label}: ${formatWon(c.raw)}` } } },
+          scales: { x: { stacked, ticks: MONO_TICK, grid: { display: false } }, y: { stacked, ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT } }
         },
-        plugins: [valueLabelPlugin]
+        plugins: [stacked ? stackTotalLabelPlugin : valueLabelPlugin]
       });
       return;
     }
@@ -7828,13 +7891,9 @@ function renderExpensePage(container, data, d) {
 
     ${SUB === 'budget' ? `
     <div class="g">
-      <div class="panel s7" id="panel-budget-month-section">
-        <div class="panel-title"><div>세부 카테고리별 예산</div><span class="ptag">기준 = 최근 12개월 월평균</span></div>
-        <div id="cat-budget-body"></div>
-      </div>
-      <div class="panel s5">
-        <div class="panel-title"><div>실적</div><div id="expense-month-nav-slot"></div></div>
-        <div id="budget-actual-body"></div>
+      <div class="panel s12" id="panel-budget-month-section">
+        <div class="panel-title"><div>예산</div><div id="expense-month-nav-slot"></div></div>
+        <div id="budget-table-body"></div>
       </div>
     </div>` : ''}
 
@@ -7955,8 +8014,7 @@ function renderExpenseMonthSection(data, d) {
   const navSlot = document.getElementById('expense-month-nav-slot');
   if (navSlot) navSlot.innerHTML = renderMonthNavControls(idx, data, d);
   bindMonthNavControls(data, d);
-  renderCategoryBudgetPanel(data, d);
-  renderBudgetActualPanel(data, d);
+  renderBudgetTable(data, d);
 }
 
 function setExpenseMonthIdx(idx, data, d) {
@@ -8028,113 +8086,101 @@ function budgetOf(minor, item, fallback) {
   return (v === undefined || v === null || v === '') ? fallback : Number(v);
 }
 
-function renderCategoryBudgetPanel(data, d) {
-  const body = document.getElementById('cat-budget-body');
-  if (!body) return;
-  const { groups } = buildBudgetTree(data);
-  if (!state.budgetOpen) state.budgetOpen = {};
-
-  const gTotals = groups.map(g => ({
-    name: g.name,
-    avg: g.avg,
-    budget: g.items.reduce((a, it) => a + budgetOf(g.name, it.name, it.avg), 0)
-  }));
-  const sumAvg = gTotals.reduce((a, g) => a + g.avg, 0);
-  const sumBudget = gTotals.reduce((a, g) => a + g.budget, 0);
-  const maxG = Math.max(...gTotals.map(g => g.budget), 1);
-
-  body.innerHTML = `
-    <div class="bg-total">
-      <div class="bg-total-head"><span>월 예산 합계</span><b>${formatWon(sumBudget)}</b></div>
-      <div class="bg-total-foot"><span>최근 12개월 월평균 ${formatWon(Math.round(sumAvg))}</span>
-        <span style="color:${sumBudget <= sumAvg ? 'var(--green)' : 'var(--red)'}">${sumBudget <= sumAvg ? '−' : '+'}${formatWon(Math.abs(sumBudget - sumAvg))}</span></div>
-    </div>
-    <div class="bt">
-      ${groups.map(g => {
-        const gt = gTotals.find(x => x.name === g.name);
-        const open = !!state.budgetOpen[g.name];
-        return `<div class="bt-g ${open ? 'open' : ''}">
-          <div class="bt-ghead" data-g="${g.name}">
-            <span class="bt-caret">${open ? '▾' : '▸'}</span>
-            <span class="bt-gnm">${g.name}<em>${g.items.length}</em></span>
-            <span class="bt-gtrack"><i style="width:${(gt.budget / maxG) * 100}%"></i></span>
-            <span class="bt-gamt">${formatWon(gt.budget)}</span>
-          </div>
-          ${open ? g.items.map(it => {
-            const b = budgetOf(g.name, it.name, it.avg);
-            const custom = !!(state.budgets && state.budgets[budgetKeyOf(g.name, it.name)]);
-            return `<div class="bt-i">
-              <span class="bt-inm">${it.name}</span>
-              <span class="bt-iavg">평균 ${wonComma(Math.round(it.avg))}</span>
-              <span class="bt-iin">
-                <input type="text" inputmode="numeric" class="budget-input-compact" data-cat="${g.name}" data-item="${it.name}" value="${wonComma(Math.round(b))}" />
-                ${custom ? '' : '<em title="최근 12개월 평균">자동</em>'}
-              </span>
-            </div>`;
-          }).join('') : ''}
-        </div>`;
-      }).join('') || '<div class="empty-state">지출 데이터가 없어요.</div>'}
-    </div>
-    <div class="settings-note">그룹을 눌러 세부 항목을 펼치고, 예산 칸을 고치면 저장돼요. 비우면 12개월 평균으로 돌아갑니다.</div>
-  `;
-
-  body.querySelectorAll('.bt-ghead').forEach(h => h.addEventListener('click', () => {
-    state.budgetOpen[h.dataset.g] = !state.budgetOpen[h.dataset.g];
-    renderCategoryBudgetPanel(data, d);
-  }));
-  body.querySelectorAll('.budget-input-compact').forEach(inp => {
-    inp.addEventListener('click', (e) => e.stopPropagation());
-    inp.addEventListener('change', () => {
-      const k = budgetKeyOf(inp.dataset.cat, inp.dataset.item);
-      const raw = inp.value.replace(/[^0-9]/g, '');
-      state.budgets[k] = raw === '' ? undefined : parseFloat(raw);
-      saveBudgets();
-      renderCategoryBudgetPanel(data, d);
-      renderBudgetActualPanel(data, d);
-    });
-  });
-}
-
-/* 선택한 달의 예산 대비 실적 */
-function renderBudgetActualPanel(data, d) {
-  const body = document.getElementById('budget-actual-body');
+/* ---------------- 지출 › 예산 : 예산과 실적을 한 표로 ----------------
+   상위(소분류) 행을 접었다 폈다 하면 예산·실적이 같이 열린다.
+   예산 입력칸은 항목 바로 옆, 그 오른쪽에 실적과 차이. */
+function renderBudgetTable(data, d) {
+  const body = document.getElementById('budget-table-body');
   if (!body) return;
   const { groups, months } = buildBudgetTree(data);
+  if (!state.budgetOpen) state.budgetOpen = {};
+
   if (state.expenseMonthIdx === undefined || state.expenseMonthIdx === null) state.expenseMonthIdx = d.latestPivotIdx;
   const pm = data.months[state.expenseMonthIdx];
   const ym = pivotYearMonth(pm);
   const mk = ym.year ? `${ym.year}-${String(ym.month).padStart(2, '0')}` : months[months.length - 1];
 
   const rows = groups.map(g => {
-    const budget = g.items.reduce((a, it) => a + budgetOf(g.name, it.name, it.avg), 0);
-    const used = g.items.reduce((a, it) => a + (it.byMonth[mk] || 0), 0);
-    return { name: g.name, budget, used, pct: budget > 0 ? (used / budget) * 100 : 0, rem: budget - used };
-  }).filter(r => r.budget > 0 || r.used > 0).sort((a, b) => b.pct - a.pct);
+    const items = g.items.map(it => {
+      const budget = budgetOf(g.name, it.name, it.avg);
+      const used = it.byMonth[mk] || 0;
+      const custom = !!(state.budgets && state.budgets[budgetKeyOf(g.name, it.name)] !== undefined
+        && state.budgets[budgetKeyOf(g.name, it.name)] !== '');
+      return { name: it.name, avg: it.avg, budget, used, custom };
+    });
+    return {
+      name: g.name,
+      items,
+      budget: items.reduce((a, x) => a + x.budget, 0),
+      used: items.reduce((a, x) => a + x.used, 0)
+    };
+  }).filter(g => g.budget > 0 || g.used > 0)
+    .sort((a, b) => b.budget - a.budget);
 
   const tB = rows.reduce((a, r) => a + r.budget, 0);
   const tU = rows.reduce((a, r) => a + r.used, 0);
-  const tPct = tB > 0 ? (tU / tB) * 100 : 0;
+  const diffCell = (b, u) => {
+    const gap = b - u;
+    if (gap >= 0) return `<span class="bt2-diff ok">${wonComma(Math.round(gap))}</span>`;
+    return `<span class="bt2-diff over">+${wonComma(Math.round(-gap))}</span>`;
+  };
 
   body.innerHTML = `
-    <div class="bg-total ${tU > tB ? 'over' : ''}">
-      <div class="bg-total-head"><span>${monthKeyLabel(mk)}</span><b>${formatWon(tU)} <em>/ ${formatWon(tB)}</em></b></div>
-      <div class="bg-track lg"><div class="bg-fill ${tU > tB ? 'over' : ''}" style="width:${Math.min(tPct, 100)}%"></div></div>
-      <div class="bg-total-foot">
-        <span style="color:${tU > tB ? 'var(--red)' : 'var(--green)'}">${tU > tB ? `${formatWon(tU - tB)} 초과` : `${formatWon(tB - tU)} 남음`}</span>
-        <span>${tPct.toFixed(0)}%</span>
-      </div>
-    </div>
-    <div class="ba-list">
-      ${rows.map(r => `
-        <div class="ba-row ${r.rem < 0 ? 'over' : ''}">
-          <span class="ba-nm">${r.name}</span>
-          <span class="ba-track"><i class="${r.rem < 0 ? 'over' : ''}" style="width:${Math.min(r.pct, 100)}%"></i></span>
-          <span class="ba-pct">${r.pct.toFixed(0)}%</span>
-          <span class="ba-fig">${wonComma(Math.round(r.used))}<em>/ ${wonComma(Math.round(r.budget))}</em></span>
-          <span class="ba-rem ${r.rem < 0 ? 'over' : ''}">${r.rem < 0 ? '+' + wonComma(Math.round(-r.rem)) : wonComma(Math.round(r.rem))}</span>
-        </div>`).join('') || '<div class="empty-state">해당 월 데이터가 없어요.</div>'}
-    </div>
+    <table class="bt2">
+      <thead>
+        <tr>
+          <th class="c-nm">항목</th>
+          <th class="c-in">예산</th>
+          <th class="c-num">실적</th>
+          <th class="c-num">남음 / 초과</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows.map(g => {
+          const open = !!state.budgetOpen[g.name];
+          return `
+          <tr class="bt2-g ${open ? 'open' : ''} ${g.used > g.budget ? 'over' : ''}" data-g="${g.name}">
+            <td class="c-nm"><span class="bt2-caret">${open ? '▾' : '▸'}</span><b>${g.name}</b><em>${g.items.length}</em></td>
+            <td class="c-in">${wonComma(Math.round(g.budget))}</td>
+            <td class="c-num">${wonComma(Math.round(g.used))}</td>
+            <td class="c-num">${diffCell(g.budget, g.used)}</td>
+          </tr>
+          ${open ? g.items.map(it => `
+            <tr class="bt2-i ${it.used > it.budget ? 'over' : ''}">
+              <td class="c-nm"><span class="bt2-ind"></span>${it.name}${it.custom ? '' : '<i class="bt2-auto" title="최근 12개월 평균">자동</i>'}</td>
+              <td class="c-in"><input type="text" inputmode="numeric" class="bt2-input" data-cat="${g.name}" data-item="${it.name}" value="${wonComma(Math.round(it.budget))}" /></td>
+              <td class="c-num">${wonComma(Math.round(it.used))}</td>
+              <td class="c-num">${diffCell(it.budget, it.used)}</td>
+            </tr>`).join('') : ''}`;
+        }).join('') || '<tr><td colspan="4"><div class="empty-state">지출 데이터가 없어요.</div></td></tr>'}
+      </tbody>
+      <tfoot>
+        <tr class="${tU > tB ? 'over' : ''}">
+          <td class="c-nm"><b>합계</b></td>
+          <td class="c-in">${wonComma(Math.round(tB))}</td>
+          <td class="c-num">${wonComma(Math.round(tU))}</td>
+          <td class="c-num">${diffCell(tB, tU)}</td>
+        </tr>
+      </tfoot>
+    </table>
   `;
+
+  body.querySelectorAll('.bt2-g').forEach(tr => tr.addEventListener('click', (e) => {
+    if (e.target.closest('input')) return;
+    state.budgetOpen[tr.dataset.g] = !state.budgetOpen[tr.dataset.g];
+    renderBudgetTable(data, d);
+  }));
+  body.querySelectorAll('.bt2-input').forEach(inp => {
+    inp.addEventListener('click', (e) => e.stopPropagation());
+    inp.addEventListener('change', () => {
+      const k = budgetKeyOf(inp.dataset.cat, inp.dataset.item);
+      const raw = inp.value.replace(/[^0-9]/g, '');
+      if (raw === '') delete state.budgets[k];
+      else state.budgets[k] = parseFloat(raw);
+      saveBudgets();
+      renderBudgetTable(data, d);
+    });
+  });
 }
 
 function renderTopExpensesPanel(data, d) {
