@@ -710,6 +710,9 @@ body{
   background:var(--panel);border:1px solid var(--border);border-radius:12px;
   padding:15px 16px;
 }
+.stat-card.clickable{cursor:pointer;transition:border-color .15s ease,background .15s ease;}
+.stat-card.clickable:hover{border-color:var(--border-strong);background:rgba(255,255,255,0.025);}
+.stat-card.clickable .label:after{content:' ›';color:var(--text-faint);font-weight:700;}
 .stat-card .label{font-family:var(--mono);font-size:10.5px;color:var(--text-faint);letter-spacing:.05em;}
 .stat-card .value{font-family:var(--sans);font-weight:800;font-size:21px;margin-top:5px;color:var(--text);}
 .stat-card .sub{position:relative;font-size:11.5px;color:var(--text-dim);margin-top:9px;
@@ -1928,9 +1931,9 @@ const state = {
   incomePieRange: 12,
   savTrendRange: 12,
   savContribRange: 12,
-  flowSub: 'today',        // 흐름 하위 탭: today | now | calendar | income | expense
+  flowSub: 'today',        // 흐름 하위 탭: today | now | year | calendar
   expSub: 'summary',       // 지출 하위: summary | fixed | budget
-  nowSub: 'summary',       // 이번달 하위: summary | budget | detail
+  nowSub: 'summary',       // 이번달 하위: summary | income | expense
   nowAxis: 'expense',      // 페이스 차트 축: income | expense | net (하나만)
   nowOpts: { budget: true, daily: false },
   yearAxis: 'expense',
@@ -1945,7 +1948,7 @@ const state = {
   simYears: 10,
   yearKey: null,
   yearMode: 'pace',
-  yearSub: 'summary',
+  yearSub: 'summary',      // 올해 하위: summary | income | expense | saving
   nowMonthKey: null,       // '이번달' 탭에서 보고 있는 달 (YYYY-MM)
   nowWeekIdx: null,        // null = 그 달 전체, 0.. = 해당 주차만
   nowGranularity: 'week',  // 'week' | 'day'
@@ -3197,10 +3200,7 @@ const SECTION_SUBS = {
     ['today', '오늘'],
     ['now', '이번달'],
     ['year', '올해'],
-    ['calendar', '캘린더'],
-    ['income', '수입'],
-    ['expense', '지출'],
-    ['saving', '순저축']
+    ['calendar', '캘린더']
   ],
   assets: [
     ['overview', '전체'],
@@ -4549,13 +4549,10 @@ function renderPage() {
   body.innerHTML = '';
 
   if (section === 'flow') {
-    if (SUB === 'today') renderTodayPage(body, data, d);
-    else if (SUB === 'now') renderNowPage(body, data, d);
+    if (SUB === 'now') renderNowPage(body, data, d);
     else if (SUB === 'year') renderYearPage(body, data, d);
     else if (SUB === 'calendar') renderCalendarPage(body, data, d);
-    else if (SUB === 'income') renderIncomePage(body, data, d);
-    else if (SUB === 'saving') renderSavingFlowPage(body, data, d);
-    else renderExpensePage(body, data, d);
+    else renderTodayPage(body, data, d);
   } else if (section === 'assets') {
     if (SUB === 'overview') renderAssetsPage(body, data, d);
     else if (SUB === 'investment') renderInvestmentPage(body, data, d);
@@ -6235,7 +6232,68 @@ function renderNowPage(container, data, d) {
 
   const monthOptions = availableKeys.slice().reverse().map(k => `<option value="${k}" ${k === monthKey ? 'selected' : ''}>${monthKeyLabel(k)}</option>`).join('');
 
-  const NOW_SUBS = [['summary', '요약'], ['budget', '예산 대비'], ['detail', '상세']];
+  /* --- 투자원금 이체 (➡️이체 › 📈투자 자산) --- */
+  const isInvTr = (r) => r.major.includes('이체') && String(r.minor || '').includes('투자');
+  const investTr = scopeRows.filter(isInvTr).reduce((a, r) => a + r.amount, 0);
+  const prevInvestSame = week ? null : ledger.filter(r => isInvTr(r) && ledgerMonthKey(r.date) === prevKey)
+    .reduce((a, r) => { const pp = parseLedgerDateParts(r.date); return (pp && pp.d <= cmpDay) ? a + r.amount : a; }, 0);
+  const investRate = sIncome > 0 ? (investTr / sIncome) * 100 : null;
+
+  /* --- 수입 분해 (이번달 스코프) --- */
+  const incBy = (kw) => scopeRows.filter(r => r.major.includes('수입') && String(r.minor || '').includes(kw)).reduce((a, r) => a + r.amount, 0);
+  const incWork = incBy('근로');
+  const incInvest = incBy('투자');
+  const incSide = incBy('부수입');
+  const incEtc = sIncome - incWork - incInvest - incSide;
+  const incCatRows = (() => {
+    const curMap = {}, prevMap = {};
+    scopeRows.filter(r => r.major.includes('수입')).forEach(r => {
+      const k = r.minor || '기타'; curMap[k] = (curMap[k] || 0) + r.amount;
+    });
+    if (!week) ledger.filter(r => r.major.includes('수입') && ledgerMonthKey(r.date) === prevKey).forEach(r => {
+      const pp = parseLedgerDateParts(r.date); if (!pp || pp.d > cmpDay) return;
+      const k = r.minor || '기타'; prevMap[k] = (prevMap[k] || 0) + r.amount;
+    });
+    const names = [...new Set([...Object.keys(curMap), ...Object.keys(prevMap)])];
+    const tot = Object.values(curMap).reduce((a, b) => a + b, 0);
+    return names.map(n => ({ name: n, cur: curMap[n] || 0, prev: prevMap[n] || 0, pct: tot > 0 ? ((curMap[n] || 0) / tot) * 100 : 0 }))
+      .filter(r => r.cur > 0 || r.prev > 0).sort((a, b) => b.cur - a.cur);
+  })();
+  const topIncomes = scopeRows.filter(r => r.major.includes('수입')).sort((a, b) => b.amount - a.amount).slice(0, 8);
+
+  /* --- 세부항목별 수입 성과 (기준 = 최근 3개월 같은 시점 평균) --- */
+  const detailIncomeRows = (() => {
+    const keyOf = (r) => [r.minor || '기타', r.item || '-'].join(' › ');
+    const cur = {};
+    scopeRows.filter(r => r.major.includes('수입')).forEach(r => { cur[keyOf(r)] = (cur[keyOf(r)] || 0) + r.amount; });
+    const baseDay = isThisMonth ? (elapsed || M.days) : M.days;
+    const acc = {};
+    let nMonths = 0;
+    for (let i = 1; i <= 3; i++) {
+      const k = shiftMonthKey(monthKey, -i);
+      const rowsK = ledger.filter(r => r.major.includes('수입') && ledgerMonthKey(r.date) === k);
+      if (!rowsK.length) continue;
+      nMonths += 1;
+      rowsK.forEach(r => {
+        const pp = parseLedgerDateParts(r.date); if (!pp || pp.d > baseDay) return;
+        acc[keyOf(r)] = (acc[keyOf(r)] || 0) + r.amount;
+      });
+    }
+    const names = [...new Set([...Object.keys(cur), ...Object.keys(acc)])];
+    const tot = Object.values(cur).reduce((a, b) => a + b, 0);
+    return {
+      nMonths, baseDay,
+      rows: names.map(n => {
+        const base = nMonths ? (acc[n] || 0) / nMonths : 0;
+        const c = cur[n] || 0;
+        return { name: n, cur: c, base, diff: c - base, pct: base > 0 ? (c / base) * 100 : null, share: tot > 0 ? (c / tot) * 100 : 0 };
+      }).filter(r => r.cur > 0 || r.base > 0).sort((a, b) => b.cur - a.cur)
+    };
+  })();
+
+  const NOW_SUBS = [['summary', '요약'], ['income', '수입'], ['expense', '지출'], ['saving', '순저축']];
+  const NSUB_MIGRATE = { budget: 'expense', detail: 'expense' };
+  if (NSUB_MIGRATE[state.nowSub]) state.nowSub = NSUB_MIGRATE[state.nowSub];
   const NSUB = NOW_SUBS.some(x => x[0] === state.nowSub) ? state.nowSub : 'summary';
 
   container.innerHTML = `
@@ -6257,17 +6315,17 @@ function renderNowPage(container, data, d) {
 
     ${NSUB === 'summary' ? `
     <div class="stat-grid">
-      <div class="stat-card">
+      <div class="stat-card clickable" data-goto="income" title="수입 탭으로 이동">
         <div class="label">수입</div>
         <div class="value" style="color:var(--green)">${formatWon(sIncome)}</div>
         ${week ? `<div class="sub">${week.label}</div>` : nowDeltaSub(sIncome, prevIncomeSame, false, cmpNote)}
       </div>
-      <div class="stat-card">
+      <div class="stat-card clickable" data-goto="expense" title="지출 탭으로 이동">
         <div class="label">지출</div>
         <div class="value" style="color:var(--red)">${formatWon(sExpense)}</div>
         ${week ? `<div class="sub">${week.label}</div>` : nowDeltaSub(sExpense, prevExpenseSame, true, cmpNote)}
       </div>
-      <div class="stat-card">
+      <div class="stat-card clickable" data-goto="saving" title="순저축 탭으로 이동">
         <div class="label">순저축</div>
         <div class="value" style="color:${sNet >= 0 ? 'var(--net)' : 'var(--red)'}">${formatWon(sNet)}</div>
         ${week ? '' : cmpSub(sNet, avgNet, false, avgNote)}
@@ -6276,6 +6334,12 @@ function renderNowPage(container, data, d) {
         <div class="label">저축률</div>
         <div class="value" style="color:${sRate === null ? 'var(--text)' : sRate >= rateTarget ? 'var(--net)' : 'var(--red)'}">${sRate === null ? '—' : sRate.toFixed(1) + '%'}</div>
         ${cmpSubPp(sRate, rateTarget, `목표 ${rateTarget}% 대비`)}
+      </div>
+      <div class="stat-card">
+        <div class="label">투자원금 이체</div>
+        <div class="value" style="color:var(--gold-soft)">${formatWon(investTr)}</div>
+        ${week ? `<div class="sub">${week.label}</div>` : nowDeltaSub(investTr, prevInvestSame, false, cmpNote)}
+        ${investRate === null ? '' : `<div class="sub">수입의 <b>${investRate.toFixed(1)}%</b></div>`}
       </div>
       <div class="stat-card">
         <div class="label">하루 평균 지출</div>
@@ -6317,49 +6381,103 @@ function renderNowPage(container, data, d) {
       </div>
     </div>` : ''}
 
-    ${NSUB === 'budget' ? `
-    <div class="bt2-wrap" style="margin-top:4px;">
-      <div id="now-budget-body"></div>
-    </div>` : ''}
-
-    ${NSUB === 'detail' ? `
-    <div class="g">
-      <div class="panel s6">
-        <div class="panel-title"><div>고정비</div></div>
-        <div id="now-fixed-body"></div>
+    ${NSUB === 'income' ? `
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="label">수입 합계</div>
+        <div class="value" style="color:var(--green)">${formatWon(sIncome)}</div>
+        ${week ? `<div class="sub">${week.label}</div>` : nowDeltaSub(sIncome, prevIncomeSame, false, cmpNote)}
       </div>
-      <div class="panel s6">
-        <div class="panel-title"><div>이체</div><span class="ptag">${week ? week.label : monthKeyLabel(monthKey)}</span></div>
-        <div id="now-transfer-body"></div>
+      <div class="stat-card">
+        <div class="label">근로소득</div>
+        <div class="value">${formatWon(incWork)}</div>
+        <div class="sub">수입의 <b>${sIncome > 0 ? ((incWork / sIncome) * 100).toFixed(1) : '0.0'}%</b></div>
+      </div>
+      <div class="stat-card">
+        <div class="label">투자 수익</div>
+        <div class="value">${formatWon(incInvest)}</div>
+        <div class="sub">수입의 <b>${sIncome > 0 ? ((incInvest / sIncome) * 100).toFixed(1) : '0.0'}%</b></div>
+      </div>
+      <div class="stat-card">
+        <div class="label">근로 외 수입</div>
+        <div class="value" style="color:${sIncome > 0 && (sIncome - incWork) > 0 ? 'var(--net)' : 'var(--text)'}">${formatWon(sIncome - incWork)}</div>
+        <div class="sub">부수입 ${formatCompactWon(incSide)} · 그 외 ${formatCompactWon(incEtc)}</div>
       </div>
     </div>
 
     <div class="g">
-      <div class="panel s7">
-        <div class="panel-title"><div>카테고리별 지출</div></div>
-        <div id="now-cat-body"></div>
+      <div class="panel s12">
+        <div class="panel-title">
+          <div>세부항목별 수입</div>
+          <span class="ptag">기준 · 최근 ${detailIncomeRows.nMonths}개월 ${isThisMonth ? `1–${detailIncomeRows.baseDay}일 ` : ''}평균</span>
+        </div>
+        <div id="now-incdetail-body"></div>
       </div>
-      <div class="panel s5">
-        <div class="panel-title"><div>큰 지출 TOP 8</div></div>
+    </div>` : ''}
+
+    ${NSUB === 'expense' ? `
+    <div class="bt2-wrap" style="margin-top:4px;">
+      <div id="now-budget-body"></div>
+    </div>
+
+    <div class="g">
+      <div class="panel s6">
+        <div class="panel-title"><div>고정비</div><span class="ptag">${monthKeyLabel(monthKey)}</span></div>
+        <div id="now-fixed-body"></div>
+      </div>
+      <div class="panel s6">
+        <div class="panel-title"><div>큰 지출 TOP 8</div><span class="ptag">${week ? week.label : monthKeyLabel(monthKey)}</span></div>
         <div id="now-top-body"></div>
       </div>
     </div>
 
-    <div class="g">
-      <div class="panel s7">
-        <div class="panel-title"><div>주차별 요약</div></div>
-        <div id="now-week-body"></div>
+    <div id="panel-regret-wrap"></div>` : ''}
+
+    ${NSUB === 'saving' ? `
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="label">순저축</div>
+        <div class="value" style="color:${sNet >= 0 ? 'var(--net)' : 'var(--red)'}">${formatWon(sNet)}</div>
+        ${week ? `<div class="sub">${week.label}</div>` : cmpSub(sNet, avgNet, false, avgNote)}
       </div>
-      <div class="panel s5">
-        <div class="panel-title"><div>요일별 평균 지출</div></div>
-        <div id="now-dow-body"></div>
+      <div class="stat-card">
+        <div class="label">저축률</div>
+        <div class="value" style="color:${sRate === null ? 'var(--text)' : sRate >= rateTarget ? 'var(--net)' : 'var(--red)'}">${sRate === null ? '—' : sRate.toFixed(1) + '%'}</div>
+        ${cmpSubPp(sRate, rateTarget, `목표 ${rateTarget}% 대비`)}
+      </div>
+      <div class="stat-card">
+        <div class="label">투자원금 이체</div>
+        <div class="value" style="color:var(--gold-soft)">${formatWon(investTr)}</div>
+        ${week ? `<div class="sub">${week.label}</div>` : nowDeltaSub(investTr, prevInvestSame, false, cmpNote)}
+      </div>
+      <div class="stat-card">
+        <div class="label">자산 유입 합계</div>
+        <div class="value">${formatWon(transferTotal)}</div>
+        <div class="sub">순저축의 <b>${sNet > 0 ? ((transferTotal / sNet) * 100).toFixed(0) + '%' : '—'}</b></div>
       </div>
     </div>
 
-` : ''}
+    <div class="g">
+      <div class="panel s5">
+        <div class="panel-title"><div>이체</div><span class="ptag">${week ? week.label : monthKeyLabel(monthKey)}</span></div>
+        <div id="now-transfer-body"></div>
+      </div>
+      <div class="panel s7">
+        <div class="panel-title"><div>주차별 순저축</div></div>
+        <div id="now-week-body"></div>
+      </div>
+    </div>` : ''}
   `;
 
-  if (NSUB === 'budget') renderBudgetTable(data, d, monthKey, 'now-budget-body');
+  if (NSUB === 'expense') {
+    renderBudgetTable(data, d, monthKey, 'now-budget-body');
+    renderRegretSection(container, data, d);
+  }
+
+  container.querySelectorAll('.stat-card[data-goto]').forEach(el => el.addEventListener('click', () => {
+    state.nowSub = el.dataset.goto;
+    renderPage();
+  }));
 
   document.getElementById('now-subnav').addEventListener('click', (e) => {
     const btn = e.target.closest('button');
@@ -6396,6 +6514,44 @@ function renderNowPage(container, data, d) {
         </div>`).join('') : '<div class="empty-state">이 기간 이체 내역이 없어요.</div>'}
     </div>
   `;
+
+  /* --- 세부항목별 수입 성과 --- */
+  const incDetailBody = document.getElementById('now-incdetail-body');
+  if (incDetailBody) {
+    const rowsD = detailIncomeRows.rows;
+    const maxD = Math.max(...rowsD.map(r => Math.max(r.cur, r.base)), 1);
+    incDetailBody.innerHTML = rowsD.length ? `
+      <div class="table-scroll" style="max-height:none;">
+        <table class="data-table">
+          <thead><tr>
+            <th>세부항목</th>
+            <th style="text-align:right">이번 달</th>
+            <th style="text-align:right">기준</th>
+            <th style="width:26%">성과</th>
+            <th style="text-align:right">달성률</th>
+            <th style="text-align:right">비중</th>
+          </tr></thead>
+          <tbody>${rowsD.map(r => {
+            const pct = r.pct;
+            const col = pct === null ? 'var(--gold-soft)' : pct >= 100 ? 'var(--green)' : pct >= 70 ? 'var(--text-dim)' : 'var(--red)';
+            const badge = pct === null ? '신규' : `${pct.toFixed(0)}%`;
+            return `<tr>
+              <td>${r.name}</td>
+              <td class="amt income">${r.cur ? formatWon(r.cur) : '—'}</td>
+              <td class="amt" style="color:var(--text-faint)">${r.base ? formatWon(Math.round(r.base)) : '—'}</td>
+              <td>
+                <div class="b-bar-track" style="margin:0;"><div class="b-bar-fill" style="width:${(r.cur / maxD) * 100}%;background:${col}"></div></div>
+                <div class="b-bar-track" style="margin:3px 0 0;height:3px;opacity:.55;"><div class="b-bar-fill" style="width:${(r.base / maxD) * 100}%;background:var(--text-faint)"></div></div>
+              </td>
+              <td class="amt" style="color:${col};font-weight:700">${badge}</td>
+              <td class="amt" style="color:var(--text-dim)">${r.share.toFixed(0)}%</td>
+            </tr>`;
+          }).join('')}</tbody>
+        </table>
+      </div>
+      <div class="settings-note">굵은 막대 = 이번 달 · 얇은 막대 = 기준(최근 ${detailIncomeRows.nMonths}개월 ${isThisMonth ? `1–${detailIncomeRows.baseDay}일 ` : ''}평균) · 달성률 100% 이상이면 기준보다 잘 벌고 있어요.</div>
+    ` : '<div class="empty-state">이 기간 수입 내역이 없어요.</div>';
+  }
 
   /* --- 카테고리 --- */
   const catBody = document.getElementById('now-cat-body');
@@ -7008,7 +7164,8 @@ function renderYearPage(container, data, d) {
   const prevY = String(Number(Y) - 1);
   const isThisYear = Y === String(new Date().getFullYear());
 
-  const YR_SUBS = [['summary', '요약'], ['detail', '상세']];
+  const YR_SUBS = [['summary', '요약'], ['income', '수입'], ['expense', '지출'], ['saving', '순저축'], ['invest', '투자']];
+  if (state.yearSub === 'detail') state.yearSub = 'expense';
   const YSUB = YR_SUBS.some(x => x[0] === state.yearSub) ? state.yearSub : 'summary';
   const YMODE = (state.yearMode === 'flow') ? 'flow' : 'pace';
   const cur = rows.filter(r => r.year === Y).sort((a, b) => a.month - b.month);
@@ -7064,19 +7221,19 @@ function renderYearPage(container, data, d) {
 
     ${YSUB === 'summary' ? `
     <div class="stat-grid" style="margin-bottom:0;">
-        <div class="stat-card">
+        <div class="stat-card clickable" data-goto="income" title="수입 탭으로 이동">
           <div class="label">수입</div>
           <div class="value" style="color:var(--green)">${formatWon(income)}</div>
           ${cmpSub(income, pIncome, false, cmpNote)}
           ${projected ? `<div class="sub">연말 예상 ${formatCompactWon(projected.income)}원</div>` : ''}
         </div>
-        <div class="stat-card">
+        <div class="stat-card clickable" data-goto="expense" title="지출 탭으로 이동">
           <div class="label">지출</div>
           <div class="value" style="color:var(--red)">${formatWon(expense)}</div>
           ${cmpSub(expense, pExpense, true, cmpNote)}
           ${projected ? `<div class="sub">연말 예상 ${formatCompactWon(projected.expense)}원</div>` : ''}
         </div>
-        <div class="stat-card">
+        <div class="stat-card clickable" data-goto="saving" title="순저축 탭으로 이동">
           <div class="label">순익 (쌓인 돈)</div>
           <div class="value" style="color:${net >= 0 ? 'var(--net)' : 'var(--red)'}">${formatWon(net)}</div>
           ${cmpSub(net, pNet, false, cmpNote)}
@@ -7117,9 +7274,9 @@ function renderYearPage(container, data, d) {
       </div>
     </div>` : ''}
 
-    ${YSUB === 'detail' ? `
+    ${YSUB === 'income' ? `
     <div class="g">
-      <div class="panel s6">
+      <div class="panel s12">
         <div class="panel-title"><div>주요 수입</div><span class="ptag">${Y}년 TOP 8</span></div>
         <div class="yr-list">
           ${topIncome.length ? topIncome.map(r => `
@@ -7131,7 +7288,12 @@ function renderYearPage(container, data, d) {
             </div>`).join('') : '<div class="empty-state">수입 내역이 없어요.</div>'}
         </div>
       </div>
-      <div class="panel s6">
+    </div>
+    <div id="yr-income-host"></div>` : ''}
+
+    ${YSUB === 'expense' ? `
+    <div class="g">
+      <div class="panel s12">
         <div class="panel-title"><div>주요 지출</div><span class="ptag">${Y}년 TOP 8</span></div>
         <div class="yr-list">
           ${topExpense.length ? topExpense.map(r => `
@@ -7143,7 +7305,12 @@ function renderYearPage(container, data, d) {
             </div>`).join('') : '<div class="empty-state">지출 내역이 없어요.</div>'}
         </div>
       </div>
-    </div>` : ''}
+    </div>
+    <div id="yr-expense-host"></div>` : ''}
+
+    ${YSUB === 'saving' ? `<div id="yr-saving-host"></div>` : ''}
+
+    ${YSUB === 'invest' ? `<div id="yr-invest-host"></div>` : ''}
   `;
 
   document.getElementById('yr-subnav').addEventListener('click', (e) => {
@@ -7152,6 +7319,21 @@ function renderYearPage(container, data, d) {
     state.yearSub = b.dataset.sub;
     renderPage();
   });
+
+  container.querySelectorAll('.stat-card[data-goto]').forEach(el => el.addEventListener('click', () => {
+    state.yearSub = el.dataset.goto;
+    renderPage();
+  }));
+
+  /* 하위 탭 본문 — 기존 수입/지출/순저축 분석 페이지를 그대로 품는다 */
+  const incHost = document.getElementById('yr-income-host');
+  if (incHost) renderIncomePage(incHost, data, d);
+  const expHost = document.getElementById('yr-expense-host');
+  if (expHost) renderExpensePage(expHost, data, d);
+  const savHost = document.getElementById('yr-saving-host');
+  if (savHost) renderSavingFlowPage(savHost, data, d);
+  const invHost = document.getElementById('yr-invest-host');
+  if (invHost) renderInvestmentPage(invHost, data, d);
 
   const drawYear = () => {
     if (state.charts.year) state.charts.year.destroy();
