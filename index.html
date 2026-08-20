@@ -2249,7 +2249,8 @@ const state = {
   invSub: 'overview',      // 투자 하위: overview | holdings | perf | toss | study
   study: { name: '', step: 0, ans: {}, chk: {}, memo: {}, stop: '', take: '', weight: '', crit: [], val: {}, price: '', editId: null },
   bookFilter: 'all',       // 내 종목 필터: all | due | action | none
-  bookOpen: null           // 내 종목에서 펼친 행 (종목명)
+  bookOpen: null,          // 내 종목에서 펼친 행 (종목명)
+  bookCcy: 'won'           // 내 종목 표시 통화: won | local
 };
 
 /* ---------------- 로컬 저장소 shim ----------------
@@ -11856,6 +11857,26 @@ function bookVerdict(card, chk, weightPct) {
   return { k: 'hold', label: '보유', why: '손절 조건은 안 걸렸고 논리도 아직 실현 전이에요. 추가로 살 만큼은 아니라면 <b>그대로 두는 게 정답</b>입니다.' };
 }
 
+/* 원/달러 환율 — 토스 계좌요약 우선, 없으면 미국 종목에서 역산 */
+function bookFxRate(data) {
+  const s = data.toss && data.toss.summary;
+  if (s && s.fx && s.fx > 100) return s.fx;
+  const us = ((data.toss && data.toss.holdings) || [])
+    .filter(h => h.country !== 'KR' && h.qty > 0 && h.last > 0 && h.value > 0);
+  if (!us.length) return null;
+  /* 종목마다 미세하게 다를 수 있어 중앙값을 쓴다 */
+  const rates = us.map(h => h.value / (h.qty * h.last)).sort((a, b) => a - b);
+  const m = rates[Math.floor(rates.length / 2)];
+  return (m > 100 && m < 5000) ? m : null;
+}
+/* 밴드 값을 원화로 환산한 사본 (비율인 gap·pos는 그대로) */
+function bookInWon(r, mul) {
+  if (!r || r.need || !mul || mul === 1) return r;
+  return Object.assign({}, r, {
+    low: r.low * mul, base: r.base * mul, high: r.high * mul, price: r.price * mul
+  });
+}
+
 function renderBookPage(hostId, data, d) {
   const host = document.getElementById(hostId);
   if (!host) return;
@@ -11876,13 +11897,20 @@ function renderBookPage(hostId, data, d) {
   const checks = bookLoadChecks();
   const totalVal = holdings.reduce((a, h) => a + h.value, 0) || 1;
   const ws = bookWeekStart();
+  const fx = bookFxRate(data);
+  const wonMode = state.bookCcy !== 'local';
 
   const rows = holdings.map(h => {
     const card = cardOf[h.name] || null;
     const chk = checks[h.name] || null;
     const weightPct = (h.value / totalVal) * 100;
-    const val = (card && card.type && !card.nonEquity) ? studyValue(card.type, card.val, card.price) : null;
-    return { h, card, chk, weightPct, val, v: bookVerdict(card, chk, weightPct) };
+    /* 현재가는 토스 실시간 값을 우선 — 시트에 박아두면 낡은 값으로 계산된다 */
+    const livePrice = h.last || card && card.price;
+    const val = (card && card.type && !card.nonEquity) ? studyValue(card.type, card.val, livePrice) : null;
+    /* 계산은 현지통화, 표시는 선택한 통화 */
+    const mul = (wonMode && h.country !== 'KR' && fx) ? fx : 1;
+    const valShow = bookInWon(val, mul);
+    return { h, card, chk, weightPct, val, valShow, mul, v: bookVerdict(card, chk, weightPct) };
   });
 
   const doneCount = rows.filter(r => r.chk && r.chk.date && r.chk.date >= ws).length;
@@ -11922,6 +11950,11 @@ function renderBookPage(hostId, data, d) {
       <div class="bk-filters" id="bk-filters">
         ${FILTERS.map(([v, l]) => `<button data-f="${v}" class="${f === v ? 'active' : ''}">${l}</button>`).join('')}
       </div>
+      ${fx ? `<div class="bk-filters" id="bk-ccy" style="margin-left:0;">
+        <button data-c="won" class="${wonMode ? 'active' : ''}">원화</button>
+        <button data-c="local" class="${wonMode ? '' : 'active'}">현지통화</button>
+        <span class="bk-week" style="margin-left:4px;">₩${Math.round(fx).toLocaleString()}/$</span>
+      </div>` : ''}
     </div>
     <div class="bk-scroll">
       <table class="bk-table">
@@ -11949,8 +11982,8 @@ function renderBookPage(hostId, data, d) {
             <td class="bk-amt bk-pl ${r.h.pl >= 0 ? 'up' : 'down'}">${r.h.pl >= 0 ? '+' : '−'}${formatCompactWon(Math.abs(r.h.pl))}<span class="sub">${r.h.plRate >= 0 ? '+' : '−'}${Math.abs(r.h.plRate || 0).toFixed(1)}%</span></td>
             <td><span class="bk-type ${ty ? '' : 'none'}">${ty ? ty.label : '미분류'}</span></td>
             ${BOOK_STAGES.map(([id]) => `<td style="text-align:center;">${stageCell(r, id)}</td>`).join('')}
-            <td class="bk-fair ${r.val && !r.val.need ? '' : 'none'}">${r.val && !r.val.need
-      ? `${Math.round(r.val.base).toLocaleString()}<span class="sub ${r.val.gap >= 0 ? 'up' : 'down'}">${r.val.gap >= 0 ? '+' : '−'}${Math.abs(r.val.gap).toFixed(0)}%</span>`
+            <td class="bk-fair ${r.val && !r.val.need ? '' : 'none'}"${r.mul !== 1 && r.val && !r.val.need ? ` title="현지통화 ${r.val.base.toFixed(2)} · 현재가 ${r.val.price.toFixed(2)}"` : ''}>${r.val && !r.val.need
+      ? `${r.mul !== 1 ? formatCompactWon(r.valShow.base) : Math.round(r.valShow.base).toLocaleString()}<span class="sub ${r.val.gap >= 0 ? 'up' : 'down'}">${r.val.gap >= 0 ? '+' : '−'}${Math.abs(r.val.gap).toFixed(0)}%</span>`
       : '—'}</td>
             <td><div class="bk-stop ${r.card && r.card.stop ? '' : 'none'}" title="${r.card && r.card.stop ? r.card.stop.replace(/"/g, '&quot;') : ''}">${r.card && r.card.stop ? r.card.stop : '미작성'}</div></td>
             <td class="bk-age ${r.v.k === 'due' ? 'due' : ''}">${age === null ? '없음' : age === 0 ? '오늘' : `${age}일 전`}</td>
@@ -11988,8 +12021,8 @@ function renderBookPage(hostId, data, d) {
               <div class="bk-q">
                 <div class="qt">③ 지금 이 돈이 <b>현금으로 있다면</b>, 이 가격에 이걸 살 것인가?
                   <span class="hint">매입가는 시장이 모르는 숫자다. 이 질문 하나가 보유 여부를 결정한다.</span>
-                  ${r.val && !r.val.need ? `${studyBandBar(r.val, true)}
-                  <span class="hint" style="margin-top:6px;">내 가정 기준 기본값 <b>${Math.round(r.val.base).toLocaleString()}</b> · 현재가 대비 ${r.val.gap >= 0 ? '+' : '−'}${Math.abs(r.val.gap).toFixed(0)}%</span>` : ''}</div>
+                  ${r.val && !r.val.need ? `${studyBandBar(r.valShow, true)}
+                  <span class="hint" style="margin-top:6px;">내 가정 기준 기본값 <b>${r.mul !== 1 ? formatCompactWon(r.valShow.base) + '원' : Math.round(r.valShow.base).toLocaleString()}</b> · 현재가 대비 ${r.val.gap >= 0 ? '+' : '−'}${Math.abs(r.val.gap).toFixed(0)}%${r.mul !== 1 ? ` <span style="opacity:.7">(현지 ${r.val.base.toFixed(2)})</span>` : ''}</span>` : ''}</div>
                 <div class="bk-btns" data-q="buyNow" data-nm="${r.h.name.replace(/"/g, '&quot;')}">
                   <button data-v="yes" class="${r.chk && r.chk.buyNow === 'yes' ? 'on' : ''}">산다</button>
                   <button data-v="no" class="${r.chk && r.chk.buyNow === 'no' ? 'on no' : ''}">안 산다</button>
@@ -12012,6 +12045,12 @@ function renderBookPage(hostId, data, d) {
   if (filters) filters.addEventListener('click', (e) => {
     const b = e.target.closest('button'); if (!b) return;
     state.bookFilter = b.dataset.f; renderPage();
+  });
+
+  const ccy = document.getElementById('bk-ccy');
+  if (ccy) ccy.addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    state.bookCcy = b.dataset.c; renderPage();
   });
 
   host.querySelectorAll('tr[data-open]').forEach(tr => tr.addEventListener('click', (e) => {
