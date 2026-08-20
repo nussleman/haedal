@@ -10992,6 +10992,84 @@ const INV_SERIES = [
   { key: 'share', label: '총자산 대비 비중', color: '#5b8fc7' }
 ];
 
+/* ---------------- 종목_팩트 시트 → 스터디 카드 자동 생성 ----------------
+   시트가 단일 진실 공급원. 내가 배치로 채워두면 대시보드가 읽어서
+   유형·5단계·적정가를 자동 계산한다. 로컬 카드가 있으면 그쪽이 우선(수동 오버라이드). */
+
+const FACTS_TAB = '종목_팩트';
+const FACT_TYPE_KO = {
+  '성장형': 'growth', '안정형': 'stable', '사이클형': 'cyclical',
+  '턴어라운드형': 'turnaround', '옵션형': 'option', '자산형': 'asset'
+};
+/* 개별기업이 아닌 것 — 6유형 틀이 작동하지 않는다 */
+const FACT_NONEQUITY = { '레버리지': 'lev', 'ETF': 'etf', '특수': 'lev' };
+const FACT_STAGE_KO = {
+  src: { '덧셈': 'sell', '가격': 'price', '뺄셈': 'cost', '회계': 'acct', '없음': 'none' },
+  quality: { '양호': 'high', '보통': 'mid', '누수': 'low', '손실': 'neg' },
+  survive: { '순현금': 'netcash', '양호': 'ok', '소진': 'burn2', '위험': 'burn1' },
+  moat: { '검증': 'proven', '점유↓': 'share', '점유하락': 'share', '정책': 'policy', '마진': 'channel' },
+  price: { '합의': 'narrow', '분산': 'wide', '무반응': 'nogood', '바닥': 'nobad' }
+};
+const FACT_NUM_KEYS = ['eps', 'g', 'per', 'dy', 'bps', 'pbrLow', 'pbrAvg', 'pbrHigh', 'neps', 'prob', 'nav', 'disc', 'mcap', 'revT', 'psr', 'years'];
+
+async function fetchStockFacts() {
+  const r = await fetch(csvUrlForSheet(FACTS_TAB), { cache: 'no-store' });
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  let text = await r.text();
+  if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+  if (text.trim().startsWith('<')) throw new Error('탭 접근 불가');
+  const rows = Papa.parse(text, { skipEmptyLines: true }).data
+    .map(row => row.map(c => (c === null || c === undefined) ? '' : String(c).trim()));
+  return parseStockFacts(rows);
+}
+
+function parseStockFacts(rows) {
+  if (!rows || !rows.length) return {};
+  /* 헤더 이름 기반 조회 — 컬럼이 밀려도 안 깨진다 */
+  const hdr = rows[0].map(h => h.replace(/\s/g, ''));
+  const at = (r, name) => { const i = hdr.indexOf(name); return i === -1 ? '' : (r[i] || ''); };
+  const out = {};
+  rows.slice(1).forEach(r => {
+    const name = at(r, '종목명');
+    if (!name) return;
+    const tyKo = at(r, '유형');
+    const type = FACT_TYPE_KO[tyKo] || null;
+    const nonEquity = FACT_NONEQUITY[tyKo] || null;
+    const chk = {};
+    [['1출처', 'src'], ['2질', 'quality'], ['3생존', 'survive'], ['4해자', 'moat'], ['5가격', 'price']]
+      .forEach(([col, id]) => {
+        const v = at(r, col);
+        const mapped = (FACT_STAGE_KO[id] || {})[v];
+        if (mapped) chk[id] = mapped;
+      });
+    const val = {};
+    FACT_NUM_KEYS.forEach(k => { const v = at(r, k); if (v) val[k] = v; });
+    out[name] = {
+      id: 'sheet:' + name, name, type, nonEquity, tyKo, chk, val,
+      price: at(r, '현재가'), stop: at(r, '손절조건'), take: at(r, '익절조건'),
+      weight: at(r, '목표비중'), memo: at(r, '메모') ? { sheet: at(r, '메모') } : {},
+      crit: [], source: 'sheet'
+    };
+  });
+  return out;
+}
+
+/* 개별기업이 아닌 상품 — 별도 판정 */
+const FACT_NONEQ_INFO = {
+  lev: {
+    label: '레버리지', tag: '기초자산의 배수를 추종하는 파생 상품',
+    why: '<b>기업이 아니라서 기업 분석 틀이 작동하지 않는다.</b> 이익도 자산도 해자도 없다. 분류·5단계·적정가 모두 해당 없음.',
+    rule: '보유 기간 제한이 유일한 관리 수단. 변동성 끌림 때문에 기초자산이 제자리로 돌아와도 손실이 남는다.',
+    stop: '정해둔 보유 기간 경과 (판단이 아니라 달력)'
+  },
+  etf: {
+    label: 'ETF', tag: '지수·바스켓 추종 상품',
+    why: '개별기업 분석 대상이 아니다. 편입 종목이 알아서 교체되므로 유형 분류가 무의미하다.',
+    rule: '지수 ETF는 사실상 손절 기준이 필요 없다. 비중과 적립 규칙으로만 관리.',
+    stop: '자산배분 목표 이탈 시 리밸런싱'
+  }
+};
+
 /* ---------------- 밸류에이션: 유형이 방법을 정한다 ----------------
    적정가는 사실이 아니라 가정의 출력이다. 그래서 점이 아니라 밴드로 내고,
    "지금 가격이 참이 되려면 무엇이 필요한가"를 역산으로 함께 보여준다. */
@@ -11753,6 +11831,13 @@ function bookDaysSince(iso) {
 /* 최종 의견 — 내가 적어둔 기준 + 이번 주 점검의 기계적 귀결 */
 function bookVerdict(card, chk, weightPct) {
   if (!card) return { k: 'none', label: '미분석', why: '아직 분류하지 않은 종목이에요. 스터디에서 한 번 돌려두면 이후 점검이 자동으로 붙습니다.' };
+  if (card.nonEquity) {
+    const info = FACT_NONEQ_INFO[card.nonEquity] || FACT_NONEQ_INFO.lev;
+    if (card.nonEquity === 'lev') {
+      return { k: 'sell', label: '기간 관리', why: `<b>${info.label} 상품이라 기업 분석 틀이 작동하지 않아요.</b> ${info.rule} 손절 조건 대신 <b>언제까지 들고 있을지</b>만 정하면 됩니다.` };
+    }
+    return { k: 'hold', label: '리밸런싱 대상', why: `${info.why} ${info.rule}` };
+  }
   if (!card.stop) return { k: 'none', label: '기준 없음', why: '손절 조건이 비어 있어요. <b>기준이 없으면 판단할 수 없습니다.</b> 스터디에서 반증 조건부터 적어주세요.' };
 
   const checkedThisWeek = chk && chk.date && chk.date >= bookWeekStart();
@@ -11784,9 +11869,10 @@ function renderBookPage(hostId, data, d) {
     return;
   }
 
-  const cards = studyLoadCards();
+  /* 시트(종목_팩트)가 기본, 로컬 카드가 있으면 그쪽이 우선 */
   const cardOf = {};
-  cards.forEach(c => { if (c.name) cardOf[c.name.trim()] = c; });
+  Object.entries(data.stockFacts || {}).forEach(([k, v]) => { cardOf[k] = v; });
+  studyLoadCards().forEach(c => { if (c.name) cardOf[c.name.trim()] = c; });
   const checks = bookLoadChecks();
   const totalVal = holdings.reduce((a, h) => a + h.value, 0) || 1;
   const ws = bookWeekStart();
@@ -11795,7 +11881,7 @@ function renderBookPage(hostId, data, d) {
     const card = cardOf[h.name] || null;
     const chk = checks[h.name] || null;
     const weightPct = (h.value / totalVal) * 100;
-    const val = card && card.type ? studyValue(card.type, card.val, card.price) : null;
+    const val = (card && card.type && !card.nonEquity) ? studyValue(card.type, card.val, card.price) : null;
     return { h, card, chk, weightPct, val, v: bookVerdict(card, chk, weightPct) };
   });
 
@@ -11812,6 +11898,7 @@ function renderBookPage(hostId, data, d) {
           : !r.card || !r.card.stop);
 
   const stageCell = (r, id) => {
+    if (r.card && r.card.nonEquity) return '<span class="bk-stage empty">해당없음</span>';
     if (!r.card || !r.card.chk || !r.card.chk[id]) return '<span class="bk-stage empty">—</span>';
     const sel = r.card.chk[id];
     const c = STUDY_CHECK.find(x => x.id === id);
@@ -11853,7 +11940,8 @@ function renderBookPage(hostId, data, d) {
           ${shown.length ? shown.map(r => {
     const isOpen = open === r.h.name;
     const age = r.chk ? bookDaysSince(r.chk.date) : null;
-    const ty = r.card && STUDY_TYPES[r.card.type];
+    const neq = r.card && r.card.nonEquity ? (FACT_NONEQ_INFO[r.card.nonEquity] || FACT_NONEQ_INFO.lev) : null;
+    const ty = neq ? { label: neq.label } : (r.card && STUDY_TYPES[r.card.type]);
     return `
           <tr class="row ${isOpen ? 'open' : ''}" data-open="${r.h.name.replace(/"/g, '&quot;')}">
             <td><span class="bk-nm">${r.h.name}<span class="sym">${r.h.symbol || r.h.country || ''}</span></span></td>
@@ -11870,7 +11958,11 @@ function renderBookPage(hostId, data, d) {
           </tr>
           ${isOpen ? `
           <tr class="bk-panel"><td colspan="${5 + BOOK_STAGES.length + 4}">
-            ${!r.card ? `
+            ${r.card && r.card.nonEquity ? `
+              <div class="bk-out sell">${(FACT_NONEQ_INFO[r.card.nonEquity] || FACT_NONEQ_INFO.lev).why}
+                <div style="margin-top:9px;">${(FACT_NONEQ_INFO[r.card.nonEquity] || FACT_NONEQ_INFO.lev).rule}</div>
+                <div style="margin-top:9px;">손절 기준 형태 → <b>${(FACT_NONEQ_INFO[r.card.nonEquity] || FACT_NONEQ_INFO.lev).stop}</b></div></div>`
+      : !r.card ? `
               <div class="bk-out">이 종목은 아직 분류되지 않았어요. 스터디에서 <b>${r.h.name}</b>을(를) 한 번 돌리면
                 유형·단계 판정·손절 조건이 이 표에 자동으로 붙습니다.
                 <div style="margin-top:10px;"><button class="sd-go" data-study="${r.h.name.replace(/"/g, '&quot;')}">스터디에서 분류하기 →</button></div></div>`
@@ -12620,9 +12712,10 @@ async function fetchCsvRows(gid) {
 
 async function fetchAllTabsAndMerge() {
   /* 토스 탭 조회는 실패해도 대시보드 전체를 막지 않도록 병렬로 따로 돌린다. */
-  const [results, tossResult] = await Promise.all([
+  const [results, tossResult, factsResult] = await Promise.all([
     Promise.allSettled(TAB_GIDS.map(fetchCsvRows)),
-    fetchTossData().catch(() => null)
+    fetchTossData().catch(() => null),
+    fetchStockFacts().catch(() => null)
   ]);
   const failures = results.filter(r => r.status === 'rejected');
   const rowSets = results.filter(r => r.status === 'fulfilled').map(r => r.value);
@@ -12673,6 +12766,7 @@ async function fetchAllTabsAndMerge() {
     expenseCategories: pivot.expenseCategories, incomeCategories: pivot.incomeCategories, transferCategories: pivot.transferCategories,
     assetRows, ledger, investmentTags, goals, stockCategoryMap,
     toss: tossResult,
+    stockFacts: factsResult || {},
     indexPrices: Object.keys(indexPrices).length ? indexPrices : INDEX_SEED,
     indexSource: Object.keys(indexPrices).length ? 'sheet' : 'seed'
   };
