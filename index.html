@@ -2081,6 +2081,49 @@ body{font-variant-numeric:tabular-nums;}
   .bk-filters{margin-left:0;width:100%;}
 }
 
+
+/* ---------- 밸류에이션 밴드 ---------- */
+.sv-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:9px;margin:12px 0 4px;}
+.sv-in{display:flex;flex-direction:column;gap:5px;}
+.sv-in label{font-size:11px;color:var(--text-dim);}
+.sv-in label .u{color:var(--text-faint);font-size:10px;margin-left:5px;}
+.sv-in input{
+  background:var(--panel-2);border:1px solid var(--border);color:var(--text);
+  border-radius:7px;padding:8px 10px;font-size:13px;font-family:var(--mono);width:100%;
+}
+.sv-in input:focus{outline:none;border-color:var(--gold);}
+.sv-price input{border-color:rgba(201,162,39,0.4);}
+
+.sv-band{margin:14px 0 2px;}
+.sv-band.compact{margin:6px 0 0;}
+.sv-track{position:relative;height:6px;border-radius:3px;background:rgba(255,255,255,0.06);margin:20px 0 7px;}
+.sv-band.compact .sv-track{height:4px;margin:14px 0 5px;}
+.sv-fill{position:absolute;inset:0;border-radius:3px;
+  background:linear-gradient(90deg,rgba(76,140,107,.35),rgba(201,162,39,.35),rgba(193,72,63,.3));}
+.sv-base{position:absolute;top:-4px;width:2px;height:14px;background:var(--gold-soft);transform:translateX(-1px);}
+.sv-band.compact .sv-base{top:-3px;height:10px;}
+.sv-now{position:absolute;top:-17px;transform:translateX(-50%);}
+.sv-band.compact .sv-now{top:-13px;}
+.sv-now::after{content:'';position:absolute;left:50%;top:13px;width:1px;height:12px;background:var(--text);transform:translateX(-50%);}
+.sv-band.compact .sv-now::after{top:10px;height:8px;}
+.sv-now span{font-size:9.5px;font-family:var(--mono);color:var(--text);white-space:nowrap;}
+.sv-band.compact .sv-now span{font-size:9px;}
+.sv-legend{display:flex;justify-content:space-between;font-size:10.5px;font-family:var(--mono);color:var(--text-faint);}
+.sv-legend .mid{color:var(--gold-soft);}
+.sv-gap{font-size:13px;margin-top:12px;color:var(--text);}
+.sv-gap b{font-size:17px;font-family:var(--mono);}
+.sv-gap b.up{color:var(--green);} .sv-gap b.down{color:var(--red);}
+.sv-rev{
+  margin-top:12px;padding:10px 12px;border-radius:8px;font-size:12.5px;line-height:1.75;
+  border-left:2px solid var(--net);background:rgba(57,168,189,0.07);color:var(--text);
+}
+.sv-rev b{color:var(--net);}
+.sv-caution{font-size:11.5px;color:var(--text-faint);line-height:1.7;margin-top:11px;padding-left:10px;border-left:2px solid var(--border-strong);}
+.bk-fair{font-family:var(--mono);text-align:right;white-space:nowrap;}
+.bk-fair .sub{display:block;font-size:10px;}
+.bk-fair .sub.up{color:var(--green);} .bk-fair .sub.down{color:var(--red);}
+.bk-fair.none{color:var(--text-faint);font-family:var(--sans);font-size:11px;text-align:center;}
+
 </style>
 </head>
 <body>
@@ -2204,7 +2247,7 @@ const state = {
   calHeat: false,         // 지출 진하기(히트맵) — 기본 끔
   calSelDay: null,         // 캘린더에서 선택한 날 (YYYY-MM-DD)
   invSub: 'overview',      // 투자 하위: overview | holdings | perf | toss | study
-  study: { name: '', step: 0, ans: {}, chk: {}, memo: {}, stop: '', take: '', weight: '', crit: [], editId: null },
+  study: { name: '', step: 0, ans: {}, chk: {}, memo: {}, stop: '', take: '', weight: '', crit: [], val: {}, price: '', editId: null },
   bookFilter: 'all',       // 내 종목 필터: all | due | action | none
   bookOpen: null           // 내 종목에서 펼친 행 (종목명)
 };
@@ -10949,6 +10992,165 @@ const INV_SERIES = [
   { key: 'share', label: '총자산 대비 비중', color: '#5b8fc7' }
 ];
 
+/* ---------------- 밸류에이션: 유형이 방법을 정한다 ----------------
+   적정가는 사실이 아니라 가정의 출력이다. 그래서 점이 아니라 밴드로 내고,
+   "지금 가격이 참이 되려면 무엇이 필요한가"를 역산으로 함께 보여준다. */
+
+const STUDY_VAL = {
+  growth: {
+    method: '3년 뒤 EPS × 목표 PER → 현재가치 할인',
+    why: '성장형은 지금 이익이 아니라 <b>몇 년 뒤 이익</b>에 값을 매긴다. 대신 그만큼 할인해서 끌어와야 한다.',
+    inputs: [
+      ['eps', '현재 주당순이익 (EPS)', '최근 4개 분기 합산'],
+      ['g', '향후 3년 예상 연평균 성장률', '%'],
+      ['per', '3년 뒤 적용할 PER', '동종업계 성숙기 배수']
+    ],
+    calc: (v, price) => {
+      const f = v.eps * Math.pow(1 + v.g / 100, 3);
+      const pv = (k) => f * v.per * k / Math.pow(1.10, 3);
+      return {
+        low: pv(0.75), base: pv(1), high: pv(1.25),
+        note: `3년 뒤 EPS ${Math.round(f).toLocaleString()} × PER ${v.per} 를 연 10%로 할인. 밴드는 PER ±25%.`,
+        reverse: (() => {
+          const need = price * Math.pow(1.10, 3) / v.per;
+          const gNeed = (Math.pow(need / v.eps, 1 / 3) - 1) * 100;
+          return `지금 가격이 정당화되려면 3년 뒤 EPS가 <b>${Math.round(need).toLocaleString()}</b> (연 ${gNeed.toFixed(1)}% 성장) 이어야 한다.`;
+        })()
+      };
+    }
+  },
+  stable: {
+    method: '이익 × 과거 PER 밴드',
+    why: '안정형은 이익이 평평하니 <b>배수만 정하면</b> 값이 나온다. 싸게 사는 것 자체가 수익의 대부분이다.',
+    inputs: [
+      ['eps', '주당순이익 (EPS)', '최근 4개 분기 합산'],
+      ['per', '과거 평균 PER', '5년 평균 정도'],
+      ['dy', '배당수익률', '% · 선택']
+    ],
+    calc: (v, price) => {
+      const b = v.eps * v.per;
+      return {
+        low: b * 0.8, base: b, high: b * 1.2,
+        note: `EPS × PER ${v.per}. 밴드는 ±20%.${v.dy ? ` 배당수익률 ${v.dy}% 는 여기에 더해지는 수익.` : ''}`,
+        reverse: `지금 가격은 PER <b>${(price / v.eps).toFixed(1)}배</b>. 과거 평균 ${v.per}배 대비 ${price / v.eps > v.per ? '비싸다' : '싸다'}.`
+      };
+    }
+  },
+  cyclical: {
+    method: 'BPS × 과거 PBR 밴드',
+    why: '<b>PER을 쓰면 안 된다.</b> 정점에서 가장 싸 보이고 바닥에서 가장 비싸 보여 신호가 거꾸로 나온다. 자산가치는 사이클을 타지 않는다.',
+    inputs: [
+      ['bps', '주당순자산 (BPS)', '자기자본 ÷ 주식수'],
+      ['pbrLow', '과거 PBR 저점', '불황기 바닥'],
+      ['pbrAvg', '과거 PBR 평균', '사이클 전체 평균'],
+      ['pbrHigh', '과거 PBR 고점', '호황기 천장']
+    ],
+    calc: (v, price) => ({
+      low: v.bps * v.pbrLow, base: v.bps * v.pbrAvg, high: v.bps * v.pbrHigh,
+      note: `BPS ${Math.round(v.bps).toLocaleString()} 에 과거 PBR 저점·평균·고점을 각각 적용.`,
+      reverse: `지금 가격은 PBR <b>${(price / v.bps).toFixed(2)}배</b> — 과거 밴드에서 ${price / v.bps >= v.pbrHigh ? '고점 위' : price / v.bps <= v.pbrLow ? '저점 아래' : `${(((price / v.bps) - v.pbrLow) / (v.pbrHigh - v.pbrLow) * 100).toFixed(0)}% 지점`}.`
+    })
+  },
+  turnaround: {
+    method: '정상화 이익 × PER × 회복 확률',
+    why: '<b>지금 이익이 아니라 회복이 끝났을 때의 이익</b>으로 값을 매긴다. 대신 회복이 실패할 확률을 반드시 곱해야 한다.',
+    inputs: [
+      ['neps', '회복 완료 시 예상 주당순이익', '정상화 EPS'],
+      ['per', '적용 PER', '업종 평균'],
+      ['prob', '회복 성공 확률', '% · 냉정하게']
+    ],
+    calc: (v, price) => {
+      const b = v.neps * v.per * (v.prob / 100);
+      return {
+        low: b * 0.7, base: b, high: b * 1.3,
+        note: `정상화 EPS ${Math.round(v.neps).toLocaleString()} × PER ${v.per} × 확률 ${v.prob}%. 확률을 안 곱하면 턴어라운드 밸류에이션이 아니다.`,
+        reverse: `지금 가격이 정당화되려면 회복 확률이 <b>${Math.min(999, (price / (v.neps * v.per) * 100)).toFixed(0)}%</b> 여야 한다.`
+      };
+    }
+  },
+  asset: {
+    method: '주당 NAV × (1 − 할인율)',
+    why: '자산형은 <b>할인율이 전부</b>다. 싸다는 것과 오른다는 건 다르다. 할인율을 좁힐 촉매가 없으면 10년도 싼 채로 있는다.',
+    inputs: [
+      ['nav', '주당 순자산가치 (NAV)', '보유자산 시가 − 부채'],
+      ['disc', '적용 할인율', '% · 지주사는 보통 40~60']
+    ],
+    calc: (v, price) => ({
+      low: v.nav * (1 - Math.min(95, v.disc + 15) / 100),
+      base: v.nav * (1 - v.disc / 100),
+      high: v.nav * (1 - Math.max(0, v.disc - 15) / 100),
+      note: `NAV ${Math.round(v.nav).toLocaleString()} 에 할인율 ${v.disc}% 적용. 밴드는 할인율 ±15%p.`,
+      reverse: `지금 가격의 실제 할인율은 <b>${((1 - price / v.nav) * 100).toFixed(0)}%</b>. 이걸 좁힐 촉매가 있는지가 전부다.`
+    })
+  },
+  option: {
+    method: '미래 매출 × PSR → 역산 (적정가 산출 불가)',
+    why: '<b>이 유형은 적정가를 낼 수 없다.</b> 이익이 없으니 배수를 걸 대상이 없다. 대신 지금 가격이 무엇을 가정하고 있는지를 역산한다.',
+    inputs: [
+      ['mcap', '현재 시가총액', '억원 또는 백만달러'],
+      ['revT', 'N년 뒤 예상 연매출', '같은 단위'],
+      ['psr', '그때 적용할 PSR', '성숙기 배수'],
+      ['years', '몇 년 뒤인가', 'N년']
+    ],
+    calc: (v, price) => {
+      const fut = v.revT * v.psr;
+      const disc = Math.pow(1.15, v.years);
+      const ratio = (fut / disc) / v.mcap;
+      const needRev = v.mcap * disc / v.psr;
+      return {
+        low: price * ratio * 0.5, base: price * ratio, high: price * ratio * 1.5,
+        note: `${v.years}년 뒤 매출 × PSR ${v.psr} 을 연 15%로 할인 → 현재 시총의 ${ratio.toFixed(2)}배. 밴드가 ±50%인 건 이 유형의 불확실성이 그만큼이라는 뜻이다.`,
+        reverse: `지금 가격이 정당화되려면 ${v.years}년 뒤 연매출이 <b>${Math.round(needRev).toLocaleString()}</b> (현재 대비 필수 성장)이어야 한다. 이 숫자가 현실적인지가 유일한 질문이다.`
+      };
+    }
+  }
+};
+
+/* 입력이 다 찼는지 확인하고 계산 */
+function studyValue(type, valInputs, priceRaw) {
+  const cfg = STUDY_VAL[type];
+  if (!cfg) return null;
+  const price = Number(String(priceRaw || '').replace(/[^0-9.\-]/g, ''));
+  if (!price || price <= 0) return { need: true, cfg };
+  const v = {};
+  let missing = false;
+  cfg.inputs.forEach(([k, , hint]) => {
+    const raw = Number(String((valInputs || {})[k] || '').replace(/[^0-9.\-]/g, ''));
+    if (!raw && !(hint || '').includes('선택')) missing = true;
+    v[k] = raw;
+  });
+  if (missing) return { need: true, cfg };
+  let r;
+  try { r = cfg.calc(v, price); } catch (e) { return { need: true, cfg }; }
+  if (!isFinite(r.base) || r.base <= 0) return { need: true, cfg };
+  const lo = Math.min(r.low, r.base, r.high), hi = Math.max(r.low, r.base, r.high);
+  return {
+    need: false, cfg, price, low: lo, base: r.base, high: hi,
+    note: r.note, reverse: r.reverse,
+    gap: (r.base / price - 1) * 100,
+    pos: hi > lo ? Math.max(0, Math.min(100, (price - lo) / (hi - lo) * 100)) : 50
+  };
+}
+
+/* 밴드 막대 — 현재가가 밴드 어디에 있는지 */
+function studyBandBar(r, compact) {
+  if (!r || r.need) return '';
+  const fmt = (n) => Math.round(n).toLocaleString();
+  return `
+    <div class="sv-band ${compact ? 'compact' : ''}">
+      <div class="sv-track">
+        <div class="sv-fill"></div>
+        <div class="sv-base" style="left:${r.high > r.low ? Math.max(0, Math.min(100, (r.base - r.low) / (r.high - r.low) * 100)) : 50}%"></div>
+        <div class="sv-now" style="left:${r.pos}%"><span>현재가</span></div>
+      </div>
+      <div class="sv-legend">
+        <span>보수 ${fmt(r.low)}</span>
+        <span class="mid">기본 ${fmt(r.base)}</span>
+        <span>낙관 ${fmt(r.high)}</span>
+      </div>
+    </div>`;
+}
+
 /* ================= 자산 > 투자 > 스터디 : 종목 판단 흐름 =================
    화면 정중앙에 판단할 항목이 하나씩 들어온다. 고르면 해석을 돌려주고 다음 항목으로.
    0단계 분류 → 유형 발표(처방전) → 1~5단계 검토 → 손절/익절 → 처방전 한 장. */
@@ -11162,7 +11364,7 @@ const STUDY_CRITERIA = [
 const STUDY_WLABEL = { 2: ['핵심', 'core'], 1: ['보통', 'mid'], 0: ['참고', 'low'] };
 const STUDY_PHASES = [
   ['분류', ['q1', 'q2', 'q3', 'type']],
-  ['검토', ['src', 'quality', 'survive', 'moat', 'price']],
+  ['검토', ['src', 'quality', 'survive', 'moat', 'price', 'value']],
   ['판정', ['stop', 'take', 'done']]
 ];
 const STUDY_CARDS_KEY = 'haedal:study-cards';
@@ -11172,7 +11374,7 @@ function studyLoadCards() {
 }
 function studySaveCards(list) { try { localStorage.setItem(STUDY_CARDS_KEY, JSON.stringify(list)); } catch (e) {} }
 function studyReset() {
-  state.study = { name: '', step: 0, ans: {}, chk: {}, memo: {}, stop: '', take: '', weight: '', crit: [], editId: null };
+  state.study = { name: '', step: 0, ans: {}, chk: {}, memo: {}, stop: '', take: '', weight: '', crit: [], val: {}, price: '', editId: null };
 }
 function studyType() {
   const a = (state.study && state.study.ans) || {};
@@ -11192,7 +11394,7 @@ function studySteps() {
   const a = (state.study && state.study.ans) || {};
   const arr = ['q1'];
   if (a.q1 === 'profit') { arr.push('q2'); if (a.q2 === 'inside') arr.push('q3'); }
-  if (studyType()) arr.push('type', 'src', 'quality', 'survive', 'moat', 'price', 'stop', 'take', 'done');
+  if (studyType()) arr.push('type', 'src', 'quality', 'survive', 'moat', 'price', 'value', 'stop', 'take', 'done');
   return arr;
 }
 /* 지금 화면에서 '판단'이 끝났는지 — 끝나야 다음으로 넘어갈 수 있다 */
@@ -11217,6 +11419,33 @@ function studyTrail() {
     if (o) push(c.id, c.n, o[1]);
   });
   return out;
+}
+
+/* 입력 중 포커스가 튀지 않도록 결과 영역만 갈아끼운다 */
+let studyValTimer = null;
+function studyValRefresh() {
+  clearTimeout(studyValTimer);
+  studyValTimer = setTimeout(() => {
+    const S = state.study, T = studyType();
+    const host = document.getElementById('panel-study');
+    if (!host || !T) return;
+    const grid = host.querySelector('.sv-grid');
+    if (!grid) return;
+    const r = studyValue(T, S.val, S.price);
+    let slot = host.querySelector('#sv-out');
+    if (!slot) { slot = document.createElement('div'); slot.id = 'sv-out'; grid.insertAdjacentElement('afterend', slot); }
+    /* 최초 렌더 때 만들어진 정적 결과 블록 제거 */
+    host.querySelectorAll('.sv-band,.sv-gap,.sv-rev').forEach(el => { if (!slot.contains(el)) el.remove(); });
+    const stale = grid.nextElementSibling;
+    if (stale && stale !== slot && stale.classList.contains('sd-why')) stale.remove();
+    slot.innerHTML = (r && !r.need) ? `
+      ${studyBandBar(r)}
+      <div class="sv-gap">기본값 대비 현재가 <b class="${r.gap >= 0 ? 'up' : 'down'}">${r.gap >= 0 ? '+' : '−'}${Math.abs(r.gap).toFixed(0)}%</b>
+        ${r.gap >= 0 ? '저평가 구간' : '고평가 구간'}<span style="font-size:11.5px;color:var(--text-faint);"> — 어디까지나 내 가정 기준</span></div>
+      <div class="sd-why" style="margin:9px 0 0;font-size:11.5px;">${r.note}</div>
+      <div class="sv-rev">역산 — ${r.reverse}</div>`
+      : '<div class="sd-why" style="margin-top:14px;">숫자를 채우면 밴드가 나와요. 모르는 값이 있으면 이 단계는 건너뛰어도 됩니다.</div>';
+  }, 160);
 }
 
 function renderStudy() {
@@ -11280,6 +11509,34 @@ function renderStudy() {
       return `<div class="sd-opt flat" style="${w === 0 ? 'opacity:.45;' : ''}">${n}단계 · ${l}<span class="sd-badge ${wl[1]}">${wl[0]}</span><span class="sd-sub">${ty.h[k]}</span></div>`;
     }).join('')}
       </div>`;
+  } else if (cur === 'value') {
+    const r = studyValue(T, S.val, S.price);
+    const cfg = STUDY_VAL[T];
+    card = `
+      <div class="sd-eyebrow">밸류에이션 · ${ty.label}</div>
+      <div class="sd-ask">${cfg.method}</div>
+      <div class="sd-why">${cfg.why}</div>
+      <div class="sd-lens">유형이 <b>방법을 정한다</b>. 같은 회사라도 사이클형이면 PBR, 성장형이면 미래 EPS로 봐야 한다. 여기서 방법을 잘못 고르면 뒤의 숫자는 전부 무의미하다.</div>
+      <div class="sv-grid">
+        <div class="sv-in sv-price">
+          <label>현재가 <span class="u">기준 통화 아무거나</span></label>
+          <input data-fld="price" value="${(S.price || '').replace(/"/g, '&quot;')}" placeholder="42100" />
+        </div>
+        ${cfg.inputs.map(([k, l, u]) => `
+        <div class="sv-in">
+          <label>${l} <span class="u">${u || ''}</span></label>
+          <input data-val="${k}" value="${((S.val || {})[k] || '').toString().replace(/"/g, '&quot;')}" />
+        </div>`).join('')}
+      </div>
+      ${r && !r.need ? `
+        ${studyBandBar(r)}
+        <div class="sv-gap">기본값 대비 현재가 <b class="${r.gap >= 0 ? 'up' : 'down'}">${r.gap >= 0 ? '+' : '−'}${Math.abs(r.gap).toFixed(0)}%</b>
+          ${r.gap >= 0 ? '저평가 구간' : '고평가 구간'}<span style="font-size:11.5px;color:var(--text-faint);"> — 어디까지나 내 가정 기준</span></div>
+        <div class="sd-why" style="margin:9px 0 0;font-size:11.5px;">${r.note}</div>
+        <div class="sv-rev">역산 — ${r.reverse}</div>`
+      : '<div class="sd-why" style="margin-top:14px;">숫자를 채우면 밴드가 나와요. 모르는 값이 있으면 이 단계는 건너뛰어도 됩니다.</div>'}
+      <div class="sv-caution">이 숫자는 <b>사실이 아니라 내 가정의 출력</b>이다. 입력을 조금만 바꾸면 두 배가 된다.
+        밴드 안의 값에 의미를 두지 말고, <b>현재가가 밴드 밖으로 나가는 것</b>만 신호로 쓸 것.</div>`;
   } else if (cur === 'stop') {
     const score = (S.crit || []).length;
     card = `
@@ -11327,6 +11584,9 @@ function renderStudy() {
           ${S.stop ? `<span class="note">품질 ${score}/4</span>` : ''}</div></div>
         <div class="sd-frow hot"><div class="k">익절 조건</div><div class="v">${S.take || '<span style="color:var(--text-faint)">미작성</span>'}</div></div>
         <div class="sd-frow"><div class="k">비중</div><div class="v">${S.weight ? S.weight + '%' : '<span style="color:var(--text-faint)">미정</span>'}</div></div>
+        ${(() => { const r = studyValue(T, S.val, S.price); return (r && !r.need) ? `
+        <div class="sd-frow"><div class="k">적정가 밴드</div><div class="v">${Math.round(r.low).toLocaleString()} — <b style="color:var(--gold-soft)">${Math.round(r.base).toLocaleString()}</b> — ${Math.round(r.high).toLocaleString()}
+          <span class="note">현재가 ${Math.round(r.price).toLocaleString()} · 기본값 대비 ${r.gap >= 0 ? '+' : '−'}${Math.abs(r.gap).toFixed(0)}% · ${r.cfg.method}</span></div></div>` : ''; })()}
       </div>
       <div class="sd-trap">${ty ? ty.trap : ''}</div>`;
   } else {
@@ -11395,7 +11655,13 @@ function renderStudy() {
     S.chk[b.dataset.chk] = b.dataset.v; renderStudy();
   }));
   host.querySelectorAll('[data-memo]').forEach(t => t.addEventListener('input', () => { S.memo[t.dataset.memo] = t.value; }));
-  host.querySelectorAll('[data-fld]').forEach(t => t.addEventListener('input', () => { S[t.dataset.fld] = t.value; }));
+  host.querySelectorAll('[data-fld]').forEach(t => t.addEventListener('input', () => {
+    S[t.dataset.fld] = t.value;
+    if (t.dataset.fld === 'price' && studySteps()[S.step] === 'value') studyValRefresh();
+  }));
+  host.querySelectorAll('[data-val]').forEach(t => t.addEventListener('input', () => {
+    S.val = S.val || {}; S.val[t.dataset.val] = t.value; studyValRefresh();
+  }));
   host.querySelectorAll('[data-crit]').forEach(cb => cb.addEventListener('change', () => {
     const i = Number(cb.dataset.crit);
     S.crit = S.crit || [];
@@ -11416,7 +11682,8 @@ function renderStudy() {
     if (!c) return;
     state.study = {
       name: c.name, step: 0, ans: c.ans || {}, chk: c.chk || {}, memo: c.memo || {},
-      stop: c.stop || '', take: c.take || '', weight: c.weight || '', crit: c.crit || [], editId: c.id
+      stop: c.stop || '', take: c.take || '', weight: c.weight || '', crit: c.crit || [],
+      val: c.val || {}, price: c.price || '', editId: c.id
     };
     state.study.step = studySteps().length - 1;
     renderStudy();
@@ -11434,7 +11701,8 @@ function renderStudy() {
     const rec = {
       id: S.editId || ('sd' + Date.now()), name: S.name || '이름 없음', type: studyType(),
       ans: S.ans, chk: S.chk, memo: S.memo, stop: S.stop, take: S.take,
-      weight: S.weight, crit: S.crit || [], ts: new Date().toISOString().slice(0, 10)
+      weight: S.weight, crit: S.crit || [], val: S.val || {}, price: S.price || '',
+      ts: new Date().toISOString().slice(0, 10)
     };
     const i = list.findIndex(c => c.id === rec.id);
     if (i >= 0) list[i] = rec; else list.unshift(rec);
@@ -11527,7 +11795,8 @@ function renderBookPage(hostId, data, d) {
     const card = cardOf[h.name] || null;
     const chk = checks[h.name] || null;
     const weightPct = (h.value / totalVal) * 100;
-    return { h, card, chk, weightPct, v: bookVerdict(card, chk, weightPct) };
+    const val = card && card.type ? studyValue(card.type, card.val, card.price) : null;
+    return { h, card, chk, weightPct, val, v: bookVerdict(card, chk, weightPct) };
   });
 
   const doneCount = rows.filter(r => r.chk && r.chk.date && r.chk.date >= ws).length;
@@ -11575,6 +11844,7 @@ function renderBookPage(hostId, data, d) {
           <th style="text-align:right;">손익</th>
           <th>유형</th>
           ${BOOK_STAGES.map(([, l]) => `<th class="grp" style="text-align:center;">${l}</th>`).join('')}
+          <th style="text-align:right;">적정가 · 괴리</th>
           <th>손절 조건</th>
           <th>점검</th>
           <th>의견</th>
@@ -11591,12 +11861,15 @@ function renderBookPage(hostId, data, d) {
             <td class="bk-amt bk-pl ${r.h.pl >= 0 ? 'up' : 'down'}">${r.h.pl >= 0 ? '+' : '−'}${formatCompactWon(Math.abs(r.h.pl))}<span class="sub">${r.h.plRate >= 0 ? '+' : '−'}${Math.abs(r.h.plRate || 0).toFixed(1)}%</span></td>
             <td><span class="bk-type ${ty ? '' : 'none'}">${ty ? ty.label : '미분류'}</span></td>
             ${BOOK_STAGES.map(([id]) => `<td style="text-align:center;">${stageCell(r, id)}</td>`).join('')}
+            <td class="bk-fair ${r.val && !r.val.need ? '' : 'none'}">${r.val && !r.val.need
+      ? `${Math.round(r.val.base).toLocaleString()}<span class="sub ${r.val.gap >= 0 ? 'up' : 'down'}">${r.val.gap >= 0 ? '+' : '−'}${Math.abs(r.val.gap).toFixed(0)}%</span>`
+      : '—'}</td>
             <td><div class="bk-stop ${r.card && r.card.stop ? '' : 'none'}" title="${r.card && r.card.stop ? r.card.stop.replace(/"/g, '&quot;') : ''}">${r.card && r.card.stop ? r.card.stop : '미작성'}</div></td>
             <td class="bk-age ${r.v.k === 'due' ? 'due' : ''}">${age === null ? '없음' : age === 0 ? '오늘' : `${age}일 전`}</td>
             <td><span class="bk-verdict bk-v-${r.v.k}">${r.v.label}</span></td>
           </tr>
           ${isOpen ? `
-          <tr class="bk-panel"><td colspan="${5 + BOOK_STAGES.length + 3}">
+          <tr class="bk-panel"><td colspan="${5 + BOOK_STAGES.length + 4}">
             ${!r.card ? `
               <div class="bk-out">이 종목은 아직 분류되지 않았어요. 스터디에서 <b>${r.h.name}</b>을(를) 한 번 돌리면
                 유형·단계 판정·손절 조건이 이 표에 자동으로 붙습니다.
@@ -11622,7 +11895,9 @@ function renderBookPage(hostId, data, d) {
               </div>
               <div class="bk-q">
                 <div class="qt">③ 지금 이 돈이 <b>현금으로 있다면</b>, 이 가격에 이걸 살 것인가?
-                  <span class="hint">매입가는 시장이 모르는 숫자다. 이 질문 하나가 보유 여부를 결정한다.</span></div>
+                  <span class="hint">매입가는 시장이 모르는 숫자다. 이 질문 하나가 보유 여부를 결정한다.</span>
+                  ${r.val && !r.val.need ? `${studyBandBar(r.val, true)}
+                  <span class="hint" style="margin-top:6px;">내 가정 기준 기본값 <b>${Math.round(r.val.base).toLocaleString()}</b> · 현재가 대비 ${r.val.gap >= 0 ? '+' : '−'}${Math.abs(r.val.gap).toFixed(0)}%</span>` : ''}</div>
                 <div class="bk-btns" data-q="buyNow" data-nm="${r.h.name.replace(/"/g, '&quot;')}">
                   <button data-v="yes" class="${r.chk && r.chk.buyNow === 'yes' ? 'on' : ''}">산다</button>
                   <button data-v="no" class="${r.chk && r.chk.buyNow === 'no' ? 'on no' : ''}">안 산다</button>
@@ -11635,7 +11910,7 @@ function renderBookPage(hostId, data, d) {
               </div>
             </div>`}
           </td></tr>` : ''}`;
-  }).join('') : `<tr><td colspan="${5 + BOOK_STAGES.length + 3}"><div class="empty-state">이 조건에 해당하는 종목이 없어요.</div></td></tr>`}
+  }).join('') : `<tr><td colspan="${5 + BOOK_STAGES.length + 4}"><div class="empty-state">이 조건에 해당하는 종목이 없어요.</div></td></tr>`}
         </tbody>
       </table>
     </div>`;
@@ -11684,7 +11959,7 @@ function renderBookPage(hostId, data, d) {
       state.study = {
         name: existing.name, step: 0, ans: existing.ans || {}, chk: existing.chk || {}, memo: existing.memo || {},
         stop: existing.stop || '', take: existing.take || '', weight: existing.weight || '',
-        crit: existing.crit || [], editId: existing.id
+        crit: existing.crit || [], val: existing.val || {}, price: existing.price || '', editId: existing.id
       };
       state.study.step = studySteps().length - 1;
     } else {
