@@ -1839,6 +1839,156 @@ body{font-variant-numeric:tabular-nums;}
 .fs-bar i{display:block;width:100%;border-radius:2px 2px 0 0;}
 
 .al-notes li,.cmp-row{font-size:12px;line-height:1.65;}
+
+/* ---------- 자산>투자>스터디: 한 번에 하나씩, 정중앙 ---------- */
+.sd-stage{display:flex;flex-direction:column;align-items:center;padding:4px 0 2px;}
+.sd-top{width:100%;max-width:660px;margin-bottom:16px;}
+.sd-phases{display:flex;gap:3px;margin-bottom:6px;}
+.sd-ph{flex:1;display:flex;flex-direction:column;gap:4px;}
+.sd-ph .lbl{font-size:9.5px;font-family:var(--mono);letter-spacing:.06em;color:var(--text-faint);}
+.sd-ph.on .lbl{color:var(--gold-soft);}
+.sd-ph .bars{display:flex;gap:2px;}
+.sd-seg{flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,0.08);}
+.sd-seg.done{background:rgba(201,162,39,0.42);}
+.sd-seg.on{background:var(--gold);}
+.sd-topbar{display:flex;align-items:center;gap:8px;margin-top:10px;}
+.sd-name{
+  flex:1;background:transparent;border:none;border-bottom:1px solid var(--border);
+  color:var(--text);padding:4px 1px;font-size:13px;font-family:var(--sans);font-weight:600;
+}
+.sd-name:focus{outline:none;border-bottom-color:var(--gold);}
+.sd-name::placeholder{color:var(--text-faint);font-weight:400;}
+.sd-type{
+  font-size:11px;font-family:var(--mono);padding:3px 9px;border-radius:20px;flex-shrink:0;
+  background:rgba(201,162,39,0.15);color:var(--gold-soft);border:1px solid rgba(201,162,39,0.4);
+}
+
+/* 중앙 카드 */
+.sd-card{width:100%;max-width:660px;min-height:330px;display:flex;flex-direction:column;}
+.sd-eyebrow{
+  font-size:10px;font-family:var(--mono);letter-spacing:.1em;color:var(--text-faint);
+  margin-bottom:9px;text-transform:uppercase;
+}
+.sd-ask{font-size:19px;font-weight:700;color:var(--text);line-height:1.45;margin-bottom:8px;letter-spacing:-.01em;}
+.sd-why{font-size:12.5px;color:var(--text-dim);line-height:1.8;margin-bottom:16px;}
+.sd-lens{
+  font-size:12px;line-height:1.75;padding:8px 11px;border-radius:7px;margin-bottom:14px;
+  background:rgba(201,162,39,0.06);border-left:2px solid rgba(201,162,39,0.5);color:var(--text-dim);
+}
+.sd-lens b{color:var(--gold-soft);font-weight:600;}
+.sd-opts{display:flex;flex-direction:column;gap:7px;}
+.sd-opt{
+  text-align:left;width:100%;background:var(--panel-2);border:1px solid var(--border);
+  color:var(--text);border-radius:9px;padding:11px 13px;font-size:13.5px;font-family:var(--sans);
+  cursor:pointer;line-height:1.5;transition:border-color .12s,background .12s,transform .08s;
+}
+.sd-opt:hover{border-color:var(--border-strong);background:rgba(255,255,255,0.035);}
+.sd-opt:active{transform:scale(.995);}
+.sd-opt.sel{border-color:var(--gold);background:rgba(201,162,39,0.13);color:var(--gold-soft);font-weight:600;}
+.sd-opt .sd-sub{display:block;font-size:11.5px;color:var(--text-faint);font-weight:400;margin-top:4px;}
+.sd-opt.sel .sd-sub{color:var(--text-dim);}
+.sd-opt.flat{cursor:default;}
+.sd-opt.flat:hover{border-color:var(--border);background:var(--panel-2);}
+
+.sd-verdict{
+  margin-top:13px;padding:11px 13px;border-radius:8px;font-size:12.5px;line-height:1.8;
+  border-left:2px solid var(--gold);background:rgba(201,162,39,0.07);color:var(--text);
+}
+.sd-verdict.warn{border-left-color:var(--red);background:var(--red-soft);}
+.sd-verdict.good{border-left-color:var(--green);background:var(--green-soft);}
+.sd-verdict b{color:var(--gold-soft);}
+.sd-verdict.warn b{color:var(--red);}
+.sd-verdict.good b{color:var(--green);}
+.sd-memo{
+  width:100%;margin-top:9px;background:var(--panel-2);border:1px solid var(--border);color:var(--text);
+  border-radius:8px;padding:9px 11px;font-size:12.5px;font-family:var(--sans);resize:vertical;min-height:46px;
+}
+.sd-memo:focus{outline:none;border-color:var(--gold);}
+.sd-input{
+  background:var(--panel-2);border:1px solid var(--border);color:var(--text);
+  border-radius:8px;padding:9px 11px;font-size:13px;font-family:var(--mono);width:110px;
+}
+.sd-input:focus{outline:none;border-color:var(--gold);}
+
+/* 유형 발표 */
+.sd-reveal{text-align:center;padding:2px 0 6px;}
+.sd-reveal .big{font-size:30px;font-weight:800;color:var(--gold-soft);letter-spacing:-.02em;line-height:1.2;}
+.sd-reveal .sub{font-size:12.5px;color:var(--text-dim);margin-top:6px;}
+.sd-rx{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:7px;margin:16px 0 0;}
+.sd-rx-item{background:var(--panel-2);border:1px solid var(--border);border-radius:8px;padding:9px 11px;}
+.sd-rx-item .k{font-size:9.5px;font-family:var(--mono);letter-spacing:.05em;color:var(--text-faint);margin-bottom:5px;}
+.sd-rx-item .v{font-size:13px;color:var(--text);font-weight:600;line-height:1.5;}
+.sd-rx-item.hot{border-color:rgba(201,162,39,0.42);background:rgba(201,162,39,0.08);}
+.sd-rx-item.hot .v{color:var(--gold-soft);}
+.sd-trap{font-size:12px;color:var(--text-dim);line-height:1.8;margin-top:14px;padding-left:11px;border-left:2px solid var(--red);}
+
+.sd-badge{display:inline-block;font-size:9.5px;font-family:var(--mono);padding:2px 7px;border-radius:4px;letter-spacing:.04em;vertical-align:middle;margin-left:8px;}
+.sd-badge.core{background:rgba(201,162,39,0.2);color:var(--gold-soft);}
+.sd-badge.mid{background:rgba(255,255,255,0.06);color:var(--text-dim);}
+.sd-badge.low{background:rgba(255,255,255,0.04);color:var(--text-faint);}
+
+.sd-crit{display:flex;flex-direction:column;gap:7px;margin-top:12px;}
+.sd-crit label{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-dim);cursor:pointer;}
+.sd-crit input{accent-color:var(--gold);width:14px;height:14px;flex-shrink:0;}
+.sd-score{font-family:var(--mono);font-size:11.5px;color:var(--text-faint);margin-top:9px;}
+.sd-score.ok{color:var(--green);}
+.sd-score.bad{color:var(--red);}
+
+/* 최종 처방전 */
+.sd-final{display:flex;flex-direction:column;gap:0;}
+.sd-frow{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:12.5px;align-items:baseline;}
+.sd-frow:last-child{border-bottom:none;}
+.sd-frow .k{width:88px;flex-shrink:0;font-size:10.5px;font-family:var(--mono);color:var(--text-faint);letter-spacing:.04em;}
+.sd-frow .v{flex:1;color:var(--text);line-height:1.65;}
+.sd-frow .v .note{display:block;font-size:11.5px;color:var(--text-faint);margin-top:2px;}
+.sd-frow.hot .v{color:var(--gold-soft);font-weight:600;}
+
+/* 하단 이동 */
+.sd-nav{display:flex;gap:7px;align-items:center;margin-top:auto;padding-top:18px;flex-wrap:wrap;}
+.sd-nav .sd-spacer{flex:1;}
+.sd-go{
+  background:var(--gold);border:1px solid var(--gold);color:#1a1508;font-weight:700;
+  border-radius:8px;padding:8px 18px;font-size:13px;cursor:pointer;font-family:var(--sans);
+}
+.sd-go:disabled{opacity:.28;cursor:default;}
+.sd-ghost{
+  background:transparent;border:1px solid var(--border);color:var(--text-dim);
+  border-radius:8px;padding:8px 13px;font-size:12.5px;cursor:pointer;font-family:var(--sans);
+}
+.sd-ghost:hover{border-color:var(--border-strong);color:var(--text);}
+.sd-ghost:disabled{opacity:.3;cursor:default;}
+
+/* 지나온 판단 */
+.sd-trail{width:100%;max-width:660px;margin-top:20px;padding-top:13px;border-top:1px solid var(--border);
+  display:flex;gap:5px;flex-wrap:wrap;align-items:center;}
+.sd-trail .t-lbl{font-size:9.5px;font-family:var(--mono);color:var(--text-faint);letter-spacing:.06em;margin-right:3px;}
+.sd-chip{
+  font-size:11px;padding:3px 9px;border-radius:20px;border:1px solid var(--border);
+  background:var(--panel-2);color:var(--text-dim);cursor:pointer;white-space:nowrap;
+}
+.sd-chip:hover{border-color:var(--gold);color:var(--gold-soft);}
+.sd-chip .n{font-family:var(--mono);font-size:9.5px;color:var(--text-faint);margin-right:4px;}
+
+/* 저장된 카드 */
+.sd-saved{width:100%;max-width:660px;margin-top:14px;display:flex;gap:5px;flex-wrap:wrap;align-items:center;}
+.sd-saved .t-lbl{font-size:9.5px;font-family:var(--mono);color:var(--text-faint);letter-spacing:.06em;margin-right:3px;}
+.sd-scard{
+  display:inline-flex;align-items:center;gap:6px;font-size:11.5px;padding:4px 10px;border-radius:20px;
+  border:1px solid var(--border);background:var(--panel-2);cursor:pointer;
+}
+.sd-scard:hover{border-color:var(--border-strong);}
+.sd-scard .nm{color:var(--text);font-weight:600;}
+.sd-scard .ty{font-family:var(--mono);font-size:9.5px;color:var(--gold-soft);}
+.sd-scard .del{color:var(--text-faint);}
+.sd-scard .del:hover{color:var(--red);}
+
+@media (max-width:700px){
+  .sd-ask{font-size:16.5px;}
+  .sd-reveal .big{font-size:25px;}
+  .sd-card{min-height:0;}
+  .sd-frow{flex-direction:column;gap:3px;}
+  .sd-frow .k{width:auto;}
+}
 </style>
 </head>
 <body>
@@ -1960,7 +2110,9 @@ const state = {
   calMonthKey: null,       // '캘린더' 탭에서 보고 있는 달 (YYYY-MM)
   calMode: 'all',
   calHeat: false,         // 지출 진하기(히트맵) — 기본 끔
-  calSelDay: null          // 캘린더에서 선택한 날 (YYYY-MM-DD)
+  calSelDay: null,         // 캘린더에서 선택한 날 (YYYY-MM-DD)
+  invSub: 'overview',      // 투자 하위: overview | holdings | perf | toss | study
+  study: { name: '', step: 0, ans: {}, chk: {}, memo: {}, stop: '', take: '', weight: '', crit: [], editId: null }
 };
 
 /* ---------------- 로컬 저장소 shim ----------------
@@ -10703,11 +10855,507 @@ const INV_SERIES = [
   { key: 'share', label: '총자산 대비 비중', color: '#5b8fc7' }
 ];
 
+/* ================= 자산 > 투자 > 스터디 : 종목 판단 흐름 =================
+   화면 정중앙에 판단할 항목이 하나씩 들어온다. 고르면 해석을 돌려주고 다음 항목으로.
+   0단계 분류 → 유형 발표(처방전) → 1~5단계 검토 → 손절/익절 → 처방전 한 장. */
+
+const STUDY_TYPES = {
+  growth: {
+    label: '성장형', tag: '이익이 계단식으로 커지는 회사',
+    tool: 'PEG · 매출성장률', track: '성장률 둔화 시점',
+    stop: '성장률이 정해둔 선 아래로', size: '중간',
+    trap: '성장률은 반드시 언젠가 꺾인다. "얼마나 크냐"가 아니라 "언제 꺾이냐"가 이 유형의 유일한 질문이다.',
+    w: { src: 2, quality: 1, survive: 0, moat: 2, price: 2 },
+    h: {
+      src: '매출이 늘어서 난 이익인지가 전부다. 비용 절감으로 난 이익이면 애초에 성장형이 아니다.',
+      quality: '성장기엔 이익률이 낮아도 되지만, 방향이 개선인지 악화인지는 봐야 한다.',
+      survive: '흑자 성장이면 대개 문제없다. 성장에 자금이 계속 필요한 구조인지만 확인.',
+      moat: '성장은 반드시 경쟁을 부른다. 후발주자가 못 따라오는 이유를 한 줄로 말할 수 있어야 한다.',
+      price: '이미 성장이 가격에 다 들어가 있는 경우가 대부분이다. 기대치를 넘어야 오른다.'
+    }
+  },
+  stable: {
+    label: '안정형', tag: '이익이 평평하게 유지되는 회사',
+    tool: 'PER · 배당수익률 · FCF', track: '이익 방어력 · 배당 지속성',
+    stop: '배당 삭감 · 점유율 구조적 하락', size: '크게 가능',
+    trap: '안정형의 진짜 위험은 급락이 아니라 "천천히 낡는 것". 아무 일도 안 일어나는 동안 대체되고 있을 수 있다.',
+    w: { src: 1, quality: 2, survive: 0, moat: 2, price: 2 },
+    h: {
+      src: '드라마틱한 변화가 없는 게 정상이다. 갑자기 이익이 튀면 오히려 일회성을 의심.',
+      quality: '이 유형의 핵심. 번 돈이 배당·자사주로 실제로 돌아오는지가 전부다.',
+      survive: '보통 문제되지 않는다. 부채비율만 확인.',
+      moat: '규제·인프라·브랜드 중 무엇이 이 안정성을 만드는지 특정할 수 있어야 한다.',
+      price: '싸게 사는 것 자체가 수익의 대부분. 비싸게 산 안정형은 채권만도 못하다.'
+    }
+  },
+  cyclical: {
+    label: '사이클형', tag: '이익이 파도처럼 오르내리는 회사',
+    tool: 'PBR · 정상화 이익 (PER 아님)', track: '제품 가격 · 사이클 위치',
+    stop: '제품 가격 사이클의 하강 전환', size: '중간',
+    trap: 'PER이 가장 싸 보일 때가 정점이고 가장 비싸 보일 때가 바닥이다. 신호가 정확히 거꾸로 나온다.',
+    w: { src: 2, quality: 1, survive: 0, moat: 1, price: 2 },
+    h: {
+      src: '이익의 출처는 거의 항상 "가격"이다. 내 실력이 아니라는 점을 인정하고 시작한다.',
+      quality: '정점 이익엔 성과급·환율 같은 일회성이 섞이기 쉽다. 걷어내고 봐야 한다.',
+      survive: '정점에선 무의미하고 바닥에선 결정적. 사이클 위치가 가중치를 정한다.',
+      moat: '사이클형의 해자는 대개 원가 경쟁력과 생존력이다. 불황에 남을 회사인가.',
+      price: 'PER 말고 PBR로 봐라. 자산가치는 사이클을 타지 않아 제자리를 지켜준다.'
+    }
+  },
+  turnaround: {
+    label: '턴어라운드형', tag: '이익이 바닥에서 회복 중인 회사',
+    tool: 'EV/EBITDA · 회복률', track: '매출 성장률 (이익 아님)',
+    stop: '회복이 N개 분기 이상 지연', size: '중간~작게',
+    trap: '이익 회복은 뺄셈으로도 만들어진다. 하지만 매출 회복은 못 속인다. 그래서 이익이 아니라 매출을 본다.',
+    w: { src: 2, quality: 2, survive: 1, moat: 2, price: 1 },
+    h: {
+      src: '이 유형의 생사가 걸린 질문. 덧셈(매출)인가 뺄셈(비용)인가. 뺄셈이면 한 번짜리다.',
+      quality: '적자를 벗어난 직후엔 이자비용이 이익을 대부분 먹는다. 순이익까지 내려가서 확인.',
+      survive: '회복이 완성되기 전에 자금이 마르면 판단이 옳아도 진다.',
+      moat: '"업황이 돌아온다"와 "내 이익이 돌아온다"는 다른 명제다. 여기서 대부분이 틀린다.',
+      price: '회복 초입엔 지표가 다 이상하게 나온다. 시장이 안 믿는 이유를 먼저 알아야 한다.'
+    }
+  },
+  option: {
+    label: '옵션형', tag: '아직 이익이 없는 회사',
+    tool: '현금 소진 속도 · 손익분기점', track: '현금과 EBITDA 궤적',
+    stop: '없음 — 사이징으로 대체', size: '잃어도 되는 만큼만',
+    trap: '이 유형엔 손절 기준이 존재하지 않는다. 가격이 논리와 무관하게 움직이기 때문. 손절 결정은 매수하는 순간 이미 끝나 있어야 한다.',
+    w: { src: 0, quality: 0, survive: 2, moat: 2, price: 1 },
+    h: {
+      src: '아직 볼 이익이 없다. 매출이 있다면 그게 진짜 제품 판매인지만 확인.',
+      quality: '흑자 전환 전까지는 의미 없는 단계. 건너뛰어도 된다.',
+      survive: '이 유형 분석의 절반. 현금 − 차입, 분기 소진액, 남은 개월 수를 직접 계산한다.',
+      moat: '이익이 없으니 기술·특허·수주잔고가 유일한 근거다. 실제 계약으로 나오는지 확인.',
+      price: '밸류에이션이 불가능하다. 목표주가는 참고도 되지 않는다.'
+    }
+  },
+  asset: {
+    label: '자산형', tag: '가치의 원천이 이익이 아니라 보유 자산인 회사',
+    tool: 'NAV · PBR', track: 'NAV 할인율 · 자산 매각 여부',
+    stop: '할인율 확대가 고착', size: '중간',
+    trap: '싸다는 것과 오른다는 것은 다르다. 할인율을 좁힐 촉매(매각·배당·지배구조 변화)가 없으면 10년도 싼 채로 있는다.',
+    w: { src: 1, quality: 1, survive: 1, moat: 0, price: 2 },
+    h: {
+      src: '영업이익보다 자산에서 나오는 수익(배당·임대·지분법)의 비중을 먼저 확인.',
+      quality: '장부가와 실제 시장가치의 괴리를 확인. 장부가는 거짓말을 자주 한다.',
+      survive: '자산이 많아도 현금이 없으면 급매를 하게 된다. 유동성은 따로 본다.',
+      moat: '대체로 해당 없음. 자산의 질 자체가 해자다.',
+      price: '이 유형의 전부. 할인율이 과거 평균 대비 어디인지, 좁힐 촉매가 있는지.'
+    }
+  }
+};
+
+/* 0단계 분류 문답 — 고르면 해석을 돌려준다 */
+const STUDY_Q = {
+  q1: {
+    eyebrow: '0단계 · 분류',
+    ask: '이 회사는 지금 돈을 버는가?',
+    why: '가장 먼저 갈라야 하는 질문. 여기서 틀리면 이후의 모든 도구가 잘못 작동한다. 적자 기업에 PER을 들이대는 것 같은 일이 벌어진다.',
+    lens: '분류의 유일한 기준은 <b>"이 회사의 미래 이익을 결정하는 지배 변수가 무엇인가"</b>다. 업종도 시총도 아니다.',
+    opts: [
+      ['profit', '흑자다', '영업이익과 순이익이 플러스', '',
+        '그럼 다음 갈림길은 <b>그 이익이 어디서 오는가</b>다. 같은 흑자라도 원천이 회사 밖이면 완전히 다른 종목이 된다.'],
+      ['loss', '적자다', '아직 이익이 없거나 손실 중', 'warn',
+        '<b>옵션형</b>으로 분류된다. 이 순간 PER·목표주가 같은 도구는 전부 버려야 한다. 남는 건 현금과 시간뿐이다.'],
+      ['assetheavy', '버는 돈보다 가진 것이 크다', '지주회사 · 부동산 과다 보유 등', '',
+        '<b>자산형</b>이다. 이익이 아니라 가진 것의 가치와 그 할인율이 분석 대상이 된다.']
+    ]
+  },
+  q2: {
+    eyebrow: '0단계 · 분류',
+    ask: '이익을 결정하는 것이 회사 밖인가, 안인가?',
+    why: '분류 전체에서 가장 중요한 갈림길이다. 여기가 갈려야 PER을 믿을지 말지가 정해진다.',
+    lens: '판별법 한 줄 — <b>"이 회사가 아무것도 안 바꿔도 이익이 절반이 될 수 있는가?"</b> 답이 예라면 회사 밖이 지배하는 것이다.',
+    opts: [
+      ['outside', '회사 밖 — 제품 가격 · 업황', '반도체 · 화학 · 해운 · 정유처럼 가격이 이익을 결정', '',
+        '<b>사이클형</b>이다. 지금부터 PER은 신뢰하면 안 되는 지표가 된다. 정점에서 가장 싸 보이기 때문.'],
+      ['inside', '회사 안 — 실력 · 전략 · 제품', '회사가 잘하면 이익이 늘어나는 구조', '',
+        '회사의 실력이 이익을 만든다. 이제 <b>그 이익이 지금 어느 국면인지</b>만 정하면 분류가 끝난다.']
+    ]
+  },
+  q3: {
+    eyebrow: '0단계 · 분류',
+    ask: '이익이 지금 어느 국면인가?',
+    why: '회사를 분류하는 게 아니라 "지금 이 국면"을 분류하는 것이다. 같은 회사도 시간에 따라 칸을 옮겨 다닌다.',
+    lens: '<b>칸이 바뀌는 순간이 재평가가 일어나는 순간</b>이다. 삼성전자도 2023년엔 턴어라운드형이었고 지금은 사이클 정점에 있다.',
+    opts: [
+      ['up', '커지는 중', '전년 대비 이익이 추세적으로 증가', '', '<b>성장형</b>으로 분류된다.'],
+      ['flat', '유지되는 중', '큰 변화 없이 안정적', '', '<b>안정형</b>으로 분류된다.'],
+      ['recover', '바닥에서 회복 중', '적자 · 부진에서 빠져나오는 중', '', '<b>턴어라운드형</b>으로 분류된다.']
+    ]
+  }
+};
+
+const STUDY_CHECK = [
+  {
+    id: 'src', n: 1, ask: '이익은 어디서 왔나?',
+    why: '가계부를 여는 단계. 이번 달에 돈이 남았다고 다 같은 게 아니다. 월급이 올랐나, 씀씀이를 줄였나, 적금을 깼나.',
+    lens: '시장은 <b>덧셈으로 번 돈과 뺄셈으로 번 돈에 전혀 다른 값</b>을 매긴다. 같은 이익 증가라도 주가 반응이 정반대로 나온다.',
+    opts: [
+      ['sell', '제품·서비스가 더 팔려서', '덧셈', 'good',
+        '가장 좋은 형태. 재평가로 이어질 수 있다. 남은 질문은 <b>이게 몇 분기 더 가는가</b> 하나뿐이다.'],
+      ['price', '판매 가격이 올라서', '외부 요인', '',
+        '내 실력이 아니다. 이익이 아니라 <b>가격 사이클의 위치</b>를 봐야 한다. 사이클형으로 재분류할지 검토해볼 것.'],
+      ['cost', '비용을 줄여서', '뺄셈', 'warn',
+        '한 번밖에 못 쓰는 카드. 내년엔 기저에 깔려 성장 기여가 사라진다. 실적이 좋아도 목표가가 깎이는 일이 여기서 생긴다. <b>멀티플 확장은 매출이 늘 때만</b> 일어난다.'],
+      ['acct', '회계·일회성 (합의금·보험금·환율)', '현금과 무관할 수 있음', 'warn',
+        '이 금액을 걷어내고 다시 계산해야 진짜 추세가 보인다. 이연수익이면 앞으로 몇 분기 더 들어오는지까지 확인할 것.'],
+      ['none', '아직 이익이 없다', '', '',
+        '이 단계는 건너뛴다. 3단계 생존이 이 종목 분석의 절반이다.']
+    ]
+  },
+  {
+    id: 'quality', n: 2, ask: '그 이익이 끝까지 내려오나?',
+    why: '수도관 점검. 상류에서 100을 흘려보냈는데 수도꼭지에서 30이 나오면 중간 어딘가에 새는 곳이 있는 것이다.',
+    lens: '보는 법 — <b>순이익 ÷ 영업이익</b>. 차액이 크면 그 원인(이자·세금·소수주주지분)을 반드시 특정할 것.',
+    opts: [
+      ['high', '80% 이상', '누수 거의 없음', 'good', '깨끗하다. 영업이익 추세를 그대로 믿어도 된다.'],
+      ['mid', '50 ~ 80%', '보통', '', '이자인지 세금인지 확인. 이자라면 차입 만기 구조까지 봐야 한다.'],
+      ['low', '50% 미만', '누수 큼', 'warn',
+        '번 돈의 절반 이상이 밖으로 샌다. 대개 이자비용이 주범이고, 이건 <b>영업이익이 늘어도 주주 몫은 안 는다</b>는 뜻이다.'],
+      ['neg', '순손실이다', '', 'warn', '이익의 질을 논할 단계가 아니다. 생존으로 넘어간다.']
+    ]
+  },
+  {
+    id: 'survive', n: 3, ask: '그때까지 버티나?',
+    why: '잠수부의 산소통. 아무리 정확한 판단도 산소가 떨어지면 실현되지 않는다. 옳았는데 죽는 경우가 실제로 있다.',
+    lens: '계산할 것 — <b>현금 − 차입</b>, 분기 소진액, 남은 개월 수. 이 단계의 가중치는 유형이 정한다.',
+    opts: [
+      ['netcash', '순현금이다 (현금 > 차입)', '', 'good', '시간을 살 수 있다. 판단이 늦게 맞아도 견딜 수 있다는 뜻.'],
+      ['ok', '차입은 있지만 영업현금흐름 +', '', '', '당장은 위험하지 않다. 만기 구조와 금리만 확인.'],
+      ['burn2', '현금 소진 중 · 2년 이상 버팀', '', '', '옵션으로 취급할 것. 가격이 아니라 <b>사이징</b>으로 관리한다.'],
+      ['burn1', '1년 미만치 현금', '', 'warn', '증자 위험. 지분 희석이 일어나면 판단이 맞아도 수익률은 깎인다.']
+    ]
+  },
+  {
+    id: 'moat', n: 4, ask: '업황이 좋아지면 "내"가 좋아지나?',
+    why: '밀물이 들어오면 모든 배가 뜬다지만, 내 배 바닥에 구멍이 났으면 물만 들어온다.',
+    lens: '<b>업황 명제와 기업 명제 사이에 등호를 놓는 순간 분석은 끝난 것</b>이다. "중국인이 돌아온다"와 "이 회사 이익이 돌아온다"는 다른 명제다.',
+    opts: [
+      ['proven', '업황 개선이 내 매출로 이어진 이력이 있다', '', 'good', '검증된 연결고리. 업황 지표를 선행지표로 써도 된다.'],
+      ['share', '업황은 좋은데 내 몫이 줄고 있다', '점유율 하락', 'warn',
+        '가장 위험한 조합. 시장이 커지는데 내 매출이 안 크면 구조적으로 밀리고 있는 것이다.'],
+      ['policy', '정책·규제가 지배한다', '통제 밖', 'warn',
+        '경영진이 잘해도 안 되는 변수다. 이건 실력이 아니라 <b>정책에 대한 베팅</b>이라는 걸 인정하고 사이징해야 한다.'],
+      ['channel', '경쟁·대체채널로 마진 회복이 불확실', '', 'warn',
+        '수요가 돌아와도 예전 마진으로는 못 돌아올 수 있다. 물량과 마진을 분리해서 볼 것.']
+    ]
+  },
+  {
+    id: 'price', n: 5, ask: '시장은 이미 뭘 알고 있나?',
+    why: '이길 말을 찍는 게 아니라 배당률 대비 빠른 말을 찍는 것이다. 좋은 회사도 이미 그 값이 붙어 있으면 먹을 게 없다.',
+    lens: '목표주가는 평균이 아니라 <b>분산</b>을 봐라. 그리고 뉴스보다 <b>뉴스에 대한 반응</b>을 봐라.',
+    opts: [
+      ['narrow', '목표주가 분산이 좁다', '합의 존재', '', '컨센서스가 있다. 남들이 다 아는 것이므로 초과수익 여지가 작다.'],
+      ['wide', '분산이 2배 이상 벌어져 있다', '합의 없음', '',
+        '전문가들도 갈린다는 뜻. 남의 결론을 빌려올 수 없고, <b>내 관점이 없으면 애초에 살 자리가 아니다.</b>'],
+      ['nogood', '좋은 뉴스에도 안 오른다', '', 'warn',
+        '가장 나쁜 신호. 나쁜 뉴스에 내리는 것보다 훨씬 나쁘다. 시장이 개선의 지속성을 안 믿는다는 뜻.'],
+      ['nobad', '나쁜 뉴스에도 안 내린다', '', 'good',
+        '악재 소화가 끝났을 가능성. 바닥 신호로 볼 수 있는 몇 안 되는 가격 정보다.']
+    ]
+  }
+];
+
+const STUDY_CRITERIA = [
+  '공시·지표로 관측 가능하다',
+  '분기마다 주기적으로 확인된다',
+  '해석의 여지가 없다 (숫자로 참·거짓이 갈린다)',
+  '지금 미리 숫자로 적어둘 수 있다'
+];
+
+const STUDY_WLABEL = { 2: ['핵심', 'core'], 1: ['보통', 'mid'], 0: ['참고', 'low'] };
+const STUDY_PHASES = [
+  ['분류', ['q1', 'q2', 'q3', 'type']],
+  ['검토', ['src', 'quality', 'survive', 'moat', 'price']],
+  ['판정', ['stop', 'take', 'done']]
+];
+const STUDY_CARDS_KEY = 'haedal:study-cards';
+
+function studyLoadCards() {
+  try { return JSON.parse(localStorage.getItem(STUDY_CARDS_KEY) || '[]'); } catch (e) { return []; }
+}
+function studySaveCards(list) { try { localStorage.setItem(STUDY_CARDS_KEY, JSON.stringify(list)); } catch (e) {} }
+function studyReset() {
+  state.study = { name: '', step: 0, ans: {}, chk: {}, memo: {}, stop: '', take: '', weight: '', crit: [], editId: null };
+}
+function studyType() {
+  const a = (state.study && state.study.ans) || {};
+  if (a.q1 === 'loss') return 'option';
+  if (a.q1 === 'assetheavy') return 'asset';
+  if (a.q1 === 'profit') {
+    if (a.q2 === 'outside') return 'cyclical';
+    if (a.q2 === 'inside') {
+      if (a.q3 === 'up') return 'growth';
+      if (a.q3 === 'flat') return 'stable';
+      if (a.q3 === 'recover') return 'turnaround';
+    }
+  }
+  return null;
+}
+function studySteps() {
+  const a = (state.study && state.study.ans) || {};
+  const arr = ['q1'];
+  if (a.q1 === 'profit') { arr.push('q2'); if (a.q2 === 'inside') arr.push('q3'); }
+  if (studyType()) arr.push('type', 'src', 'quality', 'survive', 'moat', 'price', 'stop', 'take', 'done');
+  return arr;
+}
+/* 지금 화면에서 '판단'이 끝났는지 — 끝나야 다음으로 넘어갈 수 있다 */
+function studyAnswered(id) {
+  const S = state.study;
+  if (id === 'q1' || id === 'q2' || id === 'q3') return !!S.ans[id];
+  if (STUDY_CHECK.some(c => c.id === id)) return !!S.chk[id];
+  return true;
+}
+/* 지나온 판단 요약 (되돌아가기용 칩) */
+function studyTrail() {
+  const S = state.study, out = [];
+  const push = (stepId, n, label) => out.push({ stepId, n, label });
+  ['q1', 'q2', 'q3'].forEach(q => {
+    if (!S.ans[q]) return;
+    const o = STUDY_Q[q].opts.find(x => x[0] === S.ans[q]);
+    if (o) push(q, '', o[1]);
+  });
+  STUDY_CHECK.forEach(c => {
+    if (!S.chk[c.id]) return;
+    const o = c.opts.find(x => x[0] === S.chk[c.id]);
+    if (o) push(c.id, c.n, o[1]);
+  });
+  return out;
+}
+
+function renderStudy() {
+  const host = document.getElementById('panel-study');
+  if (!host) return;
+  const S = state.study;
+  const steps = studySteps();
+  if (S.step > steps.length - 1) S.step = steps.length - 1;
+  if (S.step < 0) S.step = 0;
+  const cur = steps[S.step];
+  const T = studyType();
+  const ty = T ? STUDY_TYPES[T] : null;
+
+  /* ---- 상단 진행 바 ---- */
+  const phases = STUDY_PHASES.map(([lbl, ids]) => {
+    const mine = ids.filter(i => steps.includes(i));
+    const shown = mine.length ? mine : [ids[0]];
+    const active = shown.includes(cur);
+    const bars = shown.map(i => {
+      const idx = steps.indexOf(i);
+      const cls = idx === -1 ? '' : (i === cur ? 'on' : (idx < S.step ? 'done' : ''));
+      return `<div class="sd-seg ${cls}"></div>`;
+    }).join('');
+    return `<div class="sd-ph ${active ? 'on' : ''}"><div class="lbl">${lbl}</div><div class="bars">${bars}</div></div>`;
+  }).join('');
+
+  /* ---- 중앙 카드 ---- */
+  let card = '';
+
+  if (cur === 'q1' || cur === 'q2' || cur === 'q3') {
+    const q = STUDY_Q[cur];
+    const sel = S.ans[cur];
+    const o = sel ? q.opts.find(x => x[0] === sel) : null;
+    card = `
+      <div class="sd-eyebrow">${q.eyebrow}</div>
+      <div class="sd-ask">${q.ask}</div>
+      <div class="sd-why">${q.why}</div>
+      <div class="sd-lens">${q.lens}</div>
+      <div class="sd-opts">${q.opts.map(([v, l, sub]) =>
+      `<button class="sd-opt ${sel === v ? 'sel' : ''}" data-ans="${cur}" data-v="${v}">${l}${sub ? `<span class="sd-sub">${sub}</span>` : ''}</button>`).join('')}</div>
+      ${o ? `<div class="sd-verdict ${o[3] || ''}">${o[4]}</div>` : ''}`;
+  } else if (cur === 'type') {
+    const order = [['1', 'src', '이익 출처'], ['2', 'quality', '이익의 질'], ['3', 'survive', '생존'], ['4', 'moat', '해자'], ['5', 'price', '가격']];
+    card = `
+      <div class="sd-eyebrow">분류 완료</div>
+      <div class="sd-reveal">
+        <div class="big">${ty.label}</div>
+        <div class="sub">${ty.tag}</div>
+      </div>
+      <div class="sd-rx">
+        <div class="sd-rx-item hot"><div class="k">쓰는 도구</div><div class="v">${ty.tool}</div></div>
+        <div class="sd-rx-item hot"><div class="k">추적 지표</div><div class="v">${ty.track}</div></div>
+        <div class="sd-rx-item"><div class="k">손절 기준의 형태</div><div class="v">${ty.stop}</div></div>
+        <div class="sd-rx-item"><div class="k">비중</div><div class="v">${ty.size}</div></div>
+      </div>
+      <div class="sd-trap">${ty.trap}</div>
+      <div class="sd-eyebrow" style="margin-top:18px;">이제 볼 것 · 안 봐도 될 것</div>
+      <div class="sd-opts" style="gap:5px;">
+        ${order.map(([n, k, l]) => {
+      const w = ty.w[k], wl = STUDY_WLABEL[w];
+      return `<div class="sd-opt flat" style="${w === 0 ? 'opacity:.45;' : ''}">${n}단계 · ${l}<span class="sd-badge ${wl[1]}">${wl[0]}</span><span class="sd-sub">${ty.h[k]}</span></div>`;
+    }).join('')}
+      </div>`;
+  } else if (cur === 'stop') {
+    const score = (S.crit || []).length;
+    card = `
+      <div class="sd-eyebrow">판정 · 손절</div>
+      <div class="sd-ask">내가 틀렸다는 조건은 무엇인가?</div>
+      <div class="sd-why">모든 진료의 끝은 처방전 한 장이다. 검사 결과를 아무리 많이 뽑아도 종이 한 장으로 안 나오면 진료가 끝난 게 아니다.</div>
+      <div class="sd-lens">${ty ? `${ty.label}이므로 형태는 → <b>${ty.stop}</b>. 추적할 지표는 <b>${ty.track}</b>.` : ''}</div>
+      <textarea class="sd-memo" style="min-height:78px;" data-fld="stop" placeholder="예) 시내면세점 매출 YoY 성장률이 3개 분기 연속 한 자릿수에 머무르면">${S.stop || ''}</textarea>
+      <div class="sd-eyebrow" style="margin-top:16px;">이게 쓸 수 있는 기준인지 점검</div>
+      <div class="sd-crit">${STUDY_CRITERIA.map((c, i) =>
+      `<label><input type="checkbox" data-crit="${i}" ${(S.crit || []).includes(i) ? 'checked' : ''}/> ${c}</label>`).join('')}</div>
+      <div class="sd-score ${score === 4 ? 'ok' : score <= 1 ? 'bad' : ''}">${score}/4 충족 · ${score === 4 ? '쓸 수 있는 기준이다' : score >= 2 ? '아직 애매하다. 숫자로 더 좁혀보자' : '이건 기준이 아니라 느낌이다'}</div>`;
+  } else if (cur === 'take') {
+    card = `
+      <div class="sd-eyebrow">판정 · 익절과 비중</div>
+      <div class="sd-ask">논리가 실현되면 어떤 모습인가?</div>
+      <div class="sd-why">익절은 손절과 대칭이 아니다. 손실은 잘라야 하지만 이익은 자르면 안 된다. "몇 % 올랐나"가 아니라 <b>논리가 실현됐나</b>로 판단한다.</div>
+      <div class="sd-lens">정당한 익절 사유는 셋뿐 — <b>논리 실현 · 더 나은 기회 · 내 사정</b>. "많이 올라서"는 여기 없다.</div>
+      <textarea class="sd-memo" style="min-height:70px;" data-fld="take" placeholder="예) 시내면세점이 두 자릿수 성장으로 복귀하고 목표가 컨센서스 근처까지 재평가되면">${S.take || ''}</textarea>
+      <div class="sd-eyebrow" style="margin-top:16px;">이 종목에 넣을 비중 · 총자산 대비 %</div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <input class="sd-input" data-fld="weight" value="${(S.weight || '').replace(/"/g, '&quot;')}" placeholder="3" />
+        <span style="font-size:12px;color:var(--text-faint);">${ty ? `${ty.label} 권장 → ${ty.size}` : ''}</span>
+      </div>
+      ${T === 'option' ? '<div class="sd-verdict warn" style="margin-top:14px;">옵션형은 손절 기준이 작동하지 않는다. <b>지금 적은 이 숫자가 곧 손실 한도</b>다. 손절 결정은 매수하는 순간 이미 끝나 있어야 한다.</div>' : ''}`;
+  } else if (cur === 'done') {
+    const score = (S.crit || []).length;
+    const line = (id) => {
+      const c = STUDY_CHECK.find(x => x.id === id);
+      const o = S.chk[id] ? c.opts.find(x => x[0] === S.chk[id]) : null;
+      const w = ty ? ty.w[id] : 1, wl = STUDY_WLABEL[w];
+      return `<div class="sd-frow"><div class="k">${c.n} ${c.ask.replace(/\?$/, '')}</div>
+        <div class="v">${o ? o[1] : '<span style="color:var(--text-faint)">미판단</span>'}<span class="sd-badge ${wl[1]}">${wl[0]}</span>
+        ${S.memo[id] ? `<span class="note">${S.memo[id]}</span>` : ''}</div></div>`;
+    };
+    card = `
+      <div class="sd-eyebrow">처방전</div>
+      <div class="sd-ask">${S.name || '이름 없음'} · ${ty ? ty.label : ''}</div>
+      <div class="sd-why">${ty ? ty.tag : ''}</div>
+      <div class="sd-final">
+        <div class="sd-frow hot"><div class="k">쓰는 도구</div><div class="v">${ty ? ty.tool : '—'}</div></div>
+        <div class="sd-frow hot"><div class="k">추적 지표</div><div class="v">${ty ? ty.track : '—'}</div></div>
+        ${['src', 'quality', 'survive', 'moat', 'price'].map(line).join('')}
+        <div class="sd-frow hot"><div class="k">손절 조건</div><div class="v">${S.stop || '<span style="color:var(--red)">미작성 — 이게 없으면 분석이 끝난 게 아니다</span>'}
+          ${S.stop ? `<span class="note">품질 ${score}/4</span>` : ''}</div></div>
+        <div class="sd-frow hot"><div class="k">익절 조건</div><div class="v">${S.take || '<span style="color:var(--text-faint)">미작성</span>'}</div></div>
+        <div class="sd-frow"><div class="k">비중</div><div class="v">${S.weight ? S.weight + '%' : '<span style="color:var(--text-faint)">미정</span>'}</div></div>
+      </div>
+      <div class="sd-trap">${ty ? ty.trap : ''}</div>`;
+  } else {
+    const c = STUDY_CHECK.find(x => x.id === cur);
+    const w = ty ? ty.w[c.id] : 1, wl = STUDY_WLABEL[w];
+    const sel = S.chk[c.id];
+    const o = sel ? c.opts.find(x => x[0] === sel) : null;
+    card = `
+      <div class="sd-eyebrow">${c.n}단계 · ${['', '이익의 출처', '이익의 질', '생존', '해자', '가격'][c.n]}<span class="sd-badge ${wl[1]}">${ty ? ty.label + ' ' + wl[0] : wl[0]}</span></div>
+      <div class="sd-ask">${c.ask}</div>
+      <div class="sd-why">${c.why}</div>
+      <div class="sd-lens">${ty ? `${ty.label}에서는 → ${ty.h[c.id]}` : c.lens}</div>
+      <div class="sd-opts">${c.opts.map(([v, l, sub]) =>
+      `<button class="sd-opt ${sel === v ? 'sel' : ''}" data-chk="${c.id}" data-v="${v}">${l}${sub ? `<span class="sd-sub">${sub}</span>` : ''}</button>`).join('')}</div>
+      ${o ? `<div class="sd-verdict ${o[3] || ''}">${o[4]}</div>
+        <textarea class="sd-memo" data-memo="${c.id}" placeholder="이 종목에서 확인한 숫자를 적어두자 (선택)">${S.memo[c.id] || ''}</textarea>` : ''}`;
+  }
+
+  const trail = studyTrail();
+  const cards = studyLoadCards();
+  const isLast = S.step === steps.length - 1;
+  const canNext = studyAnswered(cur);
+
+  host.innerHTML = `
+    <div class="sd-stage">
+      <div class="sd-top">
+        <div class="sd-phases">${phases}</div>
+        <div class="sd-topbar">
+          <input class="sd-name" id="sd-name" value="${(S.name || '').replace(/"/g, '&quot;')}" placeholder="종목 이름을 적고 시작하세요" />
+          ${T ? `<span class="sd-type">${ty.label}</span>` : ''}
+        </div>
+      </div>
+
+      <div class="sd-card">
+        ${card}
+        <div class="sd-nav">
+          <button class="sd-ghost" id="sd-prev" ${S.step === 0 ? 'disabled' : ''}>← 이전</button>
+          ${!isLast ? `<button class="sd-go" id="sd-next" ${canNext ? '' : 'disabled'}>${canNext ? '다음 →' : '판단을 선택하세요'}</button>` : ''}
+          <div class="sd-spacer"></div>
+          ${isLast && T ? '<button class="sd-go" id="sd-save">카드로 저장</button>' : ''}
+          <button class="sd-ghost" id="sd-reset">처음부터</button>
+        </div>
+      </div>
+
+      ${trail.length ? `<div class="sd-trail"><span class="t-lbl">지나온 판단</span>${trail.map(t =>
+    `<button class="sd-chip" data-jump="${t.stepId}">${t.n ? `<span class="n">${t.n}</span>` : ''}${t.label}</button>`).join('')}</div>` : ''}
+
+      ${cards.length ? `<div class="sd-saved"><span class="t-lbl">저장한 종목</span>${cards.map(c =>
+      `<span class="sd-scard" data-open="${c.id}"><span class="nm">${c.name || '이름 없음'}</span><span class="ty">${(STUDY_TYPES[c.type] || {}).label || ''}</span><span class="del" data-del="${c.id}">✕</span></span>`).join('')}</div>` : ''}
+    </div>`;
+
+  /* ---- 바인딩 ---- */
+  const nameEl = document.getElementById('sd-name');
+  if (nameEl) nameEl.addEventListener('input', () => { S.name = nameEl.value; });
+
+  host.querySelectorAll('[data-ans]').forEach(b => b.addEventListener('click', () => {
+    const k = b.dataset.ans;
+    if (S.ans[k] !== b.dataset.v) {
+      S.ans[k] = b.dataset.v;
+      if (k === 'q1') { delete S.ans.q2; delete S.ans.q3; }
+      if (k === 'q2') { delete S.ans.q3; }
+    }
+    renderStudy();
+  }));
+  host.querySelectorAll('[data-chk]').forEach(b => b.addEventListener('click', () => {
+    S.chk[b.dataset.chk] = b.dataset.v; renderStudy();
+  }));
+  host.querySelectorAll('[data-memo]').forEach(t => t.addEventListener('input', () => { S.memo[t.dataset.memo] = t.value; }));
+  host.querySelectorAll('[data-fld]').forEach(t => t.addEventListener('input', () => { S[t.dataset.fld] = t.value; }));
+  host.querySelectorAll('[data-crit]').forEach(cb => cb.addEventListener('change', () => {
+    const i = Number(cb.dataset.crit);
+    S.crit = S.crit || [];
+    S.crit = cb.checked ? Array.from(new Set([...S.crit, i])) : S.crit.filter(x => x !== i);
+    renderStudy();
+  }));
+  host.querySelectorAll('[data-jump]').forEach(b => b.addEventListener('click', () => {
+    const i = studySteps().indexOf(b.dataset.jump);
+    if (i >= 0) { S.step = i; renderStudy(); }
+  }));
+  host.querySelectorAll('[data-del]').forEach(el => el.addEventListener('click', (e) => {
+    e.stopPropagation();
+    studySaveCards(studyLoadCards().filter(c => c.id !== el.dataset.del));
+    renderStudy();
+  }));
+  host.querySelectorAll('[data-open]').forEach(el => el.addEventListener('click', () => {
+    const c = studyLoadCards().find(x => x.id === el.dataset.open);
+    if (!c) return;
+    state.study = {
+      name: c.name, step: 0, ans: c.ans || {}, chk: c.chk || {}, memo: c.memo || {},
+      stop: c.stop || '', take: c.take || '', weight: c.weight || '', crit: c.crit || [], editId: c.id
+    };
+    state.study.step = studySteps().length - 1;
+    renderStudy();
+  }));
+
+  const prev = document.getElementById('sd-prev');
+  if (prev) prev.addEventListener('click', () => { S.step = Math.max(0, S.step - 1); renderStudy(); });
+  const next = document.getElementById('sd-next');
+  if (next) next.addEventListener('click', () => { S.step = Math.min(studySteps().length - 1, S.step + 1); renderStudy(); });
+  const reset = document.getElementById('sd-reset');
+  if (reset) reset.addEventListener('click', () => { studyReset(); renderStudy(); });
+  const save = document.getElementById('sd-save');
+  if (save) save.addEventListener('click', () => {
+    const list = studyLoadCards();
+    const rec = {
+      id: S.editId || ('sd' + Date.now()), name: S.name || '이름 없음', type: studyType(),
+      ans: S.ans, chk: S.chk, memo: S.memo, stop: S.stop, take: S.take,
+      weight: S.weight, crit: S.crit || [], ts: new Date().toISOString().slice(0, 10)
+    };
+    const i = list.findIndex(c => c.id === rec.id);
+    if (i >= 0) list[i] = rec; else list.unshift(rec);
+    studySaveCards(list.slice(0, 40));
+    S.editId = rec.id;
+    renderStudy();
+  });
+}
+
 const INV_SUBS = [
   ['overview', '요약'],
   ['holdings', '종목·테마'],
   ['perf', '벤치마크·세금'],
-  ['toss', '토스 실시간']
+  ['toss', '토스 실시간'],
+  ['study', '스터디']
 ];
 
 function renderInvestmentPage(container, data, d) {
@@ -10881,6 +11529,11 @@ function renderInvestmentPage(container, data, d) {
 
     ${SUB === 'toss' ? `<div class="g"><div class="panel s8" id="panel-toss-live"></div></div>` : ''}
 
+    ${SUB === 'study' ? `
+    <div class="g">
+      <div class="panel s12" id="panel-study"></div>
+    </div>` : ''}
+
   `;
 
   document.getElementById('inv-subnav').addEventListener('click', (e) => {
@@ -10897,6 +11550,7 @@ function renderInvestmentPage(container, data, d) {
     renderIdlePanel('panel-idle-invest', data, d, ['투자 자산'], '방치된 증권 계좌');
   }
   if (SUB === 'toss') renderTossPanel('panel-toss-live', data);
+  if (SUB === 'study') renderStudy();
 
   if (SUB === 'overview') {
 
