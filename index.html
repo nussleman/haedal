@@ -1197,11 +1197,12 @@ body{font-variant-numeric:tabular-nums;}
   .st-todo-name{min-height:0;}
 }
 
-/* ---------- 체크 배지 (후회·고정비·환급) ---------- */
+/* ---------- 체크 배지 (Good/Bad·고정비·환급) ---------- */
 .chk-strip{display:flex;gap:4px;flex-wrap:wrap;align-items:center;}
 .chk-pill{font-family:var(--mono);font-size:9.5px;letter-spacing:.02em;padding:2px 6px;border-radius:5px;white-space:nowrap;}
 .chk-pill.fixed{background:rgba(91,143,199,0.18);color:#9dc2e8;}
 .chk-pill.regret{background:rgba(193,72,63,0.20);color:#eb9891;}
+.chk-pill.good{background:rgba(96,150,120,0.22);color:#93d4b1;}
 .chk-pill.refund{background:rgba(76,140,107,0.20);color:#8fd0ac;}
 #today-left{display:flex;flex-direction:column;gap:var(--gap);min-width:0;}
 #today-left .stat-card{flex:0 0 auto;}
@@ -1800,6 +1801,7 @@ body{font-variant-numeric:tabular-nums;}
 /* 체크 배지 가독성 */
 .chk-pill{font-size:11px;padding:3px 8px;font-weight:500;}
 .chk-pill.regret{background:rgba(193,72,63,0.30);color:#f5b4ae;}
+.chk-pill.good{background:rgba(96,150,120,0.30);color:#a8e2c3;}
 .chk-pill.fixed{background:rgba(91,143,199,0.28);color:#b6d5f2;}
 .chk-pill.refund{background:rgba(76,140,107,0.28);color:#a6dcbf;}
 
@@ -2221,7 +2223,7 @@ const state = {
   flowSub: 'today',        // 흐름 하위 탭: today | now | year | calendar
   expSub: 'summary',       // 지출 하위: summary | fixed | budget
   nowSub: 'summary',       // 이번달 하위: summary | income | expense
-  nowExpFilter: 'all',     // 이번달>지출 내역 필터: all | fixed | var | regret
+  nowExpFilter: 'all',     // 이번달>지출 내역 필터: all | fixed | var | good | regret
   nowAxis: 'expense',      // 페이스 차트 축: income | expense | net (하나만)
   nowOpts: { budget: true, daily: false },
   yearAxis: 'expense',
@@ -2446,7 +2448,7 @@ function parseIndexFromRows(rows) {
 
 /* 목표 탭: 시기 / 구분 / 목표 / 상태 / 달성한 날 / 메모 컬럼 구조.
    "시기"와 "상태"가 함께 있는 행만 헤더로 인정한다 — 가계부(D)의
-   헤더(날짜,대분류,소분류,항목,사용처,금액,메모,후회하는 소비,회사 환급,고정비)에는
+   헤더(날짜,대분류,소분류,항목,사용처,금액,메모,Good/Bad,회사 환급,고정비)에는
    이 두 단어가 없어서, 다른 탭을 잘못 목표로 오인할 위험이 없다. */
 function parseGoalsFromRows(rows) {
   let headerRowIdx = -1, headerCols = [];
@@ -2548,7 +2550,7 @@ const GOAL_METRIC_DEFS = [
   /* --- 지출 (플로우) --- */
   { key: 'fixed', name: '고정비', cat: /지출/, item: /고정비/, unit: 'won', dir: 'down', type: 'cap',
     current: (d, e, f) => f === '연' ? e.sumFixed12 : e.avgFixed12 },
-  { key: 'regret', name: '후회 소비', cat: /지출/, item: /후회/, unit: 'won', dir: 'down', type: 'cap',
+  { key: 'regret', name: '아낄 수 있었던 소비', cat: /지출/, item: /후회|아낄|bad/i, unit: 'won', dir: 'down', type: 'cap',
     current: (d, e, f) => f === '연' ? e.sumRegret12 : e.avgRegret12 },
   { key: 'expense', name: '총지출', cat: /지출/, item: /지출|생활비/, unit: 'won', dir: 'down', type: 'cap',
     current: (d, e, f) => f === '연' ? e.sumExpense12 : e.avgExpense12 },
@@ -2734,7 +2736,7 @@ function isTruthyFlag(v) {
   return /^(true|1|y|yes|참|o|on|v|✓)$/i.test(String(v === null || v === undefined ? '' : v).trim());
 }
 
-/* 시트의 체크 칸(후회하는 소비 · 회사 환급)은 ✔️ ✅ ☑ 같은 이모지가 들어온다.
+/* 시트의 체크 칸(회사 환급=🏢 · 고정비=📌 등)은 이모지로 들어온다.
    변이 셀렉터(U+FE0F)까지 붙어 오므로 '비어 있지 않고 명시적 거짓이 아니면 체크'로 본다. */
 function isCheckMark(v) {
   const t = String(v === null || v === undefined ? '' : v).replace(/\uFE0F/g, '').trim();
@@ -2775,7 +2777,7 @@ function parseLedgerFromRows(rows) {
     amount: findCol(['금액'], c0 + 5),
     vendor: findCol([/^사용처/, /브랜드/], c0 + 6),
     memo: findCol(['내용', '메모'], c0 + 7),
-    regret: findCol([/^후회/], -1),
+    gb: findCol([/^good\/?bad$/i, /^후회/], -1),
     refund: findCol([/^회사환급/, /^환급/], -1),
     fixed: findCol([/^고정비/], -1)
   };
@@ -2798,8 +2800,12 @@ function parseLedgerFromRows(rows) {
     const amount = parseWon(row[COL.amount]);
     const vendor = cleanLabel(row[COL.vendor] || '');
     const memo = (row[COL.memo] || '').trim();
-    const fixed = COL.fixed >= 0 ? isTruthyFlag(row[COL.fixed]) : false;
-    const regret = COL.regret >= 0 ? isCheckMark(row[COL.regret]) : false;
+    const fixed = COL.fixed >= 0 ? isCheckMark(row[COL.fixed]) : false;   /* 📌 등 아무 표시나 체크로 */
+    /* Good/Bad 열: 'Good'=잘한소비, 'Bad'=아낄 수 있었던 소비.
+       (예전 방식대로 ✔️ 체크만 있으면 Bad로 간주 — 과거 데이터 호환) */
+    const gbRaw = COL.gb >= 0 ? String(row[COL.gb] === null || row[COL.gb] === undefined ? '' : row[COL.gb]).trim() : '';
+    const good = /good/i.test(gbRaw);
+    const regret = /bad/i.test(gbRaw) || (!good && isCheckMark(gbRaw));
     /* 회사 환급 칸은 금액일 수도, 체크(=전액 환급)일 수도 있다 */
     let refund = 0;
     if (COL.refund >= 0) {
@@ -2808,7 +2814,7 @@ function parseLedgerFromRows(rows) {
       refund = (asWon !== null && asWon !== 0) ? asWon : (isCheckMark(raw) && amount !== null ? amount : 0);
     }
     if (amount === null || amount === 0) continue;
-    ledger.push({ date: dateCell, major, minor, item, amount, vendor, memo, fixed, regret, refund });
+    ledger.push({ date: dateCell, major, minor, item, amount, vendor, memo, fixed, regret, good, refund });
   }
   return ledger;
 }
@@ -3905,7 +3911,7 @@ function monthlyCheckHtml(data, d, monthKey) {
   const rg = monthExp.filter(r => r.regret);
   const rgSum = rg.reduce((a, r) => a + netOf(r), 0);
   const expSum = monthExp.reduce((a, r) => a + netOf(r), 0);
-  pills.push(`<span class="dq-pill ${rgSum === 0 ? 'ok' : rgSum / (expSum || 1) > 0.15 ? 'bad' : 'warn'}">후회 소비 ${formatCompactWon(rgSum)} · ${rg.length}건${expSum ? ` (${(rgSum / expSum * 100).toFixed(0)}%)` : ''}</span>`);
+  pills.push(`<span class="dq-pill ${rgSum === 0 ? 'ok' : rgSum / (expSum || 1) > 0.15 ? 'bad' : 'warn'}">아낄 수 있었던 ${formatCompactWon(rgSum)} · ${rg.length}건${expSum ? ` (${(rgSum / expSum * 100).toFixed(0)}%)` : ''}</span>`);
 
   if (mk === thisMonthKey()) {
     const idle = computeIdleAccounts(data, d, null).filter(x => x.checked !== mk && x.severity >= 1);
@@ -4055,14 +4061,15 @@ function openIdleAccountPicker(data, d) {
   });
 }
 
-/* ---------------- 후회하는 소비 ---------------- */
+/* ---------------- Good/Bad 소비 (잘한소비 · 아낄 수 있었던) ---------------- */
 function renderRegretSection(container, data, d) {
   const ledger = (data.ledger || []).filter(r => r.major.includes('지출'));
   const regret = ledger.filter(r => r.regret);
+  const good = ledger.filter(r => r.good);
   const host = document.getElementById('panel-regret-wrap');
   if (!host) return;
-  if (!regret.length) {
-    host.innerHTML = '<div class="panel s12"><div class="panel-title"><div>후회하는 소비</div></div><div class="empty-state">가계부에 후회 체크가 된 내역이 없어요.</div></div>';
+  if (!regret.length && !good.length) {
+    host.innerHTML = '<div class="panel s12"><div class="panel-title"><div>Good/Bad 소비</div></div><div class="empty-state">가계부에 Good/Bad 표시가 된 내역이 없어요.</div></div>';
     return;
   }
   const netOf = (r) => r.amount - (r.refund || 0);
@@ -4070,19 +4077,23 @@ function renderRegretSection(container, data, d) {
   ledger.forEach(r => {
     const k = ledgerMonthKey(r.date);
     if (!k) return;
-    if (!byMonth[k]) byMonth[k] = { all: 0, regret: 0, cnt: 0 };
+    if (!byMonth[k]) byMonth[k] = { all: 0, regret: 0, cnt: 0, good: 0, gcnt: 0 };
     byMonth[k].all += netOf(r);
     if (r.regret) { byMonth[k].regret += netOf(r); byMonth[k].cnt++; }
+    if (r.good) { byMonth[k].good += netOf(r); byMonth[k].gcnt++; }
   });
   const keys = Object.keys(byMonth).sort();
   const series = keys.slice(-12);
   const mk = thisMonthKey();
-  const cur = byMonth[mk] || { all: 0, regret: 0, cnt: 0 };
+  const cur = byMonth[mk] || { all: 0, regret: 0, cnt: 0, good: 0, gcnt: 0 };
   const totalRegret = regret.reduce((a, r) => a + netOf(r), 0);
+  const totalGood = good.reduce((a, r) => a + netOf(r), 0);
   const totalAll = ledger.reduce((a, r) => a + netOf(r), 0);
   const share = totalAll ? (totalRegret / totalAll) * 100 : 0;
+  const shareGood = totalAll ? (totalGood / totalAll) * 100 : 0;
   const closed = keys.filter(k => k !== mk);
   const avg = closed.length ? closed.slice(-12).reduce((a, k) => a + byMonth[k].regret, 0) / Math.min(closed.length, 12) : 0;
+  const avgGood = closed.length ? closed.slice(-12).reduce((a, k) => a + byMonth[k].good, 0) / Math.min(closed.length, 12) : 0;
 
   const byCat = {};
   regret.forEach(r => { const k = r.minor || '기타'; byCat[k] = (byCat[k] || 0) + netOf(r); });
@@ -4096,46 +4107,57 @@ function renderRegretSection(container, data, d) {
     <div class="g">
       <div class="stat-grid s5" style="grid-template-columns:1fr 1fr;">
         <div class="stat-card">
-          <div class="label">이번 달 후회 소비</div>
+          <div class="label">이번 달 아낄 수 있었던</div>
           <div class="value" style="color:var(--red)">${formatCompactWon(cur.regret)}원</div>
           <div class="sub ${cur.regret <= avg ? 'up' : 'down'}">마감월 평균 ${formatCompactWon(Math.round(avg))}원 · ${cur.cnt}건</div>
         </div>
         <div class="stat-card">
-          <div class="label">이번 달 지출 중 비중</div>
-          <div class="value">${cur.all ? (cur.regret / cur.all * 100).toFixed(1) : '0.0'}%</div>
-          <div class="sub">전체 지출 ${formatCompactWon(cur.all)}원</div>
+          <div class="label">이번 달 잘한소비</div>
+          <div class="value" style="color:var(--green)">${formatCompactWon(cur.good)}원</div>
+          <div class="sub">마감월 평균 ${formatCompactWon(Math.round(avgGood))}원 · ${cur.gcnt}건</div>
         </div>
         <div class="stat-card">
-          <div class="label">누적 후회 소비</div>
+          <div class="label">누적 아낄 수 있었던</div>
           <div class="value" style="color:var(--red)">${formatCompactWon(totalRegret)}원</div>
           <div class="sub">${regret.length}건 · 전체 지출의 ${share.toFixed(1)}%</div>
         </div>
         <div class="stat-card">
+          <div class="label">누적 잘한소비</div>
+          <div class="value" style="color:var(--green)">${formatCompactWon(totalGood)}원</div>
+          <div class="sub">${good.length}건 · 전체 지출의 ${shareGood.toFixed(1)}%</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">이번 달 지출 중 Bad 비중</div>
+          <div class="value">${cur.all ? (cur.regret / cur.all * 100).toFixed(1) : '0.0'}%</div>
+          <div class="sub">전체 지출 ${formatCompactWon(cur.all)}원 · Good ${cur.all ? (cur.good / cur.all * 100).toFixed(1) : '0.0'}%</div>
+        </div>
+        <div class="stat-card">
           <div class="label">안 썼다면</div>
           <div class="value" style="color:var(--gold-soft)">${formatCompactWon(Math.round(totalRegret * 1.08))}원</div>
-          <div class="sub">연 8% 가정 1년 굴렸을 때</div>
+          <div class="sub">Bad 누적 · 연 8% 가정 1년 굴렸을 때</div>
         </div>
       </div>
       <div class="panel s7">
-        <div class="panel-title"><div>월별 후회 소비</div><span class="ptag">최근 12개월</span></div>
+        <div class="panel-title"><div>월별 Good/Bad</div><span class="ptag">최근 12개월</span></div>
         <div class="chart-wrap tall" style="min-height:250px;"><canvas id="chart-regret"></canvas></div>
         <div class="chart-legend">
-          <span><i style="background:rgba(193,72,63,.8)"></i>후회 소비</span>
-          <span><i style="background:#e0c766"></i>전체 지출 대비 %</span>
+          <span><i style="background:rgba(193,72,63,.8)"></i>아낄 수 있었던</span>
+          <span><i style="background:rgba(96,150,120,.85)"></i>잘한소비</span>
+          <span><i style="background:#e0c766"></i>Bad, 전체 지출 대비 %</span>
         </div>
       </div>
     </div>
     <div class="g">
       <div class="panel s4">
-        <div class="panel-title"><div>카테고리별</div></div>
+        <div class="panel-title"><div>카테고리별</div><span class="ptag">아낄 수 있었던</span></div>
         ${catList.map(([k, v]) => `<div class="rg-row"><span class="nm">${k}</span><span class="vl">${formatCompactWon(v)}</span></div>`).join('')}
       </div>
       <div class="panel s4">
-        <div class="panel-title"><div>사용처별</div></div>
+        <div class="panel-title"><div>사용처별</div><span class="ptag">아낄 수 있었던</span></div>
         ${vendorList.map(([k, v]) => `<div class="rg-row"><span class="nm">${k}</span><span class="vl">${formatCompactWon(v)}</span></div>`).join('')}
       </div>
       <div class="panel s4">
-        <div class="panel-title"><div>최근 내역</div><span class="ptag">${recent.length}건</span></div>
+        <div class="panel-title"><div>최근 내역</div><span class="ptag">아낄 수 있었던 ${recent.length}건</span></div>
         <div style="max-height:340px;overflow-y:auto;">
         ${recent.map(r => `<div class="rg-row">
           <span class="dt">${(ledgerDayKey(r.date) || '').slice(5)}</span>
@@ -4154,13 +4176,14 @@ function renderRegretSection(container, data, d) {
     data: {
       labels: series.map(monthKeyLabel),
       datasets: [
-        { type: 'bar', label: '후회 소비', data: series.map(k => byMonth[k].regret), backgroundColor: 'rgba(193,72,63,.8)', borderRadius: 3, yAxisID: 'y', labelColor: '#f0c4c0' },
+        { type: 'bar', label: '아낄 수 있었던', data: series.map(k => byMonth[k].regret), backgroundColor: 'rgba(193,72,63,.8)', borderRadius: 3, yAxisID: 'y', labelColor: '#f0c4c0' },
+        { type: 'bar', label: '잘한소비', data: series.map(k => byMonth[k].good), backgroundColor: 'rgba(96,150,120,.85)', borderRadius: 3, yAxisID: 'y', labelColor: '#a8e2c3' },
         { type: 'line', label: '비중(%)', data: series.map(k => byMonth[k].all ? +(byMonth[k].regret / byMonth[k].all * 100).toFixed(1) : 0), borderColor: '#e0c766', backgroundColor: 'transparent', tension: .3, pointRadius: 2, borderWidth: 1.5, yAxisID: 'y1', labelColor: '#e0c766' }
       ]
     },
     options: {
       responsive: true, maintainAspectRatio: false, layout: { padding: { top: 18 } },
-      plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => c.dataset.yAxisID === 'y1' ? ` 비중: ${c.raw}%` : ` 후회 소비: ${formatWon(c.raw)}` } } },
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => c.dataset.yAxisID === 'y1' ? ` Bad 비중: ${c.raw}%` : ` ${c.dataset.label}: ${formatWon(c.raw)}` } } },
       scales: {
         x: { ticks: MONO_TICK, grid: { display: false } },
         y: { ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT },
@@ -5455,13 +5478,13 @@ function buildGoalRecommendations(data, d, extra, existingGoals) {
     });
   }
 
-  /* 4. 후회 소비 — 최근 12개월 평균의 절반 */
+  /* 4. 아낄 수 있었던 소비(Bad) — 최근 12개월 평균의 절반 */
   const avgRegret = extra.avgRegret12 || 0;
   if (avgRegret > 30000) {
     const t = roundManwon(avgRegret * 0.5, 5);
     push('regret', {
-      category: '💳지출', item: '후회 소비', freq: '월', amount: t,
-      title: `월 후회 소비 ${manwonText(t)}`,
+      category: '💳지출', item: '아낄 수 있었던 소비', freq: '월', amount: t,
+      title: `월 아낄 수 있었던 소비 ${manwonText(t)}`,
       why: `최근 12개월 평균 ${formatCompactWon(avgRegret)}원 → 절반으로`
     });
   }
@@ -6590,21 +6613,23 @@ function renderNowPage(container, data, d) {
   const prevEmgSame = week ? null : ledger.filter(r => isEmgTr(r) && ledgerMonthKey(r.date) === prevKey)
     .reduce((a, r) => { const pp = parseLedgerDateParts(r.date); return (pp && pp.d <= cmpDay) ? a + r.amount : a; }, 0);
 
-  /* --- 지출 분해 (고정비 / 변동비 / 후회) --- */
+  /* --- 지출 분해 (고정비 / 변동비 / Good·Bad) --- */
   const expRows = scopeRows.filter(r => r.major.includes('지출'));
   const netOfR = (r) => r.amount - (r.refund || 0);
   const projRate = (isThisMonth && elapsed > 0) ? (M.days / elapsed) : 1;
   const expFixed = expRows.filter(r => r.fixed).reduce((a, r) => a + netOfR(r), 0);
   const expRegret = expRows.filter(r => r.regret).reduce((a, r) => a + netOfR(r), 0);
+  const expGood = expRows.filter(r => r.good).reduce((a, r) => a + netOfR(r), 0);
   const expVar = sExpense - expFixed;
   const EXP_BUCKETS = [
     { key: 'all', label: '지출 합계', value: sExpense, color: 'var(--red)' },
     { key: 'fixed', label: '고정비', value: expFixed, color: 'var(--text)' },
     { key: 'var', label: '변동비', value: expVar, color: 'var(--text)' },
-    { key: 'regret', label: '후회하는 소비', value: expRegret, color: '#e6b48f' }
+    { key: 'good', label: '잘한소비', value: expGood, color: '#93d4b1' },
+    { key: 'regret', label: '아낄 수 있었던', value: expRegret, color: '#e6b48f' }
   ];
-  const EXPF = ['all', 'fixed', 'var', 'regret'].includes(state.nowExpFilter) ? state.nowExpFilter : 'all';
-  const expFilterFn = { all: () => true, fixed: (r) => r.fixed, var: (r) => !r.fixed, regret: (r) => r.regret }[EXPF];
+  const EXPF = ['all', 'fixed', 'var', 'good', 'regret'].includes(state.nowExpFilter) ? state.nowExpFilter : 'all';
+  const expFilterFn = { all: () => true, fixed: (r) => r.fixed, var: (r) => !r.fixed, good: (r) => r.good, regret: (r) => r.regret }[EXPF];
   const expListRows = expRows.filter(expFilterFn).sort((a, b) => b.amount - a.amount);
 
   /* --- 유독 큰 지출: 이 달 지출 합계의 5% 이상인 단건만 --- */
@@ -6814,12 +6839,12 @@ function renderNowPage(container, data, d) {
             <thead><tr><th>날짜</th><th>소분류</th><th>항목</th><th>사용처</th><th style="text-align:right">금액</th></tr></thead>
             <tbody>${expListRows.map(r => `<tr>
               <td>${r.date}</td><td style="color:var(--text-dim)">${r.minor || ''}</td>
-              <td>${r.item || ''}${r.fixed ? ' <span class="chk-pill fixed">고정</span>' : ''}${r.regret ? ' <span class="chk-pill regret">후회</span>' : ''}</td>
+              <td>${r.item || ''}${r.fixed ? ' <span class="chk-pill fixed">고정</span>' : ''}${r.good ? ' <span class="chk-pill good">잘한소비</span>' : ''}${r.regret ? ' <span class="chk-pill regret">아낄 수 있었던</span>' : ''}</td>
               <td style="color:var(--text-faint)">${(r.vendor || '').split('›').pop().trim()}</td>
               <td class="amt expense">${formatWon(netOfR(r))}</td></tr>`).join('')}</tbody>
           </table>
         </div>
-        <div class="settings-note">합계 <b>${formatWon(tot)}</b> · 카드를 눌러 고정비 / 변동비 / 후회 소비로 좁혀 볼 수 있어요.</div>`
+        <div class="settings-note">합계 <b>${formatWon(tot)}</b> · 카드를 눌러 고정비 / 변동비 / 잘한소비 / 아낄 수 있었던 소비로 좁혀 볼 수 있어요.</div>`
         : '<div class="empty-state">해당 조건의 지출 내역이 없어요.</div>';
     }
 
@@ -7167,11 +7192,12 @@ function renderNowPage(container, data, d) {
 
 /* ---------------- page: 오늘 (하루 단위) ---------------- */
 
-/* 시트의 체크 항목(후회하는 소비 · 고정비 · 회사 환급)을 배지로 */
+/* 시트의 체크 항목(Good/Bad · 고정비 · 회사 환급)을 배지로 */
 function checkPills(r) {
   const out = [];
   if (r.fixed) out.push('<span class="chk-pill fixed">고정</span>');
-  if (r.regret) out.push('<span class="chk-pill regret">후회</span>');
+  if (r.good) out.push('<span class="chk-pill good">잘한소비</span>');
+  if (r.regret) out.push('<span class="chk-pill regret">아낄 수 있었던</span>');
   if (r.refund) out.push(`<span class="chk-pill refund">환급 ${formatCompactWon(r.refund)}</span>`);
   return out.length ? `<span class="chk-strip">${out.join('')}</span>` : '<span style="color:var(--text-faint)">·</span>';
 }
@@ -7343,6 +7369,7 @@ function renderTodayPage(container, data, d) {
   const todayNetExpense = netExpOfDay(key);
   const todayRefund = today.rows.reduce((a, r) => a + (r.major.includes('지출') ? (r.refund || 0) : 0), 0);
   const todayRegret = today.rows.filter(r => r.regret && r.major.includes('지출')).reduce((a, r) => a + netExpenseOf(r), 0);
+  const todayGood = today.rows.filter(r => r.good && r.major.includes('지출')).reduce((a, r) => a + netExpenseOf(r), 0);
   const todayFixed = today.rows.filter(r => r.fixed && r.major.includes('지출')).reduce((a, r) => a + netExpenseOf(r), 0);
   const cumThrough = cumBefore + todayNetExpense;
 
@@ -7457,9 +7484,10 @@ function renderTodayPage(container, data, d) {
             ${cmpLine('하루 예산', todayNetExpense, targetDaily)}
             ${cmpLine(`${DOW_KR[dowOfDayKey(key)]}요일 평균`, todayNetExpense, sameDowAvg === null ? null : Math.round(sameDowAvg))}
           </div>
-          ${(todayFixed || todayRegret || todayRefund) ? `<div class="chk-strip">
+          ${(todayFixed || todayRegret || todayGood || todayRefund) ? `<div class="chk-strip">
             ${todayFixed ? `<span class="chk-pill fixed">고정비 ${formatWon(todayFixed)}</span>` : ''}
-            ${todayRegret ? `<span class="chk-pill regret">후회 ${formatWon(todayRegret)}</span>` : ''}
+            ${todayGood ? `<span class="chk-pill good">잘한소비 ${formatWon(todayGood)}</span>` : ''}
+            ${todayRegret ? `<span class="chk-pill regret">아낄 수 있었던 ${formatWon(todayRegret)}</span>` : ''}
             ${todayRefund ? `<span class="chk-pill refund">환급 ${formatWon(todayRefund)}</span>` : ''}
           </div>` : ''}
         </div>
@@ -8113,7 +8141,7 @@ function renderYearSubTab(sub, Y, data, d, yrRows, TOP_PCT) {
         [cmpSub(fixed, pFixed, true, pvNote), cmpSubPp(total ? (fixed / total) * 100 : null, pTotal ? (pFixed / pTotal) * 100 : null, '지출 내 비중 변화'), `지출의 <b>${total ? ((fixed / total) * 100).toFixed(0) : 0}%</b>`]),
       yrStatCard('월 평균 고정비', formatWon(Math.round(nMonths ? fixed / nMonths : 0)),
         [cmpSub(Math.round(nMonths ? fixed / nMonths : 0), Math.round(fixAvgOf(prevRows)), true, pvNote), `매달 반드시 나가는 돈 — 줄면 구조가 가벼워짐`]),
-      yrStatCard('후회하는 소비', formatWon(regret),
+      yrStatCard('아낄 수 있었던 소비', formatWon(regret),
         [cmpSub(regret, pRegret, true, pvNote), { text: `지출의 <b>${total ? ((regret / total) * 100).toFixed(1) : 0}%</b> · 작년 ${pTotal ? ((pRegret / pTotal) * 100).toFixed(1) + '%' : '—'}`, tone: (pTotal && total && (regret / total) <= (pRegret / pTotal)) ? 'up' : 'down' }], '#e6b48f'),
       yrStatCard('회사 환급', formatWon(refund),
         [cmpSub(refund, pRefund, false, pvNote), `이미 지출에서 차감된 금액`], 'var(--green)')
@@ -9576,7 +9604,7 @@ function renderExpenseAvgCard(panelId, series, label, rangeKey) {
   draw();
 }
 
-const EXP_SUBS = [['summary', '요약'], ['fixed', '고정비'], ['budget', '예산'], ['regret', '후회']];
+const EXP_SUBS = [['summary', '요약'], ['fixed', '고정비'], ['budget', '예산'], ['regret', 'Good/Bad']];
 
 function renderExpensePage(container, data, d) {
   const cf = d.cashflow;
