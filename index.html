@@ -818,27 +818,41 @@ body{
 .en-sub{font-size:11px;color:var(--text-faint);margin:0 0 7px;}
 
 /* ---------- 전체 내역 ---------- */
-.lg-wrap{max-width:900px;margin:0 auto;}
+.lg-wrap{max-width:1040px;margin:0 auto;}
 .lg-stick{position:sticky;top:var(--hdr-h,0px);z-index:30;background:var(--bg);
-  padding:12px 0 0;margin-bottom:2px;}
-.lg-bar{display:flex;flex-wrap:wrap;gap:5px;align-items:center;}
-.lg-bar .en-in{height:30px;font-size:12px;width:auto;flex:0 0 auto;padding:0 8px;
-  background:var(--panel);border-color:var(--border);}
-.lg-bar .grow{flex:1 1 160px;min-width:130px;}
+  padding:30px 0 0;margin-bottom:2px;}
+.lg-bar{display:flex;flex-wrap:wrap;gap:10px 12px;align-items:flex-end;}
+.lg-grp{display:flex;flex-direction:column;gap:5px;flex:0 0 auto;}
+.lg-grp.grow{flex:1 1 190px;min-width:150px;}
+.lg-glab{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;
+  color:var(--text-faint);padding-left:3px;}
+.lg-gin{display:flex;gap:4px;align-items:center;padding:3px;border-radius:9px;
+  background:var(--panel);border:1px solid var(--border);}
+.lg-grp.grow .lg-gin{flex:1;}
+.lg-bar .en-in{height:26px;font-size:12px;width:auto;flex:0 0 auto;padding:0 8px;
+  background:transparent;border-color:transparent;border-radius:6px;}
+.lg-bar .en-in:focus{background:var(--panel-2);border-color:var(--border-strong);}
+.lg-bar .grow{flex:1 1 auto;min-width:0;}
 .lg-bar select.en-in{cursor:pointer;color-scheme:dark;}
+.lg-bar #lg-reset{color:var(--text-faint);}
+.lg-bar #lg-reset:hover{color:var(--text);background:var(--panel-2);}
 .lg-quick{display:flex;gap:2px;}
 .lg-quick button{background:transparent;border:0;color:var(--text-faint);
   border-radius:14px;padding:5px 10px;cursor:pointer;font-family:var(--sans);font-size:11.5px;}
 .lg-quick button:hover{color:var(--text);}
 .lg-quick button.on{background:var(--gold);color:#1a1508;font-weight:700;}
-.lg-sum{display:flex;gap:22px;align-items:baseline;margin:10px 2px 0;flex-wrap:wrap;}
+.lg-sum{display:flex;gap:22px;align-items:baseline;margin:14px 2px 0;flex-wrap:wrap;}
+.lg-hint{margin-left:auto;font-size:11px;color:var(--text-faint);}
+.lg-hint kbd{font-family:var(--mono);font-size:10px;background:var(--panel-2);
+  border:1px solid var(--border);border-radius:4px;padding:1px 5px;color:var(--text-dim);}
 .lg-sum span.k{font-size:10.5px;color:var(--text-faint);margin-right:6px;}
 .lg-sum span.v{font-family:var(--mono);font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;}
 
 /* 열 머리글 */
-.lg-cols{display:flex;align-items:center;gap:10px;height:26px;padding:0 12px;
-  margin-top:10px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);
-  font-family:var(--mono);font-size:10px;color:var(--text-faint);letter-spacing:.08em;}
+.lg-cols{display:flex;align-items:center;gap:9px;height:28px;padding:0 12px;
+  margin-top:12px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);
+  font-family:var(--mono);font-size:10px;color:var(--text-faint);letter-spacing:.06em;}
+.lg-cols .f,.lg-cols .g{text-align:center;}
 
 /* 날짜 그룹 */
 .lg-day{display:flex;align-items:baseline;gap:8px;margin:14px 4px 5px;}
@@ -849,30 +863,64 @@ body{
 .lg-card{background:var(--panel);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
 
 /* 행 : 표의 열처럼 폭 고정 */
-.lg-line{display:flex;align-items:center;gap:10px;height:34px;padding:0 12px;
-  border-bottom:1px solid var(--border);}
+.lg-line{display:flex;align-items:center;gap:9px;height:36px;padding:0 12px;
+  border-bottom:1px solid var(--border);position:relative;}
 .lg-card .lg-line:last-child{border-bottom:0;}
 .lg-line:hover{background:var(--panel-2);}
+/* 종류를 왼쪽 띠로 한 번, 분류 앞 배지로 한 번 더 알린다 */
+.lg-line:before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:transparent;}
+.lg-line.k-지출:before{background:var(--red);}
+.lg-line.k-수입:before{background:var(--green);}
+.lg-line.k-이체:before{background:var(--net);}
 .lg-line .e,.lg-cols .e{flex:0 0 16px;font-size:12px;line-height:1;text-align:center;}
-.lg-line .c,.lg-cols .c{flex:0 0 150px;font-family:var(--mono);font-size:11px;color:var(--text-dim);
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.lg-line .c,.lg-cols .c{flex:0 0 206px;font-family:var(--mono);font-size:11px;color:var(--text-dim);
+  display:flex;align-items:center;gap:6px;min-width:0;}
+.lg-cols .c{display:block;}
+.lg-line .c .ct{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.lg-kd{flex:0 0 auto;font-family:var(--mono);font-size:9.5px;font-weight:600;letter-spacing:.02em;
+  border-radius:4px;padding:2px 5px;line-height:1.15;}
+.lg-kd.지출{background:var(--red-soft);color:#e39189;}
+.lg-kd.수입{background:var(--green-soft);color:#7fc0a0;}
+.lg-kd.이체{background:var(--net-soft);color:#7ed0de;}
 .lg-line .n,.lg-cols .n{flex:1 1 auto;min-width:0;font-size:12.5px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.lg-line .mm,.lg-cols .mm{flex:0 0 170px;min-width:0;font-size:11.5px;color:var(--text-faint);
+.lg-line .mm,.lg-cols .mm{flex:0 0 148px;min-width:0;font-size:11.5px;color:var(--text-faint);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   border-left:1px solid var(--border);padding-left:10px;}
-.lg-line .f,.lg-cols .f{flex:0 0 30px;font-size:10px;color:var(--text-dim);text-align:center;}
-.lg-line .v,.lg-cols .v{flex:0 0 112px;font-family:var(--mono);font-size:12.5px;font-weight:500;
+.lg-line .f,.lg-cols .f{flex:0 0 52px;font-size:10px;color:var(--text-dim);text-align:center;}
+.lg-line .g,.lg-cols .g{flex:0 0 56px;text-align:center;}
+.lg-line .f{display:flex;gap:2px;justify-content:center;}
+.lg-tg{background:none;border:0;cursor:pointer;font-size:11px;line-height:1;padding:3px;
+  border-radius:5px;opacity:.22;filter:grayscale(1);}
+.lg-tg:hover{opacity:.6;background:rgba(255,255,255,0.05);}
+.lg-tg.on{opacity:1;filter:none;}
+.lg-gb{background:none;border:1px solid transparent;cursor:pointer;border-radius:11px;
+  font-family:var(--mono);font-size:9.5px;padding:2px 7px;color:var(--text-faint);line-height:1.3;}
+.lg-gb:hover{border-color:var(--border-strong);}
+.lg-gb.good{background:var(--green-soft);color:#7fc0a0;}
+.lg-gb.bad{background:var(--red-soft);color:#e39189;}
+.lg-line .v,.lg-cols .v{flex:0 0 110px;font-family:var(--mono);font-size:12.5px;font-weight:500;
   font-variant-numeric:tabular-nums;text-align:right;}
 .lg-line .v.지출{color:var(--red);}.lg-line .v.수입{color:var(--green);}.lg-line .v.이체{color:var(--net);}
 .lg-line .x,.lg-cols .x{flex:0 0 16px;background:none;border:0;color:transparent;font-size:15px;
   cursor:pointer;padding:0;line-height:1;}
 .lg-line:hover .x{color:var(--text-faint);}
 .lg-line .x:hover{color:var(--red);}
+/* 더블클릭 인라인 수정 */
+.lg-line [data-ed]{cursor:text;border-radius:5px;}
+.lg-line [data-ed]:hover{box-shadow:inset 0 0 0 1px var(--border-strong);}
+.lg-line [data-ed].editing{box-shadow:inset 0 0 0 1px var(--gold-soft);}
+.lg-ed{width:100%;min-width:0;background:var(--bg-2);border:0;outline:0;color:var(--text);
+  font-family:var(--sans);font-size:12px;height:24px;padding:0 5px;border-radius:5px;}
+.lg-ed.mono{font-family:var(--mono);text-align:right;}
+.lg-ed.sel{cursor:pointer;color-scheme:dark;font-family:var(--mono);font-size:11px;}
 @media(max-width:820px){
-  .lg-line .c,.lg-cols .c,.lg-line .mm,.lg-cols .mm{display:none;}
+  .lg-line .c .ct,.lg-cols .c,.lg-line .mm,.lg-cols .mm,.lg-line .g,.lg-cols .g{display:none;}
+  .lg-line .c{flex:0 0 auto;}
+  .lg-line .f,.lg-cols .f{flex:0 0 40px;}
   .lg-line .v,.lg-cols .v{flex:0 0 96px;}
   .lg-line .x{color:var(--text-faint);}
+  .lg-hint{display:none;}
 }
 
 .lg-meta{display:flex;align-items:center;justify-content:space-between;gap:10px;
@@ -2211,6 +2259,122 @@ body{font-variant-numeric:tabular-nums;}
   .sd-card{min-height:0;}
   .sd-frow{flex-direction:column;gap:3px;}
   .sd-frow .k{width:auto;}
+}
+
+/* ---------- 자산>투자>스터디: 종목 검토 보드 ---------- */
+.sd-headright{display:flex;align-items:center;gap:10px;}
+.sd-saved{font-family:var(--mono);font-size:10.5px;color:var(--text-faint);}
+.sd-lead{font-size:12px;color:var(--text-dim);margin:-2px 0 12px;line-height:1.6;}
+.sdb-strip{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px;}
+.sdb-chip{display:flex;align-items:baseline;gap:6px;background:var(--panel-2);
+  border:1px solid var(--border);border-radius:16px;padding:4px 11px;cursor:pointer;
+  font-family:var(--sans);font-size:11.5px;color:var(--text-dim);}
+.sdb-chip .n{font-family:var(--mono);font-size:11px;color:var(--text-faint);}
+.sdb-chip:hover{border-color:var(--border-strong);color:var(--text);}
+.sdb-chip.on{background:var(--gold);border-color:var(--gold);color:#1a1508;font-weight:700;}
+.sdb-chip.on .n{color:#4a3c08;}
+.sdb{display:grid;grid-template-columns:262px minmax(0,1fr);gap:16px;align-items:start;}
+.sdb-side{display:flex;flex-direction:column;gap:8px;position:sticky;top:8px;}
+.sdb-q{height:30px;font-size:12px;}
+.sdb-list{display:flex;flex-direction:column;gap:3px;max-height:640px;overflow-y:auto;
+  padding-right:3px;scrollbar-width:thin;}
+.sdb-item{display:flex;flex-direction:column;gap:3px;text-align:left;cursor:pointer;
+  background:transparent;border:1px solid transparent;border-radius:8px;padding:7px 9px;}
+.sdb-item:hover{background:var(--panel-2);}
+.sdb-item.on{background:var(--panel-2);border-color:var(--gold-soft);}
+.sdb-item .nm{font-size:12.5px;color:var(--text);display:flex;align-items:baseline;gap:5px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sdb-item .nm i{font-family:var(--mono);font-size:10px;color:var(--text-faint);font-style:normal;}
+.sdb-item .meta{display:flex;align-items:center;gap:7px;}
+.sdb-item .w{font-family:var(--mono);font-size:10.5px;color:var(--gold-soft);}
+.sdb-item .w.off{color:var(--text-faint);}
+.sdb-item .st{font-size:10px;font-family:var(--mono);}
+.st.pass{color:#7fc0a0;} .st.fail{color:#d98a82;} .st.wip{color:var(--gold-soft);} .st.none{color:var(--text-faint);}
+
+.sdc-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;
+  padding-bottom:12px;border-bottom:1px solid var(--border-strong);}
+.sdc-nm{font-family:var(--serif);font-size:20px;font-weight:700;color:var(--text);
+  display:flex;align-items:baseline;gap:8px;}
+.sdc-nm .tk{font-family:var(--mono);font-size:11.5px;color:var(--text-faint);font-weight:400;}
+.sdc-sub{font-size:11.5px;color:var(--text-dim);margin-top:4px;}
+.sdc-sub b{color:var(--text);} .sdc-sub .up{color:#7fc0a0;} .sdc-sub .down{color:#d98a82;}
+.sdc-right{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.sdc-badge{font-family:var(--mono);font-size:10.5px;border-radius:12px;padding:4px 10px;
+  border:1px solid var(--border);}
+.sdc-badge.pass{background:var(--green-soft);color:#7fc0a0;border-color:rgba(76,140,107,.4);}
+.sdc-badge.fail{background:var(--red-soft);color:#e39189;border-color:rgba(193,72,63,.4);}
+.sdc-badge.wip{background:rgba(201,162,39,.14);color:var(--gold-soft);border-color:rgba(201,162,39,.35);}
+.sdc-badge.none{color:var(--text-faint);}
+
+.sdc-sec{padding:16px 0;border-bottom:1px solid var(--border);}
+.sdc-sec:last-child{border-bottom:0;padding-bottom:2px;}
+.sdc-sec.dim{opacity:.42;}
+.sdc-h{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;font-size:13px;
+  font-weight:700;color:var(--text);margin-bottom:11px;}
+.sdc-h .n{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;color:#1a1508;
+  background:var(--gold-soft);border-radius:4px;padding:3px 6px;font-weight:700;}
+.sdc-h i{font-style:normal;font-weight:400;font-size:11px;color:var(--text-faint);margin-left:auto;}
+.sdc-h i b{color:var(--gold-soft);}
+
+.sdc-row{display:flex;align-items:center;gap:12px;padding:7px 0;
+  border-top:1px dotted var(--border);}
+.sdc-row:first-of-type{border-top:0;}
+.sdc-row.bad{background:rgba(193,72,63,.06);border-radius:6px;padding-left:8px;padding-right:8px;}
+.sdc-row .q{flex:1;min-width:0;}
+.sdc-row .q .t{display:block;font-size:12.5px;color:var(--text);}
+.sdc-row .q .t em{font-style:normal;font-family:var(--mono);font-size:9.5px;
+  color:var(--text-faint);margin-left:7px;}
+.sdc-row .q .w{display:block;font-size:11px;color:var(--text-faint);margin-top:2px;line-height:1.5;}
+.sdc-row .a{display:flex;gap:3px;flex-shrink:0;}
+.sd-tri{background:var(--panel-2);border:1px solid var(--border);border-radius:6px;
+  color:var(--text-faint);font-family:var(--sans);font-size:11px;padding:4px 9px;cursor:pointer;}
+.sd-tri:hover{border-color:var(--border-strong);color:var(--text);}
+.sd-tri.on.ok{background:var(--green-soft);border-color:rgba(76,140,107,.5);color:#8fd0af;}
+.sd-tri.on.warn{background:rgba(201,162,39,.18);border-color:rgba(201,162,39,.5);color:var(--gold-soft);}
+.sd-tri.on.no{background:var(--red-soft);border-color:rgba(193,72,63,.5);color:#e39189;}
+
+.sdc-stop{margin-top:11px;background:var(--red-soft);border:1px solid rgba(193,72,63,.35);
+  border-radius:8px;padding:10px 12px;font-size:12px;color:#e8a79f;line-height:1.6;}
+.sdc-stop.warn{background:rgba(201,162,39,.12);border-color:rgba(201,162,39,.35);color:var(--gold-soft);}
+.sdc-note{margin-top:9px;font-size:11.5px;color:var(--text-faint);line-height:1.6;}
+.sdc-tags{display:flex;flex-wrap:wrap;gap:5px;}
+.sd-tag{background:var(--panel-2);border:1px solid var(--border);border-radius:15px;
+  color:var(--text-dim);font-family:var(--sans);font-size:11.5px;padding:5px 12px;cursor:pointer;}
+.sd-tag:hover{border-color:var(--border-strong);color:var(--text);}
+.sd-tag.on{background:rgba(201,162,39,.18);border-color:var(--gold-soft);color:var(--gold-soft);font-weight:600;}
+.sd-tag.act.on{background:var(--gold);border-color:var(--gold);color:#1a1508;font-weight:700;}
+
+.sdc-bar{height:4px;border-radius:3px;background:rgba(255,255,255,.07);margin-bottom:10px;overflow:hidden;}
+.sdc-bar i{display:block;height:100%;background:var(--gold);border-radius:3px;transition:width .2s;}
+.sdc-grade{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 16px;margin-top:12px;
+  background:var(--panel-2);border:1px solid var(--border);border-radius:9px;padding:10px 13px;}
+.sdc-grade .k{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;color:var(--text-faint);}
+.sdc-grade .v{font-size:13.5px;font-weight:700;color:var(--gold-soft);margin-right:4px;}
+.sdc-grade .v.sm{font-size:11.5px;font-weight:400;color:var(--text-dim);}
+
+.sdc-sent{background:var(--panel-2);border-left:2px solid var(--gold-soft);border-radius:0 8px 8px 0;
+  padding:11px 14px;font-size:12.5px;line-height:1.85;color:var(--text-dim);margin-bottom:12px;}
+.sdc-sent b{color:var(--text);font-weight:600;}
+.sd-blank{color:var(--text-faint);font-style:normal;letter-spacing:.04em;}
+
+.sdc-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px 12px;}
+.sdc-fields.three{grid-template-columns:repeat(3,minmax(0,1fr));}
+.sdc-fields label{display:flex;flex-direction:column;gap:4px;min-width:0;}
+.sdc-fields label.wide{grid-column:1/-1;}
+.sdc-fields label span{font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;color:var(--text-faint);}
+.sdc-fields .en-in{height:31px;font-size:12px;background:var(--panel-2);border-color:var(--border);}
+.sdc-memo{display:flex;flex-direction:column;gap:5px;margin-top:11px;}
+.sdc-memo span{font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;color:var(--text-faint);}
+.sdc-memo textarea{background:var(--panel-2);border-color:var(--border);font-size:12px;
+  line-height:1.7;padding:9px 11px;resize:vertical;height:auto;}
+.sd-ghost.danger:hover{border-color:rgba(193,72,63,.5);color:#e39189;}
+@media(max-width:1000px){
+  .sdb{grid-template-columns:1fr;}
+  .sdb-side{position:static;}
+  .sdb-list{max-height:230px;}
+  .sdc-fields,.sdc-fields.three{grid-template-columns:1fr;}
+  .sdc-row{flex-direction:column;align-items:stretch;gap:7px;}
+  .sdc-row .a{justify-content:flex-start;}
 }
 
 /* ---------- 자산>투자>내 종목: 보유 종목 판정 보드 ---------- */
@@ -5567,27 +5731,46 @@ async function renderLedgerPage(body) {
     <div class="lg-wrap">
       <div class="lg-stick">
         <div class="lg-bar">
-          <div class="lg-quick" id="lg-quick">
-            <button data-q="tm">이번달</button><button data-q="lm">지난달</button>
-            <button data-q="3m">최근 3개월</button><button data-q="ty">올해</button><button data-q="all">전체</button>
+          <div class="lg-grp">
+            <span class="lg-glab">기간</span>
+            <div class="lg-gin">
+              <div class="lg-quick" id="lg-quick">
+                <button data-q="tm">이번달</button><button data-q="lm">지난달</button>
+                <button data-q="3m">최근 3개월</button><button data-q="ty">올해</button><button data-q="all">전체</button>
+              </div>
+              <select class="en-in" id="lg-y"><option value="">연도</option>${years.map(y => `<option value="${y}">${y}년</option>`).join('')}</select>
+              <select class="en-in" id="lg-m"><option value="">월</option>${Array.from({ length: 12 }, (_, i) => `<option value="${i + 1}">${i + 1}월</option>`).join('')}</select>
+            </div>
           </div>
-          <select class="en-in" id="lg-y"><option value="">연도</option>${years.map(y => `<option value="${y}">${y}년</option>`).join('')}</select>
-          <select class="en-in" id="lg-m"><option value="">월</option>${Array.from({ length: 12 }, (_, i) => `<option value="${i + 1}">${i + 1}월</option>`).join('')}</select>
-          <input class="en-in grow" id="lg-q" placeholder="사용처 · 메모 검색" value="${enEsc(g.q)}">
-          <select class="en-in" id="lg-kind"><option value="all">종류 전체</option>
-            <option value="지출">지출</option><option value="수입">수입</option><option value="이체">이체</option></select>
-          <select class="en-in" id="lg-cat"><option value="all">분류 전체</option>
-            ${cats.map(c => `<option value="${c.id}">${enEsc(c.category)} › ${enEsc(c.subcategory)}</option>`).join('')}</select>
-          <select class="en-in" id="lg-sort">
-            <option value="date_desc">최신순</option><option value="date_asc">오래된순</option>
-            <option value="amt_desc">금액 큰 순</option><option value="amt_asc">금액 작은 순</option>
-            <option value="created_desc">입력한 순서</option></select>
-          <button class="en-in" id="lg-reset" style="cursor:pointer;">초기화</button>
+          <div class="lg-grp grow">
+            <span class="lg-glab">검색</span>
+            <div class="lg-gin"><input class="en-in grow" id="lg-q" placeholder="사용처 · 메모" value="${enEsc(g.q)}"></div>
+          </div>
+          <div class="lg-grp">
+            <span class="lg-glab">종류 · 분류</span>
+            <div class="lg-gin">
+              <select class="en-in" id="lg-kind"><option value="all">종류 전체</option>
+                <option value="지출">지출</option><option value="수입">수입</option><option value="이체">이체</option></select>
+              <select class="en-in" id="lg-cat"><option value="all">분류 전체</option>
+                ${cats.map(c => `<option value="${c.id}">${enEsc(c.category)} › ${enEsc(c.subcategory)}</option>`).join('')}</select>
+            </div>
+          </div>
+          <div class="lg-grp">
+            <span class="lg-glab">정렬</span>
+            <div class="lg-gin">
+              <select class="en-in" id="lg-sort">
+                <option value="date_desc">최신순</option><option value="date_asc">오래된순</option>
+                <option value="amt_desc">금액 큰 순</option><option value="amt_asc">금액 작은 순</option>
+                <option value="created_desc">입력한 순서</option></select>
+              <button class="en-in" id="lg-reset" style="cursor:pointer;">초기화</button>
+            </div>
+          </div>
         </div>
         <div class="lg-sum" id="lg-sum"></div>
         <div class="lg-cols">
-          <span class="e"></span><span class="c">분류</span><span class="n">사용처</span>
-          <span class="mm">메모</span><span class="f"></span><span class="v">금액</span><span class="x"></span>
+          <span class="e"></span><span class="c">종류 · 분류</span><span class="n">사용처</span>
+          <span class="mm">메모</span><span class="f">회사 · 고정</span><span class="g">GOOD/BAD</span>
+          <span class="v">금액</span><span class="x"></span>
         </div>
       </div>
       <div id="lg-list"><div class="en-empty">불러오는 중…</div></div>
@@ -5670,7 +5853,7 @@ function enLedgerQuery(sb, mode) {
   let q;
   if (mode === 'count') q = sb.from('v_transactions').select('id', { count: 'exact', head: true });
   else if (mode === 'sum') q = sb.from('v_transactions').select('kind,amount');
-  else q = sb.from('v_transactions').select('id,date,kind,category,subcategory,emoji_category,amount,merchant,note,company_paid,is_fixed');
+  else q = sb.from('v_transactions').select('id,date,kind,category,subcategory,emoji_category,amount,merchant,note,good_bad,company_paid,is_fixed,category_id');
   if (g.kind !== 'all') q = q.eq('kind', g.kind);
   if (g.cat !== 'all') q = q.eq('category_id', Number(g.cat));
   if (g.from) q = q.gte('date', g.from);
@@ -5707,7 +5890,8 @@ async function enLoadLedger() {
       `<div><span class="k">수입</span><span class="v" style="color:var(--green);">${enComma(Math.round(agg['수입'] || 0))}</span></div>
        <div><span class="k">지출</span><span class="v" style="color:var(--red);">${enComma(Math.round(agg['지출'] || 0))}</span></div>
        <div><span class="k">이체</span><span class="v" style="color:var(--net);">${enComma(Math.round(agg['이체'] || 0))}</span></div>
-       <div><span class="k">수입 − 지출</span><span class="v" style="color:${net >= 0 ? 'var(--green)' : 'var(--red)'};">${enComma(Math.round(net))}</span></div>`;
+       <div><span class="k">수입 − 지출</span><span class="v" style="color:${net >= 0 ? 'var(--green)' : 'var(--red)'};">${enComma(Math.round(net))}</span></div>
+       <span class="lg-hint">분류 · 사용처 · 메모 · 금액 칸은 <kbd>더블클릭</kbd>, 태그는 <kbd>클릭</kbd>으로 바로 수정됩니다</span>`;
   }
 
   const box = enQS('#lg-list');
@@ -5730,13 +5914,19 @@ async function enLoadLedger() {
           <span class="w">${EN_WD[dt.getDay()]}</span>
           <span class="s">${grp.items.length}건${spend ? ' · 지출 ' + enComma(Math.round(spend)) : ''}</span>
         </div><div class="lg-card">` +
-        grp.items.map(r => `<div class="lg-line">
+        grp.items.map(r => `<div class="lg-line k-${r.kind}" data-id="${r.id}"
+          data-cat="${r.category_id}" data-amt="${r.amount}"
+          data-merch="${enEsc(r.merchant || '')}" data-note="${enEsc(r.note || '')}">
           <span class="e" aria-hidden="true">${r.emoji_category || ''}</span>
-          <span class="c">${enEsc(r.category)} › ${enEsc(r.subcategory)}</span>
-          <span class="n">${enEsc(r.merchant || r.subcategory)}</span>
-          <span class="mm">${r.note ? enEsc(r.note) : ''}</span>
-          <span class="f">${r.company_paid ? '🏢' : ''}${r.is_fixed ? '📌' : ''}</span>
-          <span class="v ${r.kind}">${Number(r.amount) < 0 ? '−' : ''}${enComma(Math.abs(r.amount))}</span>
+          <span class="c" data-ed="cat" title="더블클릭해서 분류 변경"><i class="lg-kd ${r.kind}">${r.kind}</i><span class="ct">${enEsc(r.category)} › ${enEsc(r.subcategory)}</span></span>
+          <span class="n" data-ed="merchant" title="더블클릭해서 수정">${enEsc(r.merchant || r.subcategory)}</span>
+          <span class="mm" data-ed="note" title="더블클릭해서 수정">${r.note ? enEsc(r.note) : ''}</span>
+          <span class="f">
+            <button class="lg-tg ${r.company_paid ? 'on' : ''}" data-tg="company_paid" title="회사 환급">🏢</button>
+            <button class="lg-tg ${r.is_fixed ? 'on' : ''}" data-tg="is_fixed" title="고정비">📌</button>
+          </span>
+          <span class="g"><button class="lg-gb ${r.good_bad === 'Good' ? 'good' : r.good_bad === 'Bad' ? 'bad' : ''}" data-gb title="클릭해서 Good → Bad → 해제">${r.good_bad === 'Good' ? 'GOOD' : r.good_bad === 'Bad' ? 'BAD' : '—'}</button></span>
+          <span class="v ${r.kind}" data-ed="amount" title="더블클릭해서 수정">${Number(r.amount) < 0 ? '−' : ''}${enComma(Math.abs(r.amount))}</span>
           <button class="x" data-id="${r.id}" aria-label="삭제">×</button>
         </div>`).join('') + '</div>';
     }).join('');
@@ -5746,6 +5936,7 @@ async function enLoadLedger() {
       enToast('삭제했습니다');
       enLoadLedger();
     }));
+    lgBindEdit(box);
   }
 
   const last = Math.max(1, Math.ceil(total / g.size));
@@ -5754,6 +5945,127 @@ async function enLoadLedger() {
     : '0건';
   enQS('#lg-prev').disabled = g.page <= 1;
   enQS('#lg-next').disabled = g.page >= last;
+}
+
+/* ---------------- 전체 내역 : 칸을 더블클릭해서 그 자리에서 고친다 ----------------
+   고친 값은 곧바로 transactions 테이블에 반영된다. 화면만 바뀌는 수정은 만들지 않는다. */
+async function lgUpdate(id, patch) {
+  const { error } = await (await enClient()).from('transactions').update(patch).eq('id', id);
+  if (error) { enToast('저장하지 못했습니다'); return false; }
+  return true;
+}
+
+function lgCellEdit(cell) {
+  if (cell.classList.contains('editing')) return;
+  const line = cell.closest('.lg-line');
+  const id = Number(line.dataset.id);
+  const what = cell.dataset.ed;
+  const prev = cell.innerHTML;
+  let done = false;
+  cell.classList.add('editing');
+
+  let input;
+  if (what === 'cat') {
+    input = document.createElement('select');
+    input.className = 'lg-ed sel';
+    const cur = Number(line.dataset.cat);
+    ['지출', '수입', '이체'].forEach(k => {
+      const list = EN.cats.filter(c => c.kind === k);
+      if (!list.length) return;
+      const og = document.createElement('optgroup');
+      og.label = k;
+      list.forEach(c => {
+        const o = document.createElement('option');
+        o.value = c.id;
+        o.textContent = c.category + ' › ' + c.subcategory;
+        if (c.id === cur) o.selected = true;
+        og.appendChild(o);
+      });
+      input.appendChild(og);
+    });
+  } else {
+    input = document.createElement('input');
+    input.className = 'lg-ed' + (what === 'amount' ? ' mono' : '');
+    if (what === 'amount') {
+      input.inputMode = 'numeric';
+      const n = Number(line.dataset.amt);
+      input.value = (n < 0 ? '−' : '') + enComma(Math.abs(n));
+    } else {
+      input.value = line.dataset[what === 'merchant' ? 'merch' : 'note'] || '';
+    }
+  }
+
+  cell.innerHTML = '';
+  cell.appendChild(input);
+  input.focus();
+  if (input.select) input.select();
+
+  const finish = async (commit) => {
+    if (done) return;
+    done = true;
+    cell.classList.remove('editing');
+    if (!commit) { cell.innerHTML = prev; return; }
+    const patch = {};
+    if (what === 'cat') {
+      const cid = Number(input.value);
+      if (!cid || cid === Number(line.dataset.cat)) { cell.innerHTML = prev; return; }
+      patch.category_id = cid;
+    } else if (what === 'amount') {
+      const t = input.value.trim();
+      const neg = /^[-−]/.test(t);
+      const n = Number(t.replace(/[^\d]/g, ''));
+      if (!n) { cell.innerHTML = prev; return; }
+      const v = neg ? -n : n;
+      if (v === Number(line.dataset.amt)) { cell.innerHTML = prev; return; }
+      patch.amount = v;
+    } else if (what === 'merchant') {
+      const v = input.value.trim();
+      if (v === (line.dataset.merch || '')) { cell.innerHTML = prev; return; }
+      patch.merchant = v || null;
+    } else {
+      const v = input.value.trim();
+      if (v === (line.dataset.note || '')) { cell.innerHTML = prev; return; }
+      patch.note = v || null;
+    }
+    const ok = await lgUpdate(id, patch);
+    if (!ok) { cell.innerHTML = prev; return; }
+    enToast('수정했습니다');
+    enLoadLedger();
+  };
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); finish(true); }
+    else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); finish(false); }
+  });
+  input.addEventListener('blur', () => finish(true));
+  if (what === 'cat') input.addEventListener('change', () => finish(true));
+}
+
+function lgBindEdit(box) {
+  box.querySelectorAll('[data-ed]').forEach(cell =>
+    cell.addEventListener('dblclick', () => lgCellEdit(cell)));
+
+  box.querySelectorAll('[data-tg]').forEach(btn => btn.addEventListener('click', async () => {
+    const line = btn.closest('.lg-line');
+    const on = !btn.classList.contains('on');
+    btn.classList.toggle('on', on);
+    const patch = {}; patch[btn.dataset.tg] = on;
+    const ok = await lgUpdate(Number(line.dataset.id), patch);
+    if (!ok) btn.classList.toggle('on', !on);
+  }));
+
+  box.querySelectorAll('[data-gb]').forEach(btn => btn.addEventListener('click', async () => {
+    const line = btn.closest('.lg-line');
+    const cur = btn.classList.contains('good') ? 'Good' : btn.classList.contains('bad') ? 'Bad' : null;
+    const next = cur === null ? 'Good' : cur === 'Good' ? 'Bad' : null;
+    btn.className = 'lg-gb ' + (next === 'Good' ? 'good' : next === 'Bad' ? 'bad' : '');
+    btn.textContent = next === 'Good' ? 'GOOD' : next === 'Bad' ? 'BAD' : '—';
+    const ok = await lgUpdate(Number(line.dataset.id), { good_bad: next });
+    if (!ok) {
+      btn.className = 'lg-gb ' + (cur === 'Good' ? 'good' : cur === 'Bad' ? 'bad' : '');
+      btn.textContent = cur === 'Good' ? 'GOOD' : cur === 'Bad' ? 'BAD' : '—';
+    }
+  }));
 }
 
 /* ---------------- 단축키 ---------------- */
@@ -12364,6 +12676,20 @@ const STUDY_PHASES = [
 const STUDY_CARDS_KEY = 'haedal:study-cards';
 
 function studyLoadCards() {
+  /* 원장은 Supabase(study_cards). 아직 못 불러왔을 때만 예전 로컬 카드를 쓴다. */
+  try {
+    if (SDX && SDX.rows && SDX.rows.length) {
+      return SDX.rows.map(r => ({
+        id: 'sdx' + r.id, name: r.name, type: r.type || null,
+        ans: r.ans || {}, chk: r.chk || {}, memo: r.note_by_stage || {},
+        stop: r.stop || '', take: r.take || '',
+        weight: (r.weight == null ? '' : String(r.weight)),
+        crit: [], val: r.val || {}, price: r.price || '',
+        nonEquity: r.non_equity || null,
+        ts: String(r.updated_at || '').slice(0, 10)
+      }));
+    }
+  } catch (e) {}
   try { return JSON.parse(localStorage.getItem(STUDY_CARDS_KEY) || '[]'); } catch (e) { return []; }
 }
 function studySaveCards(list) { try { localStorage.setItem(STUDY_CARDS_KEY, JSON.stringify(list)); } catch (e) {} }
@@ -12442,268 +12768,410 @@ function studyValRefresh() {
   }, 160);
 }
 
+/* ================= 자산 > 투자 > 스터디 : 종목 검토 보드 =================
+   게이트 0~5를 종목별로 채워 넣는 카드 한 장. 원장은 Supabase(study_cards)에 있고
+   입력하는 즉시 저장된다. 왼쪽은 종목 목록, 오른쪽은 지금 보고 있는 종목의 카드. */
+
+const SD_G0 = [
+  ['g1', '3년 연속 영업적자 + 흑자 전환 시점 미제시', '가치 평가가 성립하지 않는다. 투자가 아니라 옵션 베팅.'],
+  ['g2', '최근 2년 주식수 10% 이상 증가', '희석이 성장을 먹는다. 주당 가치가 늘지 않는다.'],
+  ['g3', '현금소진율 기준 잔여 런웨이 18개월 미만', '증자가 강제된다. 시점은 내가 못 고른다.'],
+  ['g4', '사업 내용을 3문장으로 못 쓰겠다', '이해하지 못한 것. 이해 못 한 건 들고 버틸 수 없다.']
+];
+const SD_G1 = [
+  ['cov', '커버리지 공백', '애널리스트 3명 이하 · 컨콜 질문자 4명 이하'],
+  ['size', '사이즈 배제', '시총 3조 미만 + 일평균 거래대금 낮음'],
+  ['mis', '분류 오류', '실제 사업과 등록 섹터가 다름'],
+  ['forced', '강제 매도', '스핀오프 · 지수 편출 · 소송 종결 직후'],
+  ['hate', '혐오 산업', 'ESG 배제 · 사양산업 오인 · 지루함']
+];
+const SD_G2 = [
+  ['s1', '매출총이익률 추세', '8분기 개선 또는 유지', 2],
+  ['s2', '매출 증가율 vs 판관비 증가율', '매출이 더 빠름', 2],
+  ['s3', 'ROIC', '10% 이상이면서 자본비용 상회', 3],
+  ['s4', 'FCF ÷ 순이익 (3년 평균)', '1.0 이상', 3],
+  ['s5', '매출채권 회전일수', '매출 증가율보다 느리게 증가', 1],
+  ['s6', '수주잔고 · 이연매출', '매출보다 빠르게 증가', 2],
+  ['s7', '상위 1개 고객 매출 비중', '20% 미만', 1]
+];
+const SD_GRADE = [
+  [12, 14, '우량', '8~10%', '3회 분할 · 6개월 이상'],
+  [9, 11, '성장', '5~7%', '3회 분할'],
+  [6, 8, '턴어라운드', '4~5%', '2회 분할 · 실적 확인 후'],
+  [3, 5, '옵션형', '2~3%', '일괄 · 손절선 사전 설정'],
+  [0, 2, '매수 금지', '0%', '—']
+];
+const SD_VERDICT = [
+  ['buy', '신규매수'], ['add', '추가매수'], ['hold', '유지'],
+  ['trim', '축소'], ['exit', '전량매도'], ['watch', '관망']
+];
+const SD_TYPE_OPTS = [
+  ['growth', '성장형'], ['stable', '안정형'], ['cyclical', '순환형'],
+  ['turnaround', '턴어라운드'], ['option', '옵션형'], ['asset', '자산형']
+];
+
+const SDX = { rows: [], byName: {}, loaded: false, sel: null, q: '', filter: 'all', timers: {}, saved: '' };
+
+async function sdxLoad(force) {
+  if (SDX.loaded && !force) return SDX.rows;
+  try {
+    const sb = await enClient();
+    const { data } = await sb.from('study_cards').select('*').order('name');
+    SDX.rows = data || [];
+  } catch (e) { SDX.rows = []; }
+  SDX.byName = {};
+  SDX.rows.forEach(r => { SDX.byName[r.name] = r; });
+  SDX.loaded = true;
+  return SDX.rows;
+}
+
+function sdxRow(name) {
+  return SDX.byName[name] || null;
+}
+
+function sdxMark(txt) {
+  SDX.saved = txt;
+  const el = document.getElementById('sd-saved');
+  if (el) el.textContent = txt;
+}
+
+/* 저장 — 있으면 update, 없으면 insert. 화면은 다시 그리지 않는다(포커스 유지). */
+async function sdxPatch(name, patch) {
+  const sb = await enClient();
+  const row = sdxRow(name);
+  sdxMark('저장 중…');
+  try {
+    if (row && row.id) {
+      Object.assign(row, patch);
+      const { error } = await sb.from('study_cards').update(patch).eq('id', row.id);
+      if (error) throw error;
+    } else {
+      const { data, error } = await sb.from('study_cards')
+        .insert(Object.assign({ name }, patch)).select().single();
+      if (error) throw error;
+      SDX.rows.push(data); SDX.byName[name] = data;
+    }
+    const t = new Date();
+    sdxMark('저장됨 ' + String(t.getHours()).padStart(2, '0') + ':' + String(t.getMinutes()).padStart(2, '0'));
+  } catch (e) {
+    sdxMark('저장 실패 — 다시 시도하세요');
+  }
+}
+function sdxPatchLater(name, patch, key) {
+  const k = name + ':' + (key || Object.keys(patch)[0]);
+  clearTimeout(SDX.timers[k]);
+  sdxMark('입력 중…');
+  SDX.timers[k] = setTimeout(() => sdxPatch(name, patch), 650);
+}
+
+/* ---------- 판정 로직 ---------- */
+function sdxG0State(r) {
+  const g = (r && r.gate0) || {};
+  const v = SD_G0.map(x => g[x[0]]);
+  if (v.some(x => x === 'y')) return 'fail';
+  if (v.every(x => x === 'n')) return 'pass';
+  return 'part';
+}
+function sdxScore(r) {
+  const g = (r && r.gate2) || {};
+  let s = 0, n = 0;
+  SD_G2.forEach(([id, , , max]) => {
+    const v = g[id];
+    if (!v) return;
+    n++;
+    if (v === 'y') s += max;
+    else if (v === 'w') s += Math.floor(max / 2);
+  });
+  return { score: s, answered: n, full: n === SD_G2.length };
+}
+function sdxGrade(score) {
+  return SD_GRADE.find(([lo, hi]) => score >= lo && score <= hi) || SD_GRADE[SD_GRADE.length - 1];
+}
+function sdxStatus(r) {
+  if (!r) return { k: 'none', label: '미검토' };
+  const g0 = sdxG0State(r);
+  if (g0 === 'fail') return { k: 'fail', label: '게이트0 탈락' };
+  const sc = sdxScore(r);
+  if (g0 === 'part' && !sc.answered) return { k: 'wip', label: '검토 중' };
+  const gr = sdxGrade(sc.score);
+  if (!sc.full) return { k: 'wip', label: `검토 중 ${sc.score}점` };
+  return { k: gr[2] === '매수 금지' ? 'fail' : 'pass', label: `${gr[2]} ${sc.score}점` };
+}
+function sdxSentence(r) {
+  const a = (r && r.why_not || '').trim(), b = (r && r.resolve_when || '').trim(), c = (r && r.resolve_how || '').trim();
+  if (!a && !b && !c) return null;
+  const blank = (v) => v ? `<b>${enEsc(v)}</b>` : '<i class="sd-blank">______</i>';
+  return `나보다 정보가 많은 사람이 이 회사를 안 사는 이유는 ${blank(a)} 이고,
+    이 이유는 ${blank(b)} 시점에 ${blank(c)} 로 해소된다.`;
+}
+
+/* ---------- 목록 ---------- */
+function sdxList() {
+  const hold = ((state.data && state.data.toss && state.data.toss.holdings) || []);
+  const total = hold.reduce((a, h) => a + h.value, 0) || 1;
+  const seen = {};
+  const out = hold.slice().sort((a, b) => b.value - a.value).map(h => {
+    seen[h.name] = 1;
+    return { name: h.name, symbol: h.symbol, weight: (h.value / total) * 100, plRate: h.plRate, held: true, row: sdxRow(h.name) };
+  });
+  SDX.rows.forEach(r => {
+    if (seen[r.name]) return;
+    out.push({ name: r.name, symbol: r.ticker || '', weight: null, plRate: null, held: false, row: r });
+  });
+  return out;
+}
+
 function renderStudy() {
   const host = document.getElementById('panel-study');
   if (!host) return;
-  const S = state.study;
-  const steps = studySteps();
-  if (S.step > steps.length - 1) S.step = steps.length - 1;
-  if (S.step < 0) S.step = 0;
-  const cur = steps[S.step];
-  const T = studyType();
-  const ty = T ? STUDY_TYPES[T] : null;
-
-  /* ---- 상단 진행 바 ---- */
-  const phases = STUDY_PHASES.map(([lbl, ids]) => {
-    const mine = ids.filter(i => steps.includes(i));
-    const shown = mine.length ? mine : [ids[0]];
-    const active = shown.includes(cur);
-    const bars = shown.map(i => {
-      const idx = steps.indexOf(i);
-      const cls = idx === -1 ? '' : (i === cur ? 'on' : (idx < S.step ? 'done' : ''));
-      return `<div class="sd-seg ${cls}"></div>`;
-    }).join('');
-    return `<div class="sd-ph ${active ? 'on' : ''}"><div class="lbl">${lbl}</div><div class="bars">${bars}</div></div>`;
-  }).join('');
-
-  /* ---- 중앙 카드 ---- */
-  let card = '';
-
-  if (cur === 'q1' || cur === 'q2' || cur === 'q3') {
-    const q = STUDY_Q[cur];
-    const sel = S.ans[cur];
-    const o = sel ? q.opts.find(x => x[0] === sel) : null;
-    card = `
-      <div class="sd-eyebrow">${q.eyebrow}</div>
-      <div class="sd-ask">${q.ask}</div>
-      <div class="sd-why">${q.why}</div>
-      <div class="sd-lens">${q.lens}</div>
-      <div class="sd-opts">${q.opts.map(([v, l, sub]) =>
-      `<button class="sd-opt ${sel === v ? 'sel' : ''}" data-ans="${cur}" data-v="${v}">${l}${sub ? `<span class="sd-sub">${sub}</span>` : ''}</button>`).join('')}</div>
-      ${o ? `<div class="sd-verdict ${o[3] || ''}">${o[4]}</div>` : ''}`;
-  } else if (cur === 'type') {
-    const order = [['1', 'src', '이익 출처'], ['2', 'quality', '이익의 질'], ['3', 'survive', '생존'], ['4', 'moat', '해자'], ['5', 'price', '가격']];
-    card = `
-      <div class="sd-eyebrow">분류 완료</div>
-      <div class="sd-reveal">
-        <div class="big">${ty.label}</div>
-        <div class="sub">${ty.tag}</div>
-      </div>
-      <div class="sd-rx">
-        <div class="sd-rx-item hot"><div class="k">쓰는 도구</div><div class="v">${ty.tool}</div></div>
-        <div class="sd-rx-item hot"><div class="k">추적 지표</div><div class="v">${ty.track}</div></div>
-        <div class="sd-rx-item"><div class="k">손절 기준의 형태</div><div class="v">${ty.stop}</div></div>
-        <div class="sd-rx-item"><div class="k">비중</div><div class="v">${ty.size}</div></div>
-      </div>
-      <div class="sd-trap">${ty.trap}</div>
-      <div class="sd-eyebrow" style="margin-top:18px;">이제 볼 것 · 안 봐도 될 것</div>
-      <div class="sd-opts" style="gap:5px;">
-        ${order.map(([n, k, l]) => {
-      const w = ty.w[k], wl = STUDY_WLABEL[w];
-      return `<div class="sd-opt flat" style="${w === 0 ? 'opacity:.45;' : ''}">${n}단계 · ${l}<span class="sd-badge ${wl[1]}">${wl[0]}</span><span class="sd-sub">${ty.h[k]}</span></div>`;
-    }).join('')}
-      </div>`;
-  } else if (cur === 'value') {
-    const r = studyValue(T, S.val, S.price);
-    const cfg = STUDY_VAL[T];
-    card = `
-      <div class="sd-eyebrow">밸류에이션 · ${ty.label}</div>
-      <div class="sd-ask">${cfg.method}</div>
-      <div class="sd-why">${cfg.why}</div>
-      <div class="sd-lens">유형이 <b>방법을 정한다</b>. 같은 회사라도 사이클형이면 PBR, 성장형이면 미래 EPS로 봐야 한다. 여기서 방법을 잘못 고르면 뒤의 숫자는 전부 무의미하다.</div>
-      <div class="sv-grid">
-        <div class="sv-in sv-price">
-          <label>현재가 <span class="u">기준 통화 아무거나</span></label>
-          <input data-fld="price" value="${(S.price || '').replace(/"/g, '&quot;')}" placeholder="42100" />
-        </div>
-        ${cfg.inputs.map(([k, l, u]) => `
-        <div class="sv-in">
-          <label>${l} <span class="u">${u || ''}</span></label>
-          <input data-val="${k}" value="${((S.val || {})[k] || '').toString().replace(/"/g, '&quot;')}" />
-        </div>`).join('')}
-      </div>
-      ${r && !r.need ? `
-        ${studyBandBar(r)}
-        <div class="sv-gap">기본값 대비 현재가 <b class="${r.gap >= 0 ? 'up' : 'down'}">${r.gap >= 0 ? '+' : '−'}${Math.abs(r.gap).toFixed(0)}%</b>
-          ${r.gap >= 0 ? '저평가 구간' : '고평가 구간'}<span style="font-size:11.5px;color:var(--text-faint);"> — 어디까지나 내 가정 기준</span></div>
-        <div class="sd-why" style="margin:9px 0 0;font-size:11.5px;">${r.note}</div>
-        <div class="sv-rev">역산 — ${r.reverse}</div>`
-      : '<div class="sd-why" style="margin-top:14px;">숫자를 채우면 밴드가 나와요. 모르는 값이 있으면 이 단계는 건너뛰어도 됩니다.</div>'}
-      <div class="sv-caution">이 숫자는 <b>사실이 아니라 내 가정의 출력</b>이다. 입력을 조금만 바꾸면 두 배가 된다.
-        밴드 안의 값에 의미를 두지 말고, <b>현재가가 밴드 밖으로 나가는 것</b>만 신호로 쓸 것.</div>`;
-  } else if (cur === 'stop') {
-    const score = (S.crit || []).length;
-    card = `
-      <div class="sd-eyebrow">판정 · 손절</div>
-      <div class="sd-ask">내가 틀렸다는 조건은 무엇인가?</div>
-      <div class="sd-why">모든 진료의 끝은 처방전 한 장이다. 검사 결과를 아무리 많이 뽑아도 종이 한 장으로 안 나오면 진료가 끝난 게 아니다.</div>
-      <div class="sd-lens">${ty ? `${ty.label}이므로 형태는 → <b>${ty.stop}</b>. 추적할 지표는 <b>${ty.track}</b>.` : ''}</div>
-      <textarea class="sd-memo" style="min-height:78px;" data-fld="stop" placeholder="예) 시내면세점 매출 YoY 성장률이 3개 분기 연속 한 자릿수에 머무르면">${S.stop || ''}</textarea>
-      <div class="sd-eyebrow" style="margin-top:16px;">이게 쓸 수 있는 기준인지 점검</div>
-      <div class="sd-crit">${STUDY_CRITERIA.map((c, i) =>
-      `<label><input type="checkbox" data-crit="${i}" ${(S.crit || []).includes(i) ? 'checked' : ''}/> ${c}</label>`).join('')}</div>
-      <div class="sd-score ${score === 4 ? 'ok' : score <= 1 ? 'bad' : ''}">${score}/4 충족 · ${score === 4 ? '쓸 수 있는 기준이다' : score >= 2 ? '아직 애매하다. 숫자로 더 좁혀보자' : '이건 기준이 아니라 느낌이다'}</div>`;
-  } else if (cur === 'take') {
-    card = `
-      <div class="sd-eyebrow">판정 · 익절과 비중</div>
-      <div class="sd-ask">논리가 실현되면 어떤 모습인가?</div>
-      <div class="sd-why">익절은 손절과 대칭이 아니다. 손실은 잘라야 하지만 이익은 자르면 안 된다. "몇 % 올랐나"가 아니라 <b>논리가 실현됐나</b>로 판단한다.</div>
-      <div class="sd-lens">정당한 익절 사유는 셋뿐 — <b>논리 실현 · 더 나은 기회 · 내 사정</b>. "많이 올라서"는 여기 없다.</div>
-      <textarea class="sd-memo" style="min-height:70px;" data-fld="take" placeholder="예) 시내면세점이 두 자릿수 성장으로 복귀하고 목표가 컨센서스 근처까지 재평가되면">${S.take || ''}</textarea>
-      <div class="sd-eyebrow" style="margin-top:16px;">이 종목에 넣을 비중 · 총자산 대비 %</div>
-      <div style="display:flex;align-items:center;gap:10px;">
-        <input class="sd-input" data-fld="weight" value="${(S.weight || '').replace(/"/g, '&quot;')}" placeholder="3" />
-        <span style="font-size:12px;color:var(--text-faint);">${ty ? `${ty.label} 권장 → ${ty.size}` : ''}</span>
-      </div>
-      ${T === 'option' ? '<div class="sd-verdict warn" style="margin-top:14px;">옵션형은 손절 기준이 작동하지 않는다. <b>지금 적은 이 숫자가 곧 손실 한도</b>다. 손절 결정은 매수하는 순간 이미 끝나 있어야 한다.</div>' : ''}`;
-  } else if (cur === 'done') {
-    const score = (S.crit || []).length;
-    const line = (id) => {
-      const c = STUDY_CHECK.find(x => x.id === id);
-      const o = S.chk[id] ? c.opts.find(x => x[0] === S.chk[id]) : null;
-      const w = ty ? ty.w[id] : 1, wl = STUDY_WLABEL[w];
-      return `<div class="sd-frow"><div class="k">${c.n} ${c.ask.replace(/\?$/, '')}</div>
-        <div class="v">${o ? o[1] : '<span style="color:var(--text-faint)">미판단</span>'}<span class="sd-badge ${wl[1]}">${wl[0]}</span>
-        ${S.memo[id] ? `<span class="note">${S.memo[id]}</span>` : ''}</div></div>`;
-    };
-    card = `
-      <div class="sd-eyebrow">처방전</div>
-      <div class="sd-ask">${S.name || '이름 없음'} · ${ty ? ty.label : ''}</div>
-      <div class="sd-why">${ty ? ty.tag : ''}</div>
-      <div class="sd-final">
-        <div class="sd-frow hot"><div class="k">쓰는 도구</div><div class="v">${ty ? ty.tool : '—'}</div></div>
-        <div class="sd-frow hot"><div class="k">추적 지표</div><div class="v">${ty ? ty.track : '—'}</div></div>
-        ${['src', 'quality', 'survive', 'moat', 'price'].map(line).join('')}
-        <div class="sd-frow hot"><div class="k">손절 조건</div><div class="v">${S.stop || '<span style="color:var(--red)">미작성 — 이게 없으면 분석이 끝난 게 아니다</span>'}
-          ${S.stop ? `<span class="note">품질 ${score}/4</span>` : ''}</div></div>
-        <div class="sd-frow hot"><div class="k">익절 조건</div><div class="v">${S.take || '<span style="color:var(--text-faint)">미작성</span>'}</div></div>
-        <div class="sd-frow"><div class="k">비중</div><div class="v">${S.weight ? S.weight + '%' : '<span style="color:var(--text-faint)">미정</span>'}</div></div>
-        ${(() => { const r = studyValue(T, S.val, S.price); return (r && !r.need) ? `
-        <div class="sd-frow"><div class="k">적정가 밴드</div><div class="v">${Math.round(r.low).toLocaleString()} — <b style="color:var(--gold-soft)">${Math.round(r.base).toLocaleString()}</b> — ${Math.round(r.high).toLocaleString()}
-          <span class="note">현재가 ${Math.round(r.price).toLocaleString()} · 기본값 대비 ${r.gap >= 0 ? '+' : '−'}${Math.abs(r.gap).toFixed(0)}% · ${r.cfg.method}</span></div></div>` : ''; })()}
-      </div>
-      <div class="sd-trap">${ty ? ty.trap : ''}</div>`;
-  } else {
-    const c = STUDY_CHECK.find(x => x.id === cur);
-    const w = ty ? ty.w[c.id] : 1, wl = STUDY_WLABEL[w];
-    const sel = S.chk[c.id];
-    const o = sel ? c.opts.find(x => x[0] === sel) : null;
-    card = `
-      <div class="sd-eyebrow">${c.n}단계 · ${['', '이익의 출처', '이익의 질', '생존', '해자', '가격'][c.n]}<span class="sd-badge ${wl[1]}">${ty ? ty.label + ' ' + wl[0] : wl[0]}</span></div>
-      <div class="sd-ask">${c.ask}</div>
-      <div class="sd-why">${c.why}</div>
-      <div class="sd-lens">${ty ? `${ty.label}에서는 → ${ty.h[c.id]}` : c.lens}</div>
-      <div class="sd-opts">${c.opts.map(([v, l, sub]) =>
-      `<button class="sd-opt ${sel === v ? 'sel' : ''}" data-chk="${c.id}" data-v="${v}">${l}${sub ? `<span class="sd-sub">${sub}</span>` : ''}</button>`).join('')}</div>
-      ${o ? `<div class="sd-verdict ${o[3] || ''}">${o[4]}</div>
-        <textarea class="sd-memo" data-memo="${c.id}" placeholder="이 종목에서 확인한 숫자를 적어두자 (선택)">${S.memo[c.id] || ''}</textarea>` : ''}`;
+  if (!SDX.loaded) {
+    host.innerHTML = '<div class="empty-state">검토 카드를 불러오는 중…</div>';
+    sdxLoad().then(() => renderStudy());
+    return;
   }
+  const items = sdxList();
+  if (SDX.sel === null && items.length) SDX.sel = items[0].name;
 
-  const trail = studyTrail();
-  const cards = studyLoadCards();
-  const isLast = S.step === steps.length - 1;
-  const canNext = studyAnswered(cur);
+  const cnt = { pass: 0, fail: 0, wip: 0, none: 0 };
+  items.forEach(it => { cnt[sdxStatus(it.row).k]++; });
+
+  const q = SDX.q.trim().toLowerCase();
+  const shown = items.filter(it => {
+    if (q && !(it.name.toLowerCase().includes(q) || (it.symbol || '').toLowerCase().includes(q))) return false;
+    if (SDX.filter === 'all') return true;
+    return sdxStatus(it.row).k === SDX.filter;
+  });
 
   host.innerHTML = `
-    <div class="sd-stage">
-      <div class="sd-top">
-        <div class="sd-phases">${phases}</div>
-        <div class="sd-topbar">
-          <input class="sd-name" id="sd-name" value="${(S.name || '').replace(/"/g, '&quot;')}" placeholder="종목 이름을 적고 시작하세요" />
-          ${T ? `<span class="sd-type">${ty.label}</span>` : ''}
-        </div>
+    <div class="panel-title">
+      <div>스터디 — 종목 검토</div>
+      <div class="sd-headright">
+        <span class="sd-saved" id="sd-saved">${enEsc(SDX.saved)}</span>
+        <button class="sd-ghost" id="sdb-new">+ 종목 추가</button>
       </div>
-
-      <div class="sd-card">
-        ${card}
-        <div class="sd-nav">
-          <button class="sd-ghost" id="sd-prev" ${S.step === 0 ? 'disabled' : ''}>← 이전</button>
-          ${!isLast ? `<button class="sd-go" id="sd-next" ${canNext ? '' : 'disabled'}>${canNext ? '다음 →' : '판단을 선택하세요'}</button>` : ''}
-          <div class="sd-spacer"></div>
-          ${isLast && T ? '<button class="sd-go" id="sd-save">카드로 저장</button>' : ''}
-          <button class="sd-ghost" id="sd-reset">처음부터</button>
-        </div>
+    </div>
+    <p class="sd-lead">게이트 0에서 하나라도 걸리면 아래로 내려가지 않는다. 통과한 것만 점수를 매기고, 점수가 비중을 정한다.</p>
+    <div class="sdb-strip">
+      ${[['all', '전체', items.length], ['pass', '통과', cnt.pass], ['wip', '검토 중', cnt.wip],
+        ['fail', '탈락', cnt.fail], ['none', '미검토', cnt.none]].map(([k, l, n]) =>
+        `<button class="sdb-chip ${SDX.filter === k ? 'on' : ''}" data-fil="${k}"><span class="l">${l}</span><span class="n">${n}</span></button>`).join('')}
+    </div>
+    <div class="sdb">
+      <div class="sdb-side">
+        <input class="en-in sdb-q" id="sdb-q" placeholder="종목 · 티커 검색" value="${enEsc(SDX.q)}">
+        <div class="sdb-list">${shown.length ? shown.map(it => {
+          const st = sdxStatus(it.row);
+          return `<button class="sdb-item ${it.name === SDX.sel ? 'on' : ''}" data-nm="${enEsc(it.name)}">
+            <span class="nm">${enEsc(it.name)}${it.symbol ? `<i>${enEsc(it.symbol)}</i>` : ''}</span>
+            <span class="meta">
+              ${it.weight != null ? `<span class="w">${it.weight.toFixed(1)}%</span>` : '<span class="w off">미보유</span>'}
+              <span class="st ${st.k}">${st.label}</span>
+            </span>
+          </button>`;
+        }).join('') : '<div class="empty-state">해당하는 종목이 없어요.</div>'}</div>
       </div>
-
-      ${trail.length ? `<div class="sd-trail"><span class="t-lbl">지나온 판단</span>${trail.map(t =>
-    `<button class="sd-chip" data-jump="${t.stepId}">${t.n ? `<span class="n">${t.n}</span>` : ''}${t.label}</button>`).join('')}</div>` : ''}
-
-      ${cards.length ? `<div class="sd-saved"><span class="t-lbl">저장한 종목</span>${cards.map(c =>
-      `<span class="sd-scard" data-open="${c.id}"><span class="nm">${c.name || '이름 없음'}</span><span class="ty">${(STUDY_TYPES[c.type] || {}).label || ''}</span><span class="del" data-del="${c.id}">✕</span></span>`).join('')}</div>` : ''}
+      <div class="sdb-main" id="sdb-main">${sdxCard(items.find(x => x.name === SDX.sel))}</div>
     </div>`;
 
-  /* ---- 바인딩 ---- */
-  const nameEl = document.getElementById('sd-name');
-  if (nameEl) nameEl.addEventListener('input', () => { S.name = nameEl.value; });
+  host.querySelectorAll('[data-fil]').forEach(b => b.addEventListener('click', () => {
+    SDX.filter = b.dataset.fil; renderStudy();
+  }));
+  const qi = host.querySelector('#sdb-q');
+  if (qi) {
+    let t = null;
+    qi.addEventListener('input', () => {
+      clearTimeout(t);
+      t = setTimeout(() => { SDX.q = qi.value; renderStudy(); const n = document.getElementById('sdb-q'); if (n) { n.focus(); n.setSelectionRange(n.value.length, n.value.length); } }, 250);
+    });
+  }
+  host.querySelectorAll('[data-nm]').forEach(b => b.addEventListener('click', () => {
+    SDX.sel = b.dataset.nm; renderStudy();
+  }));
+  const nb = host.querySelector('#sdb-new');
+  if (nb) nb.addEventListener('click', async () => {
+    const nm = (prompt('검토할 종목 이름 — 예: 크레인 NXT') || '').trim();
+    if (!nm) return;
+    if (!sdxRow(nm)) await sdxPatch(nm, { ticker: null });
+    SDX.sel = nm; renderStudy();
+  });
+  sdxBind(host);
+}
 
-  host.querySelectorAll('[data-ans]').forEach(b => b.addEventListener('click', () => {
-    const k = b.dataset.ans;
-    if (S.ans[k] !== b.dataset.v) {
-      S.ans[k] = b.dataset.v;
-      if (k === 'q1') { delete S.ans.q2; delete S.ans.q3; }
-      if (k === 'q2') { delete S.ans.q3; }
+/* ---------- 카드 ---------- */
+function sdxCard(it) {
+  if (!it) return '<div class="empty-state">왼쪽에서 종목을 고르거나 <b>+ 종목 추가</b>로 새로 만드세요.</div>';
+  const r = it.row || {};
+  const g0 = (r.gate0 || {}), g1 = (Array.isArray(r.gate1) ? r.gate1 : []), g2 = (r.gate2 || {});
+  const g0s = sdxG0State(r);
+  const sc = sdxScore(r);
+  const gr = sdxGrade(sc.score);
+  const st = sdxStatus(r);
+  const blocked = g0s === 'fail';
+  const over = (it.weight != null && gr[3] !== '—')
+    ? it.weight - Number(String(gr[3]).split('~')[0].replace('%', '')) : null;
+
+  const tri = (field, id, cur, opts) => opts.map(([v, l, cls]) =>
+    `<button class="sd-tri ${cls || ''} ${cur === v ? 'on' : ''}" data-g="${field}" data-k="${id}" data-v="${v}">${l}</button>`).join('');
+
+  return `
+    <div class="sdc-head">
+      <div>
+        <div class="sdc-nm">${enEsc(it.name)}${it.symbol ? `<span class="tk">${enEsc(it.symbol)}</span>` : ''}</div>
+        <div class="sdc-sub">
+          ${it.weight != null ? `현재 비중 <b>${it.weight.toFixed(2)}%</b>` : '보유하지 않음'}
+          ${it.plRate != null ? ` · 손익 <b class="${it.plRate >= 0 ? 'up' : 'down'}">${it.plRate >= 0 ? '+' : '−'}${Math.abs(it.plRate).toFixed(2)}%</b>` : ''}
+          ${r.updated_at ? ` · 갱신 ${String(r.updated_at).slice(0, 10)}` : ''}
+        </div>
+      </div>
+      <div class="sdc-right">
+        <span class="sdc-badge ${st.k}">${st.label}</span>
+        <button class="sd-ghost danger" data-del="${enEsc(it.name)}">카드 삭제</button>
+      </div>
+    </div>
+
+    <div class="sdc-sec ${blocked ? '' : ''}">
+      <div class="sdc-h"><span class="n">게이트 0</span>즉시 탈락 조건<i>하나라도 &lsquo;해당&rsquo;이면 여기서 끝난다</i></div>
+      ${SD_G0.map(([id, q, why]) => `
+        <div class="sdc-row ${g0[id] === 'y' ? 'bad' : ''}">
+          <div class="q"><span class="t">${q}</span><span class="w">${why}</span></div>
+          <div class="a">${tri('gate0', id, g0[id], [['n', '아니오', 'ok'], ['y', '해당', 'no']])}</div>
+        </div>`).join('')}
+      ${blocked ? `<div class="sdc-stop">여기서 종료. <b>가치평가 대상이 아니다.</b> 아래 점수는 매기지 않아도 된다 — 판단은 이미 났다.</div>` : ''}
+    </div>
+
+    <div class="sdc-sec ${blocked ? 'dim' : ''}">
+      <div class="sdc-h"><span class="n">게이트 1</span>소외 유형<i>하나도 해당 없으면 이미 컨센서스다</i></div>
+      <div class="sdc-tags">
+        ${SD_G1.map(([id, l, w]) => `<button class="sd-tag ${g1.includes(id) ? 'on' : ''}" data-g1="${id}" title="${w}">${l}</button>`).join('')}
+      </div>
+      ${g1.length ? '' : '<div class="sdc-note">좋은 회사여도 초과수익의 원천이 없다. 사도 시장 수익률이다.</div>'}
+    </div>
+
+    <div class="sdc-sec ${blocked ? 'dim' : ''}">
+      <div class="sdc-h"><span class="n">게이트 2</span>숫자 일곱 개
+        <i>${sc.answered}/7 응답 · <b>${sc.score}</b>/14점</i></div>
+      <div class="sdc-bar"><i style="width:${Math.round(sc.score / 14 * 100)}%"></i></div>
+      ${SD_G2.map(([id, l, w, max]) => `
+        <div class="sdc-row">
+          <div class="q"><span class="t">${l}<em>${max}점</em></span><span class="w">${w}</span></div>
+          <div class="a">${tri('gate2', id, g2[id], [['y', '통과', 'ok'], ['w', '경고', 'warn'], ['n', '실패', 'no']])}</div>
+        </div>`).join('')}
+      <div class="sdc-grade">
+        <span class="k">${sc.full ? '판정' : '잠정'}</span>
+        <span class="v">${gr[2]}</span>
+        <span class="k">최대 비중</span>
+        <span class="v">${gr[3]}</span>
+        <span class="k">진입</span>
+        <span class="v sm">${gr[4]}</span>
+      </div>
+      ${over != null && over > 0 ? `<div class="sdc-stop warn">현재 비중이 상한을 <b>${over.toFixed(1)}%p</b> 넘는다. 논리와 무관하게 그 자체로 축소 사유.</div>` : ''}
+    </div>
+
+    <div class="sdc-sec ${blocked ? 'dim' : ''}">
+      <div class="sdc-h"><span class="n">게이트 3</span>세 문장<i>빈칸이 있으면 리서치가 아니라 발견의 흥분이다</i></div>
+      <div class="sdc-sent">${sdxSentence(r) || '아래 세 칸을 채우면 문장이 완성된다.'}</div>
+      <div class="sdc-fields three">
+        <label><span>안 사는 이유</span><input class="en-in" data-f="why_not" value="${enEsc(r.why_not || '')}" placeholder="예: 매출이 역성장 전환 중"></label>
+        <label><span>해소 시점</span><input class="en-in" data-f="resolve_when" value="${enEsc(r.resolve_when || '')}" placeholder="예: 2026년 11월 3분기 실적"></label>
+        <label><span>해소 경로</span><input class="en-in" data-f="resolve_how" value="${enEsc(r.resolve_how || '')}" placeholder="예: 동일점포 매출 플러스 전환"></label>
+      </div>
+    </div>
+
+    <div class="sdc-sec ${blocked ? 'dim' : ''}">
+      <div class="sdc-h"><span class="n">게이트 5</span>반증 조건<i>진입 전에 적는다. 나중에 적으면 합리화가 된다</i></div>
+      <div class="sdc-fields">
+        <label class="wide"><span>매수 근거 — 한 문장</span><input class="en-in" data-f="buy_reason" value="${enEsc(r.buy_reason || '')}"></label>
+        <label><span>틀렸다는 증거 ①</span><input class="en-in" data-f="falsify1" value="${enEsc(r.falsify1 || '')}" placeholder="예: GPM 3분기 연속 하락"></label>
+        <label><span>틀렸다는 증거 ②</span><input class="en-in" data-f="falsify2" value="${enEsc(r.falsify2 || '')}" placeholder="예: 수주잔고 감소"></label>
+        <label><span>확인 날짜</span><input class="en-in" type="date" data-f="check_date" value="${enEsc(r.check_date || '')}" style="color-scheme:dark;"></label>
+        <label><span>손절 조건</span><input class="en-in" data-f="stop" value="${enEsc(r.stop || '')}"></label>
+        <label><span>익절 조건</span><input class="en-in" data-f="take" value="${enEsc(r.take || '')}"></label>
+        <label><span>목표 비중 %</span><input class="en-in" inputmode="decimal" data-f="weight" value="${r.weight == null ? '' : enEsc(r.weight)}" placeholder="${gr[3]}"></label>
+        <label><span>유형 — 밸류에이션 도구</span>
+          <select class="en-in" data-f="type">
+            <option value="">미지정</option>
+            ${SD_TYPE_OPTS.map(([v, l]) => `<option value="${v}" ${r.type === v ? 'selected' : ''}>${l}</option>`).join('')}
+          </select></label>
+      </div>
+    </div>
+
+    <div class="sdc-sec">
+      <div class="sdc-h"><span class="n">결론</span>지금 할 일<i>기준의 기계적 귀결. 기분이 아니라</i></div>
+      <div class="sdc-tags">
+        ${SD_VERDICT.map(([v, l]) => `<button class="sd-tag act ${r.verdict === v ? 'on' : ''}" data-vd="${v}">${l}</button>`).join('')}
+      </div>
+      <label class="sdc-memo"><span>메모</span><textarea class="en-in" data-f="memo" rows="4" placeholder="오늘 확인한 숫자, 다음에 볼 것">${enEsc(r.memo || '')}</textarea></label>
+    </div>`;
+}
+
+function sdxBind(host) {
+  const nm = SDX.sel;
+  if (!nm) return;
+  const repaintMain = () => {
+    const it = sdxList().find(x => x.name === nm);
+    const main = document.getElementById('sdb-main');
+    if (main) { main.innerHTML = sdxCard(it); sdxBind(document); }
+    const side = document.querySelector('.sdb-list [data-nm="' + nm.replace(/"/g, '\\"') + '"] .st');
+    if (side) { const st = sdxStatus(sdxRow(nm)); side.className = 'st ' + st.k; side.textContent = st.label; }
+  };
+
+  host.querySelectorAll('[data-g]').forEach(b => b.addEventListener('click', async () => {
+    const field = b.dataset.g, key = b.dataset.k, v = b.dataset.v;
+    const r = sdxRow(nm) || {};
+    const cur = Object.assign({}, r[field] || {});
+    cur[key] = (cur[key] === v) ? null : v;
+    if (!cur[key]) delete cur[key];
+    const patch = {}; patch[field] = cur;
+    if (field === 'gate2') { const tmp = { gate2: cur }; patch.score = sdxScore(tmp).score; }
+    await sdxPatch(nm, patch);
+    repaintMain();
+  }));
+
+  host.querySelectorAll('[data-g1]').forEach(b => b.addEventListener('click', async () => {
+    const r = sdxRow(nm) || {};
+    const cur = Array.isArray(r.gate1) ? r.gate1.slice() : [];
+    const i = cur.indexOf(b.dataset.g1);
+    if (i >= 0) cur.splice(i, 1); else cur.push(b.dataset.g1);
+    await sdxPatch(nm, { gate1: cur });
+    repaintMain();
+  }));
+
+  host.querySelectorAll('[data-vd]').forEach(b => b.addEventListener('click', async () => {
+    const r = sdxRow(nm) || {};
+    await sdxPatch(nm, { verdict: r.verdict === b.dataset.vd ? null : b.dataset.vd });
+    repaintMain();
+  }));
+
+  host.querySelectorAll('[data-f]').forEach(el => {
+    const f = el.dataset.f;
+    const handler = () => {
+      let v = el.value;
+      if (f === 'weight') v = v.trim() === '' ? null : Number(v.replace(/[^\d.]/g, ''));
+      else if (f === 'check_date') v = v || null;
+      else v = (v === '' ? null : v);
+      const p = {}; p[f] = v;
+      if (el.tagName === 'SELECT' || el.type === 'date') sdxPatch(nm, p);
+      else sdxPatchLater(nm, p, f);
+      if (['why_not', 'resolve_when', 'resolve_how'].includes(f)) {
+        const r = sdxRow(nm) || {}; r[f] = v;
+        const s = document.querySelector('.sdc-sent');
+        if (s) s.innerHTML = sdxSentence(r) || '아래 세 칸을 채우면 문장이 완성된다.';
+      }
+    };
+    el.addEventListener(el.tagName === 'SELECT' || el.type === 'date' ? 'change' : 'input', handler);
+  });
+
+  host.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', async () => {
+    const target = b.dataset.del;
+    if (!confirm(`${target} 검토 카드를 삭제할까요? 보유 종목 목록에서는 사라지지 않습니다.`)) return;
+    const r = sdxRow(target);
+    if (r && r.id) {
+      await (await enClient()).from('study_cards').delete().eq('id', r.id);
+      SDX.rows = SDX.rows.filter(x => x.id !== r.id);
+      delete SDX.byName[target];
     }
     renderStudy();
   }));
-  host.querySelectorAll('[data-chk]').forEach(b => b.addEventListener('click', () => {
-    S.chk[b.dataset.chk] = b.dataset.v; renderStudy();
-  }));
-  host.querySelectorAll('[data-memo]').forEach(t => t.addEventListener('input', () => { S.memo[t.dataset.memo] = t.value; }));
-  host.querySelectorAll('[data-fld]').forEach(t => t.addEventListener('input', () => {
-    S[t.dataset.fld] = t.value;
-    if (t.dataset.fld === 'price' && studySteps()[S.step] === 'value') studyValRefresh();
-  }));
-  host.querySelectorAll('[data-val]').forEach(t => t.addEventListener('input', () => {
-    S.val = S.val || {}; S.val[t.dataset.val] = t.value; studyValRefresh();
-  }));
-  host.querySelectorAll('[data-crit]').forEach(cb => cb.addEventListener('change', () => {
-    const i = Number(cb.dataset.crit);
-    S.crit = S.crit || [];
-    S.crit = cb.checked ? Array.from(new Set([...S.crit, i])) : S.crit.filter(x => x !== i);
-    renderStudy();
-  }));
-  host.querySelectorAll('[data-jump]').forEach(b => b.addEventListener('click', () => {
-    const i = studySteps().indexOf(b.dataset.jump);
-    if (i >= 0) { S.step = i; renderStudy(); }
-  }));
-  host.querySelectorAll('[data-del]').forEach(el => el.addEventListener('click', (e) => {
-    e.stopPropagation();
-    studySaveCards(studyLoadCards().filter(c => c.id !== el.dataset.del));
-    renderStudy();
-  }));
-  host.querySelectorAll('[data-open]').forEach(el => el.addEventListener('click', () => {
-    const c = studyLoadCards().find(x => x.id === el.dataset.open);
-    if (!c) return;
-    state.study = {
-      name: c.name, step: 0, ans: c.ans || {}, chk: c.chk || {}, memo: c.memo || {},
-      stop: c.stop || '', take: c.take || '', weight: c.weight || '', crit: c.crit || [],
-      val: c.val || {}, price: c.price || '', editId: c.id
-    };
-    state.study.step = studySteps().length - 1;
-    renderStudy();
-  }));
-
-  const prev = document.getElementById('sd-prev');
-  if (prev) prev.addEventListener('click', () => { S.step = Math.max(0, S.step - 1); renderStudy(); });
-  const next = document.getElementById('sd-next');
-  if (next) next.addEventListener('click', () => { S.step = Math.min(studySteps().length - 1, S.step + 1); renderStudy(); });
-  const reset = document.getElementById('sd-reset');
-  if (reset) reset.addEventListener('click', () => { studyReset(); renderStudy(); });
-  const save = document.getElementById('sd-save');
-  if (save) save.addEventListener('click', () => {
-    const list = studyLoadCards();
-    const rec = {
-      id: S.editId || ('sd' + Date.now()), name: S.name || '이름 없음', type: studyType(),
-      ans: S.ans, chk: S.chk, memo: S.memo, stop: S.stop, take: S.take,
-      weight: S.weight, crit: S.crit || [], val: S.val || {}, price: S.price || '',
-      ts: new Date().toISOString().slice(0, 10)
-    };
-    const i = list.findIndex(c => c.id === rec.id);
-    if (i >= 0) list[i] = rec; else list.unshift(rec);
-    studySaveCards(list.slice(0, 40));
-    S.editId = rec.id;
-    renderStudy();
-  });
 }
 
 /* ================= 자산 > 투자 > 내 종목 : 보유 종목 판정 보드 =================
@@ -12998,20 +13466,8 @@ function renderBookPage(hostId, data, d) {
   }));
 
   host.querySelectorAll('[data-study]').forEach(b => b.addEventListener('click', (e) => {
-    e.stopPropagation();
-    const nm = b.dataset.study;
-    const existing = studyLoadCards().find(c => c.name === nm);
-    if (existing) {
-      state.study = {
-        name: existing.name, step: 0, ans: existing.ans || {}, chk: existing.chk || {}, memo: existing.memo || {},
-        stop: existing.stop || '', take: existing.take || '', weight: existing.weight || '',
-        crit: existing.crit || [], val: existing.val || {}, price: existing.price || '', editId: existing.id
-      };
-      state.study.step = studySteps().length - 1;
-    } else {
-      studyReset();
-      state.study.name = nm;
-    }
+    e.preventDefault();
+    SDX.sel = b.dataset.study;
     state.invSub = 'study';
     renderPage();
   }));
@@ -13771,7 +14227,7 @@ async function fetchLive(manual) {
 
 async function init() {
   renderShell();
-  await Promise.all([loadBudgets(), loadSettings()]);
+  await Promise.all([loadBudgets(), loadSettings(), sdxLoad(true)]);
   state.data = SNAPSHOT_DATA;
   state.source = 'snapshot';
   applySuggestedGoals(state.data);
