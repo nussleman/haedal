@@ -1006,7 +1006,14 @@ body{
 
 /* ---------- 전체 내역 › 사용처 ---------- */
 .lg-shell{padding-top:26px;}
+.mg-stick{position:sticky;top:var(--hdr-h,0px);z-index:30;background:var(--bg);padding-top:4px;}
 .mg-bar{display:flex;flex-wrap:wrap;gap:10px 12px;align-items:flex-end;margin:16px 0 12px;}
+#mg-cols [data-s]{cursor:pointer;user-select:none;display:flex;align-items:center;gap:4px;}
+#mg-cols .cn,#mg-cols .sm,#mg-cols .lt{justify-content:flex-end;}
+#mg-cols [data-s]:hover{color:var(--text);}
+#mg-cols .ar{color:var(--gold-soft);font-size:8px;line-height:1;}
+.mg-row .gp{display:flex;align-items:center;gap:3px;overflow:hidden;}
+.mg-row .gp .lg-mg{margin-right:0;}
 .mg-groups{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px;max-height:96px;overflow-y:auto;
   scrollbar-width:thin;}
 .mg-cols{margin-top:0;}
@@ -6214,6 +6221,14 @@ async function enLoadLedger() {
       if (idx[d] === undefined) { idx[d] = groups.length; groups.push({ date: d, items: [] }); }
       groups[idx[d]].items.push(r);
     });
+    /* 같은 날 안에서는 수입 → 지출 → 이체, 그 다음 금액 큰 순.
+       들어온 돈과 나간 돈이 섞여 있으면 하루가 어땠는지 한눈에 안 잡힌다. */
+    if (g.sort === 'date_desc' || g.sort === 'date_asc') {
+      const rank = { '수입': 0, '지출': 1, '이체': 2 };
+      groups.forEach(grp => grp.items.sort((a, b) =>
+        (rank[a.kind] ?? 9) - (rank[b.kind] ?? 9) ||
+        Math.abs(Number(b.amount)) - Math.abs(Number(a.amount))));
+    }
     box.innerHTML = groups.map(grp => {
       const dt = new Date(grp.date + 'T00:00:00');
       const spend = grp.items.filter(x => x.kind === '지출').reduce((a, x) => a + Number(x.amount), 0);
@@ -6824,7 +6839,9 @@ async function lgDraftSave() {
    814개 사용처가 어느 그룹·분류로 쓰이고 있는지 한 곳에서 본다.
    여기서 고치면 그 사용처의 과거 기록 전체가 같이 바뀐다 — 표기 흔들림을 잡는 자리. */
 
-const MG = { rows: null, q: '', group: 'all', sort: 'cnt', loading: false };
+const MG = { rows: null, q: '', group: 'all', sort: 'cnt', dir: 'desc', loading: false };
+/* 열마다 기본 방향이 다르다 — 숫자는 큰 것부터, 글자는 가나다순이 자연스럽다 */
+const MG_SORTDIR = { gp: 'asc', nm: 'asc', ct: 'asc', cnt: 'desc', sum: 'desc', last: 'desc' };
 
 /* 그룹 이름 앞에 붙는 그림. 목록이 39줄이라 글자만으로는 훑기 어렵다. */
 const MG_EMOJI = {
@@ -6837,6 +6854,14 @@ const MG_EMOJI = {
   'OTT': '📺', '사진관': '📷', '식품/식료품': '🥬', '인쇄소': '🖨️', '클럽': '🕺',
   '숙박': '🛏️', '보험': '🛡️', '적금': '💰', '(그룹 없음)': '⬜'
 };
+/* 그룹 칸에 '소프트웨어, 🔁구독' 처럼 쉼표로 여러 개가 들어간 경우가 있다.
+   이건 합쳐진 이름이 아니라 두 개를 고른 것이므로 쪼개서 각각으로 센다. */
+function mgSplitGroups(raw) {
+  return String(raw || '')
+    .split(',')
+    .map(t => t.replace(/^[^\p{L}\p{N}]+/u, '').trim())
+    .filter(Boolean);
+}
 function mgEmoji(g) {
   if (!g || g === 'all') return '';
   if (MG_EMOJI[g]) return MG_EMOJI[g];
@@ -6899,13 +6924,14 @@ async function mgLoad(force) {
     const m = (r.merchant || '').trim();
     if (!m) return;
     const k = m;
-    if (!map[k]) map[k] = { name: m, groups: {}, cats: {}, cnt: 0, sum: 0, last: '', kind: r.kind };
+    if (!map[k]) map[k] = { name: m, groups: {}, tags: {}, cats: {}, cnt: 0, sum: 0, last: '', kind: r.kind };
     const e = map[k];
     e.cnt++;
     e.sum += Math.abs(Number(r.amount) || 0);
     if (String(r.date) > e.last) { e.last = String(r.date); e.kind = r.kind; }
     /* 그룹이 비어 있는 것도 하나의 상태로 센다 — 일부만 묶여 있으면 그것도 흔들림이다 */
     e.groups[r.merchant_group || ''] = (e.groups[r.merchant_group || ''] || 0) + 1;
+    mgSplitGroups(r.merchant_group).forEach(t => { e.tags[t] = (e.tags[t] || 0) + 1; });
     if (r.category_id) e.cats[r.category_id] = (e.cats[r.category_id] || 0) + 1;
   });
   const top = (o) => {
@@ -6916,7 +6942,7 @@ async function mgLoad(force) {
   MG.rows = Object.values(map).map(e => ({
     name: e.name, cnt: e.cnt, sum: e.sum, last: e.last, kind: e.kind,
     group: top(e.groups) || '',
-    onlyPartlyGrouped: Object.keys(e.groups).length > 1 && e.groups[''] > 0,
+    tags: Object.keys(e.tags).sort((a, b) => e.tags[b] - e.tags[a]),
     catId: Number(top(e.cats)) || null,
     mixedGroup: Object.keys(e.groups).length > 1,
     mixedCat: Object.keys(e.cats).length > 1
@@ -6931,25 +6957,38 @@ async function renderMerchantPage(host) {
   await mgLoad();
 
   const groups = {};
-  MG.rows.forEach(r => { const g = r.group || '(그룹 없음)'; groups[g] = (groups[g] || 0) + 1; });
+  MG.rows.forEach(r => {
+    if (!r.tags.length) { groups['(그룹 없음)'] = (groups['(그룹 없음)'] || 0) + 1; return; }
+    r.tags.forEach(t => { groups[t] = (groups[t] || 0) + 1; });
+  });
   const gList = Object.keys(groups).sort((a, b) => groups[b] - groups[a]);
 
   const q = MG.q.trim().toLowerCase();
   let rows = MG.rows.filter(r => {
-    if (MG.group !== 'all' && (r.group || '(그룹 없음)') !== MG.group) return false;
-    if (q && !(r.name.toLowerCase().includes(q) || (r.group || '').toLowerCase().includes(q))) return false;
+    if (MG.group !== 'all') {
+      const hit = MG.group === '(그룹 없음)' ? !r.tags.length : r.tags.includes(MG.group);
+      if (!hit) return false;
+    }
+    if (q && !(r.name.toLowerCase().includes(q) || r.tags.join(' ').toLowerCase().includes(q))) return false;
     return true;
   });
+  const catLabel = (r) => { const c = EN.catById[r.catId]; return c ? c.category + ' ' + c.subcategory : 'ㅎㅎㅎ'; };
   const sorts = {
     cnt: (a, b) => b.cnt - a.cnt,
     sum: (a, b) => b.sum - a.sum,
     last: (a, b) => b.last.localeCompare(a.last),
-    name: (a, b) => a.name.localeCompare(b.name, 'ko')
+    nm: (a, b) => a.name.localeCompare(b.name, 'ko'),
+    gp: (a, b) => (a.tags[0] || 'ㅎㅎㅎ').localeCompare(b.tags[0] || 'ㅎㅎㅎ', 'ko') || a.name.localeCompare(b.name, 'ko'),
+    ct: (a, b) => catLabel(a).localeCompare(catLabel(b), 'ko') || a.name.localeCompare(b.name, 'ko')
   };
-  rows = rows.sort(sorts[MG.sort] || sorts.cnt);
+  const base = sorts[MG.sort] || sorts.cnt;
+  const flip = MG.dir !== (MG_SORTDIR[MG.sort] || 'desc');
+  rows = rows.sort((a, b) => (flip ? -1 : 1) * base(a, b));
+  const arrow = (k) => MG.sort === k ? `<b class="ar">${MG.dir === 'asc' ? '▲' : '▼'}</b>` : '';
 
   host.innerHTML = `
     <div class="lg-wrap">
+      <div class="lg-stick mg-stick">
       <div class="mg-bar">
         <div class="lg-grp grow">
           <span class="lg-glab">검색</span>
@@ -6970,30 +7009,27 @@ async function renderMerchantPage(host) {
           </div>
         </div>
         <div class="lg-grp">
-          <span class="lg-glab">정렬</span>
-          <div class="lg-gin">
-            <select class="en-in" id="mg-sort">
-              <option value="cnt">사용 횟수</option><option value="sum">금액 합계</option>
-              <option value="last">최근 사용</option><option value="name">이름순</option>
-            </select>
-          </div>
-        </div>
-        <div class="lg-grp">
           <span class="lg-glab">&nbsp;</span>
           <button class="lg-reset" id="mg-reload">다시 읽기</button>
         </div>
       </div>
 
-      <div class="lg-cols mg-cols">
-        <span class="gp">그룹</span><span class="nm">사용처</span><span class="ct">주로 쓰는 분류</span>
-        <span class="cn">건수</span><span class="sm">합계</span><span class="lt">최근</span>
+      <div class="lg-cols mg-cols" id="mg-cols">
+        <span class="gp" data-s="gp">그룹${arrow('gp')}</span>
+        <span class="nm" data-s="nm">사용처${arrow('nm')}</span>
+        <span class="ct" data-s="ct">주로 쓰는 분류${arrow('ct')}</span>
+        <span class="cn" data-s="cnt">건수${arrow('cnt')}</span>
+        <span class="sm" data-s="sum">합계${arrow('sum')}</span>
+        <span class="lt" data-s="last">최근${arrow('last')}</span>
+      </div>
       </div>
       <div class="lg-card mg-card">
         ${rows.length ? rows.map(r => {
           const c = EN.catById[r.catId];
           return `<div class="mg-row" data-m="${enEsc(r.name)}">
-            <span class="gp" data-me="group" title="더블클릭해서 그룹 변경">${r.group
-              ? `<i class="lg-mg">${mgEmoji(r.group)} ${enEsc(r.group)}</i>${r.mixedGroup ? '<b class="mix" title="기록마다 그룹이 다릅니다">•</b>' : ''}`
+            <span class="gp" data-me="group" title="더블클릭해서 그룹 변경">${r.tags.length
+              ? r.tags.map(t => `<i class="lg-mg">${mgEmoji(t)} ${enEsc(t)}</i>`).join('')
+                + (r.mixedGroup ? '<b class="mix" title="기록마다 그룹이 다릅니다">•</b>' : '')
               : '<i class="lg-mg none">없음</i>'}</span>
             <span class="nm" data-me="name" title="더블클릭해서 이름 변경">${enEsc(r.name)}</span>
             <span class="ct" data-me="cat" title="더블클릭해서 분류 일괄 변경">${c
@@ -7008,7 +7044,6 @@ async function renderMerchantPage(host) {
       <div class="lg-meta"><span>${enComma(rows.length)}개 사용처${MG.rows.length !== rows.length ? ` (전체 ${enComma(MG.rows.length)}개 중)` : ''}</span></div>
     </div>`;
 
-  enQS('#mg-sort').value = MG.sort;
   let t = null;
   enQS('#mg-q').addEventListener('input', (e) => {
     clearTimeout(t);
@@ -7021,9 +7056,14 @@ async function renderMerchantPage(host) {
       });
     }, 260);
   });
-  enQS('#mg-sort').addEventListener('change', (e) => { MG.sort = e.target.value; renderMerchantPage(host); });
   enQS('#mg-reload').addEventListener('click', () => { MG.rows = null; renderMerchantPage(host); });
   mgGroupPicker(host);
+  host.querySelectorAll('#mg-cols [data-s]').forEach(el => el.addEventListener('click', () => {
+    const k = el.dataset.s;
+    if (MG.sort === k) MG.dir = MG.dir === 'asc' ? 'desc' : 'asc';
+    else { MG.sort = k; MG.dir = MG_SORTDIR[k] || 'desc'; }
+    renderMerchantPage(host);
+  }));
   host.querySelectorAll('[data-me]').forEach(cell =>
     cell.addEventListener('dblclick', () => mgEdit(cell, host)));
 }
