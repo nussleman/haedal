@@ -960,6 +960,60 @@ body{
   .lg-line .x{color:var(--text-faint);}
 }
 
+/* 새 기록 : 표 위에 행을 쌓아 한 번에 넣는다 */
+.lg-add{margin-top:10px;}
+.lg-addbtn{width:100%;background:transparent;border:1px dashed var(--border-strong);
+  border-radius:10px;color:var(--text-faint);font-family:var(--sans);font-size:12px;
+  padding:9px 0;cursor:pointer;transition:.15s;}
+.lg-addbtn:hover{border-color:var(--gold-soft);color:var(--gold-soft);background:rgba(201,162,39,.05);}
+.lg-addbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:7px;}
+.lg-addbar .t{font-size:12px;color:var(--text-dim);}
+.lg-addbar .t b{color:var(--gold-soft);font-family:var(--mono);}
+.lg-addbar .hint{font-size:10.5px;color:var(--text-faint);margin-right:auto;}
+.lg-addbar kbd{font-family:var(--mono);font-size:9.5px;background:var(--panel-2);
+  border:1px solid var(--border);border-radius:4px;padding:1px 4px;color:var(--text-dim);}
+.lg-addghost{background:transparent;border:1px solid var(--border);border-radius:7px;
+  color:var(--text-faint);font-family:var(--sans);font-size:11.5px;padding:5px 10px;cursor:pointer;}
+.lg-addghost:hover{border-color:var(--border-strong);color:var(--text);}
+.lg-addsave{background:var(--gold);border:0;border-radius:7px;color:#1a1508;font-weight:700;
+  font-family:var(--sans);font-size:11.5px;padding:6px 14px;cursor:pointer;}
+.lg-addsave:disabled{opacity:.5;cursor:default;}
+.lg-drs{background:var(--panel);border:1px solid var(--gold-soft);border-radius:10px;overflow:visible;}
+.lg-dr{display:flex;align-items:center;gap:9px;padding:5px 12px;
+  border-bottom:1px solid var(--border);}
+.lg-drs .lg-dr:last-child{border-bottom:0;}
+.lg-dr.bad{background:rgba(193,72,63,.08);}
+.lg-dr .dt{flex:0 0 116px;}
+.lg-dr .ck{flex:0 0 208px;display:flex;align-items:center;gap:6px;min-width:0;}
+.lg-dr .ck .lg-kd{flex:0 0 auto;}
+.lg-dr .ck select{flex:1;min-width:0;}
+.lg-dr .nm{flex:1 1 auto;min-width:0;}
+.lg-dr .no{flex:0 0 148px;min-width:0;}
+.lg-dr .tg{flex:0 0 62px;display:flex;gap:2px;justify-content:center;}
+.lg-dr .gb{flex:0 0 56px;text-align:center;}
+.lg-dr .am{flex:0 0 110px;}
+.lg-dr .x{flex:0 0 16px;background:none;border:0;color:var(--text-faint);font-size:15px;
+  cursor:pointer;padding:0;line-height:1;}
+.lg-dr .x:hover{color:var(--red);}
+.lg-dr .lg-ed{background:var(--panel-2);height:26px;}
+.lg-dr .lg-ed:focus{background:var(--bg-2);box-shadow:inset 0 0 0 1px var(--gold-soft);}
+.lg-dr .lg-kd:empty:before,.lg-dr .lg-kd:not([class*="지"]):not([class*="수"]):not([class*="이"]){
+  background:rgba(255,255,255,.06);color:var(--text-faint);}
+.lg-drerr{font-size:11.5px;color:#e39189;margin:8px 2px 0;}
+.lg-dayadd{background:none;border:1px solid var(--border);border-radius:5px;
+  color:var(--text-faint);font-size:12px;line-height:1;width:18px;height:18px;
+  cursor:pointer;padding:0;opacity:0;transition:opacity .12s;}
+.lg-day:hover .lg-dayadd{opacity:1;}
+.lg-dayadd:hover{border-color:var(--gold-soft);color:var(--gold-soft);}
+@media(max-width:820px){
+  .lg-dr{flex-wrap:wrap;gap:5px;padding:9px 10px;}
+  .lg-dr .dt{flex:0 0 110px;}
+  .lg-dr .ck{flex:1 1 100%;}
+  .lg-dr .no{display:none;}
+  .lg-dr .nm{flex:1 1 120px;}
+  .lg-dayadd{opacity:1;}
+}
+
 .lg-meta{display:flex;align-items:center;justify-content:space-between;gap:10px;
   font-family:var(--mono);font-size:11px;color:var(--text-dim);margin:16px 4px 0;}
 .lg-pager{display:flex;gap:4px;}
@@ -5321,7 +5375,8 @@ const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
 const EN = {
   sb: null, cats: [], catById: {}, freq: {}, merchants: [], merchCat: {},
   catId: null, neg: false, loaded: false,
-  lg: { q: '', kind: 'all', cat: 'all', from: '', to: '', quick: '3m', sort: 'date_desc', page: 1, size: 60 }
+  lg: { q: '', kind: 'all', cat: 'all', from: '', to: '', quick: '3m', sort: 'date_desc', page: 1, size: 60 },
+  draft: []
 };
 const EN_WD = ['일', '월', '화', '수', '목', '금', '토'];
 
@@ -5693,6 +5748,19 @@ async function enSave() {
   const gb = enQS('#en-good').getAttribute('aria-pressed') === 'true' ? 'Good'
            : enQS('#en-bad').getAttribute('aria-pressed') === 'true' ? 'Bad' : null;
 
+  const dupRow = {
+    date: enQS('#en-date').value, amount: EN.neg ? -n : n,
+    merchant: (raw.includes('›') ? raw.split('›').slice(1).join('›').trim() : raw) || null
+  };
+  if ((await lgDupes([dupRow])).length &&
+      !confirm(`같은 날짜 · 금액 · 사용처의 기록이 이미 있습니다.
+${dupRow.date} ${enComma(n)}원 ${dupRow.merchant || ''}
+
+그래도 저장할까요?`)) {
+    enQS('#en-save').disabled = false;
+    return;
+  }
+
   const { error } = await (await enClient()).from('transactions').insert({
     date: enQS('#en-date').value,
     category_id: EN.catId,
@@ -5827,6 +5895,7 @@ async function renderLedgerPage(body) {
           <span class="v">금액</span><span class="x"></span>
         </div>
       </div>
+      <div class="lg-add" id="lg-add"></div>
       <div id="lg-list"><div class="en-empty">불러오는 중…</div></div>
       <div class="lg-meta">
         <span id="lg-count"></span>
@@ -5840,6 +5909,7 @@ async function renderLedgerPage(body) {
   document.querySelectorAll('#lg-quick button').forEach(b =>
     b.classList.toggle('on', b.dataset.q === g.quick));
   lgSetupKindCat(g, cats);
+  lgRenderAdd();
 
   document.querySelectorAll('#lg-quick button').forEach(b => b.addEventListener('click', () => {
     g.quick = b.dataset.q;
@@ -6052,6 +6122,7 @@ async function enLoadLedger() {
       return `<div class="lg-day">
           <span class="d">${grp.date.slice(2).replace(/-/g, '.')}</span>
           <span class="w">${EN_WD[dt.getDay()]}</span>
+          <button class="lg-dayadd" data-add="${grp.date}" title="이 날짜로 행 추가">+</button>
           <span class="s">${grp.items.length}건${spend ? ' · 지출 ' + enComma(Math.round(spend)) : ''}</span>
         </div><div class="lg-card">` +
         grp.items.map(r => `<div class="lg-line k-${r.kind}" data-id="${r.id}"
@@ -6078,6 +6149,9 @@ async function enLoadLedger() {
       enLoadLedger();
     }));
     lgBindEdit(box);
+    box.querySelectorAll('[data-add]').forEach(b => b.addEventListener('click', () => {
+      lgDraftAdd(b.dataset.add);
+    }));
   }
 
   const last = Math.max(1, Math.ceil(total / g.size));
@@ -6207,6 +6281,250 @@ function lgBindEdit(box) {
       btn.textContent = cur === 'Good' ? 'GOOD' : cur === 'Bad' ? 'BAD' : '—';
     }
   }));
+}
+
+/* ---------------- 전체 내역 : 표 위에서 행을 여러 개 만들어 한 번에 저장 ----------------
+   따로 화면을 만들지 않는다. 목록 맨 위에 빈 행이 쌓이고, 다 채우면 한 번에 넣는다.
+   같은 날짜·금액·사용처가 이미 있으면 저장 직전에 알려준다. */
+
+function lgDraftRowHTML(i, seed) {
+  const rank = { '지출': 0, '수입': 1, '이체': 2 };
+  const cats = [...EN.cats].sort((a, b) =>
+    (rank[a.kind] ?? 9) - (rank[b.kind] ?? 9) || a.sort_order - b.sort_order);
+  const c = EN.catById[seed.catId];
+  let last = '';
+  const opts = cats.map(x => {
+    const head = x.kind !== last ? `</optgroup><optgroup label="${x.kind}">` : '';
+    last = x.kind;
+    return head + `<option value="${x.id}" ${x.id === seed.catId ? 'selected' : ''}>${enEsc(x.category)} › ${enEsc(x.subcategory)}</option>`;
+  }).join('').replace('</optgroup>', '');
+  return `<div class="lg-dr" data-dr="${i}">
+    <span class="dt"><input class="lg-ed" type="date" data-d="date" value="${enEsc(seed.date)}" style="color-scheme:dark;"></span>
+    <span class="ck"><i class="lg-kd ${c ? c.kind : ''}" data-kd>${c ? c.kind : '—'}</i>
+      <select class="lg-ed sel" data-d="cat"><option value="">분류 선택</option>${opts}</optgroup></select></span>
+    <span class="nm"><input class="lg-ed" data-d="merchant" placeholder="사용처" autocomplete="off" value="${enEsc(seed.merchant || '')}"></span>
+    <span class="no"><input class="lg-ed" data-d="note" placeholder="메모" autocomplete="off" value="${enEsc(seed.note || '')}"></span>
+    <span class="tg">
+      <button class="lg-tg ${seed.company_paid ? 'on' : ''}" data-dtg="company_paid" title="회사 환급">🏢</button>
+      <button class="lg-tg ${seed.is_fixed ? 'on' : ''}" data-dtg="is_fixed" title="고정비">📌</button>
+    </span>
+    <span class="gb"><button class="lg-gb ${seed.good_bad === 'Good' ? 'good' : seed.good_bad === 'Bad' ? 'bad' : ''}" data-dgb>${seed.good_bad === 'Good' ? 'GOOD' : seed.good_bad === 'Bad' ? 'BAD' : '—'}</button></span>
+    <span class="am"><input class="lg-ed mono" data-d="amount" inputmode="numeric" placeholder="0" value="${enEsc(seed.amount || '')}"></span>
+    <button class="x" data-drx="${i}" aria-label="이 행 삭제">×</button>
+  </div>`;
+}
+
+function lgRenderAdd(focusIdx) {
+  const host = document.getElementById('lg-add');
+  if (!host) return;
+  if (!EN.draft) EN.draft = [];
+  if (!EN.draft.length) {
+    host.innerHTML = `<button class="lg-addbtn" id="lg-addnew">+ 새 기록 추가</button>`;
+    host.querySelector('#lg-addnew').addEventListener('click', () => lgDraftAdd());
+    return;
+  }
+  host.innerHTML = `
+    <div class="lg-addbar">
+      <span class="t">새 기록 <b>${EN.draft.length}</b>건</span>
+      <span class="hint">금액에서 <kbd>Enter</kbd> 다음 행 · <kbd>Ctrl</kbd>+<kbd>Enter</kbd> 모두 저장</span>
+      <button class="lg-addghost" id="lg-drclear">비우기</button>
+      <button class="lg-addghost" id="lg-drmore">+ 행 추가</button>
+      <button class="lg-addsave" id="lg-drsave">모두 저장</button>
+    </div>
+    <div class="lg-drs">${EN.draft.map((d, i) => lgDraftRowHTML(i, d)).join('')}</div>
+    <p class="lg-drerr" id="lg-drerr" hidden></p>`;
+
+  host.querySelectorAll('[data-d="cat"]').forEach(sel => sel.addEventListener('change', () => {
+    const row = sel.closest('.lg-dr');
+    const c = EN.catById[Number(sel.value)];
+    const kd = row.querySelector('[data-kd]');
+    kd.className = 'lg-kd ' + (c ? c.kind : '');
+    kd.textContent = c ? c.kind : '—';
+    row.classList.remove('bad');
+  }));
+
+  /* 사용처를 적으면 예전에 쓰던 분류가 따라온다 */
+  host.querySelectorAll('[data-d="merchant"]').forEach(inp => inp.addEventListener('change', () => {
+    const row = inp.closest('.lg-dr');
+    const sel = row.querySelector('[data-d="cat"]');
+    if (sel.value) return;
+    const cid = EN.merchCat[inp.value.trim()];
+    if (!cid) return;
+    sel.value = String(cid);
+    sel.dispatchEvent(new Event('change'));
+  }));
+
+  host.querySelectorAll('[data-d="amount"]').forEach(inp => {
+    inp.addEventListener('input', () => {
+      const t = inp.value;
+      const minus = /^\s*[-−]/.test(t);
+      const raw = t.replace(/[^\d]/g, '');
+      inp.value = raw ? (minus ? '−' : '') + enComma(raw) : (minus ? '−' : '');
+    });
+  });
+
+  host.querySelectorAll('[data-dtg]').forEach(b => b.addEventListener('click', () => b.classList.toggle('on')));
+  host.querySelectorAll('[data-dgb]').forEach(b => b.addEventListener('click', () => {
+    const cur = b.classList.contains('good') ? 'Good' : b.classList.contains('bad') ? 'Bad' : null;
+    const next = cur === null ? 'Good' : cur === 'Good' ? 'Bad' : null;
+    b.className = 'lg-gb ' + (next === 'Good' ? 'good' : next === 'Bad' ? 'bad' : '');
+    b.textContent = next === 'Good' ? 'GOOD' : next === 'Bad' ? 'BAD' : '—';
+  }));
+
+  host.querySelectorAll('[data-drx]').forEach(b => b.addEventListener('click', () => {
+    lgDraftSync();
+    EN.draft.splice(Number(b.dataset.drx), 1);
+    lgRenderAdd();
+  }));
+
+  host.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); lgDraftSave(); return; }
+    if (e.key !== 'Enter') return;
+    const t = e.target;
+    if (!t || !t.dataset || t.dataset.d !== 'amount') return;
+    e.preventDefault();
+    const row = t.closest('.lg-dr');
+    const i = Number(row.dataset.dr);
+    lgDraftSync();
+    if (i === EN.draft.length - 1) lgDraftAdd(EN.draft[i].date, EN.draft[i].catId);
+    else lgRenderAdd(i + 1);
+  });
+
+  host.querySelector('#lg-drmore').addEventListener('click', () => {
+    lgDraftSync();
+    const last = EN.draft[EN.draft.length - 1] || {};
+    lgDraftAdd(last.date, last.catId);
+  });
+  host.querySelector('#lg-drclear').addEventListener('click', () => {
+    if (!confirm('작성 중인 행을 모두 버릴까요?')) return;
+    EN.draft = [];
+    lgRenderAdd();
+  });
+  host.querySelector('#lg-drsave').addEventListener('click', lgDraftSave);
+
+  const rows = host.querySelectorAll('.lg-dr');
+  const target = rows[focusIdx == null ? rows.length - 1 : focusIdx];
+  if (target) {
+    const sel = target.querySelector('[data-d="cat"]');
+    const nm = target.querySelector('[data-d="merchant"]');
+    (sel.value ? nm : sel).focus();
+  }
+}
+
+/* 화면에 적힌 값을 EN.draft 로 되받는다 — 다시 그릴 때 입력이 날아가지 않게 */
+function lgDraftSync() {
+  const host = document.getElementById('lg-add');
+  if (!host || !EN.draft || !EN.draft.length) return;
+  host.querySelectorAll('.lg-dr').forEach(row => {
+    const i = Number(row.dataset.dr);
+    const v = (k) => { const el = row.querySelector(`[data-d="${k}"]`); return el ? el.value : ''; };
+    const gb = row.querySelector('[data-dgb]');
+    EN.draft[i] = {
+      date: v('date') || enToday(),
+      catId: Number(v('cat')) || null,
+      merchant: v('merchant').trim(),
+      note: v('note').trim(),
+      amount: v('amount'),
+      company_paid: row.querySelector('[data-dtg="company_paid"]').classList.contains('on'),
+      is_fixed: row.querySelector('[data-dtg="is_fixed"]').classList.contains('on'),
+      good_bad: gb.classList.contains('good') ? 'Good' : gb.classList.contains('bad') ? 'Bad' : null
+    };
+  });
+}
+
+function lgDraftAdd(date, catId) {
+  if (!EN.draft) EN.draft = [];
+  if (EN.draft.length) lgDraftSync();
+  EN.draft.push({
+    date: date || (EN.draft.length ? EN.draft[EN.draft.length - 1].date : enToday()),
+    catId: catId || null, merchant: '', note: '', amount: '',
+    company_paid: false, is_fixed: false, good_bad: null
+  });
+  lgRenderAdd();
+}
+
+/* 같은 날짜 · 금액 · 사용처가 이미 있는지 — 저장 직전에만 확인한다 */
+async function lgDupes(rows) {
+  const key = (d, a, m) => `${d}|${a}|${(m || '').trim()}`;
+  const dates = [...new Set(rows.map(r => r.date))];
+  const out = [];
+  const seen = {};
+  try {
+    const { data } = await (await enClient()).from('v_transactions')
+      .select('date,amount,merchant').in('date', dates);
+    (data || []).forEach(r => { seen[key(String(r.date), Number(r.amount), r.merchant)] = 'db'; });
+  } catch (e) { /* 확인 못 하면 경고 없이 진행한다 — 저장을 막지는 않는다 */ }
+  rows.forEach((r, i) => {
+    const k = key(r.date, r.amount, r.merchant);
+    if (seen[k]) out.push({ i, where: seen[k] });
+    seen[k] = seen[k] || 'draft';
+  });
+  return out;
+}
+
+async function lgDraftSave() {
+  lgDraftSync();
+  const host = document.getElementById('lg-add');
+  const err = document.getElementById('lg-drerr');
+  host.querySelectorAll('.lg-dr').forEach(r => r.classList.remove('bad'));
+
+  const rows = [];
+  let invalid = 0;
+  EN.draft.forEach((d, i) => {
+    const neg = /^[-−]/.test(d.amount);
+    const n = Number(String(d.amount).replace(/[^\d]/g, ''));
+    /* 분류는 직전 행에서 물려받아 이미 채워져 있을 수 있다.
+       그러니 '아직 아무것도 안 쓴 행'의 기준은 금액·사용처·메모가 모두 빈 것. */
+    const blank = !n && !d.merchant && !d.note;
+    if (blank) return;
+    if (!d.catId || !n) {
+      invalid++;
+      const el = host.querySelector(`.lg-dr[data-dr="${i}"]`);
+      if (el) el.classList.add('bad');
+      return;
+    }
+    let group = null, merchant = d.merchant || null;
+    if (merchant && merchant.includes('›')) {
+      const p = merchant.split('›');
+      group = p[0].trim() || null;
+      merchant = p.slice(1).join('›').trim() || null;
+    }
+    rows.push({
+      date: d.date, category_id: d.catId, amount: neg ? -n : n,
+      merchant_group: group, merchant, note: d.note || null,
+      good_bad: d.good_bad, company_paid: d.company_paid, is_fixed: d.is_fixed
+    });
+  });
+
+  if (invalid) {
+    err.hidden = false;
+    err.textContent = `${invalid}건은 분류와 금액이 있어야 저장됩니다. 붉게 표시된 행을 확인하세요.`;
+    return;
+  }
+  if (!rows.length) { err.hidden = false; err.textContent = '저장할 내용이 없습니다.'; return; }
+  err.hidden = true;
+
+  const dupes = await lgDupes(rows);
+  if (dupes.length) {
+    const lines = dupes.slice(0, 6).map(({ i }) => {
+      const r = rows[i];
+      return `· ${r.date} ${enComma(Math.abs(r.amount))}원 ${r.merchant || ''}`;
+    }).join('\n');
+    const more = dupes.length > 6 ? `\n… 외 ${dupes.length - 6}건` : '';
+    if (!confirm(`같은 날짜 · 금액 · 사용처의 기록이 이미 있습니다.\n\n${lines}${more}\n\n그래도 저장할까요?`)) return;
+  }
+
+  const btn = document.getElementById('lg-drsave');
+  if (btn) { btn.disabled = true; btn.textContent = '저장 중…'; }
+  const { error } = await (await enClient()).from('transactions').insert(rows);
+  if (btn) { btn.disabled = false; btn.textContent = '모두 저장'; }
+  if (error) { err.hidden = false; err.textContent = '저장하지 못했습니다. 다시 시도하세요.'; return; }
+
+  rows.forEach(r => { if (r.merchant) EN.merchCat[r.merchant] = r.category_id; });
+  EN.draft = [];
+  lgRenderAdd();
+  enToast(`${rows.length}건 기록했습니다`);
+  enLoadLedger();
 }
 
 /* ---------------- 단축키 ---------------- */
