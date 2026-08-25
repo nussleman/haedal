@@ -969,6 +969,13 @@ body{
   .lg-line .x{color:var(--text-faint);}
 }
 
+.lg-acnew{grid-template-columns:auto 1fr;border-bottom:1px solid var(--border);
+  margin-bottom:3px;padding-bottom:8px;}
+.lg-acnew .gp{background:rgba(201,162,39,.18);color:var(--gold-soft);}
+.lg-acnew .nm{color:var(--gold-soft);}
+.en-ac-item .gp{font-family:var(--mono);font-size:9px;color:var(--text-faint);
+  background:rgba(255,255,255,0.05);border-radius:4px;padding:2px 5px;margin-right:6px;
+  flex:0 0 auto;white-space:nowrap;}
 /* 사용처 앞에 붙는 그룹 — 이 가게가 어느 갈래인지 표에서 바로 보이게 */
 .lg-mg{font-family:var(--mono);font-size:9.5px;color:var(--text-faint);
   background:rgba(255,255,255,0.05);border-radius:4px;padding:2px 5px;margin-right:6px;
@@ -2442,9 +2449,11 @@ body{font-variant-numeric:tabular-nums;}
 }
 
 /* ---------- 자산>투자>종목: 통합 표 ---------- */
+#inv-subnav{position:sticky;top:var(--hdr-h,0px);z-index:45;background:var(--bg);
+  padding-top:6px;padding-bottom:2px;}
 .bk-wrap{display:block;}
-.bk-stick{position:sticky;top:var(--hdr-h,0px);z-index:40;background:var(--bg);
-  padding-top:20px;display:block;}
+.bk-stick{position:sticky;top:calc(var(--hdr-h,0px) + var(--inv-nav-h,42px));z-index:40;
+  background:var(--bg);padding-top:16px;display:block;}
 .bk-top{display:flex;align-items:flex-end;gap:26px;flex-wrap:wrap;margin-bottom:14px;}
 .bk-spacer{flex:1;}
 .bk-stat{display:flex;flex-direction:column;gap:3px;}
@@ -2456,8 +2465,9 @@ body{font-variant-numeric:tabular-nums;}
 .bk-bar{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:9px;}
 .bk-bar2{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px;}
 .bk-bar2 .sdb-strip{margin-bottom:0;}
-.bk-q{height:32px;font-size:12.5px;flex:1 1 220px;min-width:170px;
+.bk-q{height:32px;font-size:12.5px;flex:0 0 186px;width:186px;
   background:var(--panel);border-color:var(--border-strong);}
+.bk-bar .bk-add{margin-left:auto;}
 .bk-add{height:32px;background:var(--gold);border:0;border-radius:8px;color:#1a1508;
   font-family:var(--sans);font-weight:700;font-size:12px;padding:0 14px;cursor:pointer;white-space:nowrap;}
 .bk-add:hover{filter:brightness(1.08);}
@@ -2477,11 +2487,14 @@ body{font-variant-numeric:tabular-nums;}
 .bk-pickdrop .lg-catopt.on{color:var(--gold-soft);}
 .bk-pickdrop .cnt{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--text-faint);}
 /* 열 묶음 이름 */
-.bk-groups{display:flex;gap:9px;padding:0 12px;margin-top:22px;}
-.bk-groups span{display:flex;align-items:center;gap:8px;min-width:0;overflow:hidden;}
-.bk-groups i{font-family:var(--mono);font-size:8.5px;letter-spacing:.18em;color:var(--text-faint);
-  font-style:normal;white-space:nowrap;flex:0 0 auto;}
-.bk-groups span:after{content:'';flex:1;height:1px;background:var(--border);}
+/* 묶음은 선이 아니라 옅은 띠로 나눈다 — 표에 이미 가로줄이 많아서 세로선까지 더하면 지저분해진다 */
+.bk-groups{display:flex;gap:9px;padding:0 12px;margin-top:24px;}
+.bk-groups span{display:flex;align-items:flex-end;min-width:0;overflow:hidden;
+  border-radius:7px 7px 0 0;padding:5px 9px 4px;}
+.bk-groups i{font-family:var(--mono);font-size:9px;letter-spacing:.16em;
+  font-style:normal;white-space:nowrap;color:var(--text-faint);}
+.bk-groups .g2,.bk-groups .g3{background:rgba(255,255,255,.035);}
+.bk-groups .g2 i,.bk-groups .g3 i{color:var(--text-dim);}
 .bk-groups .g1{flex:1 1 auto;}
 .bk-groups .g2{flex:0 0 340px;}
 .bk-groups .g3{flex:0 0 93px;}
@@ -2502,7 +2515,13 @@ body{font-variant-numeric:tabular-nums;}
 .bk-cols .pl,.bk-row .pl{flex:0 0 58px;text-align:right;}
 .bk-cols .rz,.bk-row .rz{flex:0 0 84px;text-align:right;}
 /* 묶음 경계 — 얇은 선 하나로 기본 | 판단 | 히스토리 를 나눈다 */
-.bk-cols .sep,.bk-row .sep{box-shadow:inset 1px 0 0 var(--border);padding-left:9px;}
+/* 세로선을 지우고, 판단·히스토리 묶음에 아주 옅은 배경을 깐다 */
+.bk-cols .gd,.bk-cols .sc,.bk-cols .vd,.bk-cols .ck,
+.bk-row .gd,.bk-row .sc,.bk-row .vd,.bk-row .ck,
+.bk-cols .rz,.bk-row .rz{background:rgba(255,255,255,.035);}
+.bk-cols .sep,.bk-row .sep{margin-left:-4px;padding-left:4px;border-radius:4px 0 0 4px;}
+.bk-cols .ck,.bk-row .ck,.bk-cols .rz,.bk-row .rz{padding-right:4px;margin-right:-4px;border-radius:0 4px 4px 0;}
+.bk-cols{border-top:0;}
 .bk-dot{width:6px;height:6px;border-radius:50%;flex:0 0 6px;display:inline-block;}
 .bk-dot.y{background:var(--gold);}
 .bk-dot.n{background:transparent;box-shadow:inset 0 0 0 1px var(--text-faint);}
@@ -2512,7 +2531,6 @@ body{font-variant-numeric:tabular-nums;}
   border-bottom:1px solid var(--border);cursor:default;user-select:none;}
 .bk-card .bk-row:last-child{border-bottom:0;}
 .bk-row:hover{background:var(--panel-2);}
-.bk-row.open{background:var(--panel-2);box-shadow:inset 2px 0 0 var(--gold-soft);}
 .bk-row .nm{font-size:12.5px;color:var(--text);display:flex;align-items:baseline;gap:6px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .bk-row .va,.bk-row .we,.bk-row .gn,.bk-row .pl,.bk-row .rz,.bk-row .sc,.bk-row .ck{
@@ -2544,7 +2562,12 @@ body{font-variant-numeric:tabular-nums;}
 .bk-gd.wip{background:rgba(201,162,39,.14);color:var(--gold-soft);}
 .bk-gd.none{background:rgba(255,255,255,.05);color:var(--text-faint);}
 .bk-row .gd em{font-style:normal;font-family:var(--mono);font-size:10px;color:var(--text-faint);}
-.bk-vd{position:relative;cursor:pointer;}
+.bk-vd,.bk-gdc,.bk-ckc{position:relative;cursor:pointer;}
+.bk-gdc:hover,.bk-ckc:hover{box-shadow:inset 0 0 0 1px var(--border-strong);border-radius:5px;}
+.bk-gd .man{color:var(--gold);font-size:11px;margin-left:1px;}
+.bk-gmenu{left:0;right:auto;min-width:170px;}
+.bk-gmenu .cnt{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--text-faint);}
+.bk-ckin{width:100%;font-size:11px;color-scheme:dark;background:var(--bg-2);}
 .bk-vdi{font-family:var(--sans);font-size:11px;border-radius:11px;padding:3px 9px;font-style:normal;
   border:1px solid var(--border);color:var(--text-dim);white-space:nowrap;}
 .bk-vdi.none{border-color:transparent;color:var(--text-faint);}
@@ -2555,9 +2578,25 @@ body{font-variant-numeric:tabular-nums;}
 .bk-vmenu{left:auto;right:0;top:calc(100% + 2px);min-width:110px;}
 .bk-vmenu .lg-catopt.on{background:var(--panel-2);color:var(--gold-soft);}
 .bk-vmenu .tx.dim{color:var(--text-faint);}
-.bk-detail{border-bottom:1px solid var(--border);background:var(--bg-2);padding:4px 18px 18px;
-  box-shadow:inset 2px 0 0 var(--gold-soft);}
-.bk-detail .sdc-head{padding-top:14px;}
+/* 판정 카드는 표를 밀어내지 않고 가운데 띄운다 */
+.bk-modal{position:fixed;inset:0;z-index:300;background:rgba(8,10,15,.72);
+  display:flex;align-items:center;justify-content:center;padding:28px 18px;
+  backdrop-filter:blur(3px);}
+.bk-sheet{position:relative;width:min(960px,100%);max-height:86vh;display:flex;flex-direction:column;
+  background:var(--panel);border:1px solid var(--border-strong);border-radius:14px;
+  box-shadow:0 30px 80px -20px rgba(0,0,0,.8);}
+.bk-sheetbody{overflow-y:auto;padding:20px 24px 24px;scrollbar-width:thin;}
+.bk-x{position:absolute;right:10px;top:8px;z-index:2;background:none;border:0;
+  color:var(--text-faint);font-size:24px;line-height:1;cursor:pointer;padding:4px 8px;}
+.bk-x:hover{color:var(--text);}
+.bk-sheet .sdc-head{padding-right:34px;}
+.bk-sheet .sdc-sec{padding:13px 0;}
+.bk-sheet .sdc-row{padding:6px 0;}
+@media(max-width:640px){
+  .bk-modal{padding:12px 8px;}
+  .bk-sheet{max-height:92vh;}
+  .bk-sheetbody{padding:16px 14px 18px;}
+}
 @media(max-width:1300px){
   .bk-cols .gn,.bk-row .gn,.bk-cols .ck,.bk-row .ck{display:none;}
   .bk-groups .g2{flex:0 0 273px;}
@@ -5660,6 +5699,55 @@ async function enSignOut() {
   location.reload();
 }
 
+/* 사용처 사전 — 거래에 쓰인 이름 + 직접 등록한 이름을 합쳐 둔다 */
+async function enLoadAllMerchants() {
+  if (EN.merchLoading) return;
+  EN.merchLoading = true;
+  try {
+    const sb = await enClient();
+    const seen = {};
+    (EN.merchants || []).forEach(m => { seen[m] = 1; });
+    for (let from = 0; from < 40000; from += 1000) {
+      const { data, error } = await sb.from('v_transactions')
+        .select('merchant,merchant_group')
+        .not('merchant', 'is', null)
+        .order('id', { ascending: false }).range(from, from + 999);
+      if (error || !data || !data.length) break;
+      data.forEach(r => {
+        const m = String(r.merchant || '').trim();
+        if (!m) return;
+        if (!seen[m]) { seen[m] = 1; EN.merchants.push(m); }
+        if (r.merchant_group && !EN.merchGroup[m]) EN.merchGroup[m] = r.merchant_group;
+      });
+      if (data.length < 1000) break;
+    }
+    /* 아직 거래가 없는, 직접 등록만 해 둔 사용처 */
+    const { data: reg } = await sb.from('merchants').select('name,merchant_group');
+    (reg || []).forEach(r => {
+      const m = String(r.name || '').trim();
+      if (!m) return;
+      if (!seen[m]) { seen[m] = 1; EN.merchants.push(m); }
+      if (r.merchant_group) EN.merchGroup[m] = r.merchant_group;
+    });
+    EN.merchants.sort((a, b) => a.localeCompare(b, 'ko'));
+  } catch (e) { /* 다음 열 때 다시 시도된다 */ }
+  EN.merchLoading = false;
+}
+
+/* 사용처를 사전에만 등록한다 — 거래 없이도 자동완성에 뜨게 */
+async function enRegisterMerchant(name, group) {
+  const nm = String(name || '').trim();
+  if (!nm) return false;
+  const sb = await enClient();
+  const { error } = await sb.from('merchants')
+    .upsert({ name: nm, merchant_group: group || null }, { onConflict: 'owner_id,name' });
+  if (error) return false;
+  if (!EN.merchants.includes(nm)) EN.merchants.push(nm);
+  if (group) EN.merchGroup[nm] = group;
+  EN.merchants.sort((a, b) => a.localeCompare(b, 'ko'));
+  return true;
+}
+
 /* ---------------- 참조 데이터 ---------------- */
 async function enEnsureRefs() {
   if (EN.loaded) return;
@@ -5668,8 +5756,10 @@ async function enEnsureRefs() {
   const [catRes, recentRes] = await Promise.all([
     sb.from('categories').select('id,kind,category,subcategory,emoji_category,sort_order')
       .neq('kind', '자산').eq('is_active', true).order('sort_order'),
+    /* 여기서는 '자주 쓰는 분류' 계산용이라 최근 1000건이면 충분하다.
+       전체 사용처 목록은 enLoadAllMerchants 가 따로 끝까지 읽는다. */
     sb.from('transactions').select('category_id,merchant,merchant_group').gte('date', since)
-      .order('date', { ascending: false }).limit(4000)
+      .order('date', { ascending: false }).limit(1000)
   ]);
   EN.cats = catRes.data || [];
   EN.catById = {};
@@ -5687,20 +5777,9 @@ async function enEnsureRefs() {
     }
   });
   EN.merchants = Object.keys(mc);
-  /* 180일 창 밖의 오래된 사용처도 자동완성에 나와야 한다 — 이름을 통일하려면 다 보여야 하니까 */
-  sb.from('v_transactions').select('merchant,merchant_group').not('merchant', 'is', null)
-    .order('id', { ascending: false }).limit(20000)
-    .then(({ data }) => {
-      const seen = {};
-      EN.merchants.forEach(m => { seen[m] = 1; });
-      (data || []).forEach(r => {
-        const m = String(r.merchant || '').trim();
-        if (!m || seen[m]) return;
-        seen[m] = 1;
-        EN.merchants.push(m);
-        if (r.merchant_group && !EN.merchGroup[m]) EN.merchGroup[m] = r.merchant_group;
-      });
-    }).catch(() => {});
+  /* PostgREST 는 한 번에 1000행까지만 준다. limit 을 크게 줘도 소용없어서
+     range 로 끝까지 넘겨 읽어야 오래된 사용처까지 자동완성에 나온다. */
+  enLoadAllMerchants();
   EN.merchCat = {};
   Object.keys(mc).forEach(m => {
     let best = null, n = -1;
@@ -5855,7 +5934,8 @@ function enSetupMerchant() {
 
   const close = () => { box.hidden = true; inp.setAttribute('aria-expanded', 'false'); cur = -1; };
   const pick = (name) => {
-    inp.value = name;
+    const gp = (EN.merchGroup && EN.merchGroup[name]) || '';
+    inp.value = (gp ? gp + ' › ' : '') + name;
     const cid = EN.merchCat[name];
     if (cid) { EN.catId = cid; enSyncCat(); }
     close();
@@ -5865,18 +5945,22 @@ function enSetupMerchant() {
     box.querySelectorAll('.en-ac-item').forEach((el, k) => el.classList.toggle('on', k === cur));
   };
   const open = () => {
-    const q = inp.value.trim().toLowerCase();
+    const rawv = inp.value.trim();
+    const q = (rawv.includes('›') ? rawv.split('›').slice(1).join('›') : rawv).trim().toLowerCase();
     const pool = EN.merchants;
-    list = (q ? pool.filter(m => m.toLowerCase().includes(q)) : pool).slice(0, 40);
+    const gOf = (m) => (EN.merchGroup && EN.merchGroup[m]) || '';
+    list = (q ? pool.filter(m => m.toLowerCase().includes(q) || gOf(m).toLowerCase().includes(q)) : pool).slice(0, 40);
     if (!list.length) { close(); return; }
     box.innerHTML = list.map((m, k) => {
       const c = EN.catById[EN.merchCat[m]];
+      const gp = gOf(m);
       let nm = enEsc(m);
       if (q) {
         const at = m.toLowerCase().indexOf(q);
         if (at >= 0) nm = enEsc(m.slice(0, at)) + '<mark>' + enEsc(m.slice(at, at + q.length)) + '</mark>' + enEsc(m.slice(at + q.length));
       }
       return `<div class="en-ac-item" role="option" data-k="${k}" aria-selected="false">
+        ${gp ? `<span class="gp">${enEsc(gp)}</span>` : ''}
         <span class="nm">${nm}</span>
         <span class="ct">${c ? enEsc(c.category) + ' › ' + enEsc(c.subcategory) : '분류 없음'}</span>
       </div>`;
@@ -6654,15 +6738,21 @@ function lgMerchantAC(input, onPick) {
   window.addEventListener('scroll', () => { if (!box.hidden) place(); }, true);
   const paint = () => box.querySelectorAll('.lg-acitem').forEach((el, i) => el.classList.toggle('on', i === cur));
   const groupOf = (m) => (EN.merchGroup && EN.merchGroup[m]) || '';
+  const rows = () => box.querySelectorAll('.lg-acitem');
 
   const open = () => {
     const raw = input.value.trim();
     const q = (raw.includes('›') ? raw.split('›').slice(1).join('›') : raw).trim().toLowerCase();
     const pool = EN.merchants || [];
     list = (q ? pool.filter(m => m.toLowerCase().includes(q) || groupOf(m).toLowerCase().includes(q)) : pool).slice(0, 40);
-    if (!list.length) { close(); return; }
+    const exact = list.some(m => m.toLowerCase() === q);
+    const canAdd = q && !exact;
+    if (!list.length && !canAdd) { close(); return; }
     place();
-    box.innerHTML = list.map((m, i) => {
+    const raw2 = (raw.includes('›') ? raw.split('›').slice(1).join('›') : raw).trim();
+    box.innerHTML = (canAdd ? `<div class="lg-acitem lg-acnew" data-new="1">
+        <span class="gp">새로</span><span class="nm">＋ ${enEsc(raw2)} 사용처로 추가</span></div>` : '')
+      + list.map((m, i) => {
       const c = EN.catById[EN.merchCat[m]];
       const gp = groupOf(m);
       let nm = enEsc(m);
@@ -6678,7 +6768,19 @@ function lgMerchantAC(input, onPick) {
     box.hidden = false;
     cur = -1;
     box.querySelectorAll('.lg-acitem').forEach(el =>
-      el.addEventListener('mousedown', (e) => { e.preventDefault(); pick(list[Number(el.dataset.i)]); }));
+      el.addEventListener('mousedown', async (e) => {
+        e.preventDefault();
+        if (el.dataset.new) {
+          const gp0 = raw.includes('›') ? raw.split('›')[0].trim() : '';
+          await enRegisterMerchant(raw2, gp0);
+          input.value = (gp0 ? gp0 + ' › ' : '') + raw2;
+          close();
+          if (onPick) onPick(raw2, EN.merchCat[raw2] || null);
+          enToast(`사용처 '${raw2}' 등록했습니다`);
+          return;
+        }
+        pick(list[Number(el.dataset.i)]);
+      }));
   };
   const pick = (m) => {
     if (!m) return;
@@ -6693,9 +6795,13 @@ function lgMerchantAC(input, onPick) {
   input.addEventListener('blur', () => setTimeout(close, 130));
   input.addEventListener('keydown', (e) => {
     if (box.hidden) return;
-    if (e.key === 'ArrowDown') { e.preventDefault(); cur = Math.min(cur + 1, list.length - 1); paint(); }
+    if (e.key === 'ArrowDown') { e.preventDefault(); cur = Math.min(cur + 1, rows().length - 1); paint(); }
     else if (e.key === 'ArrowUp') { e.preventDefault(); cur = Math.max(cur - 1, 0); paint(); }
-    else if (e.key === 'Enter' && cur >= 0) { e.preventDefault(); e.stopPropagation(); pick(list[cur]); }
+    else if (e.key === 'Enter' && cur >= 0) {
+      e.preventDefault(); e.stopPropagation();
+      const el = rows()[cur];
+      if (el) el.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+    }
     else if (e.key === 'Escape') { e.stopPropagation(); close(); }
   });
 }
@@ -7097,6 +7203,15 @@ async function mgLoad(force) {
     Object.keys(o).forEach(k => { if (o[k] > n) { n = o[k]; best = k; } });
     return best;
   };
+  try {
+    const { data: reg } = await sb.from('merchants').select('name,merchant_group');
+    (reg || []).forEach(r => {
+      const m = String(r.name || '').trim();
+      if (!m || map[m]) return;
+      map[m] = { name: m, groups: { [r.merchant_group || '']: 1 },
+        tags: r.merchant_group ? { [r.merchant_group]: 1 } : {}, cats: {}, cnt: 0, sum: 0, last: '', kind: '지출' };
+    });
+  } catch (e) {}
   MG.rows = Object.values(map).map(e => ({
     name: e.name, cnt: e.cnt, sum: e.sum, last: e.last, kind: e.kind,
     group: top(e.groups) || '',
@@ -7168,6 +7283,7 @@ async function renderMerchantPage(host) {
         </div>
         <div class="lg-grp">
           <span class="lg-glab">&nbsp;</span>
+          <button class="bk-add" id="mg-add">+ 사용처 추가</button>
           <button class="lg-reset" id="mg-reload">다시 읽기</button>
         </div>
       </div>
@@ -7215,6 +7331,14 @@ async function renderMerchantPage(host) {
     }, 260);
   });
   enQS('#mg-reload').addEventListener('click', () => { MG.rows = null; renderMerchantPage(host); });
+  enQS('#mg-add').addEventListener('click', async () => {
+    const nm = (prompt('추가할 사용처 이름') || '').trim();
+    if (!nm) return;
+    const gp = (prompt(`'${nm}' 의 그룹 — 비워두면 나중에 정해도 됩니다`, '') || '').trim();
+    const ok = await enRegisterMerchant(nm, gp);
+    enToast(ok ? `'${nm}' 등록했습니다` : '등록하지 못했습니다');
+    if (ok) { MG.rows = null; renderMerchantPage(host); }
+  });
   mgGroupPicker(host);
   host.querySelectorAll('#mg-cols [data-s]').forEach(el => el.addEventListener('click', () => {
     const k = el.dataset.s;
@@ -14535,7 +14659,10 @@ function bkMake(name, symbol, h, weight, data) {
   const g0 = sdxG0State(card);
   const gr = sdxGrade(sc.score);
   const graded = g0 !== 'fail' && sc.answered > 0;
-  const cap = graded && gr[3] !== '—' ? Number(String(gr[3]).split('~')[0].replace('%', '')) : null;
+  const capSrc = (card && card.grade_override)
+    ? ((SD_GRADE.find(x => x[2] === card.grade_override) || [])[3] || null)
+    : (graded ? gr[3] : null);
+  const cap = capSrc && capSrc !== '—' ? Number(String(capSrc).split('~')[0].replace('%', '')) : null;
   return {
     name, symbol: symbol || (card && card.ticker) || '',
     held: !!h, value: h ? h.value : null, weight,
@@ -14543,8 +14670,10 @@ function bkMake(name, symbol, h, weight, data) {
     country: h ? h.country : null,
     card, fact,
     score: sc.score, answered: sc.answered, full: sc.full,
-    g0, grade: g0 === 'fail' ? '탈락' : (graded ? gr[2] : null),
-    capText: g0 === 'fail' ? '0%' : (graded ? gr[3] : null),
+    g0, grade: (card && card.grade_override) || (g0 === 'fail' ? '탈락' : (graded ? gr[2] : null)),
+    capText: (card && card.grade_override)
+      ? ((SD_GRADE.find(x => x[2] === card.grade_override) || [])[3] || null)
+      : (g0 === 'fail' ? '0%' : (graded ? gr[3] : null)),
     over: (weight != null && cap != null) ? weight - cap : null,
     type: (card && card.type) || (fact && fact.type) || null,
     verdict: card && card.verdict || null,
@@ -14555,6 +14684,8 @@ function bkMake(name, symbol, h, weight, data) {
 }
 
 function bkStatus(r) {
+  const man = r.card && r.card.grade_override;
+  if (man) return { k: man === '매수 금지' ? 'fail' : 'pass', label: man };
   if (r.g0 === 'fail') return { k: 'fail', label: '탈락' };
   if (!r.answered) return { k: 'none', label: '미검토' };
   if (!r.full) return { k: 'wip', label: '검토 중' };
@@ -14668,7 +14799,7 @@ function renderBookPage(hostId, data, d) {
         ${s ? `<span class="bk-fresh ${fresh.stale ? 'stale' : ''}" title="15분마다 자동 갱신">마지막 확인 ${s.asOf.slice(11)} · ${fresh.text}${fresh.stale ? ' ⚠️' : ''}</span>` : ''}
       </div>
       <div class="bk-bar">
-        <input class="en-in bk-q" id="bk-q" placeholder="종목 · 티커 · 테마 검색" value="${enEsc(BK.q)}">
+        <input class="en-in bk-q" id="bk-q" placeholder="종목 · 티커 검색" value="${enEsc(BK.q)}">
         ${pick('theme', '테마', BK.theme, themeList.map(t => [t, bkThemeEmoji(t) + ' ' + enEsc(t), themeCnt[t] || 0])
           .concat([['(없음)', '테마 없음', noThemeCnt]]))}
         ${pick('grade', '등급', BK.grade, ['우량', '성장', '턴어라운드', '옵션형', '매수 금지', '탈락', '미검토'].map(g => [g, g, null]))}
@@ -14699,8 +14830,17 @@ function renderBookPage(hostId, data, d) {
     </div>
     <div class="lg-card bk-card">${rows.length ? rows.map(r => bkRowHTML(r)).join('')
       : '<div class="empty-state">조건에 맞는 종목이 없습니다.</div>'}</div>
-    <div class="lg-meta"><span>${rows.length}개 종목 · 줄을 더블클릭하면 판정 카드가 펼쳐집니다</span></div>
-    </div>`;
+    <div class="lg-meta"><span>${rows.length}개 종목 · 줄을 더블클릭하면 판정 카드가 열립니다</span></div>
+    </div>
+    ${BK.open ? `<div class="bk-modal" id="bk-modal">
+      <div class="bk-sheet" role="dialog" aria-modal="true">
+        <button class="bk-x" id="bk-close" aria-label="닫기">×</button>
+        <div class="bk-sheetbody" id="bk-detail">${sdxCard(
+          (() => { const it = rows.find(x => x.name === BK.open) || bkRows(data).find(x => x.name === BK.open);
+            return it ? { name: it.name, symbol: it.symbol, weight: it.weight, plRate: it.plRate, row: it.card } : null; })()
+        )}</div>
+      </div>
+    </div>` : ''}`;
 
   host.querySelectorAll('[data-fil]').forEach(b => b.addEventListener('click', () => {
     BK.filter = b.dataset.fil; renderBookPage(hostId, data, d);
@@ -14767,7 +14907,35 @@ function renderBookPage(hostId, data, d) {
     e.stopPropagation();
     bkThemeMenu(cell, hostId, data, d);
   }));
-  if (BK.open) bkBindDetail(host, hostId, data, d);
+  host.querySelectorAll('.bk-gdc').forEach(cell => cell.addEventListener('click', (e) => {
+    e.stopPropagation();
+    bkGradeMenu(cell, hostId, data, d);
+  }));
+  host.querySelectorAll('.bk-ckc').forEach(cell => cell.addEventListener('click', (e) => {
+    e.stopPropagation();
+    bkCheckEdit(cell, hostId, data, d);
+  }));
+  /* 하위 탭도 같이 고정되도록 높이를 재서 넘겨준다 */
+  const nav = document.getElementById('inv-subnav');
+  if (nav) document.documentElement.style.setProperty('--inv-nav-h', nav.offsetHeight + 'px');
+  if (BK.open) {
+    bkBindDetail(host, hostId, data, d);
+    const close = () => { BK.open = null; renderBookPage(hostId, data, d); };
+    host.querySelector('#bk-close').addEventListener('click', close);
+    host.querySelector('#bk-modal').addEventListener('mousedown', (e) => {
+      if (e.target.id === 'bk-modal') close();
+    });
+    if (!BK.escBound) {
+      BK.escBound = true;
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && BK.open && document.getElementById('bk-modal')) {
+          BK.open = null;
+          const h = document.getElementById('panel-book');
+          if (h) renderBookPage('panel-book', state.data, state.derived || {});
+        }
+      });
+    }
+  }
 }
 
 function bkRowHTML(r) {
@@ -14786,15 +14954,14 @@ function bkRowHTML(r) {
         : `${r.pl >= 0 ? '+' : '−'}${enComma(Math.abs(Math.round(r.pl)))}`}</span>
       <span class="pl ${r.plRate == null ? '' : r.plRate >= 0 ? 'up' : 'down'}">${r.plRate == null ? '—'
         : `${r.plRate >= 0 ? '+' : '−'}${Math.abs(r.plRate).toFixed(1)}%`}</span>
-      <span class="gd sep"><i class="bk-gd ${st.k}">${st.label}</i>${r.capText ? `<em>${r.capText}</em>` : ''}</span>
+      <span class="gd sep bk-gdc" title="클릭해서 등급 지정">
+        <i class="bk-gd ${st.k}">${st.label}${r.card && r.card.grade_override ? '<b class="man">*</b>' : ''}</i>${r.capText ? `<em>${r.capText}</em>` : ''}</span>
       <span class="sc">${r.answered ? `${r.score}<em>/14</em>` : '—'}</span>
       <span class="vd bk-vd" title="클릭해서 결론 변경">${vd ? `<i class="bk-vdi v-${r.verdict}">${vd}</i>` : '<i class="bk-vdi none">—</i>'}</span>
-      <span class="ck">${r.check ? String(r.check).slice(2).replace(/-/g, '.') : '—'}</span>
+      <span class="ck bk-ckc" title="클릭해서 확인일 지정">${r.check ? String(r.check).slice(2).replace(/-/g, '.') : '—'}</span>
       <span class="rz sep ${r.realized == null ? '' : r.realized >= 0 ? 'up' : 'down'}">${r.realized == null ? '—'
         : `${r.realized >= 0 ? '+' : '−'}${enComma(Math.abs(Math.round(r.realized)))}`}</span>
-    </div>${open ? `<div class="bk-detail" id="bk-detail">${sdxCard({
-      name: r.name, symbol: r.symbol, weight: r.weight, plRate: r.plRate, row: r.card
-    })}</div>` : ''}`;
+    </div>`;
 }
 
 function bkBindDetail(host, hostId, data, d) {
@@ -14806,9 +14973,9 @@ function bkBindDetail(host, hostId, data, d) {
   /* 카드 안에서 게이트를 바꾸면 표의 등급·점수도 같이 움직여야 한다 */
   const repaint = () => renderBookPage(hostId, data, d);
   detail.querySelectorAll('[data-g],[data-g1],[data-vd]').forEach(b =>
-    b.addEventListener('click', () => setTimeout(repaint, 220)));
+    b.addEventListener('click', () => setTimeout(repaint, 260)));
   detail.querySelectorAll('[data-del]').forEach(b =>
-    b.addEventListener('click', () => { BK.open = null; setTimeout(repaint, 220); }));
+    b.addEventListener('click', () => { BK.open = null; setTimeout(repaint, 260); }));
 }
 
 /* 테마 편집 — 여러 개 붙일 수 있고, 없는 이름은 그 자리에서 만든다.
@@ -14852,6 +15019,55 @@ function bkThemeMenu(cell, hostId, data, d) {
   paint();
   cell.appendChild(menu);
   setTimeout(() => document.addEventListener('mousedown', () => menu.remove(), { once: true }), 0);
+}
+
+/* 등급은 점수에서 자동으로 나오지만, 내가 알고 있는 게 있으면 손으로 덮어쓴다.
+   덮어쓴 등급에는 * 를 붙여 자동값과 구분한다. */
+function bkGradeMenu(cell, hostId, data, d) {
+  const name = cell.closest('.bk-row').dataset.nm;
+  const cur = (sdxRow(name) || {}).grade_override || null;
+  document.querySelectorAll('.bk-vmenu,.bk-thmenu,.bk-gmenu').forEach(m => m.remove());
+  const menu = document.createElement('div');
+  menu.className = 'lg-catdrop bk-vmenu bk-gmenu';
+  menu.innerHTML = `<div class="lg-catopt ${!cur ? 'on' : ''}" data-v=""><span class="tx dim">자동 (점수 기준)</span></div>`
+    + SD_GRADE.map(g => `<div class="lg-catopt ${cur === g[2] ? 'on' : ''}" data-v="${g[2]}">
+        <span class="tx">${g[2]}</span><span class="cnt">${g[3]}</span></div>`).join('');
+  cell.appendChild(menu);
+  menu.querySelectorAll('[data-v]').forEach(el => el.addEventListener('mousedown', async (e) => {
+    e.preventDefault(); e.stopPropagation();
+    menu.remove();
+    await sdxPatch(name, { grade_override: el.dataset.v || null });
+    renderBookPage(hostId, data, d);
+  }));
+  setTimeout(() => document.addEventListener('mousedown', () => menu.remove(), { once: true }), 0);
+}
+
+function bkCheckEdit(cell, hostId, data, d) {
+  if (cell.querySelector('input')) return;
+  const name = cell.closest('.bk-row').dataset.nm;
+  const prev = cell.innerHTML;
+  const inp = document.createElement('input');
+  inp.type = 'date';
+  inp.className = 'lg-ed bk-ckin';
+  inp.value = (sdxRow(name) || {}).check_date || '';
+  cell.innerHTML = '';
+  cell.appendChild(inp);
+  inp.focus();
+  let done = false;
+  const finish = async (commit) => {
+    if (done) return;
+    done = true;
+    if (!commit) { cell.innerHTML = prev; return; }
+    await sdxPatch(name, { check_date: inp.value || null });
+    renderBookPage(hostId, data, d);
+  };
+  inp.addEventListener('change', () => finish(true));
+  inp.addEventListener('blur', () => finish(true));
+  inp.addEventListener('keydown', (e) => {
+    e.stopPropagation();
+    if (e.key === 'Enter') finish(true);
+    if (e.key === 'Escape') finish(false);
+  });
 }
 
 function bkVerdictMenu(cell, hostId, data, d) {
