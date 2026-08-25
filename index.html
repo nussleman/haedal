@@ -993,6 +993,17 @@ body{
   display:flex;align-items:center;gap:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .lg-dr .nm,.lg-line .n{position:relative;}
 
+/* 지출이 아닌 행의 Good/Bad 자리 */
+.lg-na{color:var(--text-faint);opacity:.35;font-size:12px;}
+.lg-gb.off{opacity:.3;cursor:default;}
+.lg-gb.off:hover{border-color:transparent;}
+/* 초안 행의 분류 검색 */
+.lg-cpick{position:relative;flex:1;min-width:0;display:block;}
+.lg-cpick .lg-ed{width:100%;}
+.lg-cpdrop{min-width:250px;}
+.lg-catopt .cnt{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--text-faint);}
+#mg-gdrop{max-height:340px;}
+
 /* ---------- 전체 내역 › 사용처 ---------- */
 .lg-shell{padding-top:26px;}
 .mg-bar{display:flex;flex-wrap:wrap;gap:10px 12px;align-items:flex-end;margin:16px 0 12px;}
@@ -5845,6 +5856,7 @@ ${dupRow.date} ${enComma(n)}원 ${dupRow.merchant || ''}
 
   if (merchant) EN.merchCat[merchant] = EN.catId;
   enToast(enComma(n) + '원 기록했습니다');
+  lgTouched();
   amt.value = ''; enQS('#en-merch').value = ''; enQS('#en-note').value = '';
   EN.neg = false; EN.catId = null;
   amt.classList.remove('neg');
@@ -6223,7 +6235,9 @@ async function enLoadLedger() {
             <button class="lg-tg ${r.company_paid ? 'on' : ''}" data-tg="company_paid" title="회사 환급">🏢</button>
             <button class="lg-tg ${r.is_fixed ? 'on' : ''}" data-tg="is_fixed" title="고정비">📌</button>
           </span>
-          <span class="g"><button class="lg-gb ${r.good_bad === 'Good' ? 'good' : r.good_bad === 'Bad' ? 'bad' : ''}" data-gb title="클릭해서 Good → Bad → 해제">${r.good_bad === 'Good' ? 'GOOD' : r.good_bad === 'Bad' ? 'BAD' : '—'}</button></span>
+          <span class="g">${r.kind === '지출'
+            ? `<button class="lg-gb ${r.good_bad === 'Good' ? 'good' : r.good_bad === 'Bad' ? 'bad' : ''}" data-gb title="클릭해서 Good → Bad → 해제">${r.good_bad === 'Good' ? 'GOOD' : r.good_bad === 'Bad' ? 'BAD' : '—'}</button>`
+            : '<span class="lg-na" title="지출에만 매깁니다">·</span>'}</span>
           <span class="v ${r.kind}" data-ed="amount" title="더블클릭해서 수정">${Number(r.amount) < 0 ? '−' : ''}${enComma(Math.abs(r.amount))}</span>
           <button class="x" data-id="${r.id}" aria-label="삭제">×</button>
         </div>`).join('') + '</div></div>';
@@ -6232,6 +6246,7 @@ async function enLoadLedger() {
       if (!confirm('이 기록을 삭제할까요?')) return;
       await (await enClient()).from('transactions').delete().eq('id', Number(b.dataset.id));
       enToast('삭제했습니다');
+      lgTouched();
       enLoadLedger();
     }));
     lgBindEdit(box);
@@ -6339,6 +6354,7 @@ function lgCellEdit(cell) {
     const ok = await lgUpdate(id, patch);
     if (!ok) { cell.innerHTML = prev; return; }
     enToast('수정했습니다');
+    lgTouched();
     enLoadLedger();
   };
 
@@ -6360,7 +6376,7 @@ function lgBindEdit(box) {
     btn.classList.toggle('on', on);
     const patch = {}; patch[btn.dataset.tg] = on;
     const ok = await lgUpdate(Number(line.dataset.id), patch);
-    if (!ok) btn.classList.toggle('on', !on);
+    if (!ok) btn.classList.toggle('on', !on); else lgTouched();
   }));
 
   box.querySelectorAll('[data-gb]').forEach(btn => btn.addEventListener('click', async () => {
@@ -6375,6 +6391,69 @@ function lgBindEdit(box) {
       btn.textContent = cur === 'Good' ? 'GOOD' : cur === 'Bad' ? 'BAD' : '—';
     }
   }));
+}
+
+/* 분류를 셀렉트 대신 검색으로 고른다 — 소분류가 수십 개라 스크롤로는 못 찾는다.
+   보이는 칸은 input, 실제 값은 옆의 hidden 이 들고 있다. */
+function lgCatPick(input, hidden, onPick) {
+  if (!input || input.dataset.cp) return;
+  input.dataset.cp = '1';
+  const rank = { '지출': 0, '수입': 1, '이체': 2 };
+  const all = () => [...EN.cats].sort((a, b) =>
+    (rank[a.kind] ?? 9) - (rank[b.kind] ?? 9) || a.sort_order - b.sort_order);
+  const box = document.createElement('div');
+  box.className = 'lg-catdrop lg-cpdrop';
+  box.hidden = true;
+  (input.parentElement || document.body).appendChild(box);
+
+  let list = [], cur = -1;
+  const label = (c) => `${c.category} › ${c.subcategory}`;
+  const close = () => { box.hidden = true; cur = -1; };
+  const paint = () => box.querySelectorAll('.lg-catopt').forEach((el, i) => el.classList.toggle('on', i === cur));
+  const restore = () => {
+    const c = EN.catById[Number(hidden.value)];
+    input.value = c ? label(c) : '';
+  };
+  const open = () => {
+    const q = input.value.trim().toLowerCase();
+    const chosen = EN.catById[Number(hidden.value)];
+    const isLabel = chosen && input.value === label(chosen);
+    list = all().filter(c => !q || isLabel ||
+      (c.category + ' ' + c.subcategory + ' ' + c.kind).toLowerCase().includes(q)).slice(0, 60);
+    if (!list.length) { box.innerHTML = '<div class="lg-catempty">일치하는 분류가 없습니다.</div>'; box.hidden = false; return; }
+    let last = '';
+    box.innerHTML = list.map((c, i) => {
+      const head = c.kind !== last ? `<div class="lg-cathead">${c.kind}</div>` : '';
+      last = c.kind;
+      return head + `<div class="lg-catopt" data-i="${i}">
+        <span class="lg-kd ${c.kind}">${c.kind}</span>
+        <span class="em">${c.emoji_category || ''}</span>
+        <span class="tx">${enEsc(c.category)} › <b>${enEsc(c.subcategory)}</b></span></div>`;
+    }).join('');
+    box.hidden = false;
+    cur = -1;
+    box.querySelectorAll('.lg-catopt').forEach(el =>
+      el.addEventListener('mousedown', (e) => { e.preventDefault(); pick(list[Number(el.dataset.i)]); }));
+  };
+  const pick = (c) => {
+    if (!c) return;
+    hidden.value = String(c.id);
+    input.value = label(c);
+    close();
+    if (onPick) onPick(c);
+    hidden.dispatchEvent(new Event('change'));
+  };
+
+  input.addEventListener('focus', () => { input.select(); open(); });
+  input.addEventListener('input', open);
+  input.addEventListener('blur', () => setTimeout(() => { close(); restore(); }, 130));
+  input.addEventListener('keydown', (e) => {
+    if (box.hidden) return;
+    if (e.key === 'ArrowDown') { e.preventDefault(); cur = Math.min(cur + 1, list.length - 1); paint(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); cur = Math.max(cur - 1, 0); paint(); }
+    else if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); pick(list[cur >= 0 ? cur : 0]); }
+    else if (e.key === 'Escape') { e.stopPropagation(); close(); restore(); }
+  });
 }
 
 /* '그룹 › 사용처' 한 칸으로 다룬다 — 입력창을 늘리지 않고 둘 다 고칠 수 있게 */
@@ -6419,10 +6498,9 @@ function lgMerchantAC(input, onPick) {
         const at = m.toLowerCase().indexOf(q);
         if (at >= 0) nm = enEsc(m.slice(0, at)) + '<mark>' + enEsc(m.slice(at, at + q.length)) + '</mark>' + enEsc(m.slice(at + q.length));
       }
-      return `<div class="lg-acitem" data-i="${i}">
+      return `<div class="lg-acitem" data-i="${i}" title="${c ? enEsc(c.category + ' › ' + c.subcategory) : '분류 없음'}">
         ${gp ? `<span class="gp">${enEsc(gp)}</span>` : '<span class="gp none">그룹 없음</span>'}
         <span class="nm">${nm}</span>
-        <span class="ct">${c ? `<i class="lg-kd ${c.kind}">${c.kind}</i>${enEsc(c.category)} › ${enEsc(c.subcategory)}` : '분류 없음'}</span>
       </div>`;
     }).join('');
     box.hidden = false;
@@ -6485,6 +6563,7 @@ function lgBindDrag(box) {
       const ok = await lgUpdate(id, { date: to });
       if (!ok) return;
       enToast(`${to.slice(2).replace(/-/g, '.')} 로 옮겼습니다`);
+      lgTouched();
       enLoadLedger();
     });
   });
@@ -6495,27 +6574,22 @@ function lgBindDrag(box) {
    같은 날짜·금액·사용처가 이미 있으면 저장 직전에 알려준다. */
 
 function lgDraftRowHTML(i, seed) {
-  const rank = { '지출': 0, '수입': 1, '이체': 2 };
-  const cats = [...EN.cats].sort((a, b) =>
-    (rank[a.kind] ?? 9) - (rank[b.kind] ?? 9) || a.sort_order - b.sort_order);
   const c = EN.catById[seed.catId];
-  let last = '';
-  const opts = cats.map(x => {
-    const head = x.kind !== last ? `</optgroup><optgroup label="${x.kind}">` : '';
-    last = x.kind;
-    return head + `<option value="${x.id}" ${x.id === seed.catId ? 'selected' : ''}>${enEsc(x.category)} › ${enEsc(x.subcategory)}</option>`;
-  }).join('').replace('</optgroup>', '');
   return `<div class="lg-dr" data-dr="${i}">
     <span class="dt"><input class="lg-ed" type="date" data-d="date" value="${enEsc(seed.date)}" style="color-scheme:dark;"></span>
     <span class="ck"><i class="lg-kd ${c ? c.kind : ''}" data-kd>${c ? c.kind : '—'}</i>
-      <select class="lg-ed sel" data-d="cat"><option value="">분류 선택</option>${opts}</optgroup></select></span>
+      <span class="lg-cpick">
+        <input class="lg-ed" data-d="catq" placeholder="분류 검색" autocomplete="off"
+               value="${c ? enEsc(c.category + ' › ' + c.subcategory) : ''}">
+        <input type="hidden" data-d="cat" value="${seed.catId || ''}">
+      </span></span>
     <span class="nm"><input class="lg-ed" data-d="merchant" placeholder="사용처" autocomplete="off" value="${enEsc(seed.merchant || '')}"></span>
     <span class="no"><input class="lg-ed" data-d="note" placeholder="메모" autocomplete="off" value="${enEsc(seed.note || '')}"></span>
     <span class="tg">
       <button class="lg-tg ${seed.company_paid ? 'on' : ''}" data-dtg="company_paid" title="회사 환급">🏢</button>
       <button class="lg-tg ${seed.is_fixed ? 'on' : ''}" data-dtg="is_fixed" title="고정비">📌</button>
     </span>
-    <span class="gb"><button class="lg-gb ${seed.good_bad === 'Good' ? 'good' : seed.good_bad === 'Bad' ? 'bad' : ''}" data-dgb>${seed.good_bad === 'Good' ? 'GOOD' : seed.good_bad === 'Bad' ? 'BAD' : '—'}</button></span>
+    <span class="gb"><button class="lg-gb ${c && c.kind !== '지출' ? 'off' : ''} ${seed.good_bad === 'Good' ? 'good' : seed.good_bad === 'Bad' ? 'bad' : ''}" data-dgb ${c && c.kind !== '지출' ? 'disabled' : ''}>${seed.good_bad === 'Good' ? 'GOOD' : seed.good_bad === 'Bad' ? 'BAD' : '—'}</button></span>
     <span class="am"><input class="lg-ed mono" data-d="amount" inputmode="numeric" placeholder="0" value="${enEsc(seed.amount || '')}"></span>
     <button class="x" data-drx="${i}" aria-label="이 행 삭제">×</button>
   </div>`;
@@ -6541,23 +6615,37 @@ function lgRenderAdd(focusIdx) {
     <div class="lg-drs">${EN.draft.map((d, i) => lgDraftRowHTML(i, d)).join('')}</div>
     <p class="lg-drerr" id="lg-drerr" hidden></p>`;
 
-  host.querySelectorAll('[data-d="cat"]').forEach(sel => sel.addEventListener('change', () => {
-    const row = sel.closest('.lg-dr');
-    const c = EN.catById[Number(sel.value)];
-    const kd = row.querySelector('[data-kd]');
-    kd.className = 'lg-kd ' + (c ? c.kind : '');
-    kd.textContent = c ? c.kind : '—';
-    row.classList.remove('bad');
-  }));
+  host.querySelectorAll('.lg-dr').forEach(row => {
+    const hid = row.querySelector('[data-d="cat"]');
+    const sync = () => {
+      const c = EN.catById[Number(hid.value)];
+      const kd = row.querySelector('[data-kd]');
+      kd.className = 'lg-kd ' + (c ? c.kind : '');
+      kd.textContent = c ? c.kind : '—';
+      row.classList.remove('bad');
+      /* Good/Bad 는 지출에만 매긴다 */
+      const gb = row.querySelector('[data-dgb]');
+      const off = !!c && c.kind !== '지출';
+      gb.disabled = off;
+      gb.classList.toggle('off', off);
+      if (off) { gb.className = 'lg-gb off'; gb.textContent = '—'; }
+    };
+    hid.addEventListener('change', sync);
+    lgCatPick(row.querySelector('[data-d="catq"]'), hid, sync);
+    sync();
+  });
 
   /* 사용처를 적으면 예전에 쓰던 그룹과 분류가 따라온다 */
   host.querySelectorAll('[data-d="merchant"]').forEach(inp => {
     const row = inp.closest('.lg-dr');
     const apply = (cid) => {
-      const sel = row.querySelector('[data-d="cat"]');
-      if (!cid || sel.value) return;
-      sel.value = String(cid);
-      sel.dispatchEvent(new Event('change'));
+      const hid = row.querySelector('[data-d="cat"]');
+      if (!cid || hid.value) return;
+      const c = EN.catById[cid];
+      hid.value = String(cid);
+      const q = row.querySelector('[data-d="catq"]');
+      if (q && c) q.value = c.category + ' › ' + c.subcategory;
+      hid.dispatchEvent(new Event('change'));
     };
     lgMerchantAC(inp, (m, cid) => apply(cid));
     inp.addEventListener('change', () => apply(EN.merchCat[lgSplitMerchant(inp.value).merchant]));
@@ -6728,6 +6816,7 @@ async function lgDraftSave() {
   EN.draft = [];
   lgRenderAdd();
   enToast(`${rows.length}건 기록했습니다`);
+  lgTouched();
   enLoadLedger();
 }
 
@@ -6736,6 +6825,61 @@ async function lgDraftSave() {
    여기서 고치면 그 사용처의 과거 기록 전체가 같이 바뀐다 — 표기 흔들림을 잡는 자리. */
 
 const MG = { rows: null, q: '', group: 'all', sort: 'cnt', loading: false };
+
+/* 그룹 이름 앞에 붙는 그림. 목록이 39줄이라 글자만으로는 훑기 어렵다. */
+const MG_EMOJI = {
+  '주식': '📈', '카페/디저트': '☕', '음식점': '🍽️', '편의점/마트': '🏪', '내 계좌': '🏦',
+  '교통': '🚕', '온라인쇼핑몰': '📦', '구독': '🔁', '사람': '🧑', '잡화': '🧺',
+  '회사': '🏢', '모임': '🍻', '통신': '📱', '서점': '📚', '의류/패션': '👕',
+  '헤어/뷰티': '💇', '문구/화방': '✏️', '영화관': '🎬', '배달': '🛵', '병원/약국': '💊',
+  '여행': '✈️', '소프트웨어': '💻', '가구': '🛋️', '디지털/가전': '🔌', '노래방': '🎤',
+  '백화점': '🏬', '공연/전시': '🎭', '주점/이자카야': '🍶', '오락/가챠': '🎮', '소품샵': '🎁',
+  'OTT': '📺', '사진관': '📷', '식품/식료품': '🥬', '인쇄소': '🖨️', '클럽': '🕺',
+  '숙박': '🛏️', '보험': '🛡️', '적금': '💰', '(그룹 없음)': '⬜'
+};
+function mgEmoji(g) {
+  if (!g || g === 'all') return '';
+  if (MG_EMOJI[g]) return MG_EMOJI[g];
+  /* '소프트웨어, 🔁구독' 처럼 합쳐진 이름은 앞부분으로 한 번 더 찾는다 */
+  const head = String(g).split(/[,·/]/)[0].trim();
+  return MG_EMOJI[head] || '🏷️';
+}
+
+function mgGroupPicker(host) {
+  const inp = document.getElementById('mg-gq');
+  const drop = document.getElementById('mg-gdrop');
+  const clear = document.getElementById('mg-gx');
+  if (!inp || !drop) return;
+  const items = () => Array.from(drop.querySelectorAll('.lg-catopt'));
+  const filter = () => {
+    const q = inp.value.trim().toLowerCase();
+    const picked = MG.group !== 'all' && inp.value === mgEmoji(MG.group) + ' ' + MG.group;
+    let n = 0;
+    items().forEach(el => {
+      const hit = !q || picked || el.textContent.toLowerCase().includes(q);
+      el.hidden = !hit;
+      if (hit) n++;
+    });
+    drop.hidden = false;
+    return n;
+  };
+  inp.addEventListener('focus', () => { inp.select(); filter(); });
+  inp.addEventListener('input', filter);
+  inp.addEventListener('blur', () => setTimeout(() => { drop.hidden = true; }, 140));
+  inp.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { e.stopPropagation(); drop.hidden = true; inp.blur(); }
+    if (e.key === 'Enter') {
+      const first = items().find(el => !el.hidden);
+      if (first) { e.preventDefault(); MG.group = first.dataset.g; renderMerchantPage(host); }
+    }
+  });
+  items().forEach(el => el.addEventListener('mousedown', (e) => {
+    e.preventDefault();
+    MG.group = el.dataset.g;
+    renderMerchantPage(host);
+  }));
+  if (clear) clear.addEventListener('click', () => { MG.group = 'all'; renderMerchantPage(host); });
+}
 
 async function mgLoad(force) {
   if (MG.rows && !force) return MG.rows;
@@ -6811,6 +6955,20 @@ async function renderMerchantPage(host) {
           <span class="lg-glab">검색</span>
           <div class="lg-gin"><input class="en-in grow" id="mg-q" placeholder="사용처 · 그룹" value="${enEsc(MG.q)}"></div>
         </div>
+        <div class="lg-grp cat">
+          <span class="lg-glab">그룹</span>
+          <div class="lg-gin lg-catpick">
+            <input class="en-in grow" id="mg-gq" placeholder="그룹 전체 — 입력해서 찾기" autocomplete="off"
+                   value="${MG.group === 'all' ? '' : enEsc(mgEmoji(MG.group) + ' ' + MG.group)}">
+            <button class="lg-catx" id="mg-gx" aria-label="그룹 해제" ${MG.group === 'all' ? 'hidden' : ''}>×</button>
+            <div class="lg-catdrop" id="mg-gdrop" hidden>
+              <div class="lg-catopt" data-g="all"><span class="tx"><b>전체</b></span><span class="cnt">${MG.rows.length}</span></div>
+              ${gList.map(g => `<div class="lg-catopt" data-g="${enEsc(g)}">
+                <span class="em">${mgEmoji(g)}</span><span class="tx">${enEsc(g)}</span>
+                <span class="cnt">${groups[g]}</span></div>`).join('')}
+            </div>
+          </div>
+        </div>
         <div class="lg-grp">
           <span class="lg-glab">정렬</span>
           <div class="lg-gin">
@@ -6825,10 +6983,7 @@ async function renderMerchantPage(host) {
           <button class="lg-reset" id="mg-reload">다시 읽기</button>
         </div>
       </div>
-      <div class="mg-groups">
-        <button class="sdb-chip ${MG.group === 'all' ? 'on' : ''}" data-g="all"><span class="l">전체</span><span class="n">${MG.rows.length}</span></button>
-        ${gList.map(g => `<button class="sdb-chip ${MG.group === g ? 'on' : ''}" data-g="${enEsc(g)}"><span class="l">${enEsc(g)}</span><span class="n">${groups[g]}</span></button>`).join('')}
-      </div>
+
       <div class="lg-cols mg-cols">
         <span class="gp">그룹</span><span class="nm">사용처</span><span class="ct">주로 쓰는 분류</span>
         <span class="cn">건수</span><span class="sm">합계</span><span class="lt">최근</span>
@@ -6838,7 +6993,7 @@ async function renderMerchantPage(host) {
           const c = EN.catById[r.catId];
           return `<div class="mg-row" data-m="${enEsc(r.name)}">
             <span class="gp" data-me="group" title="더블클릭해서 그룹 변경">${r.group
-              ? `<i class="lg-mg">${enEsc(r.group)}</i>${r.mixedGroup ? '<b class="mix" title="기록마다 그룹이 다릅니다">•</b>' : ''}`
+              ? `<i class="lg-mg">${mgEmoji(r.group)} ${enEsc(r.group)}</i>${r.mixedGroup ? '<b class="mix" title="기록마다 그룹이 다릅니다">•</b>' : ''}`
               : '<i class="lg-mg none">없음</i>'}</span>
             <span class="nm" data-me="name" title="더블클릭해서 이름 변경">${enEsc(r.name)}</span>
             <span class="ct" data-me="cat" title="더블클릭해서 분류 일괄 변경">${c
@@ -6868,9 +7023,7 @@ async function renderMerchantPage(host) {
   });
   enQS('#mg-sort').addEventListener('change', (e) => { MG.sort = e.target.value; renderMerchantPage(host); });
   enQS('#mg-reload').addEventListener('click', () => { MG.rows = null; renderMerchantPage(host); });
-  host.querySelectorAll('[data-g]').forEach(b => b.addEventListener('click', () => {
-    MG.group = b.dataset.g; renderMerchantPage(host);
-  }));
+  mgGroupPicker(host);
   host.querySelectorAll('[data-me]').forEach(cell =>
     cell.addEventListener('dblclick', () => mgEdit(cell, host)));
 }
@@ -6977,6 +7130,29 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'n' || e.key === 'N' || e.key === 'ㅜ') { e.preventDefault(); open ? enClose() : enOpen(); }
   else if (e.key === 'l' || e.key === 'L' || e.key === 'ㅣ') { e.preventDefault(); if (open) enClose(); goTo('status', 'ledger'); }
 });
+
+/* 가계부를 고쳤으면 캐시된 원장도 같이 갱신한다 — 탭을 옮겼을 때 옛 숫자가 남지 않게 */
+let lgRefreshTimer = null;
+function lgTouched() {
+  clearTimeout(lgRefreshTimer);
+  lgRefreshTimer = setTimeout(async () => {
+    try {
+      const fresh = await fetchLedgerFromDB();
+      if (!fresh || !fresh.length || !state.data) return;
+      state.data.ledger = fresh;
+      state.data.ledgerSource = 'db';
+      const pv = buildPivotFromLedger(fresh);
+      if (pv) {
+        state.data.months = pv.months;
+        state.data.incomeTotal = pv.incomeTotal;
+        state.data.expenseTotal = pv.expenseTotal;
+        state.data.expenseCategories = pv.expenseCategories;
+        state.data.incomeCategories = pv.incomeCategories;
+        state.data.transferCategories = pv.transferCategories;
+      }
+    } catch (e) { /* 다음 새로고침에서 다시 맞춰진다 */ }
+  }, 900);
+}
 
 function renderAll() {
   renderBanner();
@@ -15018,12 +15194,46 @@ async function fetchCsvRows(gid) {
   return parsed.data.map(r => r.map(c => (c === null || c === undefined) ? '' : String(c).replace(/^\uFEFF/, '')));
 }
 
+/* 가계부 원장은 Supabase 가 유일한 원본이다.
+   전체 내역에서 고치거나 새로 넣은 것이 흐름·현황·목표까지 그대로 흘러가야 하므로,
+   시트의 가계부(D) 탭은 더 이상 읽지 않는다. (자산·목표·지수는 아직 시트) */
+async function fetchLedgerFromDB() {
+  const sb = await enClient();
+  const raw = [];
+  for (let from = 0; from < 60000; from += 1000) {
+    const { data, error } = await sb.from('v_transactions')
+      .select('date,kind,category,subcategory,amount,merchant_group,merchant,note,good_bad,company_paid,is_fixed')
+      .order('date', { ascending: true }).range(from, from + 999);
+    if (error) throw new Error('가계부를 불러오지 못했습니다: ' + error.message);
+    if (!data || !data.length) break;
+    raw.push(...data);
+    if (data.length < 1000) break;
+  }
+  /* 시트 파서가 내주던 모양 그대로 맞춘다 — 아래 집계 코드를 건드리지 않기 위해서 */
+  return raw.map(r => {
+    const d = String(r.date).split('-');
+    const amount = Number(r.amount) || 0;
+    return {
+      date: `${d[0]}. ${Number(d[1])}. ${Number(d[2])}`,
+      major: r.kind, minor: r.category, item: r.subcategory,
+      amount,
+      vendor: r.merchant || r.merchant_group || '',
+      memo: r.note || '',
+      fixed: !!r.is_fixed,
+      good: r.good_bad === 'Good',
+      regret: r.good_bad === 'Bad',
+      refund: r.company_paid ? amount : 0
+    };
+  }).filter(r => r.amount);
+}
+
 async function fetchAllTabsAndMerge() {
   /* 토스 탭 조회는 실패해도 대시보드 전체를 막지 않도록 병렬로 따로 돌린다. */
-  const [results, tossResult, factsResult] = await Promise.all([
+  const [results, tossResult, factsResult, dbLedger] = await Promise.all([
     Promise.allSettled(TAB_GIDS.map(fetchCsvRows)),
     fetchTossData().catch(() => null),
-    fetchStockFacts().catch(() => null)
+    fetchStockFacts().catch(() => null),
+    fetchLedgerFromDB().catch((e) => { console.error('ledger from DB failed', e); return null; })
   ]);
   const failures = results.filter(r => r.status === 'rejected');
   const rowSets = results.filter(r => r.status === 'fulfilled').map(r => r.value);
@@ -15031,7 +15241,8 @@ async function fetchAllTabsAndMerge() {
     throw new Error(failures[0] ? failures[0].reason.message : '탭을 하나도 불러오지 못했어요');
   }
 
-  let assetRows = [], ledger = [], investmentTags = [], goals = [], stockCategoryMap = {}, indexPrices = {};
+  let assetRows = [], ledger = dbLedger || [], investmentTags = [], goals = [], stockCategoryMap = {}, indexPrices = {};
+  const ledgerSource = dbLedger ? 'db' : 'sheet';
   for (const rows of rowSets) {
     try {
       const ip = parseIndexFromRows(rows);
@@ -15041,10 +15252,13 @@ async function fetchAllTabsAndMerge() {
       const ar = parseAssetsFromRows(rows);
       if (ar.length > assetRows.length) assetRows = ar;
     } catch (e) {}
-    try {
-      const lg = parseLedgerFromRows(rows);
-      if (lg.length > ledger.length) ledger = lg;
-    } catch (e) {}
+    if (!dbLedger) {
+      /* DB를 못 읽었을 때만 시트를 예비로 쓴다 */
+      try {
+        const lg = parseLedgerFromRows(rows);
+        if (lg.length > ledger.length) ledger = lg;
+      } catch (e) {}
+    }
     try {
       const tags = parseInvestmentTagsFromRows(rows);
       if (tags.length > investmentTags.length) investmentTags = tags;
@@ -15066,13 +15280,13 @@ async function fetchAllTabsAndMerge() {
     ? ` (${failures.length}개 탭 fetch 실패: ${failures.map(f => f.reason.message).join(', ')})`
     : ' (탭은 모두 불러왔지만 그 안에서 못 찾음)';
 
-  if (!pivot) throw new Error('가계부(D) 원장에서 카테고리 요약을 계산하지 못했습니다' + fetchFailNote);
+  if (!pivot) throw new Error('가계부 원장에서 카테고리 요약을 계산하지 못했습니다' + fetchFailNote);
   if (assetRows.length < 5) throw new Error('자산 현황표를 찾지 못했습니다' + fetchFailNote);
 
   const data = {
     months: pivot.months, incomeTotal: pivot.incomeTotal, expenseTotal: pivot.expenseTotal,
     expenseCategories: pivot.expenseCategories, incomeCategories: pivot.incomeCategories, transferCategories: pivot.transferCategories,
-    assetRows, ledger, investmentTags, goals, stockCategoryMap,
+    assetRows, ledger, ledgerSource, investmentTags, goals, stockCategoryMap,
     toss: tossResult,
     stockFacts: factsResult || {},
     indexPrices: Object.keys(indexPrices).length ? indexPrices : INDEX_SEED,
