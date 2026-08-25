@@ -668,6 +668,96 @@ body{
   .eng-arrow{padding-top:0;transform:rotate(90deg);}
 }
 
+
+/* ---------- 입력 탭 ---------- */
+.en-gate{max-width:360px;margin:60px auto;display:flex;flex-direction:column;gap:14px;}
+.en-gate h3{font-family:var(--serif);font-size:19px;margin:0;}
+.en-gate p{font-size:13px;color:var(--text-dim);margin:-6px 0 2px;line-height:1.6;}
+.en-in{
+  width:100%;height:44px;padding:0 12px;border:1px solid var(--border-strong);border-radius:8px;
+  background:var(--bg-2);color:var(--text);font-family:var(--sans);font-size:15px;
+}
+.en-in:focus{outline:none;border-color:var(--gold);}
+.en-lab{display:block;font-size:11.5px;color:var(--text-dim);margin:0 0 5px;letter-spacing:.02em;}
+.en-cta{
+  width:100%;height:50px;border:0;border-radius:9px;background:var(--gold);color:#1a1508;
+  font-family:var(--sans);font-weight:700;font-size:15px;cursor:pointer;
+}
+.en-cta:active{transform:scale(.99);}
+.en-cta:disabled{opacity:.45;cursor:default;}
+.en-err{font-size:12.5px;color:var(--red);min-height:17px;margin:0;}
+
+.en-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start;}
+@media(max-width:900px){.en-grid{grid-template-columns:1fr;}}
+
+.en-disp{background:var(--panel-2);border:1px solid var(--border-strong);border-radius:12px;padding:14px 16px 12px;}
+.en-disp-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+.en-date{
+  border:0;background:none;color:var(--text-dim);font-family:var(--mono);font-size:12.5px;padding:0;
+  color-scheme:dark;cursor:pointer;
+}
+.en-sign{
+  width:32px;height:28px;border:1px solid var(--border-strong);border-radius:7px;background:transparent;
+  color:var(--text-faint);font-family:var(--mono);font-size:15px;font-weight:600;cursor:pointer;line-height:1;
+}
+.en-sign[aria-pressed="true"]{background:var(--red);border-color:var(--red);color:#fff;}
+.en-amtrow{display:flex;align-items:baseline;gap:6px;}
+.en-amt{
+  flex:1;min-width:0;border:0;background:none;padding:0;color:var(--text);
+  font-family:var(--mono);font-size:34px;font-weight:600;text-align:right;letter-spacing:-.02em;
+  font-variant-numeric:tabular-nums;
+}
+.en-amt:focus{outline:none;}
+.en-amt::placeholder{color:var(--text-faint);opacity:.45;}
+.en-amt.neg{color:var(--red);}
+.en-won{font-family:var(--mono);font-size:17px;color:var(--text-faint);}
+
+.en-seg{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:var(--panel-2);
+  border:1px solid var(--border);border-radius:10px;padding:4px;margin:10px 0;}
+.en-seg button{height:36px;border:0;border-radius:7px;background:transparent;cursor:pointer;
+  font-family:var(--sans);font-size:13px;font-weight:500;color:var(--text-dim);}
+.en-seg button[aria-pressed="true"]{color:#fff;font-weight:700;}
+.en-seg button[data-k="지출"][aria-pressed="true"]{background:var(--red);}
+.en-seg button[data-k="수입"][aria-pressed="true"]{background:var(--green);}
+.en-seg button[data-k="이체"][aria-pressed="true"]{background:var(--net);}
+
+.en-chips{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;}
+.en-chip{
+  min-height:58px;border:1px solid var(--border);border-radius:10px;background:var(--panel-2);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  cursor:pointer;padding:5px 3px;font-family:var(--sans);
+}
+.en-chip:hover{border-color:var(--border-strong);}
+.en-chip .e{font-size:15px;line-height:1;}
+.en-chip .t{font-size:11px;color:var(--text-dim);text-align:center;line-height:1.25;word-break:keep-all;}
+.en-chip[aria-pressed="true"]{background:var(--gold);border-color:var(--gold);}
+.en-chip[aria-pressed="true"] .t{color:#1a1508;font-weight:700;}
+.en-more{max-height:0;overflow:hidden;transition:max-height .18s ease;}
+.en-more.open{max-height:900px;margin-top:5px;}
+
+.en-tgs{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin:10px 0 12px;}
+.en-tg{height:40px;border:1px solid var(--border-strong);border-radius:8px;background:var(--panel-2);
+  cursor:pointer;font-family:var(--sans);font-size:12px;color:var(--text-dim);}
+.en-tg[aria-pressed="true"]{background:var(--gold);border-color:var(--gold);color:#1a1508;font-weight:700;}
+.en-tg.g[aria-pressed="true"]{background:var(--green);border-color:var(--green);color:#fff;}
+.en-tg.b[aria-pressed="true"]{background:var(--red);border-color:var(--red);color:#fff;}
+
+.en-row{display:flex;align-items:center;gap:9px;background:var(--panel-2);border:1px solid var(--border);
+  border-radius:9px;padding:9px 11px;margin-bottom:5px;}
+.en-row .m{flex:1;min-width:0;}
+.en-row .l1{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.en-row .l2{font-family:var(--mono);font-size:10.5px;color:var(--text-faint);margin-top:2px;}
+.en-row .v{font-family:var(--mono);font-size:13px;font-weight:500;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.en-row .v.지출{color:var(--red);}.en-row .v.수입{color:var(--green);}.en-row .v.이체{color:var(--net);}
+.en-del{background:none;border:0;color:var(--text-faint);font-size:17px;cursor:pointer;padding:1px 3px;line-height:1;}
+.en-del:hover{color:var(--red);}
+.en-empty{font-size:12.5px;color:var(--text-faint);padding:12px 2px;}
+
+#en-toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,80px);background:var(--gold);
+  color:#1a1508;padding:11px 18px;border-radius:9px;font-size:13.5px;font-weight:700;opacity:0;
+  transition:.2s ease;pointer-events:none;z-index:99;}
+#en-toast.on{opacity:1;transform:translate(-50%,0);}
+
 /* ---------- nav ---------- */
 .navbar{
   display:flex;align-items:stretch;gap:22px;
@@ -3489,12 +3579,16 @@ function setSyncState(status) {
 /* 최상단 4탭 = 사용 빈도순 (매일 → 주/월 → 월 → 분기)
    각 탭의 하위는 SECTION_SUBS 에서 정의하고, 실제 렌더 함수로 매핑한다. */
 const NAV_ITEMS = [
+  { id: 'entry', label: '입력' },
   { id: 'flow', label: '흐름' },
   { id: 'assets', label: '자산' },
   { id: 'status', label: '현황' }
 ];
 
 const SECTION_SUBS = {
+  entry: [
+    ['new', '가계부']
+  ],
   flow: [
     ['today', '오늘'],
     ['now', '이번달'],
@@ -3514,7 +3608,7 @@ const SECTION_SUBS = {
   ]
 };
 
-const SECTION_STATE_KEY = { flow: 'flowSub', assets: 'assetSub', status: 'homeSub' };
+const SECTION_STATE_KEY = { entry: 'entrySub', flow: 'flowSub', assets: 'assetSub', status: 'homeSub' };
 
 function currentSub(section) {
   const subs = SECTION_SUBS[section] || [];
@@ -4869,6 +4963,8 @@ function renderPage() {
     else if (SUB === 'year') renderYearPage(body, data, d);
     else if (SUB === 'calendar') renderCalendarPage(body, data, d);
     else renderTodayPage(body, data, d);
+  } else if (section === 'entry') {
+    renderEntryPage(body);
   } else if (section === 'assets') {
     if (SUB === 'overview') renderAssetsPage(body, data, d);
     else if (SUB === 'investment') renderInvestmentPage(body, data, d);
@@ -4879,6 +4975,281 @@ function renderPage() {
     else if (SUB === 'flowmap') renderFlowMapPage(body, data, d);
     else renderStructurePage(body, data, d);
   }
+}
+
+
+/* ================= 입력 탭 : Supabase 가계부 기록 ================= */
+const SB_URL  = 'https://rjxmrpifrhybucexuvli.supabase.co';
+const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqeG1ycGlmcmh5YnVjZXh1dmxpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU1NjU1OTAsImV4cCI6MjEwMTE0MTU5MH0.xSzE02pjZYqbx9nPLb8RVsQF9w7hJHEx2cO0JDOLLSU';
+
+const EN = { sb: null, cats: [], freq: {}, kind: '지출', catId: null, neg: false };
+
+async function enClient() {
+  if (EN.sb) return EN.sb;
+  const mod = await import('https://esm.sh/@supabase/supabase-js@2');
+  EN.sb = mod.createClient(SB_URL, SB_ANON);
+  return EN.sb;
+}
+const enQS = (sel) => document.querySelector(sel);
+const enComma = (n) => Number(n).toLocaleString('ko-KR');
+function enToday() {
+  const d = new Date();
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  return d.toISOString().slice(0, 10);
+}
+function enToast(msg) {
+  let t = document.getElementById('en-toast');
+  if (!t) { t = document.createElement('div'); t.id = 'en-toast'; t.setAttribute('role', 'status'); document.body.appendChild(t); }
+  t.textContent = msg;
+  t.classList.add('on');
+  setTimeout(() => t.classList.remove('on'), 1700);
+}
+
+async function renderEntryPage(body) {
+  body.innerHTML = '<div class="panel"><div class="en-empty">연결하는 중…</div></div>';
+  const sb = await enClient();
+  const { data } = await sb.auth.getSession();
+  if (!data.session) { enRenderGate(body); return; }
+  await enRenderForm(body);
+}
+
+function enRenderGate(body) {
+  body.innerHTML = `
+    <div class="panel">
+      <div class="en-gate">
+        <h3>로그인</h3>
+        <p>가계부에 기록하려면 로그인하세요. 조회는 로그인 없이도 됩니다.</p>
+        <div>
+          <label class="en-lab" for="en-em">이메일</label>
+          <input class="en-in" id="en-em" type="email" autocomplete="username" inputmode="email">
+        </div>
+        <div>
+          <label class="en-lab" for="en-pw">비밀번호</label>
+          <input class="en-in" id="en-pw" type="password" autocomplete="current-password">
+        </div>
+        <p class="en-err" id="en-lerr"></p>
+        <button class="en-cta" id="en-login">로그인</button>
+      </div>
+    </div>`;
+  const go = async () => {
+    const email = enQS('#en-em').value.trim(), password = enQS('#en-pw').value;
+    if (!email || !password) { enQS('#en-lerr').textContent = '이메일과 비밀번호를 모두 입력하세요.'; return; }
+    enQS('#en-login').disabled = true; enQS('#en-lerr').textContent = '';
+    const { error } = await (await enClient()).auth.signInWithPassword({ email, password });
+    enQS('#en-login').disabled = false;
+    if (error) { enQS('#en-lerr').textContent = '로그인하지 못했습니다. 이메일과 비밀번호를 확인하세요.'; return; }
+    renderEntryPage(document.getElementById('page-content'));
+  };
+  enQS('#en-login').addEventListener('click', go);
+  enQS('#en-pw').addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
+}
+
+async function enRenderForm(body) {
+  const sb = await enClient();
+  const since = new Date(Date.now() - 90 * 864e5).toISOString().slice(0, 10);
+  const [catRes, freqRes, merchRes] = await Promise.all([
+    sb.from('categories').select('id,kind,category,subcategory,emoji_category,sort_order')
+      .neq('kind', '자산').eq('is_active', true).order('sort_order'),
+    sb.from('transactions').select('category_id').gte('date', since).limit(2000),
+    sb.from('transactions').select('merchant').not('merchant', 'is', null)
+      .order('date', { ascending: false }).limit(1200)
+  ]);
+  EN.cats = catRes.data || [];
+  EN.freq = {};
+  (freqRes.data || []).forEach(r => { EN.freq[r.category_id] = (EN.freq[r.category_id] || 0) + 1; });
+  const merchants = [...new Set((merchRes.data || []).map(r => r.merchant).filter(Boolean))].slice(0, 400);
+
+  body.innerHTML = `
+    <div class="en-grid">
+      <div class="panel">
+        <div class="panel-title"><span><span class="eyebrow">NEW ENTRY</span>새 기록</span>
+          <button class="btn small" id="en-out">로그아웃</button></div>
+
+        <div class="en-disp">
+          <div class="en-disp-top">
+            <input class="en-date" id="en-date" type="date" value="${enToday()}">
+            <button class="en-sign" id="en-sign" aria-pressed="false" title="음수로 기록">−</button>
+          </div>
+          <div class="en-amtrow">
+            <input class="en-amt" id="en-amt" inputmode="numeric" placeholder="0" autocomplete="off">
+            <span class="en-won">원</span>
+          </div>
+        </div>
+
+        <div class="en-seg" role="group" aria-label="거래 종류">
+          <button data-k="지출" aria-pressed="true">지출</button>
+          <button data-k="수입" aria-pressed="false">수입</button>
+          <button data-k="이체" aria-pressed="false">이체</button>
+        </div>
+
+        <div style="display:flex;align-items:baseline;justify-content:space-between;margin:0 2px 7px;">
+          <span class="en-lab" style="margin:0;" id="en-catlab">분류</span>
+          <button class="btn small" id="en-more">전체 보기</button>
+        </div>
+        <div class="en-chips" id="en-top"></div>
+        <div class="en-more" id="en-morebox"><div class="en-chips" id="en-all"></div></div>
+
+        <div style="margin-top:12px;">
+          <label class="en-lab" for="en-merch">사용처</label>
+          <input class="en-in" id="en-merch" list="en-mlist" autocomplete="off" placeholder="예: 매머드커피">
+          <datalist id="en-mlist">${merchants.map(m => `<option value="${String(m).replace(/"/g, '&quot;')}">`).join('')}</datalist>
+        </div>
+        <div style="margin-top:9px;">
+          <label class="en-lab" for="en-note">메모 <span style="color:var(--text-faint);">— 선택</span></label>
+          <input class="en-in" id="en-note" autocomplete="off">
+        </div>
+
+        <div class="en-tgs">
+          <button class="en-tg" id="en-co" aria-pressed="false">🏢 회사비</button>
+          <button class="en-tg" id="en-fx" aria-pressed="false">📌 고정비</button>
+          <button class="en-tg g" id="en-good" aria-pressed="false">Good</button>
+          <button class="en-tg b" id="en-bad" aria-pressed="false">Bad</button>
+        </div>
+
+        <p class="en-err" id="en-serr"></p>
+        <button class="en-cta" id="en-save">기록하기</button>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title"><span><span class="eyebrow">RECENT</span>최근 기록</span></div>
+        <div id="en-recent"><div class="en-empty">불러오는 중…</div></div>
+      </div>
+    </div>`;
+
+  enQS('#en-out').addEventListener('click', async () => {
+    await (await enClient()).auth.signOut();
+    renderEntryPage(document.getElementById('page-content'));
+  });
+
+  document.querySelectorAll('.en-seg button').forEach(b => {
+    b.addEventListener('click', () => {
+      EN.kind = b.dataset.k; EN.catId = null;
+      document.querySelectorAll('.en-seg button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+      enQS('#en-morebox').classList.remove('open');
+      enQS('#en-more').textContent = '전체 보기';
+      enRenderChips();
+    });
+  });
+  enQS('#en-more').addEventListener('click', () => {
+    const open = enQS('#en-morebox').classList.toggle('open');
+    enQS('#en-more').textContent = open ? '접기' : '전체 보기';
+  });
+
+  const amt = enQS('#en-amt');
+  amt.addEventListener('input', () => {
+    const raw = amt.value.replace(/[^\d]/g, '');
+    amt.value = raw ? enComma(raw) : '';
+  });
+  enQS('#en-sign').addEventListener('click', () => {
+    EN.neg = !EN.neg;
+    enQS('#en-sign').setAttribute('aria-pressed', String(EN.neg));
+    amt.classList.toggle('neg', EN.neg);
+  });
+
+  ['#en-co', '#en-fx'].forEach(sel => enQS(sel).addEventListener('click', () => {
+    const el = enQS(sel);
+    el.setAttribute('aria-pressed', el.getAttribute('aria-pressed') === 'true' ? 'false' : 'true');
+  }));
+  const pair = (a, b) => enQS(a).addEventListener('click', () => {
+    const on = enQS(a).getAttribute('aria-pressed') === 'true';
+    enQS(a).setAttribute('aria-pressed', String(!on));
+    enQS(b).setAttribute('aria-pressed', 'false');
+  });
+  pair('#en-good', '#en-bad'); pair('#en-bad', '#en-good');
+
+  enQS('#en-save').addEventListener('click', enSave);
+  enRenderChips();
+  enLoadRecent();
+}
+
+function enChipHTML(c) {
+  return `<button class="en-chip" data-id="${c.id}" aria-pressed="${EN.catId === c.id}">
+    <span class="e" aria-hidden="true">${c.emoji_category || ''}</span>
+    <span class="t">${c.subcategory}</span></button>`;
+}
+function enRenderChips() {
+  const list = EN.cats.filter(c => c.kind === EN.kind);
+  const top = [...list].sort((a, b) => (EN.freq[b.id] || 0) - (EN.freq[a.id] || 0)).slice(0, 8);
+  const ids = new Set(top.map(c => c.id));
+  enQS('#en-catlab').textContent = EN.kind === '이체' ? '보낼 곳' : '분류';
+  enQS('#en-top').innerHTML = top.map(enChipHTML).join('');
+  enQS('#en-all').innerHTML = list.filter(c => !ids.has(c.id)).map(enChipHTML).join('');
+  document.querySelectorAll('.en-chip').forEach(el => {
+    el.addEventListener('click', () => {
+      EN.catId = Number(el.dataset.id);
+      document.querySelectorAll('.en-chip').forEach(x =>
+        x.setAttribute('aria-pressed', String(Number(x.dataset.id) === EN.catId)));
+      enQS('#en-serr').textContent = '';
+      enQS('#en-merch').focus();
+    });
+  });
+}
+
+async function enSave() {
+  const amt = enQS('#en-amt');
+  const n = Number(amt.value.replace(/[^\d]/g, ''));
+  if (!n) { enQS('#en-serr').textContent = '금액을 입력하세요.'; amt.focus(); return; }
+  if (!EN.catId) { enQS('#en-serr').textContent = '분류를 선택하세요.'; return; }
+  enQS('#en-serr').textContent = '';
+  enQS('#en-save').disabled = true;
+
+  const raw = enQS('#en-merch').value.trim();
+  let group = null, merchant = raw || null;
+  if (raw.includes('›')) {
+    const p = raw.split('›');
+    group = p[0].trim() || null;
+    merchant = p.slice(1).join('›').trim() || null;
+  }
+  const gb = enQS('#en-good').getAttribute('aria-pressed') === 'true' ? 'Good'
+           : enQS('#en-bad').getAttribute('aria-pressed') === 'true' ? 'Bad' : null;
+
+  const { error } = await (await enClient()).from('transactions').insert({
+    date: enQS('#en-date').value,
+    category_id: EN.catId,
+    amount: EN.neg ? -n : n,
+    merchant_group: group,
+    merchant: merchant,
+    note: enQS('#en-note').value.trim() || null,
+    good_bad: gb,
+    company_paid: enQS('#en-co').getAttribute('aria-pressed') === 'true',
+    is_fixed: enQS('#en-fx').getAttribute('aria-pressed') === 'true'
+  });
+  enQS('#en-save').disabled = false;
+  if (error) { enQS('#en-serr').textContent = '저장하지 못했습니다. 다시 시도하세요.'; return; }
+
+  enToast(enComma(n) + '원 기록했습니다');
+  amt.value = ''; enQS('#en-merch').value = ''; enQS('#en-note').value = '';
+  EN.neg = false;
+  enQS('#en-sign').setAttribute('aria-pressed', 'false');
+  amt.classList.remove('neg');
+  ['#en-co', '#en-fx', '#en-good', '#en-bad'].forEach(s => enQS(s).setAttribute('aria-pressed', 'false'));
+  amt.focus();
+  enLoadRecent();
+}
+
+async function enLoadRecent() {
+  const { data } = await (await enClient()).from('v_transactions')
+    .select('id,date,kind,category,subcategory,emoji_category,amount,merchant,company_paid,is_fixed')
+    .order('created_at', { ascending: false }).limit(12);
+  const box = enQS('#en-recent');
+  if (!box) return;
+  if (!data || !data.length) { box.innerHTML = '<div class="en-empty">아직 기록이 없습니다.</div>'; return; }
+  box.innerHTML = data.map(r => `
+    <div class="en-row">
+      <span aria-hidden="true">${r.emoji_category || ''}</span>
+      <div class="m">
+        <div class="l1">${r.merchant || r.subcategory}${r.company_paid ? ' 🏢' : ''}${r.is_fixed ? ' 📌' : ''}</div>
+        <div class="l2">${String(r.date).slice(5)} · ${r.category} › ${r.subcategory}</div>
+      </div>
+      <span class="v ${r.kind}">${Number(r.amount) < 0 ? '−' : ''}${enComma(Math.abs(r.amount))}</span>
+      <button class="en-del" data-id="${r.id}" aria-label="삭제">×</button>
+    </div>`).join('');
+  box.querySelectorAll('.en-del').forEach(b => b.addEventListener('click', async () => {
+    if (!confirm('이 기록을 삭제할까요?')) return;
+    await (await enClient()).from('transactions').delete().eq('id', Number(b.dataset.id));
+    enToast('삭제했습니다');
+    enLoadRecent();
+  }));
 }
 
 function renderAll() {
