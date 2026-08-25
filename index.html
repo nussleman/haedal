@@ -2437,31 +2437,37 @@ body{font-variant-numeric:tabular-nums;}
 }
 
 /* ---------- 자산>투자>종목: 통합 표 ---------- */
-.bk-head{display:flex;align-items:center;gap:10px;}
+.bk-stick{position:sticky;top:var(--hdr-h,0px);z-index:30;background:var(--panel);
+  margin:-2px -2px 0;padding:2px 2px 0;}
+.bk-top{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:12px;}
+.bk-top h2{font-family:var(--serif);font-size:16px;font-weight:700;color:var(--text);margin:0;}
+.bk-spacer{flex:1;}
+.bk-sum{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--text-faint);}
+.bk-sum b{font-family:var(--mono);font-size:14px;font-weight:600;color:var(--text);}
+.bk-sum em{font-family:var(--mono);font-size:12px;font-style:normal;}
+.bk-sum em.up{color:#7fc0a0;} .bk-sum em.down{color:#e39189;}
 .bk-fresh{font-family:var(--mono);font-size:10.5px;color:#7fc0a0;}
 .bk-fresh.stale{color:var(--red);}
-.bk-strip{display:flex;flex-wrap:wrap;gap:6px 26px;margin:2px 0 12px;padding:10px 13px;
-  background:var(--panel-2);border:1px solid var(--border);border-radius:9px;}
-.bk-strip .k{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;color:var(--text-faint);
-  display:block;margin-bottom:3px;}
-.bk-strip .v{font-family:var(--mono);font-size:14px;font-weight:600;color:var(--text);}
-.bk-strip .v.up{color:#7fc0a0;} .bk-strip .v.down{color:#e39189;}
-.bk-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:2px;}
+.bk-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:0;}
 .bk-bar .sdb-strip{margin-bottom:0;}
 .bk-q{height:28px;font-size:12px;width:190px;margin-left:auto;}
 .bk-cols [data-s]{cursor:pointer;user-select:none;display:flex;align-items:center;gap:4px;}
 .bk-cols .ar{color:var(--gold-soft);font-size:8px;line-height:1;}
 .bk-cols [data-s]:hover{color:var(--text);}
-.bk-cols .va,.bk-cols .we,.bk-cols .pl,.bk-cols .sc{justify-content:flex-end;}
-.bk-cols .nm,.bk-row .nm{flex:1 1 auto;min-width:0;}
-.bk-cols .st,.bk-row .st{flex:0 0 60px;}
-.bk-cols .va,.bk-row .va{flex:0 0 96px;text-align:right;}
-.bk-cols .we,.bk-row .we{flex:0 0 70px;text-align:right;}
-.bk-cols .pl,.bk-row .pl{flex:0 0 62px;text-align:right;}
-.bk-cols .gd,.bk-row .gd{flex:0 0 122px;}
-.bk-cols .sc,.bk-row .sc{flex:0 0 56px;text-align:right;}
-.bk-cols .vd,.bk-row .vd{flex:0 0 80px;}
-.bk-cols .ck,.bk-row .ck{flex:0 0 62px;text-align:right;}
+.bk-cols{margin-top:12px;}
+.bk-cols .va,.bk-cols .we,.bk-cols .gn,.bk-cols .pl,.bk-cols .rz,.bk-cols .sc{justify-content:flex-end;}
+.bk-cols .nm,.bk-row .nm{flex:1 1 130px;min-width:0;}
+.bk-cols .th,.bk-row .th{flex:0 0 128px;min-width:0;}
+.bk-cols .st,.bk-row .st{flex:0 0 54px;}
+.bk-cols .va,.bk-row .va{flex:0 0 92px;text-align:right;}
+.bk-cols .we,.bk-row .we{flex:0 0 62px;text-align:right;}
+.bk-cols .gn,.bk-row .gn{flex:0 0 88px;text-align:right;}
+.bk-cols .pl,.bk-row .pl{flex:0 0 58px;text-align:right;}
+.bk-cols .rz,.bk-row .rz{flex:0 0 84px;text-align:right;}
+.bk-cols .gd,.bk-row .gd{flex:0 0 116px;}
+.bk-cols .sc,.bk-row .sc{flex:0 0 52px;text-align:right;}
+.bk-cols .vd,.bk-row .vd{flex:0 0 78px;}
+.bk-cols .ck,.bk-row .ck{flex:0 0 58px;text-align:right;}
 .bk-row{display:flex;align-items:center;gap:9px;height:38px;padding:0 12px;
   border-bottom:1px solid var(--border);cursor:default;user-select:none;}
 .bk-card .bk-row:last-child{border-bottom:0;}
@@ -2470,8 +2476,24 @@ body{font-variant-numeric:tabular-nums;}
 .bk-row .nm{font-size:12.5px;color:var(--text);display:flex;align-items:baseline;gap:6px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .bk-row .nm i{font-family:var(--mono);font-size:10px;color:var(--text-faint);font-style:normal;}
-.bk-row .va,.bk-row .we,.bk-row .pl,.bk-row .sc,.bk-row .ck{font-family:var(--mono);font-size:11.5px;
-  color:var(--text-dim);font-variant-numeric:tabular-nums;}
+.bk-row .va,.bk-row .we,.bk-row .gn,.bk-row .pl,.bk-row .rz,.bk-row .sc,.bk-row .ck{
+  font-family:var(--mono);font-size:11.5px;color:var(--text-dim);font-variant-numeric:tabular-nums;}
+.bk-row .gn.up,.bk-row .rz.up{color:#7fc0a0;}
+.bk-row .gn.down,.bk-row .rz.down{color:#e39189;}
+.bk-row .th{display:flex;align-items:center;gap:3px;overflow:hidden;cursor:pointer;position:relative;
+  border-radius:5px;}
+.bk-row .th:hover{box-shadow:inset 0 0 0 1px var(--border-strong);}
+.bk-tag{font-family:var(--mono);font-size:9px;font-style:normal;white-space:nowrap;
+  background:rgba(255,255,255,.06);color:var(--text-dim);border-radius:4px;padding:2px 5px;}
+.bk-tag.none{opacity:.4;}
+.bk-thmenu{left:0;right:auto;top:calc(100% + 2px);min-width:180px;max-height:300px;}
+.bk-thnew{padding:4px 4px 6px;}
+.bk-thnew input{width:100%;background:var(--panel-2);}
+.bk-thmenu .lg-catopt.on{color:var(--gold-soft);}
+.bk-thmenu .ck{margin-left:auto;color:var(--gold-soft);font-size:10px;}
+.bk-thsave{padding:6px 4px 2px;border-top:1px solid var(--border);margin-top:4px;}
+.bk-thsave button{width:100%;background:var(--gold);border:0;border-radius:6px;color:#1a1508;
+  font-weight:700;font-size:11.5px;padding:6px 0;cursor:pointer;}
 .bk-row .sc em{font-style:normal;color:var(--text-faint);font-size:9.5px;}
 .bk-row .ck{color:var(--text-faint);}
 .bk-row .pl.up{color:#7fc0a0;} .bk-row .pl.down{color:#e39189;}
@@ -2500,8 +2522,12 @@ body{font-variant-numeric:tabular-nums;}
 .bk-detail{border-bottom:1px solid var(--border);background:var(--bg-2);padding:4px 18px 18px;
   box-shadow:inset 2px 0 0 var(--gold-soft);}
 .bk-detail .sdc-head{padding-top:14px;}
+@media(max-width:1240px){
+  .bk-cols .gn,.bk-row .gn,.bk-cols .ck,.bk-row .ck{display:none;}
+}
 @media(max-width:1000px){
-  .bk-cols .va,.bk-row .va,.bk-cols .ck,.bk-row .ck,.bk-cols .sc,.bk-row .sc{display:none;}
+  .bk-cols .va,.bk-row .va,.bk-cols .sc,.bk-row .sc,.bk-cols .th,.bk-row .th,
+  .bk-cols .rz,.bk-row .rz{display:none;}
   .bk-cols .gd,.bk-row .gd{flex:0 0 84px;}
   .bk-row .gd em{display:none;}
   .bk-q{margin-left:0;width:100%;}
@@ -14363,12 +14389,23 @@ function sdxBind(host) {
    보유 현황(토스)과 판정(스터디 카드)을 한 표에 붙인다.
    한 줄에 다 못 넣는 것은 그 종목을 더블클릭했을 때 아래로 펼쳐진다. */
 
-const BK = { q: '', filter: 'all', sort: 'value', dir: 'desc', open: null };
-const BK_SORTDIR = { name: 'asc', state: 'asc', value: 'desc', weight: 'desc', pl: 'desc', grade: 'desc', score: 'desc', verdict: 'asc', check: 'asc' };
+const BK = { q: '', filter: 'all', sort: 'value', dir: 'desc', open: null, realized: {} };
+const BK_SORTDIR = {
+  name: 'asc', theme: 'asc', state: 'asc', value: 'desc', weight: 'desc',
+  gain: 'desc', pl: 'desc', realized: 'desc', grade: 'desc', score: 'desc', verdict: 'asc', check: 'asc'
+};
 
 function bkRows(data) {
   const hold = ((data.toss && data.toss.holdings) || []);
   const total = hold.reduce((a, h) => a + h.value, 0) || 1;
+  /* 실현수익은 가계부의 '투자 수익'(판매수익·배당·이자)을 종목별로 모은 값 */
+  BK.realized = {};
+  (data.ledger || []).filter(r => r.minor === '투자 수익').forEach(r => {
+    let nm = r.vendor || '';
+    if (nm.includes('›')) nm = nm.split('›').pop().trim();
+    if (!nm) return;
+    BK.realized[nm] = (BK.realized[nm] || 0) + r.amount;
+  });
   const facts = data.stockFacts || {};
   const seen = {};
   const out = [];
@@ -14387,7 +14424,29 @@ function bkRows(data) {
     seen[nm] = 1;
     out.push(bkMake(nm, '', null, null, data));
   });
+  /* 이미 판 종목도 실현수익이 남아 있으면 표에 남긴다 — 기록이 사라지지 않게 */
+  Object.keys(BK.realized).forEach(nm => {
+    if (seen[nm] || nm === '예탁금' || nm === '기타') return;
+    seen[nm] = 1;
+    out.push(bkMake(nm, '', null, null, data));
+  });
   return out;
+}
+
+/* 테마는 스터디 카드에 저장한 값이 우선, 없으면 시트의 주식_카테고리를 쓴다 */
+function bkThemes(name, card, data) {
+  const own = card && Array.isArray(card.themes) ? card.themes : [];
+  if (own.length) return own;
+  return String((data.stockCategoryMap || {})[name] || '')
+    .split(',').map(x => x.replace(/^[^\p{L}\p{N}]+/u, '').trim()).filter(Boolean);
+}
+function bkAllThemes(data) {
+  const set = {};
+  SDX.rows.forEach(r => (Array.isArray(r.themes) ? r.themes : []).forEach(t => { set[t] = 1; }));
+  Object.values(data.stockCategoryMap || {}).forEach(v =>
+    String(v).split(',').map(x => x.replace(/^[^\p{L}\p{N}]+/u, '').trim()).filter(Boolean)
+      .forEach(t => { set[t] = 1; }));
+  return Object.keys(set).sort((a, b) => a.localeCompare(b, 'ko'));
 }
 
 function bkMake(name, symbol, h, weight, data) {
@@ -14411,7 +14470,8 @@ function bkMake(name, symbol, h, weight, data) {
     type: (card && card.type) || (fact && fact.type) || null,
     verdict: card && card.verdict || null,
     check: card && card.check_date || null,
-    themes: String((data.stockCategoryMap || {})[name] || '').split(',').map(x => x.trim()).filter(Boolean)
+    themes: bkThemes(name, card, data),
+    realized: BK.realized[name] != null ? BK.realized[name] : null
   };
 }
 
@@ -14463,6 +14523,9 @@ function renderBookPage(hostId, data, d) {
     state: (a, b) => (b.held ? 1 : 0) - (a.held ? 1 : 0) || num(b.value) - num(a.value),
     value: (a, b) => num(b.value) - num(a.value),
     weight: (a, b) => num(b.weight) - num(a.weight),
+    theme: (a, b) => (a.themes[0] || 'ㅎㅎㅎ').localeCompare(b.themes[0] || 'ㅎㅎㅎ', 'ko') || a.name.localeCompare(b.name, 'ko'),
+    gain: (a, b) => num(b.pl) - num(a.pl),
+    realized: (a, b) => num(b.realized) - num(a.realized),
     pl: (a, b) => num(b.plRate) - num(a.plRate),
     grade: (a, b) => (gradeRank[b.grade] ?? -1) - (gradeRank[a.grade] ?? -1) || num(b.value) - num(a.value),
     score: (a, b) => (b.answered ? b.score : -1) - (a.answered ? a.score : -1),
@@ -14478,35 +14541,39 @@ function renderBookPage(hostId, data, d) {
     ['todo', '미검토 보유', cnt.todo], ['act', '조치 필요', cnt.act], ['over', '상한 초과', cnt.over]];
 
   host.innerHTML = `
-    <div class="panel-title">
-      <div>종목</div>
-      <div class="bk-head">
-        ${s ? `<span class="bk-fresh ${fresh.stale ? 'stale' : ''}">${s.asOf} · ${fresh.text}${fresh.stale ? ' ⚠️' : ''}</span>` : ''}
+    <div class="bk-stick">
+      <div class="bk-top">
+        <h2>종목</h2>
+        ${s ? `<span class="bk-sum">
+          <b>${formatCompactWon(s.total)}원</b>
+          <em class="${s.pl >= 0 ? 'up' : 'down'}">${s.pl >= 0 ? '+' : '−'}${formatCompactWon(Math.abs(s.pl))}원${s.plRate != null ? ` (${s.plRate >= 0 ? '+' : '−'}${Math.abs(s.plRate).toFixed(1)}%)` : ''}</em>
+          <span>예수금 ${formatCompactWon(s.cash)}원</span>
+          <span>보유 ${cnt.held}개</span>
+        </span>` : ''}
+        <span class="bk-spacer"></span>
+        ${s ? `<span class="bk-fresh ${fresh.stale ? 'stale' : ''}" title="${s.asOf} 수집 · 15분마다 자동 갱신">${s.asOf.slice(11)} · ${fresh.text}${fresh.stale ? ' ⚠️' : ''}</span>` : ''}
         <span class="sd-saved" id="sd-saved">${enEsc(SDX.saved)}</span>
-        <button class="sd-ghost" id="bk-new">+ 종목 추가</button>
+        <button class="sd-ghost" id="bk-new">+ 종목</button>
       </div>
-    </div>
-    ${s ? `<div class="bk-strip">
-      <div><span class="k">계좌 총액</span><span class="v">${formatCompactWon(s.total)}원</span></div>
-      <div><span class="k">평가손익</span><span class="v ${s.pl >= 0 ? 'up' : 'down'}">${s.pl >= 0 ? '+' : '−'}${formatCompactWon(Math.abs(s.pl))}원${s.plRate != null ? ` (${s.plRate >= 0 ? '+' : '−'}${Math.abs(s.plRate).toFixed(2)}%)` : ''}</span></div>
-      <div><span class="k">예수금</span><span class="v">${formatCompactWon(s.cash)}원</span></div>
-      <div><span class="k">보유 종목</span><span class="v">${cnt.held}개</span></div>
-    </div>` : ''}
-    <div class="bk-bar">
-      <div class="sdb-strip">${chips.map(([k, l, n]) =>
-        `<button class="sdb-chip ${BK.filter === k ? 'on' : ''}" data-fil="${k}"><span class="l">${l}</span><span class="n">${n}</span></button>`).join('')}</div>
-      <input class="en-in bk-q" id="bk-q" placeholder="종목 · 티커 · 테마" value="${enEsc(BK.q)}">
-    </div>
+      <div class="bk-bar">
+        <div class="sdb-strip">${chips.map(([k, l, n]) =>
+          `<button class="sdb-chip ${BK.filter === k ? 'on' : ''}" data-fil="${k}"><span class="l">${l}</span><span class="n">${n}</span></button>`).join('')}</div>
+        <input class="en-in bk-q" id="bk-q" placeholder="종목 · 티커 · 테마" value="${enEsc(BK.q)}">
+      </div>
     <div class="lg-cols bk-cols" id="bk-cols">
       <span class="nm" data-s="name">종목${arrow('name')}</span>
+      <span class="th" data-s="theme">테마${arrow('theme')}</span>
       <span class="st" data-s="state">상태${arrow('state')}</span>
       <span class="va" data-s="value">평가액${arrow('value')}</span>
       <span class="we" data-s="weight">비중${arrow('weight')}</span>
-      <span class="pl" data-s="pl">손익${arrow('pl')}</span>
+      <span class="gn" data-s="gain">평가손익${arrow('gain')}</span>
+      <span class="pl" data-s="pl">수익률${arrow('pl')}</span>
+      <span class="rz" data-s="realized">실현수익${arrow('realized')}</span>
       <span class="gd" data-s="grade">등급${arrow('grade')}</span>
       <span class="sc" data-s="score">점수${arrow('score')}</span>
       <span class="vd" data-s="verdict">결론${arrow('verdict')}</span>
       <span class="ck" data-s="check">확인일${arrow('check')}</span>
+    </div>
     </div>
     <div class="lg-card bk-card">${rows.length ? rows.map(r => bkRowHTML(r)).join('')
       : '<div class="empty-state">조건에 맞는 종목이 없습니다.</div>'}</div>
@@ -14551,6 +14618,10 @@ function renderBookPage(hostId, data, d) {
     e.stopPropagation();
     bkVerdictMenu(cell, hostId, data, d);
   }));
+  host.querySelectorAll('.bk-th').forEach(cell => cell.addEventListener('click', (e) => {
+    e.stopPropagation();
+    bkThemeMenu(cell, hostId, data, d);
+  }));
   if (BK.open) bkBindDetail(host, hostId, data, d);
 }
 
@@ -14560,11 +14631,18 @@ function bkRowHTML(r) {
   const open = BK.open === r.name;
   return `<div class="bk-row ${open ? 'open' : ''}" data-nm="${enEsc(r.name)}">
       <span class="nm">${enEsc(r.name)}${r.symbol ? `<i>${enEsc(r.symbol)}</i>` : ''}</span>
+      <span class="th bk-th" title="클릭해서 테마 변경">${r.themes.length
+        ? r.themes.map(t => `<i class="bk-tag">${enEsc(t)}</i>`).join('')
+        : '<i class="bk-tag none">테마 없음</i>'}</span>
       <span class="st"><i class="bk-hold ${r.held ? 'y' : 'n'}">${r.held ? '보유' : '미보유'}</i></span>
       <span class="va">${r.value != null ? enComma(Math.round(r.value)) : '—'}</span>
       <span class="we">${r.weight != null ? r.weight.toFixed(2) + '%' : '—'}${r.over != null && r.over > 0 ? `<b class="over" title="상한 대비 +${r.over.toFixed(1)}%p">!</b>` : ''}</span>
+      <span class="gn ${r.pl == null ? '' : r.pl >= 0 ? 'up' : 'down'}">${r.pl == null ? '—'
+        : `${r.pl >= 0 ? '+' : '−'}${enComma(Math.abs(Math.round(r.pl)))}`}</span>
       <span class="pl ${r.plRate == null ? '' : r.plRate >= 0 ? 'up' : 'down'}">${r.plRate == null ? '—'
         : `${r.plRate >= 0 ? '+' : '−'}${Math.abs(r.plRate).toFixed(1)}%`}</span>
+      <span class="rz ${r.realized == null ? '' : r.realized >= 0 ? 'up' : 'down'}">${r.realized == null ? '—'
+        : `${r.realized >= 0 ? '+' : '−'}${enComma(Math.abs(Math.round(r.realized)))}`}</span>
       <span class="gd"><i class="bk-gd ${st.k}">${st.label}</i>${r.capText ? `<em>${r.capText}</em>` : ''}</span>
       <span class="sc">${r.answered ? `${r.score}<em>/14</em>` : '—'}</span>
       <span class="vd bk-vd" title="클릭해서 결론 변경">${vd ? `<i class="bk-vdi v-${r.verdict}">${vd}</i>` : '<i class="bk-vdi none">—</i>'}</span>
@@ -14586,6 +14664,49 @@ function bkBindDetail(host, hostId, data, d) {
     b.addEventListener('click', () => setTimeout(repaint, 220)));
   detail.querySelectorAll('[data-del]').forEach(b =>
     b.addEventListener('click', () => { BK.open = null; setTimeout(repaint, 220); }));
+}
+
+/* 테마 편집 — 여러 개 붙일 수 있고, 없는 이름은 그 자리에서 만든다.
+   시트의 주식_카테고리는 읽기만 하고, 여기서 고친 값은 스터디 카드에 남는다. */
+function bkThemeMenu(cell, hostId, data, d) {
+  const name = cell.closest('.bk-row').dataset.nm;
+  const card = sdxRow(name);
+  const cur = bkThemes(name, card, data).slice();
+  document.querySelectorAll('.bk-vmenu,.bk-thmenu').forEach(m => m.remove());
+  const menu = document.createElement('div');
+  menu.className = 'lg-catdrop bk-thmenu';
+  const paint = () => {
+    menu.innerHTML = `<div class="bk-thnew"><input class="lg-ed" placeholder="새 테마 이름 + Enter" autocomplete="off"></div>`
+      + bkAllThemes(data).map(t =>
+        `<div class="lg-catopt ${cur.includes(t) ? 'on' : ''}" data-t="${enEsc(t)}"><span class="tx">${enEsc(t)}</span>${cur.includes(t) ? '<b class="ck">✓</b>' : ''}</div>`).join('')
+      + `<div class="bk-thsave"><button data-save>적용</button></div>`;
+    menu.querySelectorAll('[data-t]').forEach(el => el.addEventListener('mousedown', (e) => {
+      e.preventDefault(); e.stopPropagation();
+      const t = el.dataset.t;
+      const i = cur.indexOf(t);
+      if (i >= 0) cur.splice(i, 1); else cur.push(t);
+      paint();
+    }));
+    const inp = menu.querySelector('.bk-thnew input');
+    inp.addEventListener('mousedown', (e) => e.stopPropagation());
+    inp.addEventListener('keydown', (e) => {
+      e.stopPropagation();
+      if (e.key !== 'Enter') return;
+      const v = inp.value.trim();
+      if (!v) return;
+      if (!cur.includes(v)) cur.push(v);
+      paint();
+    });
+    menu.querySelector('[data-save]').addEventListener('mousedown', async (e) => {
+      e.preventDefault(); e.stopPropagation();
+      menu.remove();
+      await sdxPatch(name, { themes: cur });
+      renderBookPage(hostId, data, d);
+    });
+  };
+  paint();
+  cell.appendChild(menu);
+  setTimeout(() => document.addEventListener('mousedown', () => menu.remove(), { once: true }), 0);
 }
 
 function bkVerdictMenu(cell, hostId, data, d) {
@@ -14611,7 +14732,6 @@ function bkVerdictMenu(cell, hostId, data, d) {
 const INV_SUBS = [
   ['overview', '요약'],
   ['book', '종목'],
-  ['holdings', '종목·테마'],
   ['perf', '벤치마크·세금']
 ];
 
@@ -14742,35 +14862,6 @@ function renderInvestmentPage(container, data, d) {
           </label>`).join('')}
         </div>
         <div class="chart-wrap tall" style="min-height:300px;"><canvas id="chart-inv-main"></canvas></div>
-      </div>
-    </div>` : ''}
-
-    ${SUB === 'holdings' ? `
-    <div class="g">
-      <div class="panel s6">
-        <div class="panel-title"><div>테마별 수익 비중</div><span class="ptag">플러스 수익 기준 · 종목 중복 포함</span></div>
-        <div class="share-split">
-          <div class="share-tmap" id="chart-theme-share"></div>
-          <div id="theme-share-list" class="share-list"></div>
-        </div>
-      </div>
-      <div class="panel s6">
-        <div class="panel-title"><div>종목별 수익 비중</div><span class="ptag">플러스 수익 기준</span></div>
-        <div class="share-split">
-          <div class="share-tmap" id="chart-stock-share"></div>
-          <div id="stock-share-list" class="share-list"></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="g">
-      <div class="panel s6">
-        <div class="panel-title"><div>테마별 실현 수익</div><span class="ptag">누적 · 마이너스 포함</span></div>
-        <div id="theme-list"></div>
-      </div>
-      <div class="panel s6">
-        <div class="panel-title"><div>종목별 실현 수익</div><span class="ptag">상위 12</span></div>
-        <div id="stock-profit-list"></div>
       </div>
     </div>` : ''}
 
@@ -14912,108 +15003,6 @@ function renderInvestmentPage(container, data, d) {
   });
   }
 
-  if (SUB === 'holdings') {
-  /* 테마별: 종목 수·대표 종목까지 같이 (한 종목이 여러 테마면 중복 집계) */
-  const themeAgg = {};
-  stockProfit.forEach(([name, amt]) => {
-    const tags = stockTags(name);
-    (tags.length ? tags : ['미분류']).forEach(t => {
-      themeAgg[t] = themeAgg[t] || { amt: 0, stocks: [] };
-      themeAgg[t].amt += amt;
-      themeAgg[t].stocks.push([name, amt]);
-    });
-  });
-  const themeRows = Object.entries(themeAgg).sort((a, b) => Math.abs(b[1].amt) - Math.abs(a[1].amt));
-  const maxTheme = Math.max(...themeRows.map(t => Math.abs(t[1].amt)), 1);
-  document.getElementById('theme-list').innerHTML = themeRows.map(([name, v]) => {
-    const top = v.stocks.slice().sort((a, b) => Math.abs(b[1]) - Math.abs(a[1])).slice(0, 3);
-    return `<div class="thm-row">
-      <span class="thm-nm">${name}<em>${v.stocks.length}종목</em></span>
-      <span class="thm-track"><i class="${v.amt < 0 ? 'neg' : ''}" style="width:${(Math.abs(v.amt) / maxTheme) * 100}%"></i></span>
-      <span class="thm-amt" style="color:${v.amt >= 0 ? 'var(--green)' : 'var(--red)'}">${formatWon(v.amt)}</span>
-      <span class="thm-top">${top.map(([n, a]) => `<b style="color:${a >= 0 ? '#8fd0ac' : '#eb9891'}">${n}</b>`).join(' · ')}</span>
-    </div>`;
-  }).join('') || '<div class="empty-state">주식 카테고리 매핑을 찾지 못했어요.</div>';
-
-  /* --- 비중 도넛 (플러스 수익만) --- */
-  const SHARE_PALETTE = ['#4c8c6b', '#c9a227', '#5b8fc7', '#9b7fc2', '#e08a5f', '#39a8bd', '#c1483f', '#7fbf9c', '#e0c766'];
-  /* 도넛 대신 트리맵 — 면적이 곧 비중이라 상위/하위 격차가 바로 읽힌다.
-     외부 플러그인 없이 squarified treemap을 직접 계산해서 div로 그린다. */
-  const squarify = (items, x, y, w, h, out) => {
-    if (!items.length) return;
-    if (items.length === 1) { out.push({ ...items[0], x, y, w, h }); return; }
-    const total = items.reduce((a, it) => a + it.v, 0);
-    let acc = 0, i = 0;
-    const half = total / 2;
-    for (; i < items.length - 1; i++) {
-      if (acc + items[i].v > half) break;
-      acc += items[i].v;
-    }
-    if (i > items.length - 2) i = items.length - 2;   /* 한쪽이 비면 무한 재귀 */
-    const a = items.slice(0, i + 1), b = items.slice(i + 1);
-    const aSum = a.reduce((t, it) => t + it.v, 0);
-    const ratio = total ? aSum / total : 0.5;
-    if (w >= h) {
-      squarify(a, x, y, w * ratio, h, out);
-      squarify(b, x + w * ratio, y, w * (1 - ratio), h, out);
-    } else {
-      squarify(a, x, y, w, h * ratio, out);
-      squarify(b, x, y + h * ratio, w, h * (1 - ratio), out);
-    }
-  };
-
-  const drawShare = (hostId, listId, pairs) => {
-    const pos = pairs.filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
-    const total = pos.reduce((a, x) => a + x[1], 0);
-    const TOP = 16;
-    const head = pos.slice(0, TOP);
-    const restSum = pos.slice(TOP).reduce((a, x) => a + x[1], 0);
-    const rows = restSum > 0 ? head.concat([['기타 ' + (pos.length - TOP) + '건', restSum]]) : head;
-    const host = document.getElementById(hostId);
-    if (!host) return;
-    if (!rows.length) { host.innerHTML = '<div class="empty-state">플러스 수익 데이터가 없어요.</div>'; return; }
-
-    const items = rows.map((r, i) => ({ name: r[0], v: r[1], color: SHARE_PALETTE[i % SHARE_PALETTE.length] }));
-    const cells = [];
-    squarify(items, 0, 0, 100, 100, cells);
-    host.innerHTML = `<div class="tmap">${cells.map(c => {
-      const pct = total ? (c.v / total) * 100 : 0;
-      /* 칸이 너무 작으면 글자를 숨긴다 (가로 12% · 세로 10% 기준) */
-      /* 이름 한 줄(약 15px) + % 한 줄(약 13px)이 들어갈 높이가 될 때만 각각 그린다 */
-      const showName = c.w > 8 && c.h > 8;
-      const showPct = c.w > 11 && c.h > 17;
-      return `<div class="tm-cell" style="left:${c.x}%;top:${c.y}%;width:${c.w}%;height:${c.h}%;background:${c.color}"
-        title="${c.name} · ${formatCompactWon(c.v)}원 · ${pct.toFixed(1)}%">
-        ${showName ? `<b>${c.name}</b>` : ''}${showPct ? `<em>${pct.toFixed(0)}%</em>` : ''}
-      </div>`;
-    }).join('')}</div>`;
-
-    const listEl = document.getElementById(listId);
-    if (listEl) listEl.innerHTML = rows.map((r, i) => {
-      const pct = total ? (r[1] / total) * 100 : 0;
-      return `<div class="share-row">
-        <span class="share-sw" style="background:${SHARE_PALETTE[i % SHARE_PALETTE.length]}"></span>
-        <span class="share-nm">${r[0]}</span>
-        <span class="share-pct">${pct.toFixed(1)}%</span>
-        <span class="share-amt">${i < 3 ? formatCompactWon(r[1]) : ''}</span>
-      </div>`;
-    }).join('');
-  };
-
-  drawShare('chart-theme-share', 'theme-share-list', themeRows.map(([n, v]) => [n, v.amt]));
-  drawShare('chart-stock-share', 'stock-share-list', stockProfit);
-
-  const stockRows = stockProfit.filter(([, v]) => v !== 0).slice(0, 12);
-  const maxStock = Math.max(...stockRows.map(r => Math.abs(r[1])), 1);
-  document.getElementById('stock-profit-list').innerHTML = stockRows.map(([name, amt]) => {
-    const tags = stockTags(name);
-    return `<div class="thm-row">
-      <span class="thm-nm">${name}${tags.length ? `<em>${tags.join(' · ')}</em>` : ''}</span>
-      <span class="thm-track"><i class="${amt < 0 ? 'neg' : ''}" style="width:${(Math.abs(amt) / maxStock) * 100}%"></i></span>
-      <span class="thm-amt" style="color:${amt >= 0 ? 'var(--green)' : 'var(--red)'}">${formatWon(amt)}</span>
-    </div>`;
-  }).join('') || '<div class="empty-state">종목별 수익 데이터가 없어요.</div>';
-  }
 }
 
 /* ---------------- page: 저축 ---------------- */
