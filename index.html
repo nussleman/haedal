@@ -696,6 +696,8 @@ body{
 }
 .en-cta:active{transform:scale(.99);}
 .en-cta:disabled{opacity:.45;cursor:default;}
+.en-kbd{font-family:var(--mono);font-size:10px;background:rgba(26,21,8,0.18);border-radius:4px;
+  padding:2px 5px;line-height:1;font-weight:600;margin-left:3px;}
 .en-err{font-size:12.5px;color:var(--red);min-height:17px;margin:0;}
 
 /* ---------- 네비 우측 기록 버튼 ---------- */
@@ -803,7 +805,9 @@ body{
 .en-row:last-child{border-bottom:0;}
 .en-row .m{flex:1;min-width:0;}
 .en-row .l1{font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.en-row .l2{font-family:var(--mono);font-size:10px;color:var(--text-faint);margin-top:2px;}
+.en-row .l2{font-family:var(--mono);font-size:11px;color:var(--text-dim);margin-top:3px;letter-spacing:.01em;}
+.en-row .l2 .dv{color:var(--text-faint);margin:0 5px;}
+.en-row .l1{font-weight:500;}
 .en-row .v{font-family:var(--mono);font-size:12.5px;font-weight:500;font-variant-numeric:tabular-nums;white-space:nowrap;}
 .en-row .v.지출{color:var(--red);}.en-row .v.수입{color:var(--green);}.en-row .v.이체{color:var(--net);}
 .en-del{background:none;border:0;color:transparent;font-size:15px;cursor:pointer;padding:1px 3px;line-height:1;}
@@ -5238,14 +5242,14 @@ function enRenderEntry() {
       <div class="en-two">
         <div>
           <div class="en-fld">
-            <label class="en-lab" for="en-merch">1 · 어디에</label>
+            <label class="en-lab" for="en-merch">사용처</label>
             <input class="en-in" id="en-merch" autocomplete="off" placeholder="예: 매머드커피"
                    role="combobox" aria-expanded="false" aria-autocomplete="list" aria-controls="en-ac">
             <div class="en-ac" id="en-ac" role="listbox" hidden></div>
           </div>
 
           <div class="en-fld">
-            <label class="en-lab" for="en-amt">2 · 얼마를 <span style="color:var(--text-faint);">— 마이너스는 앞에 −</span></label>
+            <label class="en-lab" for="en-amt">금액 <span style="color:var(--text-faint);">— 마이너스는 앞에 −</span></label>
             <div class="en-money">
               <span class="en-kind-badge none" id="en-kind">분류 미선택</span>
               <input class="en-amt" id="en-amt" inputmode="numeric" placeholder="0" autocomplete="off">
@@ -5255,7 +5259,7 @@ function enRenderEntry() {
 
           <div class="en-fld">
             <div style="display:flex;align-items:baseline;justify-content:space-between;margin:0 2px 5px;">
-              <span class="en-lab" style="margin:0;">3 · 어떤 분류로</span>
+              <span class="en-lab" style="margin:0;">분류</span>
               <button class="btn small" id="en-more">전체 보기</button>
             </div>
             <input class="en-catsearch" id="en-catq" placeholder="분류 검색 — 예: 카페, 택시" autocomplete="off">
@@ -5280,12 +5284,12 @@ function enRenderEntry() {
           </div>
 
           <p class="en-err" id="en-serr"></p>
-          <button class="en-cta" id="en-save">기록하기</button>
+          <button class="en-cta" id="en-save">기록하기 <kbd class="en-kbd">Ctrl</kbd><kbd class="en-kbd">Enter</kbd></button>
         </div>
 
         <div class="en-side">
           <span class="en-lab">방금 기록한 것</span>
-          <p class="en-sub">가장 최근에 입력한 8건</p>
+          <p class="en-sub">최근 날짜순 8건</p>
           <div id="en-recent"><div class="en-empty">불러오는 중…</div></div>
         </div>
       </div>
@@ -5325,6 +5329,9 @@ function enRenderEntry() {
   pair('#en-good', '#en-bad'); pair('#en-bad', '#en-good');
 
   enQS('#en-save').addEventListener('click', enSave);
+  enQS('.en-modal').addEventListener('keydown', e => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); enSave(); }
+  });
   enBuildTopChips();
   enSyncCat();
   enLoadRecent();
@@ -5494,7 +5501,7 @@ async function enSave() {
 async function enLoadRecent() {
   const { data } = await (await enClient()).from('v_transactions')
     .select('id,date,kind,category,subcategory,emoji_category,amount,merchant,note,company_paid,is_fixed')
-    .order('id', { ascending: false }).limit(8);
+    .order('date', { ascending: false }).order('id', { ascending: false }).limit(8);
   const box = enQS('#en-recent');
   if (!box) return;
   if (!data || !data.length) { box.innerHTML = '<div class="en-empty">아직 기록이 없습니다.</div>'; return; }
@@ -5503,7 +5510,7 @@ async function enLoadRecent() {
       <span aria-hidden="true">${r.emoji_category || ''}</span>
       <div class="m">
         <div class="l1">${enEsc(r.merchant || r.subcategory)}${r.company_paid ? ' 🏢' : ''}${r.is_fixed ? ' 📌' : ''}</div>
-        <div class="l2">${String(r.date).slice(5)} · ${enEsc(r.subcategory)}</div>
+        <div class="l2">${String(r.date).slice(5).replace('-', '.')}<span class="dv">·</span>${enEsc(r.subcategory)}</div>
       </div>
       <span class="v ${r.kind}">${Number(r.amount) < 0 ? '−' : ''}${enComma(Math.abs(r.amount))}</span>
       <button class="en-del" data-id="${r.id}" aria-label="삭제">×</button>
