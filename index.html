@@ -949,7 +949,12 @@ body{
 .lg-line:hover .x{color:var(--text-faint);}
 .lg-line .x:hover{color:var(--red);}
 /* 더블클릭 인라인 수정 */
-.lg-line [data-ed]{cursor:text;border-radius:5px;}
+/* 비어 있는 칸은 높이가 0이 되어 더블클릭이 닿지 않는다 — 최소 높이를 준다 */
+.lg-line [data-ed]{cursor:text;border-radius:5px;min-height:22px;display:flex;align-items:center;}
+.lg-line .c[data-ed]{display:flex;}
+.lg-line .v[data-ed]{justify-content:flex-end;}
+.lg-ph{color:var(--text-faint);opacity:0;font-style:normal;transition:opacity .12s;}
+.lg-line:hover .lg-ph{opacity:.45;}
 .lg-line [data-ed]:hover{box-shadow:inset 0 0 0 1px var(--border-strong);}
 .lg-line [data-ed].editing{box-shadow:inset 0 0 0 1px var(--gold-soft);}
 .lg-ed{width:100%;min-width:0;background:var(--bg-2);border:0;outline:0;color:var(--text);
@@ -2437,7 +2442,9 @@ body{font-variant-numeric:tabular-nums;}
 }
 
 /* ---------- 자산>투자>종목: 통합 표 ---------- */
-.bk-stick{position:sticky;top:var(--hdr-h,0px);z-index:30;background:var(--bg);padding-top:20px;}
+.bk-wrap{display:block;}
+.bk-stick{position:sticky;top:var(--hdr-h,0px);z-index:40;background:var(--bg);
+  padding-top:20px;display:block;}
 .bk-top{display:flex;align-items:flex-end;gap:26px;flex-wrap:wrap;margin-bottom:14px;}
 .bk-spacer{flex:1;}
 .bk-stat{display:flex;flex-direction:column;gap:3px;}
@@ -2470,12 +2477,14 @@ body{font-variant-numeric:tabular-nums;}
 .bk-pickdrop .lg-catopt.on{color:var(--gold-soft);}
 .bk-pickdrop .cnt{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--text-faint);}
 /* 열 묶음 이름 */
-.bk-groups{display:flex;gap:9px;padding:0 12px 5px;font-family:var(--mono);font-size:9px;
-  letter-spacing:.14em;color:var(--text-faint);}
-.bk-groups span{border-bottom:1px solid var(--border-strong);padding-bottom:3px;}
+.bk-groups{display:flex;gap:9px;padding:0 12px;margin-top:22px;}
+.bk-groups span{display:flex;align-items:center;gap:8px;min-width:0;overflow:hidden;}
+.bk-groups i{font-family:var(--mono);font-size:8.5px;letter-spacing:.18em;color:var(--text-faint);
+  font-style:normal;white-space:nowrap;flex:0 0 auto;}
+.bk-groups span:after{content:'';flex:1;height:1px;background:var(--border);}
 .bk-groups .g1{flex:1 1 auto;}
-.bk-groups .g2{flex:0 0 424px;}
-.bk-groups .g3{flex:0 0 239px;}
+.bk-groups .g2{flex:0 0 340px;}
+.bk-groups .g3{flex:0 0 93px;}
 .bk-cols [data-s]{cursor:pointer;user-select:none;display:flex;align-items:center;gap:4px;}
 .bk-cols .ar{color:var(--gold-soft);font-size:8px;line-height:1;}
 .bk-cols [data-s]:hover{color:var(--text);}
@@ -2493,7 +2502,7 @@ body{font-variant-numeric:tabular-nums;}
 .bk-cols .pl,.bk-row .pl{flex:0 0 58px;text-align:right;}
 .bk-cols .rz,.bk-row .rz{flex:0 0 84px;text-align:right;}
 /* 묶음 경계 — 얇은 선 하나로 기본 | 판단 | 히스토리 를 나눈다 */
-.bk-cols .sep,.bk-row .sep{box-shadow:inset -1px 0 0 var(--border);padding-right:9px;margin-right:0;}
+.bk-cols .sep,.bk-row .sep{box-shadow:inset 1px 0 0 var(--border);padding-left:9px;}
 .bk-dot{width:6px;height:6px;border-radius:50%;flex:0 0 6px;display:inline-block;}
 .bk-dot.y{background:var(--gold);}
 .bk-dot.n{background:transparent;box-shadow:inset 0 0 0 1px var(--text-faint);}
@@ -2551,7 +2560,7 @@ body{font-variant-numeric:tabular-nums;}
 .bk-detail .sdc-head{padding-top:14px;}
 @media(max-width:1300px){
   .bk-cols .gn,.bk-row .gn,.bk-cols .ck,.bk-row .ck{display:none;}
-  .bk-groups .g2{flex:0 0 308px;} .bk-groups .g3{flex:0 0 151px;}
+  .bk-groups .g2{flex:0 0 273px;}
 }
 @media(max-width:1040px){
   .bk-cols .va,.bk-row .va,.bk-cols .sc,.bk-row .sc,.bk-cols .th,.bk-row .th,
@@ -6384,7 +6393,7 @@ async function enLoadLedger() {
           <span class="e" aria-hidden="true">${r.emoji_category || ''}</span>
           <span class="c" data-ed="cat" title="더블클릭해서 분류 변경"><span class="ct">${enEsc(r.category)} › ${enEsc(r.subcategory)}</span></span>
           <span class="n" data-ed="merchant" title="더블클릭해서 수정">${r.merchant_group ? `<i class="lg-mg">${enEsc(r.merchant_group)}</i>` : ''}${enEsc(r.merchant || r.subcategory)}</span>
-          <span class="mm" data-ed="note" title="더블클릭해서 수정">${r.note ? enEsc(r.note) : ''}</span>
+          <span class="mm" data-ed="note" title="더블클릭해서 메모 수정">${r.note ? enEsc(r.note) : '<i class="lg-ph">메모</i>'}</span>
           <span class="f">
             <button class="lg-tg ${r.company_paid ? 'on' : ''}" data-tg="company_paid" title="회사 환급">🏢</button>
             <button class="lg-tg ${r.is_fixed ? 'on' : ''}" data-tg="is_fixed" title="고정비">📌</button>
@@ -14646,6 +14655,7 @@ function renderBookPage(hostId, data, d) {
   const noThemeCnt = allRows.filter(r => !r.themes.length).length;
 
   host.innerHTML = `
+    <div class="bk-wrap">
     <div class="bk-stick">
       <div class="bk-top">
         ${s ? `
@@ -14671,25 +14681,26 @@ function renderBookPage(hostId, data, d) {
         ${active ? `<button class="bk-clear" id="bk-clear">필터 ${active}개 해제</button>` : ''}
       </div>
       <div class="bk-groups">
-        <span class="g1">기본</span><span class="g2">판단</span><span class="g3">히스토리</span>
+        <span class="g1"><i>기본</i></span><span class="g2"><i>판단</i></span><span class="g3"><i>히스토리</i></span>
       </div>
     <div class="lg-cols bk-cols" id="bk-cols">
       <span class="nm" data-s="name">종목${arrow('name')}</span>
       <span class="th" data-s="theme">테마${arrow('theme')}</span>
       <span class="va" data-s="value">평가액${arrow('value')}</span>
-      <span class="we sep" data-s="weight">비중${arrow('weight')}</span>
-      <span class="gd" data-s="grade">등급${arrow('grade')}</span>
+      <span class="we" data-s="weight">비중${arrow('weight')}</span>
+      <span class="gn" data-s="gain">평가손익${arrow('gain')}</span>
+      <span class="pl" data-s="pl">수익률${arrow('pl')}</span>
+      <span class="gd sep" data-s="grade">등급${arrow('grade')}</span>
       <span class="sc" data-s="score">점수${arrow('score')}</span>
       <span class="vd" data-s="verdict">결론${arrow('verdict')}</span>
       <span class="ck" data-s="check">확인일${arrow('check')}</span>
-      <span class="gn sep" data-s="gain">평가손익${arrow('gain')}</span>
-      <span class="pl" data-s="pl">수익률${arrow('pl')}</span>
-      <span class="rz" data-s="realized">실현수익${arrow('realized')}</span>
+      <span class="rz sep" data-s="realized">실현수익${arrow('realized')}</span>
     </div>
     </div>
     <div class="lg-card bk-card">${rows.length ? rows.map(r => bkRowHTML(r)).join('')
       : '<div class="empty-state">조건에 맞는 종목이 없습니다.</div>'}</div>
-    <div class="lg-meta"><span>${rows.length}개 종목 · 줄을 더블클릭하면 판정 카드가 펼쳐집니다</span></div>`;
+    <div class="lg-meta"><span>${rows.length}개 종목 · 줄을 더블클릭하면 판정 카드가 펼쳐집니다</span></div>
+    </div>`;
 
   host.querySelectorAll('[data-fil]').forEach(b => b.addEventListener('click', () => {
     BK.filter = b.dataset.fil; renderBookPage(hostId, data, d);
@@ -14770,16 +14781,16 @@ function bkRowHTML(r) {
         ? r.themes.map(t => `<i class="bk-tag">${bkThemeEmoji(t)} ${enEsc(t)}</i>`).join('')
         : '<i class="bk-tag none">＋ 테마</i>'}</span>
       <span class="va">${r.value != null ? enComma(Math.round(r.value)) : '—'}</span>
-      <span class="we sep">${r.weight != null ? r.weight.toFixed(2) + '%' : '—'}${r.over != null && r.over > 0 ? `<b class="over" title="상한 대비 +${r.over.toFixed(1)}%p">!</b>` : ''}</span>
-      <span class="gd"><i class="bk-gd ${st.k}">${st.label}</i>${r.capText ? `<em>${r.capText}</em>` : ''}</span>
-      <span class="sc">${r.answered ? `${r.score}<em>/14</em>` : '—'}</span>
-      <span class="vd bk-vd" title="클릭해서 결론 변경">${vd ? `<i class="bk-vdi v-${r.verdict}">${vd}</i>` : '<i class="bk-vdi none">—</i>'}</span>
-      <span class="ck">${r.check ? String(r.check).slice(2).replace(/-/g, '.') : '—'}</span>
-      <span class="gn sep ${r.pl == null ? '' : r.pl >= 0 ? 'up' : 'down'}">${r.pl == null ? '—'
+      <span class="we">${r.weight != null ? r.weight.toFixed(2) + '%' : '—'}${r.over != null && r.over > 0 ? `<b class="over" title="상한 대비 +${r.over.toFixed(1)}%p">!</b>` : ''}</span>
+      <span class="gn ${r.pl == null ? '' : r.pl >= 0 ? 'up' : 'down'}">${r.pl == null ? '—'
         : `${r.pl >= 0 ? '+' : '−'}${enComma(Math.abs(Math.round(r.pl)))}`}</span>
       <span class="pl ${r.plRate == null ? '' : r.plRate >= 0 ? 'up' : 'down'}">${r.plRate == null ? '—'
         : `${r.plRate >= 0 ? '+' : '−'}${Math.abs(r.plRate).toFixed(1)}%`}</span>
-      <span class="rz ${r.realized == null ? '' : r.realized >= 0 ? 'up' : 'down'}">${r.realized == null ? '—'
+      <span class="gd sep"><i class="bk-gd ${st.k}">${st.label}</i>${r.capText ? `<em>${r.capText}</em>` : ''}</span>
+      <span class="sc">${r.answered ? `${r.score}<em>/14</em>` : '—'}</span>
+      <span class="vd bk-vd" title="클릭해서 결론 변경">${vd ? `<i class="bk-vdi v-${r.verdict}">${vd}</i>` : '<i class="bk-vdi none">—</i>'}</span>
+      <span class="ck">${r.check ? String(r.check).slice(2).replace(/-/g, '.') : '—'}</span>
+      <span class="rz sep ${r.realized == null ? '' : r.realized >= 0 ? 'up' : 'down'}">${r.realized == null ? '—'
         : `${r.realized >= 0 ? '+' : '−'}${enComma(Math.abs(Math.round(r.realized)))}`}</span>
     </div>${open ? `<div class="bk-detail" id="bk-detail">${sdxCard({
       name: r.name, symbol: r.symbol, weight: r.weight, plRate: r.plRate, row: r.card
