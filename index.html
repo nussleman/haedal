@@ -834,17 +834,53 @@ body{
 .lg-bar .en-in:focus{background:var(--panel-2);border-color:var(--border-strong);}
 .lg-bar .grow{flex:1 1 auto;min-width:0;}
 .lg-bar select.en-in{cursor:pointer;color-scheme:dark;}
-.lg-bar #lg-reset{color:var(--text-faint);}
-.lg-bar #lg-reset:hover{color:var(--text);background:var(--panel-2);}
+.lg-grp.cat{flex:0 1 230px;min-width:170px;}
+.lg-grp.cat .lg-gin{width:100%;}
+.lg-reset{height:34px;background:transparent;border:1px solid var(--border);
+  border-radius:9px;color:var(--text-faint);font-family:var(--sans);font-size:12px;
+  padding:0 13px;cursor:pointer;white-space:nowrap;}
+.lg-reset:hover{border-color:var(--border-strong);color:var(--text);background:var(--panel-2);}
+
+/* 종류 : 아래 표에 쓰는 색 칩과 같은 언어 */
+.lg-kinds{gap:2px;}
+.lg-kinds button{background:transparent;border:1px solid transparent;border-radius:6px;
+  cursor:pointer;font-family:var(--mono);font-size:11px;padding:4px 9px;color:var(--text-faint);
+  line-height:1.2;}
+.lg-kinds button:hover{color:var(--text);background:rgba(255,255,255,0.05);}
+.lg-kinds button.on{background:var(--panel-2);border-color:var(--border-strong);color:var(--text);font-weight:600;}
+.lg-kinds button.kd.지출{color:#c98a84;}
+.lg-kinds button.kd.수입{color:#7fc0a0;}
+.lg-kinds button.kd.이체{color:#7ed0de;}
+.lg-kinds button.kd.지출.on{background:var(--red-soft);border-color:rgba(193,72,63,.5);color:#e39189;}
+.lg-kinds button.kd.수입.on{background:var(--green-soft);border-color:rgba(76,140,107,.5);color:#8fd0af;}
+.lg-kinds button.kd.이체.on{background:var(--net-soft);border-color:rgba(57,168,189,.5);color:#7ed0de;}
+
+/* 분류 : 검색해서 고른다 */
+.lg-catpick{position:relative;}
+.lg-catpick .en-in{font-size:12px;}
+.lg-catpick .en-in.picked{color:var(--gold-soft);font-family:var(--mono);font-size:11px;}
+.lg-catx{position:absolute;right:5px;top:50%;transform:translateY(-50%);background:none;
+  border:0;color:var(--text-faint);font-size:14px;cursor:pointer;line-height:1;padding:2px 4px;}
+.lg-catx:hover{color:var(--red);}
+.lg-catdrop{position:absolute;left:0;right:0;top:calc(100% + 5px);z-index:60;
+  background:var(--panel);border:1px solid var(--border-strong);border-radius:9px;
+  max-height:300px;overflow-y:auto;padding:5px;box-shadow:0 10px 26px rgba(0,0,0,.45);
+  scrollbar-width:thin;min-width:250px;}
+.lg-cathead{font-family:var(--mono);font-size:9px;letter-spacing:.1em;color:var(--text-faint);
+  padding:7px 7px 4px;}
+.lg-catopt{display:flex;align-items:center;gap:7px;padding:6px 7px;border-radius:6px;
+  cursor:pointer;font-size:12px;color:var(--text-dim);}
+.lg-catopt:hover,.lg-catopt.on{background:var(--panel-2);color:var(--text);}
+.lg-catopt .em{width:15px;text-align:center;flex:0 0 auto;}
+.lg-catopt .tx{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.lg-catopt .tx b{color:var(--text);font-weight:600;}
+.lg-catempty{padding:11px 8px;font-size:11.5px;color:var(--text-faint);}
 .lg-quick{display:flex;gap:2px;}
 .lg-quick button{background:transparent;border:0;color:var(--text-faint);
   border-radius:14px;padding:5px 10px;cursor:pointer;font-family:var(--sans);font-size:11.5px;}
 .lg-quick button:hover{color:var(--text);}
 .lg-quick button.on{background:var(--gold);color:#1a1508;font-weight:700;}
 .lg-sum{display:flex;gap:22px;align-items:baseline;margin:14px 2px 0;flex-wrap:wrap;}
-.lg-hint{margin-left:auto;font-size:11px;color:var(--text-faint);}
-.lg-hint kbd{font-family:var(--mono);font-size:10px;background:var(--panel-2);
-  border:1px solid var(--border);border-radius:4px;padding:1px 5px;color:var(--text-dim);}
 .lg-sum span.k{font-size:10.5px;color:var(--text-faint);margin-right:6px;}
 .lg-sum span.v{font-family:var(--mono);font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;}
 
@@ -852,7 +888,8 @@ body{
 .lg-cols{display:flex;align-items:center;gap:9px;height:28px;padding:0 12px;
   margin-top:12px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);
   font-family:var(--mono);font-size:10px;color:var(--text-faint);letter-spacing:.06em;}
-.lg-cols .f,.lg-cols .g{text-align:center;}
+.lg-cols .f,.lg-cols .g{text-align:center;white-space:nowrap;}
+.lg-cols .k{white-space:nowrap;}
 
 /* 날짜 그룹 */
 .lg-day{display:flex;align-items:baseline;gap:8px;margin:14px 4px 5px;}
@@ -872,11 +909,11 @@ body{
 .lg-line.k-지출:before{background:var(--red);}
 .lg-line.k-수입:before{background:var(--green);}
 .lg-line.k-이체:before{background:var(--net);}
+.lg-line .k,.lg-cols .k{flex:0 0 40px;}
 .lg-line .e,.lg-cols .e{flex:0 0 16px;font-size:12px;line-height:1;text-align:center;}
-.lg-line .c,.lg-cols .c{flex:0 0 206px;font-family:var(--mono);font-size:11px;color:var(--text-dim);
-  display:flex;align-items:center;gap:6px;min-width:0;}
-.lg-cols .c{display:block;}
-.lg-line .c .ct{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.lg-line .c,.lg-cols .c{flex:0 0 168px;font-family:var(--mono);font-size:11px;color:var(--text-dim);
+  min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.lg-line .c .ct{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .lg-kd{flex:0 0 auto;font-family:var(--mono);font-size:9.5px;font-weight:600;letter-spacing:.02em;
   border-radius:4px;padding:2px 5px;line-height:1.15;}
 .lg-kd.지출{background:var(--red-soft);color:#e39189;}
@@ -887,7 +924,8 @@ body{
 .lg-line .mm,.lg-cols .mm{flex:0 0 148px;min-width:0;font-size:11.5px;color:var(--text-faint);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   border-left:1px solid var(--border);padding-left:10px;}
-.lg-line .f,.lg-cols .f{flex:0 0 52px;font-size:10px;color:var(--text-dim);text-align:center;}
+.lg-line .f,.lg-cols .f{flex:0 0 62px;font-size:10px;color:var(--text-dim);text-align:center;
+  white-space:nowrap;}
 .lg-line .g,.lg-cols .g{flex:0 0 56px;text-align:center;}
 .lg-line .f{display:flex;gap:2px;justify-content:center;}
 .lg-tg{background:none;border:0;cursor:pointer;font-size:11px;line-height:1;padding:3px;
@@ -915,12 +953,11 @@ body{
 .lg-ed.mono{font-family:var(--mono);text-align:right;}
 .lg-ed.sel{cursor:pointer;color-scheme:dark;font-family:var(--mono);font-size:11px;}
 @media(max-width:820px){
-  .lg-line .c .ct,.lg-cols .c,.lg-line .mm,.lg-cols .mm,.lg-line .g,.lg-cols .g{display:none;}
-  .lg-line .c{flex:0 0 auto;}
-  .lg-line .f,.lg-cols .f{flex:0 0 40px;}
+  .lg-line .c,.lg-cols .c,.lg-line .mm,.lg-cols .mm,.lg-line .g,.lg-cols .g{display:none;}
+  .lg-line .f,.lg-cols .f{flex:0 0 42px;}
+  .lg-grp.cat{flex:1 1 100%;}
   .lg-line .v,.lg-cols .v{flex:0 0 96px;}
   .lg-line .x{color:var(--text-faint);}
-  .lg-hint{display:none;}
 }
 
 .lg-meta{display:flex;align-items:center;justify-content:space-between;gap:10px;
@@ -5738,22 +5775,36 @@ async function renderLedgerPage(body) {
                 <button data-q="tm">이번달</button><button data-q="lm">지난달</button>
                 <button data-q="3m">최근 3개월</button><button data-q="ty">올해</button><button data-q="all">전체</button>
               </div>
+            </div>
+          </div>
+          <div class="lg-grp">
+            <span class="lg-glab">연도 · 월</span>
+            <div class="lg-gin">
               <select class="en-in" id="lg-y"><option value="">연도</option>${years.map(y => `<option value="${y}">${y}년</option>`).join('')}</select>
               <select class="en-in" id="lg-m"><option value="">월</option>${Array.from({ length: 12 }, (_, i) => `<option value="${i + 1}">${i + 1}월</option>`).join('')}</select>
+            </div>
+          </div>
+          <div class="lg-grp">
+            <span class="lg-glab">종류</span>
+            <div class="lg-gin lg-kinds" id="lg-kinds">
+              <button data-k="all">전체</button>
+              <button data-k="지출" class="kd 지출">지출</button>
+              <button data-k="수입" class="kd 수입">수입</button>
+              <button data-k="이체" class="kd 이체">이체</button>
+            </div>
+          </div>
+          <div class="lg-grp cat">
+            <span class="lg-glab">분류</span>
+            <div class="lg-gin lg-catpick">
+              <input class="en-in grow" id="lg-catq" placeholder="분류 전체 — 입력해서 찾기" autocomplete="off"
+                     role="combobox" aria-expanded="false" aria-controls="lg-catdrop">
+              <button class="lg-catx" id="lg-catx" aria-label="분류 해제" hidden>×</button>
+              <div class="lg-catdrop" id="lg-catdrop" role="listbox" hidden></div>
             </div>
           </div>
           <div class="lg-grp grow">
             <span class="lg-glab">검색</span>
             <div class="lg-gin"><input class="en-in grow" id="lg-q" placeholder="사용처 · 메모" value="${enEsc(g.q)}"></div>
-          </div>
-          <div class="lg-grp">
-            <span class="lg-glab">종류 · 분류</span>
-            <div class="lg-gin">
-              <select class="en-in" id="lg-kind"><option value="all">종류 전체</option>
-                <option value="지출">지출</option><option value="수입">수입</option><option value="이체">이체</option></select>
-              <select class="en-in" id="lg-cat"><option value="all">분류 전체</option>
-                ${cats.map(c => `<option value="${c.id}">${enEsc(c.category)} › ${enEsc(c.subcategory)}</option>`).join('')}</select>
-            </div>
           </div>
           <div class="lg-grp">
             <span class="lg-glab">정렬</span>
@@ -5762,14 +5813,17 @@ async function renderLedgerPage(body) {
                 <option value="date_desc">최신순</option><option value="date_asc">오래된순</option>
                 <option value="amt_desc">금액 큰 순</option><option value="amt_asc">금액 작은 순</option>
                 <option value="created_desc">입력한 순서</option></select>
-              <button class="en-in" id="lg-reset" style="cursor:pointer;">초기화</button>
             </div>
+          </div>
+          <div class="lg-grp">
+            <span class="lg-glab">&nbsp;</span>
+            <button class="lg-reset" id="lg-reset">초기화</button>
           </div>
         </div>
         <div class="lg-sum" id="lg-sum"></div>
         <div class="lg-cols">
-          <span class="e"></span><span class="c">종류 · 분류</span><span class="n">사용처</span>
-          <span class="mm">메모</span><span class="f">회사 · 고정</span><span class="g">GOOD/BAD</span>
+          <span class="k">종류</span><span class="e"></span><span class="c">분류</span><span class="n">사용처</span>
+          <span class="mm">메모</span><span class="f">회사·고정</span><span class="g">GOOD/BAD</span>
           <span class="v">금액</span><span class="x"></span>
         </div>
       </div>
@@ -5782,11 +5836,10 @@ async function renderLedgerPage(body) {
       </div>
     </div>`;
 
-  enQS('#lg-kind').value = g.kind;
-  enQS('#lg-cat').value = g.cat;
   enQS('#lg-sort').value = g.sort;
   document.querySelectorAll('#lg-quick button').forEach(b =>
     b.classList.toggle('on', b.dataset.q === g.quick));
+  lgSetupKindCat(g, cats);
 
   document.querySelectorAll('#lg-quick button').forEach(b => b.addEventListener('click', () => {
     g.quick = b.dataset.q;
@@ -5819,8 +5872,7 @@ async function renderLedgerPage(body) {
     clearTimeout(timer);
     timer = setTimeout(() => { g.q = e.target.value.trim(); g.page = 1; enLoadLedger(); }, 300);
   });
-  [['#lg-kind', 'kind'], ['#lg-cat', 'cat'], ['#lg-sort', 'sort']].forEach(([sel, key]) =>
-    enQS(sel).addEventListener('change', e => { g[key] = e.target.value; g.page = 1; enLoadLedger(); }));
+  enQS('#lg-sort').addEventListener('change', e => { g.sort = e.target.value; g.page = 1; enLoadLedger(); });
   enQS('#lg-reset').addEventListener('click', () => {
     EN.lg = { q: '', kind: 'all', cat: 'all', from: '', to: '', quick: '3m', sort: 'date_desc', page: 1, size: 60 };
     renderLedgerPage(document.getElementById('page-content'));
@@ -5829,6 +5881,95 @@ async function renderLedgerPage(body) {
   enQS('#lg-next').addEventListener('click', () => { g.page++; enLoadLedger(); });
   enSyncHeaderOffset();
   enLoadLedger();
+}
+
+/* 종류는 칩으로, 분류는 검색으로 — 고르는 순서가 생각의 순서와 같도록.
+   종류를 먼저 좁히면 분류 후보도 같이 좁아진다. */
+function lgSetupKindCat(g, cats) {
+  const chips = document.getElementById('lg-kinds');
+  const inp = enQS('#lg-catq');
+  const drop = enQS('#lg-catdrop');
+  const clear = enQS('#lg-catx');
+  if (!chips || !inp || !drop) return;
+
+  const catLabel = (c) => `${c.category} › ${c.subcategory}`;
+  const paintChips = () => {
+    chips.querySelectorAll('button').forEach(b =>
+      b.classList.toggle('on', b.dataset.k === g.kind));
+  };
+  const paintCat = () => {
+    const c = EN.catById[Number(g.cat)];
+    if (g.cat !== 'all' && c) {
+      inp.value = catLabel(c);
+      inp.classList.add('picked');
+      clear.hidden = false;
+    } else {
+      inp.value = '';
+      inp.classList.remove('picked');
+      clear.hidden = true;
+    }
+  };
+  const pool = () => cats.filter(c => g.kind === 'all' || c.kind === g.kind);
+  const close = () => { drop.hidden = true; inp.setAttribute('aria-expanded', 'false'); };
+
+  let cur = -1, list = [];
+  const paintCursor = () => drop.querySelectorAll('.lg-catopt').forEach((el, i) =>
+    el.classList.toggle('on', i === cur));
+
+  const open = () => {
+    const q = inp.classList.contains('picked') ? '' : inp.value.trim().toLowerCase();
+    list = pool().filter(c => !q ||
+      (c.category + ' ' + c.subcategory + ' ' + c.kind).toLowerCase().includes(q)).slice(0, 60);
+    if (!list.length) {
+      drop.innerHTML = '<div class="lg-catempty">일치하는 분류가 없습니다.</div>';
+    } else {
+      let last = '';
+      drop.innerHTML = list.map((c, i) => {
+        const head = c.kind !== last ? `<div class="lg-cathead">${c.kind}</div>` : '';
+        last = c.kind;
+        return head + `<div class="lg-catopt" role="option" data-i="${i}">
+          <span class="lg-kd ${c.kind}">${c.kind}</span>
+          <span class="em">${c.emoji_category || ''}</span>
+          <span class="tx">${enEsc(c.category)} › <b>${enEsc(c.subcategory)}</b></span>
+        </div>`;
+      }).join('');
+    }
+    drop.hidden = false;
+    inp.setAttribute('aria-expanded', 'true');
+    cur = -1;
+    drop.querySelectorAll('.lg-catopt').forEach(el =>
+      el.addEventListener('mousedown', (e) => { e.preventDefault(); pick(list[Number(el.dataset.i)]); }));
+  };
+  const pick = (c) => {
+    if (!c) return;
+    g.cat = String(c.id);
+    if (g.kind !== 'all' && g.kind !== c.kind) { g.kind = c.kind; paintChips(); }
+    g.page = 1;
+    paintCat(); close(); enLoadLedger();
+  };
+
+  chips.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+    g.kind = b.dataset.k;
+    /* 고른 종류와 안 맞는 분류는 자동으로 푼다 — 결과가 0건인 조합을 남기지 않는다 */
+    const c = EN.catById[Number(g.cat)];
+    if (g.kind !== 'all' && c && c.kind !== g.kind) g.cat = 'all';
+    g.page = 1;
+    paintChips(); paintCat(); enLoadLedger();
+  }));
+
+  inp.addEventListener('focus', () => { if (inp.classList.contains('picked')) { inp.value = ''; inp.classList.remove('picked'); } open(); });
+  inp.addEventListener('input', open);
+  inp.addEventListener('blur', () => setTimeout(() => { close(); paintCat(); }, 120));
+  inp.addEventListener('keydown', (e) => {
+    if (drop.hidden) return;
+    if (e.key === 'ArrowDown') { e.preventDefault(); cur = Math.min(cur + 1, list.length - 1); paintCursor(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); cur = Math.max(cur - 1, 0); paintCursor(); }
+    else if (e.key === 'Enter') { e.preventDefault(); pick(list[cur >= 0 ? cur : 0]); }
+    else if (e.key === 'Escape') { e.stopPropagation(); close(); paintCat(); inp.blur(); }
+  });
+  clear.addEventListener('click', () => { g.cat = 'all'; g.page = 1; paintCat(); enLoadLedger(); });
+
+  paintChips(); paintCat();
 }
 
 /* 기존 sticky 헤더 높이만큼 아래에 붙인다 */
@@ -5890,8 +6031,7 @@ async function enLoadLedger() {
       `<div><span class="k">수입</span><span class="v" style="color:var(--green);">${enComma(Math.round(agg['수입'] || 0))}</span></div>
        <div><span class="k">지출</span><span class="v" style="color:var(--red);">${enComma(Math.round(agg['지출'] || 0))}</span></div>
        <div><span class="k">이체</span><span class="v" style="color:var(--net);">${enComma(Math.round(agg['이체'] || 0))}</span></div>
-       <div><span class="k">수입 − 지출</span><span class="v" style="color:${net >= 0 ? 'var(--green)' : 'var(--red)'};">${enComma(Math.round(net))}</span></div>
-       <span class="lg-hint">분류 · 사용처 · 메모 · 금액 칸은 <kbd>더블클릭</kbd>, 태그는 <kbd>클릭</kbd>으로 바로 수정됩니다</span>`;
+       <div><span class="k">수입 − 지출</span><span class="v" style="color:${net >= 0 ? 'var(--green)' : 'var(--red)'};">${enComma(Math.round(net))}</span></div>`;
   }
 
   const box = enQS('#lg-list');
@@ -5917,8 +6057,9 @@ async function enLoadLedger() {
         grp.items.map(r => `<div class="lg-line k-${r.kind}" data-id="${r.id}"
           data-cat="${r.category_id}" data-amt="${r.amount}"
           data-merch="${enEsc(r.merchant || '')}" data-note="${enEsc(r.note || '')}">
+          <span class="k"><i class="lg-kd ${r.kind}">${r.kind}</i></span>
           <span class="e" aria-hidden="true">${r.emoji_category || ''}</span>
-          <span class="c" data-ed="cat" title="더블클릭해서 분류 변경"><i class="lg-kd ${r.kind}">${r.kind}</i><span class="ct">${enEsc(r.category)} › ${enEsc(r.subcategory)}</span></span>
+          <span class="c" data-ed="cat" title="더블클릭해서 분류 변경"><span class="ct">${enEsc(r.category)} › ${enEsc(r.subcategory)}</span></span>
           <span class="n" data-ed="merchant" title="더블클릭해서 수정">${enEsc(r.merchant || r.subcategory)}</span>
           <span class="mm" data-ed="note" title="더블클릭해서 수정">${r.note ? enEsc(r.note) : ''}</span>
           <span class="f">
