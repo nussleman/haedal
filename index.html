@@ -2451,28 +2451,35 @@ body{font-variant-numeric:tabular-nums;}
 /* ---------- 자산>투자>종목: 통합 표 ---------- */
 #inv-subnav{position:sticky;top:var(--hdr-h,0px);z-index:45;background:var(--bg);
   padding-top:6px;padding-bottom:2px;}
-.bk-wrap{display:block;}
+.bk-wrap{display:block;max-width:1200px;margin:0 auto;
+  --bk-g2:351px; --bk-g3:104px;}
 .bk-stick{position:sticky;top:calc(var(--hdr-h,0px) + var(--inv-nav-h,42px));z-index:40;
   background:var(--bg);padding-top:16px;display:block;}
-.bk-top{display:flex;align-items:flex-end;gap:26px;flex-wrap:wrap;margin-bottom:14px;}
-.bk-spacer{flex:1;}
-.bk-stat{display:flex;flex-direction:column;gap:3px;}
-.bk-stat .k{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;color:var(--text-faint);}
-.bk-stat b{font-family:var(--mono);font-size:17px;font-weight:600;color:var(--text);line-height:1.1;}
+
+/* ---- 머리 : 지표 3칸 + 오른쪽 조작부 ---- */
+.bk-top{display:flex;gap:14px;align-items:stretch;flex-wrap:wrap;margin-bottom:2px;}
+.bk-stats{display:flex;flex:0 0 auto;background:var(--panel);border:1px solid var(--border);
+  border-radius:11px;overflow:hidden;}
+.bk-stat{display:flex;flex-direction:column;justify-content:center;gap:4px;
+  padding:10px 18px;min-width:118px;border-right:1px solid var(--border);}
+.bk-stat:last-child{border-right:0;}
+.bk-stat .k{font-family:var(--mono);font-size:9px;letter-spacing:.12em;color:var(--text-faint);}
+.bk-stat b{font-family:var(--mono);font-size:16px;font-weight:600;color:var(--text);line-height:1.1;}
 .bk-stat b.up{color:#7fc0a0;} .bk-stat b.down{color:#e39189;}
-.bk-fresh{font-family:var(--mono);font-size:10.5px;color:#7fc0a0;}
-.bk-fresh.stale{color:var(--red);}
-.bk-bar{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:9px;}
-.bk-bar2{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px;}
+.bk-controls{flex:1 1 420px;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:8px;}
+.bk-spacer{flex:1;}
+.bk-bar,.bk-bar2{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:0;}
 .bk-bar2 .sdb-strip{margin-bottom:0;}
-.bk-q{height:32px;font-size:12.5px;flex:0 0 186px;width:186px;
+.bk-q{height:32px;font-size:12.5px;flex:0 0 176px;width:176px;
   background:var(--panel);border-color:var(--border-strong);}
-.bk-bar .bk-add{margin-left:auto;}
-.bk-add{height:32px;background:var(--gold);border:0;border-radius:8px;color:#1a1508;
-  font-family:var(--sans);font-weight:700;font-size:12px;padding:0 14px;cursor:pointer;white-space:nowrap;}
+.bk-fresh{font-family:var(--mono);font-size:10.5px;color:#7fc0a0;white-space:nowrap;}
+.bk-fresh.stale{color:var(--red);}
+.sd-saved{font-family:var(--mono);font-size:10.5px;color:var(--text-faint);}
+.bk-add{height:30px;background:var(--gold);border:0;border-radius:8px;color:#1a1508;
+  font-family:var(--sans);font-weight:700;font-size:12px;padding:0 13px;cursor:pointer;white-space:nowrap;}
 .bk-add:hover{filter:brightness(1.08);}
-.bk-clear{background:transparent;border:1px solid var(--border);border-radius:14px;
-  color:var(--text-faint);font-size:11px;padding:4px 11px;cursor:pointer;white-space:nowrap;}
+.bk-clear{background:transparent;border:1px solid var(--border);border-radius:15px;
+  color:var(--text-faint);font-size:11px;padding:5px 11px;cursor:pointer;white-space:nowrap;}
 .bk-clear:hover{border-color:var(--red);color:#e39189;}
 .bk-pick{position:relative;}
 .bk-pickbtn{display:flex;align-items:center;gap:6px;height:32px;padding:0 11px;cursor:pointer;
@@ -2486,75 +2493,74 @@ body{font-variant-numeric:tabular-nums;}
 .bk-pickdrop{left:0;right:auto;top:calc(100% + 4px);min-width:170px;max-height:330px;}
 .bk-pickdrop .lg-catopt.on{color:var(--gold-soft);}
 .bk-pickdrop .cnt{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--text-faint);}
-/* 열 묶음 이름 */
-/* 묶음은 선이 아니라 옅은 띠로 나눈다 — 표에 이미 가로줄이 많아서 세로선까지 더하면 지저분해진다 */
-.bk-groups{display:flex;gap:9px;padding:0 12px;margin-top:24px;}
-.bk-groups span{display:flex;align-items:flex-end;min-width:0;overflow:hidden;
-  border-radius:7px 7px 0 0;padding:5px 9px 4px;}
+
+/* ---- 세 덩어리 : 기본 / 판단 / 히스토리 ---- */
+.bk-groups{display:flex;gap:10px;margin-top:20px;}
+.bk-groups span{display:flex;align-items:flex-end;padding:0 12px 5px;min-width:0;}
 .bk-groups i{font-family:var(--mono);font-size:9px;letter-spacing:.16em;
   font-style:normal;white-space:nowrap;color:var(--text-faint);}
-.bk-groups .g2,.bk-groups .g3{background:rgba(255,255,255,.035);}
-.bk-groups .g2 i,.bk-groups .g3 i{color:var(--text-dim);}
-.bk-groups .g1{flex:1 1 auto;}
-.bk-groups .g2{flex:0 0 340px;}
-.bk-groups .g3{flex:0 0 93px;}
+.bk-groups .g1,.bk-cols .g1,.bk-row .g1{flex:1 1 auto;min-width:0;}
+.bk-groups .g2,.bk-cols .g2,.bk-row .g2{flex:0 0 var(--bk-g2);}
+.bk-groups .g3,.bk-cols .g3,.bk-row .g3{flex:0 0 var(--bk-g3);}
+
+.bk-cols,.bk-row{display:flex;gap:10px;align-items:stretch;}
+.bk-cols .grp,.bk-row .grp{display:flex;align-items:center;gap:9px;padding:0 12px;min-width:0;}
+.bk-cols{background:var(--bg);}
+.bk-cols .grp{height:30px;font-family:var(--mono);font-size:10px;color:var(--text-faint);
+  letter-spacing:.04em;border-radius:9px 9px 0 0;}
+.bk-cols .g1{background:rgba(255,255,255,.028);}
+.bk-cols .g2{background:rgba(201,162,39,.055);}
+.bk-cols .g3{background:rgba(57,168,189,.055);}
+.bk-row .grp{height:38px;}
+.bk-row .g1{background:rgba(255,255,255,.018);}
+.bk-row .g2{background:rgba(201,162,39,.035);}
+.bk-row .g3{background:rgba(57,168,189,.035);}
+.bk-row .grp{box-shadow:inset 0 -1px 0 var(--border);}
+.bk-card .bk-row:last-child .grp{box-shadow:none;border-radius:0 0 9px 9px;}
+.bk-row:hover .g1{background:rgba(255,255,255,.055);}
+.bk-row:hover .g2{background:rgba(201,162,39,.08);}
+.bk-row:hover .g3{background:rgba(57,168,189,.075);}
+.bk-row{cursor:default;user-select:none;}
 .bk-cols [data-s]{cursor:pointer;user-select:none;display:flex;align-items:center;gap:4px;}
-.bk-cols .ar{color:var(--gold-soft);font-size:8px;line-height:1;}
 .bk-cols [data-s]:hover{color:var(--text);}
-.bk-cols{margin-top:0;background:var(--bg);}
+.bk-cols .ar{color:var(--gold-soft);font-size:8px;line-height:1;}
 .bk-cols .va,.bk-cols .we,.bk-cols .gn,.bk-cols .pl,.bk-cols .rz,.bk-cols .sc{justify-content:flex-end;}
-.bk-cols .nm,.bk-row .nm{flex:1 1 130px;min-width:0;}
-.bk-cols .th,.bk-row .th{flex:0 0 132px;min-width:0;}
+
+/* ---- 열 폭 ---- */
+.bk-cols .nm,.bk-row .nm{flex:1 1 60px;min-width:0;}
+.bk-cols .th,.bk-row .th{flex:0 0 128px;min-width:0;}
 .bk-cols .va,.bk-row .va{flex:0 0 92px;text-align:right;}
 .bk-cols .we,.bk-row .we{flex:0 0 62px;text-align:right;}
+.bk-cols .gn,.bk-row .gn{flex:0 0 88px;text-align:right;}
+.bk-cols .pl,.bk-row .pl{flex:0 0 58px;text-align:right;}
 .bk-cols .gd,.bk-row .gd{flex:0 0 116px;}
 .bk-cols .sc,.bk-row .sc{flex:0 0 52px;text-align:right;}
 .bk-cols .vd,.bk-row .vd{flex:0 0 78px;}
 .bk-cols .ck,.bk-row .ck{flex:0 0 58px;text-align:right;}
-.bk-cols .gn,.bk-row .gn{flex:0 0 88px;text-align:right;}
-.bk-cols .pl,.bk-row .pl{flex:0 0 58px;text-align:right;}
-.bk-cols .rz,.bk-row .rz{flex:0 0 84px;text-align:right;}
-/* 묶음 경계 — 얇은 선 하나로 기본 | 판단 | 히스토리 를 나눈다 */
-/* 세로선을 지우고, 판단·히스토리 묶음에 아주 옅은 배경을 깐다 */
-.bk-cols .gd,.bk-cols .sc,.bk-cols .vd,.bk-cols .ck,
-.bk-row .gd,.bk-row .sc,.bk-row .vd,.bk-row .ck,
-.bk-cols .rz,.bk-row .rz{background:rgba(255,255,255,.035);}
-.bk-cols .sep,.bk-row .sep{margin-left:-4px;padding-left:4px;border-radius:4px 0 0 4px;}
-.bk-cols .ck,.bk-row .ck,.bk-cols .rz,.bk-row .rz{padding-right:4px;margin-right:-4px;border-radius:0 4px 4px 0;}
-.bk-cols{border-top:0;}
+.bk-cols .rz,.bk-row .rz{flex:0 0 80px;text-align:right;}
+
+/* ---- 칸 내용 ---- */
+.bk-row .nm{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text);
+  white-space:nowrap;overflow:hidden;}
+.bk-row .nm b{font-weight:400;min-width:0;overflow:hidden;text-overflow:ellipsis;}
+.bk-row .nm .tk{font-family:var(--mono);font-size:10px;color:var(--text-faint);font-style:normal;flex:0 0 auto;}
+.bk-row .nm.off{color:var(--text-faint);}
 .bk-dot{width:6px;height:6px;border-radius:50%;flex:0 0 6px;display:inline-block;}
 .bk-dot.y{background:var(--gold);}
 .bk-dot.n{background:transparent;box-shadow:inset 0 0 0 1px var(--text-faint);}
-.bk-row .nm.off{color:var(--text-faint);}
-.bk-row .nm .tk{font-family:var(--mono);font-size:10px;color:var(--text-faint);font-style:normal;}
-.bk-row{display:flex;align-items:center;gap:9px;height:38px;padding:0 12px;
-  border-bottom:1px solid var(--border);cursor:default;user-select:none;}
-.bk-card .bk-row:last-child{border-bottom:0;}
-.bk-row:hover{background:var(--panel-2);}
-.bk-row .nm{font-size:12.5px;color:var(--text);display:flex;align-items:baseline;gap:6px;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .bk-row .va,.bk-row .we,.bk-row .gn,.bk-row .pl,.bk-row .rz,.bk-row .sc,.bk-row .ck{
   font-family:var(--mono);font-size:11.5px;color:var(--text-dim);font-variant-numeric:tabular-nums;}
-.bk-row .gn.up,.bk-row .rz.up{color:#7fc0a0;}
-.bk-row .gn.down,.bk-row .rz.down{color:#e39189;}
+.bk-row .gn.up,.bk-row .rz.up,.bk-row .pl.up{color:#7fc0a0;}
+.bk-row .gn.down,.bk-row .rz.down,.bk-row .pl.down{color:#e39189;}
+.bk-row .sc em{font-style:normal;color:var(--text-faint);font-size:9.5px;}
+.bk-row .ck{color:var(--text-faint);}
+.bk-row .we .over{color:var(--gold);margin-left:3px;font-size:12px;}
 .bk-row .th{display:flex;align-items:center;gap:3px;overflow:hidden;cursor:pointer;position:relative;
   border-radius:5px;}
 .bk-row .th:hover{box-shadow:inset 0 0 0 1px var(--border-strong);}
 .bk-tag{font-family:var(--mono);font-size:9px;font-style:normal;white-space:nowrap;
   background:rgba(255,255,255,.06);color:var(--text-dim);border-radius:4px;padding:2px 5px;}
 .bk-tag.none{opacity:.4;}
-.bk-thmenu{left:0;right:auto;top:calc(100% + 2px);min-width:180px;max-height:300px;}
-.bk-thnew{padding:4px 4px 6px;}
-.bk-thnew input{width:100%;background:var(--panel-2);}
-.bk-thmenu .lg-catopt.on{color:var(--gold-soft);}
-.bk-thmenu .ck{margin-left:auto;color:var(--gold-soft);font-size:10px;}
-.bk-thsave{padding:6px 4px 2px;border-top:1px solid var(--border);margin-top:4px;}
-.bk-thsave button{width:100%;background:var(--gold);border:0;border-radius:6px;color:#1a1508;
-  font-weight:700;font-size:11.5px;padding:6px 0;cursor:pointer;}
-.bk-row .sc em{font-style:normal;color:var(--text-faint);font-size:9.5px;}
-.bk-row .ck{color:var(--text-faint);}
-.bk-row .pl.up{color:#7fc0a0;} .bk-row .pl.down{color:#e39189;}
-.bk-row .we .over{color:var(--gold);margin-left:3px;font-size:12px;}
 .bk-row .gd{display:flex;align-items:center;gap:6px;overflow:hidden;}
 .bk-gd{font-family:var(--mono);font-size:9.5px;border-radius:4px;padding:2px 6px;font-style:normal;white-space:nowrap;}
 .bk-gd.pass{background:var(--green-soft);color:#7fc0a0;}
@@ -2578,10 +2584,18 @@ body{font-variant-numeric:tabular-nums;}
 .bk-vmenu{left:auto;right:0;top:calc(100% + 2px);min-width:110px;}
 .bk-vmenu .lg-catopt.on{background:var(--panel-2);color:var(--gold-soft);}
 .bk-vmenu .tx.dim{color:var(--text-faint);}
-/* 판정 카드는 표를 밀어내지 않고 가운데 띄운다 */
+.bk-thmenu{left:0;right:auto;top:calc(100% + 2px);min-width:180px;max-height:300px;}
+.bk-thnew{padding:4px 4px 6px;}
+.bk-thnew input{width:100%;background:var(--panel-2);}
+.bk-thmenu .lg-catopt.on{color:var(--gold-soft);}
+.bk-thmenu .ck{margin-left:auto;color:var(--gold-soft);font-size:10px;}
+.bk-thsave{padding:6px 4px 2px;border-top:1px solid var(--border);margin-top:4px;}
+.bk-thsave button{width:100%;background:var(--gold);border:0;border-radius:6px;color:#1a1508;
+  font-weight:700;font-size:11.5px;padding:6px 0;cursor:pointer;}
+
+/* ---- 판정 카드 팝업 ---- */
 .bk-modal{position:fixed;inset:0;z-index:300;background:rgba(8,10,15,.72);
-  display:flex;align-items:center;justify-content:center;padding:28px 18px;
-  backdrop-filter:blur(3px);}
+  display:flex;align-items:center;justify-content:center;padding:28px 18px;backdrop-filter:blur(3px);}
 .bk-sheet{position:relative;width:min(960px,100%);max-height:86vh;display:flex;flex-direction:column;
   background:var(--panel);border:1px solid var(--border-strong);border-radius:14px;
   box-shadow:0 30px 80px -20px rgba(0,0,0,.8);}
@@ -2592,21 +2606,23 @@ body{font-variant-numeric:tabular-nums;}
 .bk-sheet .sdc-head{padding-right:34px;}
 .bk-sheet .sdc-sec{padding:13px 0;}
 .bk-sheet .sdc-row{padding:6px 0;}
+
+@media(max-width:1300px){
+  .bk-cols .gn,.bk-row .gn,.bk-cols .ck,.bk-row .ck{display:none;}
+  .bk-wrap{--bk-g2:284px;}
+}
+@media(max-width:1040px){
+  .bk-cols .va,.bk-row .va,.bk-cols .sc,.bk-row .sc,.bk-cols .th,.bk-row .th{display:none;}
+  .bk-wrap{--bk-g2:222px;}
+  .bk-stats{flex:1 1 100%;}
+  .bk-stat{flex:1;min-width:0;padding:9px 12px;}
+  .bk-q{flex:1 1 140px;width:auto;}
+}
 @media(max-width:640px){
+  .bk-cols .g3,.bk-row .g3,.bk-groups .g3{display:none;}
   .bk-modal{padding:12px 8px;}
   .bk-sheet{max-height:92vh;}
   .bk-sheetbody{padding:16px 14px 18px;}
-}
-@media(max-width:1300px){
-  .bk-cols .gn,.bk-row .gn,.bk-cols .ck,.bk-row .ck{display:none;}
-  .bk-groups .g2{flex:0 0 273px;}
-}
-@media(max-width:1040px){
-  .bk-cols .va,.bk-row .va,.bk-cols .sc,.bk-row .sc,.bk-cols .th,.bk-row .th,
-  .bk-cols .rz,.bk-row .rz{display:none;}
-  .bk-cols .gd,.bk-row .gd{flex:0 0 84px;}
-  .bk-row .gd em{display:none;}
-  .bk-groups{display:none;}
 }
 
 /* ---------- 자산>투자>스터디: 종목 검토 보드 ---------- */
@@ -14789,46 +14805,55 @@ function renderBookPage(hostId, data, d) {
     <div class="bk-wrap">
     <div class="bk-stick">
       <div class="bk-top">
-        ${s ? `
+        ${s ? `<div class="bk-stats">
           <div class="bk-stat"><span class="k">합계</span><b>${formatCompactWon(s.total)}원</b></div>
           <div class="bk-stat"><span class="k">평가손익</span><b class="${s.pl >= 0 ? 'up' : 'down'}">${s.pl >= 0 ? '+' : '−'}${formatCompactWon(Math.abs(s.pl))}원</b></div>
           <div class="bk-stat"><span class="k">수익률</span><b class="${s.plRate >= 0 ? 'up' : 'down'}">${s.plRate >= 0 ? '+' : '−'}${Math.abs(s.plRate || 0).toFixed(1)}%</b></div>
-        ` : ''}
-        <span class="bk-spacer"></span>
-        <span class="sd-saved" id="sd-saved">${enEsc(SDX.saved)}</span>
-        ${s ? `<span class="bk-fresh ${fresh.stale ? 'stale' : ''}" title="15분마다 자동 갱신">마지막 확인 ${s.asOf.slice(11)} · ${fresh.text}${fresh.stale ? ' ⚠️' : ''}</span>` : ''}
-      </div>
-      <div class="bk-bar">
-        <input class="en-in bk-q" id="bk-q" placeholder="종목 · 티커 검색" value="${enEsc(BK.q)}">
-        ${pick('theme', '테마', BK.theme, themeList.map(t => [t, bkThemeEmoji(t) + ' ' + enEsc(t), themeCnt[t] || 0])
-          .concat([['(없음)', '테마 없음', noThemeCnt]]))}
-        ${pick('grade', '등급', BK.grade, ['우량', '성장', '턴어라운드', '옵션형', '매수 금지', '탈락', '미검토'].map(g => [g, g, null]))}
-        ${pick('verdict', '결론', BK.verdict, SD_VERDICT.map(v => [v[0], v[1], null]).concat([['(미정)', '미정', null]]))}
-        <button class="bk-add" id="bk-new">+ 종목 추가</button>
-      </div>
-      <div class="bk-bar2">
-        <div class="sdb-strip">${chips.map(([k, l, n]) =>
-          `<button class="sdb-chip ${BK.filter === k ? 'on' : ''}" data-fil="${k}"><span class="l">${l}</span><span class="n">${n}</span></button>`).join('')}</div>
-        ${active ? `<button class="bk-clear" id="bk-clear">필터 ${active}개 해제</button>` : ''}
+        </div>` : ''}
+        <div class="bk-controls">
+          <div class="bk-bar">
+            <input class="en-in bk-q" id="bk-q" placeholder="종목 · 티커 검색" value="${enEsc(BK.q)}">
+            ${pick('theme', '테마', BK.theme, themeList.map(t => [t, bkThemeEmoji(t) + ' ' + enEsc(t), themeCnt[t] || 0])
+              .concat([['(없음)', '테마 없음', noThemeCnt]]))}
+            ${pick('grade', '등급', BK.grade, ['우량', '성장', '턴어라운드', '옵션형', '매수 금지', '탈락', '미검토'].map(g => [g, g, null]))}
+            ${pick('verdict', '결론', BK.verdict, SD_VERDICT.map(v => [v[0], v[1], null]).concat([['(미정)', '미정', null]]))}
+            <span class="bk-spacer"></span>
+            <span class="sd-saved" id="sd-saved">${enEsc(SDX.saved)}</span>
+            ${s ? `<span class="bk-fresh ${fresh.stale ? 'stale' : ''}" title="15분마다 자동 갱신">마지막 확인 ${s.asOf.slice(11)} · ${fresh.text}${fresh.stale ? ' ⚠️' : ''}</span>` : ''}
+          </div>
+          <div class="bk-bar2">
+            <div class="sdb-strip">${chips.map(([k, l, n]) =>
+              `<button class="sdb-chip ${BK.filter === k ? 'on' : ''}" data-fil="${k}"><span class="l">${l}</span><span class="n">${n}</span></button>`).join('')}</div>
+            <span class="bk-spacer"></span>
+            ${active ? `<button class="bk-clear" id="bk-clear">필터 ${active}개 해제</button>` : ''}
+            <button class="bk-add" id="bk-new">+ 종목 추가</button>
+          </div>
+        </div>
       </div>
       <div class="bk-groups">
         <span class="g1"><i>기본</i></span><span class="g2"><i>판단</i></span><span class="g3"><i>히스토리</i></span>
       </div>
-    <div class="lg-cols bk-cols" id="bk-cols">
-      <span class="nm" data-s="name">종목${arrow('name')}</span>
-      <span class="th" data-s="theme">테마${arrow('theme')}</span>
-      <span class="va" data-s="value">평가액${arrow('value')}</span>
-      <span class="we" data-s="weight">비중${arrow('weight')}</span>
-      <span class="gn" data-s="gain">평가손익${arrow('gain')}</span>
-      <span class="pl" data-s="pl">수익률${arrow('pl')}</span>
-      <span class="gd sep" data-s="grade">등급${arrow('grade')}</span>
-      <span class="sc" data-s="score">점수${arrow('score')}</span>
-      <span class="vd" data-s="verdict">결론${arrow('verdict')}</span>
-      <span class="ck" data-s="check">확인일${arrow('check')}</span>
-      <span class="rz sep" data-s="realized">실현수익${arrow('realized')}</span>
+    <div class="bk-cols" id="bk-cols">
+      <span class="grp g1">
+        <span class="nm" data-s="name">종목${arrow('name')}</span>
+        <span class="th" data-s="theme">테마${arrow('theme')}</span>
+        <span class="va" data-s="value">평가액${arrow('value')}</span>
+        <span class="we" data-s="weight">비중${arrow('weight')}</span>
+        <span class="gn" data-s="gain">평가손익${arrow('gain')}</span>
+        <span class="pl" data-s="pl">수익률${arrow('pl')}</span>
+      </span>
+      <span class="grp g2">
+        <span class="gd" data-s="grade">등급${arrow('grade')}</span>
+        <span class="sc" data-s="score">점수${arrow('score')}</span>
+        <span class="vd" data-s="verdict">결론${arrow('verdict')}</span>
+        <span class="ck" data-s="check">확인일${arrow('check')}</span>
+      </span>
+      <span class="grp g3">
+        <span class="rz" data-s="realized">실현수익${arrow('realized')}</span>
+      </span>
     </div>
     </div>
-    <div class="lg-card bk-card">${rows.length ? rows.map(r => bkRowHTML(r)).join('')
+    <div class="bk-card">${rows.length ? rows.map(r => bkRowHTML(r)).join('')
       : '<div class="empty-state">조건에 맞는 종목이 없습니다.</div>'}</div>
     <div class="lg-meta"><span>${rows.length}개 종목 · 줄을 더블클릭하면 판정 카드가 열립니다</span></div>
     </div>
@@ -14941,26 +14966,31 @@ function renderBookPage(hostId, data, d) {
 function bkRowHTML(r) {
   const st = bkStatus(r);
   const vd = r.verdict ? (SD_VERDICT.find(v => v[0] === r.verdict) || [])[1] : null;
-  const open = BK.open === r.name;
-  return `<div class="bk-row ${open ? 'open' : ''}" data-nm="${enEsc(r.name)}">
-      <span class="nm ${r.held ? '' : 'off'}" title="${r.held ? '보유 중' : '보유하지 않음'}">
-        <i class="bk-dot ${r.held ? 'y' : 'n'}"></i>${enEsc(r.name)}${r.symbol ? `<i class="tk">${enEsc(r.symbol)}</i>` : ''}</span>
-      <span class="th bk-th" title="클릭해서 테마 변경">${r.themes.length
-        ? r.themes.map(t => `<i class="bk-tag">${bkThemeEmoji(t)} ${enEsc(t)}</i>`).join('')
-        : '<i class="bk-tag none">＋ 테마</i>'}</span>
-      <span class="va">${r.value != null ? enComma(Math.round(r.value)) : '—'}</span>
-      <span class="we">${r.weight != null ? r.weight.toFixed(2) + '%' : '—'}${r.over != null && r.over > 0 ? `<b class="over" title="상한 대비 +${r.over.toFixed(1)}%p">!</b>` : ''}</span>
-      <span class="gn ${r.pl == null ? '' : r.pl >= 0 ? 'up' : 'down'}">${r.pl == null ? '—'
-        : `${r.pl >= 0 ? '+' : '−'}${enComma(Math.abs(Math.round(r.pl)))}`}</span>
-      <span class="pl ${r.plRate == null ? '' : r.plRate >= 0 ? 'up' : 'down'}">${r.plRate == null ? '—'
-        : `${r.plRate >= 0 ? '+' : '−'}${Math.abs(r.plRate).toFixed(1)}%`}</span>
-      <span class="gd sep bk-gdc" title="클릭해서 등급 지정">
-        <i class="bk-gd ${st.k}">${st.label}${r.card && r.card.grade_override ? '<b class="man">*</b>' : ''}</i>${r.capText ? `<em>${r.capText}</em>` : ''}</span>
-      <span class="sc">${r.answered ? `${r.score}<em>/14</em>` : '—'}</span>
-      <span class="vd bk-vd" title="클릭해서 결론 변경">${vd ? `<i class="bk-vdi v-${r.verdict}">${vd}</i>` : '<i class="bk-vdi none">—</i>'}</span>
-      <span class="ck bk-ckc" title="클릭해서 확인일 지정">${r.check ? String(r.check).slice(2).replace(/-/g, '.') : '—'}</span>
-      <span class="rz sep ${r.realized == null ? '' : r.realized >= 0 ? 'up' : 'down'}">${r.realized == null ? '—'
-        : `${r.realized >= 0 ? '+' : '−'}${enComma(Math.abs(Math.round(r.realized)))}`}</span>
+  return `<div class="bk-row" data-nm="${enEsc(r.name)}">
+      <span class="grp g1">
+        <span class="nm ${r.held ? '' : 'off'}" title="${r.held ? '보유 중' : '보유하지 않음'}">
+          <i class="bk-dot ${r.held ? 'y' : 'n'}"></i><b>${enEsc(r.name)}</b>${r.symbol ? `<i class="tk">${enEsc(r.symbol)}</i>` : ''}</span>
+        <span class="th bk-th" title="클릭해서 테마 변경">${r.themes.length
+          ? r.themes.map(t => `<i class="bk-tag">${bkThemeEmoji(t)} ${enEsc(t)}</i>`).join('')
+          : '<i class="bk-tag none">＋ 테마</i>'}</span>
+        <span class="va">${r.value != null ? enComma(Math.round(r.value)) : '—'}</span>
+        <span class="we">${r.weight != null ? r.weight.toFixed(2) + '%' : '—'}${r.over != null && r.over > 0 ? `<b class="over" title="상한 대비 +${r.over.toFixed(1)}%p">!</b>` : ''}</span>
+        <span class="gn ${r.pl == null ? '' : r.pl >= 0 ? 'up' : 'down'}">${r.pl == null ? '—'
+          : `${r.pl >= 0 ? '+' : '−'}${enComma(Math.abs(Math.round(r.pl)))}`}</span>
+        <span class="pl ${r.plRate == null ? '' : r.plRate >= 0 ? 'up' : 'down'}">${r.plRate == null ? '—'
+          : `${r.plRate >= 0 ? '+' : '−'}${Math.abs(r.plRate).toFixed(1)}%`}</span>
+      </span>
+      <span class="grp g2">
+        <span class="gd bk-gdc" title="클릭해서 등급 지정">
+          <i class="bk-gd ${st.k}">${st.label}${r.card && r.card.grade_override ? '<b class="man">*</b>' : ''}</i>${r.capText ? `<em>${r.capText}</em>` : ''}</span>
+        <span class="sc">${r.answered ? `${r.score}<em>/14</em>` : '—'}</span>
+        <span class="vd bk-vd" title="클릭해서 결론 변경">${vd ? `<i class="bk-vdi v-${r.verdict}">${vd}</i>` : '<i class="bk-vdi none">—</i>'}</span>
+        <span class="ck bk-ckc" title="클릭해서 확인일 지정">${r.check ? String(r.check).slice(2).replace(/-/g, '.') : '—'}</span>
+      </span>
+      <span class="grp g3">
+        <span class="rz ${r.realized == null ? '' : r.realized >= 0 ? 'up' : 'down'}">${r.realized == null ? '—'
+          : `${r.realized >= 0 ? '+' : '−'}${enComma(Math.abs(Math.round(r.realized)))}`}</span>
+      </span>
     </div>`;
 }
 
