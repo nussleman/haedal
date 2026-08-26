@@ -935,6 +935,10 @@ body{
   border-radius:5px;opacity:.22;filter:grayscale(1);}
 .lg-tg:hover{opacity:.6;background:rgba(255,255,255,0.05);}
 .lg-tg.on{opacity:1;filter:none;}
+/* 사용처 기준으로 켜진 고정비 — 손으로 찍은 것과 구분이 돼야 왜 켜졌는지 안다 */
+.lg-tg.auto{box-shadow:inset 0 0 0 1px rgba(201,162,39,.5);}
+.lg-tg.exc{opacity:.75;filter:grayscale(1);
+  box-shadow:inset 0 0 0 1px rgba(214,106,96,.55);}
 .lg-gb{background:none;border:1px solid transparent;cursor:pointer;border-radius:11px;
   font-family:var(--mono);font-size:9.5px;padding:0 8px;color:var(--text-faint);
   height:20px;min-width:44px;display:inline-flex;align-items:center;justify-content:center;}
@@ -1032,7 +1036,22 @@ body{
 .mg-card{margin-top:0;}
 .mg-cols .gp,.mg-row .gp{flex:0 0 122px;}
 .mg-cols .nm,.mg-row .nm{flex:1 1 auto;min-width:0;}
+.mg-cols .fx,.mg-row .fx{flex:0 0 52px;display:flex;align-items:center;gap:3px;}
 .mg-cols .ct,.mg-row .ct{flex:0 0 232px;min-width:0;}
+.mg-fx{background:none;border:0;cursor:pointer;font-size:11px;line-height:1;padding:0;
+  width:22px;height:22px;flex:0 0 22px;display:flex;align-items:center;justify-content:center;
+  border-radius:5px;opacity:.2;filter:grayscale(1);}
+.mg-fx:hover{opacity:.65;background:rgba(255,255,255,.05);}
+.mg-fx.on{opacity:1;filter:none;box-shadow:inset 0 0 0 1px rgba(201,162,39,.45);}
+.mg-row .fx .gap{font-family:var(--mono);font-size:9.5px;font-weight:600;color:#e39189;cursor:help;}
+.mg-fxseg{display:flex;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden;height:32px;}
+.mg-fxseg button{background:transparent;border:0;border-right:1px solid var(--border);cursor:pointer;
+  display:flex;align-items:center;gap:5px;padding:0 10px;font-size:11.5px;color:var(--text-dim);}
+.mg-fxseg button:last-child{border-right:0;}
+.mg-fxseg button:hover{color:var(--text);background:rgba(255,255,255,.04);}
+.mg-fxseg button.on{background:rgba(201,162,39,.14);color:var(--gold-soft);}
+.mg-fxseg i{font-style:normal;font-family:var(--mono);font-size:9.5px;color:var(--text-faint);}
+.mg-fxseg button.on i{color:rgba(201,162,39,.7);}
 .mg-cols .cn,.mg-row .cn{flex:0 0 56px;text-align:right;}
 .mg-cols .sm,.mg-row .sm{flex:0 0 104px;text-align:right;}
 .mg-cols .lt,.mg-row .lt{flex:0 0 60px;text-align:right;}
@@ -1053,6 +1072,7 @@ body{
 .mg-row [data-me].editing{box-shadow:inset 0 0 0 1px var(--gold-soft);}
 @media(max-width:820px){
   .mg-cols .ct,.mg-row .ct,.mg-cols .sm,.mg-row .sm,.mg-cols .lt,.mg-row .lt{display:none;}
+  .mg-cols .fx,.mg-row .fx{flex:0 0 44px;}
   .mg-cols .gp,.mg-row .gp{flex:0 0 90px;}
 }
 
@@ -5674,7 +5694,7 @@ const SB_URL  = 'https://rjxmrpifrhybucexuvli.supabase.co';
 const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqeG1ycGlmcmh5YnVjZXh1dmxpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU1NjU1OTAsImV4cCI6MjEwMTE0MTU5MH0.xSzE02pjZYqbx9nPLb8RVsQF9w7hJHEx2cO0JDOLLSU';
 
 const EN = {
-  sb: null, cats: [], catById: {}, freq: {}, merchants: [], merchCat: {},
+  sb: null, cats: [], catById: {}, freq: {}, merchants: [], merchCat: {}, merchFixed: {},
   catId: null, neg: false, loaded: false,
   lg: { q: '', kind: 'all', cat: 'all', from: '', to: '', quick: '3m', sort: 'date_desc', page: 1, size: 60 },
   draft: []
@@ -5766,16 +5786,43 @@ async function enLoadAllMerchants() {
       if (data.length < 1000) break;
     }
     /* 아직 거래가 없는, 직접 등록만 해 둔 사용처 */
-    const { data: reg } = await sb.from('merchants').select('name,merchant_group');
+    const { data: reg } = await sb.from('merchants').select('name,merchant_group,is_fixed');
     (reg || []).forEach(r => {
       const m = String(r.name || '').trim();
       if (!m) return;
       if (!seen[m]) { seen[m] = 1; EN.merchants.push(m); }
       if (r.merchant_group) EN.merchGroup[m] = r.merchant_group;
+      if (r.is_fixed) EN.merchFixed[m] = true;
     });
     EN.merchants.sort((a, b) => a.localeCompare(b, 'ko'));
   } catch (e) { /* 다음 열 때 다시 시도된다 */ }
   EN.merchLoading = false;
+}
+
+/* ---------- 사용처 = 고정비 ----------
+   고정비는 원래 기록 한 줄마다 손으로 찍던 값이었다. 그런데 '넷플릭스'가 고정비면
+   넷플릭스로 찍힌 모든 줄이 고정비다 — 줄마다 판단할 일이 아니라 사용처의 성질이다.
+   그래서 기준은 사용처에 두고, 기록은 그 기준을 따라간다. */
+function enMerchFixed(name) {
+  return !!(EN.merchFixed && EN.merchFixed[String(name || '').trim()]);
+}
+
+/* 지정/해제 + 과거 기록 일괄 반영. past 가 true 면 그 사용처의 기록 전체를 맞춘다. */
+async function enSetMerchantFixed(name, on, past) {
+  const nm = String(name || '').trim();
+  if (!nm) return { ok: false, moved: 0 };
+  const sb = await enClient();
+  const { error } = await sb.from('merchants')
+    .upsert({ name: nm, is_fixed: !!on }, { onConflict: 'owner_id,name' });
+  if (error) return { ok: false, moved: 0 };
+  if (on) EN.merchFixed[nm] = true; else delete EN.merchFixed[nm];
+  let moved = 0;
+  if (past) {
+    const { data, error: e2 } = await sb.from('transactions')
+      .update({ is_fixed: !!on }).eq('merchant', nm).neq('is_fixed', !!on).select('id');
+    if (!e2) moved = (data || []).length;
+  }
+  return { ok: true, moved };
 }
 
 /* 사용처를 사전에만 등록한다 — 거래 없이도 자동완성에 뜨게 */
@@ -5797,13 +5844,15 @@ async function enEnsureRefs() {
   if (EN.loaded) return;
   const sb = await enClient();
   const since = new Date(Date.now() - 180 * 864e5).toISOString().slice(0, 10);
-  const [catRes, recentRes] = await Promise.all([
+  const [catRes, recentRes, fixRes] = await Promise.all([
     sb.from('categories').select('id,kind,category,subcategory,emoji_category,sort_order')
       .neq('kind', '자산').eq('is_active', true).order('sort_order'),
     /* 여기서는 '자주 쓰는 분류' 계산용이라 최근 1000건이면 충분하다.
        전체 사용처 목록은 enLoadAllMerchants 가 따로 끝까지 읽는다. */
     sb.from('transactions').select('category_id,merchant,merchant_group').gte('date', since)
-      .order('date', { ascending: false }).limit(1000)
+      .order('date', { ascending: false }).limit(1000),
+    /* 고정비로 지정된 사용처는 많지 않다. 첫 그림부터 맞게 그리려면 여기서 같이 받아야 한다. */
+    sb.from('merchants').select('name').eq('is_fixed', true)
   ]);
   EN.cats = catRes.data || [];
   EN.catById = {};
@@ -5819,6 +5868,11 @@ async function enEnsureRefs() {
       mc[r.merchant][r.category_id] = (mc[r.merchant][r.category_id] || 0) + 1;
       if (r.merchant_group && !EN.merchGroup[r.merchant]) EN.merchGroup[r.merchant] = r.merchant_group;
     }
+  });
+  EN.merchFixed = {};
+  (fixRes && fixRes.data || []).forEach(r => {
+    const m = String(r.name || '').trim();
+    if (m) EN.merchFixed[m] = true;
   });
   EN.merchants = Object.keys(mc);
   /* PostgREST 는 한 번에 1000행까지만 준다. limit 을 크게 줘도 소용없어서
@@ -5982,6 +6036,8 @@ function enSetupMerchant() {
     inp.value = (gp ? gp + ' › ' : '') + name;
     const cid = EN.merchCat[name];
     if (cid) { EN.catId = cid; enSyncCat(); }
+    const fx = enQS('#en-fx');
+    if (fx && enMerchFixed(name)) fx.setAttribute('aria-pressed', 'true');
     close();
     enQS('#en-amt').focus();
   };
@@ -6524,7 +6580,7 @@ async function enLoadLedger() {
           <span class="mm" data-ed="note" title="더블클릭해서 메모 수정">${r.note ? enEsc(r.note) : '<i class="lg-ph">메모</i>'}</span>
           <span class="f">
             <button class="lg-tg ${r.company_paid ? 'on' : ''}" data-tg="company_paid" title="회사 환급">🏢</button>
-            <button class="lg-tg ${r.is_fixed ? 'on' : ''}" data-tg="is_fixed" title="고정비">📌</button>
+            ${lgFixedBtn(r.merchant, r.is_fixed)}
           </span>
           <span class="g">${r.kind === '지출'
             ? `<button class="lg-gb ${r.good_bad === 'Good' ? 'good' : r.good_bad === 'Bad' ? 'bad' : ''}" data-gb title="클릭해서 Good → Bad → 해제">${r.good_bad === 'Good' ? 'GOOD' : r.good_bad === 'Bad' ? 'BAD' : '—'}</button>`
@@ -6667,7 +6723,15 @@ function lgBindEdit(box) {
     btn.classList.toggle('on', on);
     const patch = {}; patch[btn.dataset.tg] = on;
     const ok = await lgUpdate(Number(line.dataset.id), patch);
-    if (!ok) btn.classList.toggle('on', !on); else lgTouched();
+    if (!ok) { btn.classList.toggle('on', !on); return; }
+    lgTouched();
+    /* 사용처 기준과 어긋나면 그 자리에서 표시해 준다 — 예외인 줄 모르고 두는 일이 없게 */
+    if (btn.dataset.tg === 'is_fixed') {
+      const mfx = enMerchFixed(line.dataset.merch);
+      btn.classList.toggle('auto', mfx && on);
+      btn.classList.toggle('exc', mfx && !on);
+      btn.title = mfx ? (on ? '고정비 — 사용처 기준' : '사용처는 고정비인데 이 줄만 예외') : '고정비';
+    }
   }));
 
   box.querySelectorAll('[data-gb]').forEach(btn => btn.addEventListener('click', async () => {
@@ -6682,6 +6746,17 @@ function lgBindEdit(box) {
       btn.textContent = cur === 'Good' ? 'GOOD' : cur === 'Bad' ? 'BAD' : '—';
     }
   }));
+}
+
+/* 사용처가 고정비로 지정돼 있으면 왜 켜져 있는지가 보여야 한다.
+   auto = 사용처 기준으로 켜진 것 · exc = 사용처는 고정비인데 이 줄만 뺀 것. */
+function lgFixedBtn(merchant, on) {
+  const mfx = enMerchFixed(merchant);
+  const cls = ['lg-tg', on ? 'on' : '', mfx ? (on ? 'auto' : 'exc') : ''].filter(Boolean).join(' ');
+  const tip = mfx
+    ? (on ? '고정비 — 사용처 기준' : '사용처는 고정비인데 이 줄만 예외')
+    : '고정비';
+  return `<button class="${cls}" data-tg="is_fixed" title="${tip}">📌</button>`;
 }
 
 /* 분류를 셀렉트 대신 검색으로 고른다 — 소분류가 수십 개라 스크롤로는 못 찾는다.
@@ -6909,7 +6984,7 @@ function lgDraftRowHTML(i, seed) {
     <span class="no"><input class="lg-ed" data-d="note" placeholder="메모" autocomplete="off" value="${enEsc(seed.note || '')}"></span>
     <span class="tg">
       <button class="lg-tg ${seed.company_paid ? 'on' : ''}" data-dtg="company_paid" title="회사 환급">🏢</button>
-      <button class="lg-tg ${seed.is_fixed ? 'on' : ''}" data-dtg="is_fixed" title="고정비">📌</button>
+      <button class="lg-tg ${seed.is_fixed || enMerchFixed(seed.merchant) ? 'on' : ''}${enMerchFixed(seed.merchant) ? ' auto' : ''}" data-dtg="is_fixed" title="고정비">📌</button>
     </span>
     <span class="gb"><button class="lg-gb ${c && c.kind !== '지출' ? 'off' : ''} ${seed.good_bad === 'Good' ? 'good' : seed.good_bad === 'Bad' ? 'bad' : ''}" data-dgb ${c && c.kind !== '지출' ? 'disabled' : ''}>${seed.good_bad === 'Good' ? 'GOOD' : seed.good_bad === 'Bad' ? 'BAD' : '—'}</button></span>
     <span class="am"><input class="lg-ed mono" data-d="amount" inputmode="numeric" placeholder="0" value="${enEsc(seed.amount || '')}"></span>
@@ -6957,7 +7032,7 @@ function lgRenderAdd(focusIdx) {
     sync();
   });
 
-  /* 사용처를 적으면 예전에 쓰던 그룹과 분류가 따라온다 */
+  /* 사용처를 적으면 예전에 쓰던 그룹과 분류가 따라오고, 고정비 사용처면 📌도 같이 켜진다 */
   host.querySelectorAll('[data-d="merchant"]').forEach(inp => {
     const row = inp.closest('.lg-dr');
     const apply = (cid) => {
@@ -6969,8 +7044,20 @@ function lgRenderAdd(focusIdx) {
       if (q && c) q.value = c.category + ' › ' + c.subcategory;
       hid.dispatchEvent(new Event('change'));
     };
-    lgMerchantAC(inp, (m, cid) => apply(cid));
-    inp.addEventListener('change', () => apply(EN.merchCat[lgSplitMerchant(inp.value).merchant]));
+    /* 손으로 끈 것을 다시 켜지는 않는다 — 자동은 auto 표시가 남아 있을 때만 */
+    const applyFixed = (m) => {
+      const b = row.querySelector('[data-dtg="is_fixed"]');
+      if (!b) return;
+      const mfx = enMerchFixed(m);
+      if (mfx) { b.classList.add('on', 'auto'); }
+      else if (b.classList.contains('auto')) { b.classList.remove('on', 'auto'); }
+    };
+    lgMerchantAC(inp, (m, cid) => { apply(cid); applyFixed(m); });
+    inp.addEventListener('change', () => {
+      const m = lgSplitMerchant(inp.value).merchant;
+      apply(EN.merchCat[m]);
+      applyFixed(m);
+    });
   });
 
   host.querySelectorAll('[data-d="amount"]').forEach(inp => {
@@ -6982,7 +7069,10 @@ function lgRenderAdd(focusIdx) {
     });
   });
 
-  host.querySelectorAll('[data-dtg]').forEach(b => b.addEventListener('click', () => b.classList.toggle('on')));
+  host.querySelectorAll('[data-dtg]').forEach(b => b.addEventListener('click', () => {
+    b.classList.toggle('on');
+    b.classList.remove('auto');   /* 손으로 건드린 순간부터는 자동이 아니다 */
+  }));
   host.querySelectorAll('[data-dgb]').forEach(b => b.addEventListener('click', () => {
     const cur = b.classList.contains('good') ? 'Good' : b.classList.contains('bad') ? 'Bad' : null;
     const next = cur === null ? 'Good' : cur === 'Good' ? 'Bad' : null;
@@ -7147,9 +7237,9 @@ async function lgDraftSave() {
    814개 사용처가 어느 그룹·분류로 쓰이고 있는지 한 곳에서 본다.
    여기서 고치면 그 사용처의 과거 기록 전체가 같이 바뀐다 — 표기 흔들림을 잡는 자리. */
 
-const MG = { rows: null, q: '', group: 'all', sort: 'cnt', dir: 'desc', loading: false };
+const MG = { rows: null, q: '', group: 'all', fixed: 'all', sort: 'cnt', dir: 'desc', loading: false };
 /* 열마다 기본 방향이 다르다 — 숫자는 큰 것부터, 글자는 가나다순이 자연스럽다 */
-const MG_SORTDIR = { gp: 'asc', nm: 'asc', ct: 'asc', cnt: 'desc', sum: 'desc', last: 'desc' };
+const MG_SORTDIR = { gp: 'asc', nm: 'asc', ct: 'asc', fx: 'desc', cnt: 'desc', sum: 'desc', last: 'desc' };
 
 /* 그룹 이름 앞에 붙는 그림. 목록이 39줄이라 글자만으로는 훑기 어렵다. */
 const MG_EMOJI = {
@@ -7221,7 +7311,7 @@ async function mgLoad(force) {
   /* 3천~4천 행이라 한 번에 다 받는다. 페이지를 나누면 집계가 틀어진다. */
   for (let from = 0; from < 20000; from += 1000) {
     const { data, error } = await sb.from('v_transactions')
-      .select('merchant,merchant_group,category_id,kind,amount,date')
+      .select('merchant,merchant_group,category_id,kind,amount,date,is_fixed')
       .order('id', { ascending: false }).range(from, from + 999);
     if (error || !data || !data.length) break;
     out.push(...data);
@@ -7232,9 +7322,10 @@ async function mgLoad(force) {
     const m = (r.merchant || '').trim();
     if (!m) return;
     const k = m;
-    if (!map[k]) map[k] = { name: m, groups: {}, tags: {}, cats: {}, cnt: 0, sum: 0, last: '', kind: r.kind };
+    if (!map[k]) map[k] = { name: m, groups: {}, tags: {}, cats: {}, cnt: 0, fixedCnt: 0, sum: 0, last: '', kind: r.kind };
     const e = map[k];
     e.cnt++;
+    if (r.is_fixed) e.fixedCnt++;
     e.sum += Math.abs(Number(r.amount) || 0);
     if (String(r.date) > e.last) { e.last = String(r.date); e.kind = r.kind; }
     /* 그룹이 비어 있는 것도 하나의 상태로 센다 — 일부만 묶여 있으면 그것도 흔들림이다 */
@@ -7247,17 +7338,27 @@ async function mgLoad(force) {
     Object.keys(o).forEach(k => { if (o[k] > n) { n = o[k]; best = k; } });
     return best;
   };
+  const fixedReg = {};
   try {
-    const { data: reg } = await sb.from('merchants').select('name,merchant_group');
+    const { data: reg } = await sb.from('merchants').select('name,merchant_group,is_fixed');
     (reg || []).forEach(r => {
       const m = String(r.name || '').trim();
-      if (!m || map[m]) return;
+      if (!m) return;
+      if (r.is_fixed) fixedReg[m] = true;
+      if (map[m]) return;
       map[m] = { name: m, groups: { [r.merchant_group || '']: 1 },
-        tags: r.merchant_group ? { [r.merchant_group]: 1 } : {}, cats: {}, cnt: 0, sum: 0, last: '', kind: '지출' };
+        tags: r.merchant_group ? { [r.merchant_group]: 1 } : {}, cats: {}, cnt: 0, fixedCnt: 0, sum: 0, last: '', kind: '지출' };
     });
   } catch (e) {}
+  /* 사전 값이 기준이다. 자동완성 쪽 캐시도 여기서 같이 맞춰 둔다. */
+  EN.merchFixed = {};
+  Object.keys(fixedReg).forEach(m => { EN.merchFixed[m] = true; });
   MG.rows = Object.values(map).map(e => ({
     name: e.name, cnt: e.cnt, sum: e.sum, last: e.last, kind: e.kind,
+    fixed: !!fixedReg[e.name],
+    fixedCnt: e.fixedCnt,
+    /* 사용처는 고정비인데 기록 일부가 빠져 있는 상태 — 표에서 바로 보이게 */
+    fixedGap: (fixedReg[e.name] ? e.cnt - e.fixedCnt : e.fixedCnt),
     group: top(e.groups) || '',
     tags: Object.keys(e.tags).sort((a, b) => e.tags[b] - e.tags[a]),
     catId: Number(top(e.cats)) || null,
@@ -7279,6 +7380,7 @@ async function renderMerchantPage(host) {
     r.tags.forEach(t => { groups[t] = (groups[t] || 0) + 1; });
   });
   const gList = Object.keys(groups).sort((a, b) => groups[b] - groups[a]);
+  const fxCnt = { y: MG.rows.filter(r => r.fixed).length, gap: MG.rows.filter(r => r.fixedGap).length };
 
   const q = MG.q.trim().toLowerCase();
   let rows = MG.rows.filter(r => {
@@ -7287,6 +7389,8 @@ async function renderMerchantPage(host) {
       if (!hit) return false;
     }
     if (q && !(r.name.toLowerCase().includes(q) || r.tags.join(' ').toLowerCase().includes(q))) return false;
+    if (MG.fixed === 'y' && !r.fixed) return false;
+    if (MG.fixed === 'gap' && !r.fixedGap) return false;
     return true;
   });
   const catLabel = (r) => { const c = EN.catById[r.catId]; return c ? c.category + ' ' + c.subcategory : 'ㅎㅎㅎ'; };
@@ -7295,6 +7399,7 @@ async function renderMerchantPage(host) {
     sum: (a, b) => b.sum - a.sum,
     last: (a, b) => b.last.localeCompare(a.last),
     nm: (a, b) => a.name.localeCompare(b.name, 'ko'),
+    fx: (a, b) => (b.fixed ? 1 : 0) - (a.fixed ? 1 : 0) || b.sum - a.sum,
     gp: (a, b) => (a.tags[0] || 'ㅎㅎㅎ').localeCompare(b.tags[0] || 'ㅎㅎㅎ', 'ko') || a.name.localeCompare(b.name, 'ko'),
     ct: (a, b) => catLabel(a).localeCompare(catLabel(b), 'ko') || a.name.localeCompare(b.name, 'ko')
   };
@@ -7326,6 +7431,15 @@ async function renderMerchantPage(host) {
           </div>
         </div>
         <div class="lg-grp">
+          <span class="lg-glab">고정비</span>
+          <div class="mg-fxseg" id="mg-fxseg">
+            ${[['all', '전체', MG.rows.length],
+               ['y', '📌 고정비', fxCnt.y],
+               ['gap', '어긋남', fxCnt.gap]].map(([v, l, c]) =>
+              `<button data-fx="${v}" class="${MG.fixed === v ? 'on' : ''}">${l}<i>${c}</i></button>`).join('')}
+          </div>
+        </div>
+        <div class="lg-grp">
           <span class="lg-glab">&nbsp;</span>
           <button class="bk-add" id="mg-add">+ 사용처 추가</button>
           <button class="lg-reset" id="mg-reload">다시 읽기</button>
@@ -7335,6 +7449,7 @@ async function renderMerchantPage(host) {
       <div class="lg-cols mg-cols" id="mg-cols">
         <span class="gp" data-s="gp">그룹${arrow('gp')}</span>
         <span class="nm" data-s="nm">사용처${arrow('nm')}</span>
+        <span class="fx" data-s="fx">고정${arrow('fx')}</span>
         <span class="ct" data-s="ct">주로 쓰는 분류${arrow('ct')}</span>
         <span class="cn" data-s="cnt">건수${arrow('cnt')}</span>
         <span class="sm" data-s="sum">합계${arrow('sum')}</span>
@@ -7350,6 +7465,11 @@ async function renderMerchantPage(host) {
                 + (r.mixedGroup ? '<b class="mix" title="기록마다 그룹이 다릅니다">•</b>' : '')
               : '<i class="lg-mg none">없음</i>'}</span>
             <span class="nm" data-me="name" title="더블클릭해서 이름 변경">${enEsc(r.name)}</span>
+            <span class="fx"><button class="mg-fx ${r.fixed ? 'on' : ''}" data-mfx
+              title="${r.fixed ? '고정비 사용처 — 눌러서 해제' : '눌러서 고정비 사용처로 지정'}">📌</button>${
+              r.fixedGap ? `<b class="gap" title="${r.fixed
+                ? `이 사용처 기록 ${r.fixedGap}건이 아직 고정비로 표시돼 있지 않습니다`
+                : `고정비 사용처가 아닌데 기록 ${r.fixedGap}건이 고정비로 표시돼 있습니다`}">${r.fixedGap}</b>` : ''}</span>
             <span class="ct" data-me="cat" title="더블클릭해서 분류 일괄 변경">${c
               ? `<i class="lg-kd ${c.kind}">${c.kind}</i>${enEsc(c.category)} › ${enEsc(c.subcategory)}`
               : '<span class="dim">분류 없음</span>'}${r.mixedCat ? '<b class="mix" title="기록마다 분류가 다릅니다">•</b>' : ''}</span>
@@ -7375,6 +7495,12 @@ async function renderMerchantPage(host) {
     }, 260);
   });
   enQS('#mg-reload').addEventListener('click', () => { MG.rows = null; renderMerchantPage(host); });
+  host.querySelectorAll('#mg-fxseg [data-fx]').forEach(b => b.addEventListener('click', () => {
+    MG.fixed = b.dataset.fx;
+    renderMerchantPage(host);
+  }));
+  host.querySelectorAll('[data-mfx]').forEach(b => b.addEventListener('click', () =>
+    mgToggleFixed(b.closest('.mg-row').dataset.m, host)));
   enQS('#mg-add').addEventListener('click', async () => {
     const nm = (prompt('추가할 사용처 이름') || '').trim();
     if (!nm) return;
@@ -7392,6 +7518,29 @@ async function renderMerchantPage(host) {
   }));
   host.querySelectorAll('[data-me]').forEach(cell =>
     cell.addEventListener('dblclick', () => mgEdit(cell, host)));
+}
+
+/* 사용처를 고정비로 지정한다. 그룹·분류 수정과 같은 규칙 —
+   과거 기록 몇 건이 바뀌는지 먼저 알려주고 묻는다. */
+async function mgToggleFixed(name, host) {
+  const rec = MG.rows.find(r => r.name === name);
+  if (!rec) return;
+  const on = !rec.fixed;
+  const gap = on ? rec.cnt - rec.fixedCnt : rec.fixedCnt;
+  let past = false;
+  if (gap > 0) {
+    past = confirm(`'${name}' 을(를) ${on ? '고정비 사용처로 지정' : '고정비에서 해제'}합니다.\n\n`
+      + `지난 기록 ${enComma(gap)}건도 같이 ${on ? '고정비로 표시' : '해제'}할까요?\n\n`
+      + `확인 — 지난 기록까지 맞춥니다\n취소 — 앞으로 넣는 기록에만 적용됩니다`);
+  }
+  const res = await enSetMerchantFixed(name, on, past);
+  if (!res.ok) { enToast('바꾸지 못했습니다'); return; }
+  rec.fixed = on;
+  if (past) rec.fixedCnt = on ? rec.cnt : 0;
+  rec.fixedGap = rec.fixed ? rec.cnt - rec.fixedCnt : rec.fixedCnt;
+  enToast(`'${name}' ${on ? '고정비로 지정' : '고정비 해제'}`
+    + (res.moved ? ` · 지난 기록 ${enComma(res.moved)}건 반영` : ''));
+  renderMerchantPage(host);
 }
 
 /* 여기서 고친 건 과거 기록 전체에 적용된다. 몇 건이 바뀌는지 먼저 알려주고 묻는다. */
