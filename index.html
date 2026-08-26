@@ -61,6 +61,8 @@
   --net-fill:#9b7fc2;      --net-text:#c0a8e0;      --net-strong:#d8c8ef;      --net-bg:rgba(155,127,194,0.18);
   --warn-fill:#d9884f;     --warn-text:#e6b48f;     --warn-strong:#f0b795;     --warn-bg:rgba(217,136,79,0.16);
   --info-fill:#5b8fc7;     --info-text:#9dc2e8;     --info-strong:#b6d5f2;     --info-bg:rgba(91,143,199,0.18);
+  --save-fill:#c2749b;     --save-text:#d99cb8;     --save-strong:#eabfd2;     --save-bg:rgba(194,116,155,0.18);
+  --pension-fill:#7b7fd0;  --pension-text:#a9adea;  --pension-strong:#cdcff5;  --pension-bg:rgba(123,127,208,0.18);
 }
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;}
@@ -373,7 +375,19 @@ body{
 .dtl-group-head.income{background:var(--income-bg);color:var(--income-text);}
 .dtl-group-head.expense{background:var(--expense-bg);color:var(--expense-text);}
 .dtl-group-head.transfer{background:var(--transfer-bg);color:var(--transfer-text);}
-.dtl-group /* ---------- 내역 행 공용 배지 (오늘 탭 표 ↔ 전체 내역 통일) ---------- */
+/* ---------- 읽기 전용 원장 행 (오늘 탭) ----------
+   전체 내역(.lg-line)과 같은 규격을 쓰되 편집 어포던스만 뺀다. */
+.lg-ro{cursor:default;}
+.lg-ro:hover{background:transparent;}
+.lg-ro-card{max-height:430px;overflow-y:auto;}
+.today-list .lg-cols{margin-top:0;border-top:0;}
+.today-list .lg-cols .c,.today-list .lg-line .c{flex:0 0 150px;}
+.today-list .lg-cols .mm,.today-list .lg-line .mm{flex:0 0 120px;}
+@media (max-width:1240px){
+  .today-list .lg-cols .mm,.today-list .lg-line .mm{display:none;}
+}
+
+/* ---------- 내역 행 공용 배지 (오늘 탭 표 ↔ 전체 내역 통일) ---------- */
 .data-table td.c-kind{width:1%;white-space:nowrap;}
 .data-table td.c-date{font-family:var(--mono);font-size:var(--fs-xs);color:var(--text-faint);white-space:nowrap;width:1%;}
 .data-table td.c-marks{width:1%;white-space:nowrap;}
@@ -399,7 +413,7 @@ body{
 .data-table td .v.수입{color:var(--income-text);}
 .data-table td .v.지출{color:var(--expense-text);}
 .data-table td .v.이체{color:var(--transfer-text);}
-.table-scroll{border:none;border-radius:0;}
+.dtl-group .table-scroll{border:none;border-radius:0;}
 .dtl-group table{border-left:2px solid var(--border-strong);}
 .dtl-group.income table{border-left-color:rgba(76,140,107,0.5);}
 .dtl-group.expense table{border-left-color:rgba(193,72,63,0.5);}
@@ -1836,8 +1850,8 @@ body{font-variant-numeric:tabular-nums;}
 /* 바깥은 화면 상하 중앙, 안쪽은 두 칼럼 윗선 정렬 */
 .today-center{display:flex;align-items:center;justify-content:center;min-height:min(66vh,660px);}
 .today-inner{display:flex;gap:16px;align-items:flex-start;justify-content:center;
-  width:100%;max-width:1060px;}
-.today-col{flex:0 0 300px;display:flex;flex-direction:column;gap:12px;}
+  width:100%;max-width:1460px;}
+.today-col{flex:0 0 276px;display:flex;flex-direction:column;gap:12px;}
 .today-list{flex:1 1 auto;min-width:0;}
 @media (max-width:820px){
   .today-center{min-height:0;}
@@ -2382,15 +2396,15 @@ const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/edit
 const CAT_COLORS = {
   '현금 자산': '#c9a227',
   '투자 자산': '#4c8c6b',
-  '저축 자산': '#5b8fc7',
-  '연금 자산': '#9b7fc2'
+  '저축 자산': '#c2749b',
+  '연금 자산': '#7b7fd0'
 };
 const CAT_ORDER = ['현금 자산', '투자 자산', '저축 자산', '연금 자산'];
 const ACCT_BOARD_ORDER = ['현금 자산', '투자 자산', '연금 자산', '저축 자산'];
 const DISPLAY_GROUP = { '현금 자산': '현금', '투자 자산': '투자', '저축 자산': '저축', '연금 자산': '저축' };
-const DISPLAY_COLORS = { '현금': '#c9a227', '투자': '#4c8c6b', '저축': '#5b8fc7' };
+const DISPLAY_COLORS = { '현금': '#c9a227', '투자': '#4c8c6b', '저축': '#c2749b' };
 const DISPLAY_ORDER = ['현금', '투자', '저축'];
-const CAT_PIE_PALETTE_INV = ['#c9a227', '#4c8c6b', '#5b8fc7', '#9b7fc2', '#c1483f', '#e0c766', '#4c8c6b', '#5b8fc7', '#9b7fc2', '#d9884f'];
+const CAT_PIE_PALETTE_INV = ['#c9a227', '#4c8c6b', '#c2749b', '#7b7fd0', '#c1483f', '#e0c766', '#39a8bd', '#5b8fc7', '#9b7fc2', '#d9884f'];
 
 const state = {
   data: null,
@@ -4483,7 +4497,7 @@ const FM_QUADS = [
   { key: 'income', label: '수입', color: 'var(--income-text)' },
   { key: 'expense', label: '지출', color: 'var(--expense-text)' },
   { key: 'asset', label: '자산', color: 'var(--accent-text)' },
-  { key: 'liability', label: '부채', color: '#9b7fc2' }
+  { key: 'liability', label: '부채', color: '#c1483f' }
 ];
 
 function flowmapData() {
@@ -8366,6 +8380,44 @@ function rxAmount(r) {
   return `<span class="v ${rxKind(r)}">${wonComma(r.amount)}</span>`;
 }
 
+/* 수입 → 지출 → 이체 순. 같은 종류 안에서는 금액이 큰 것부터. */
+const RX_KIND_RANK = { '수입': 0, '지출': 1, '이체': 2 };
+function rxSortRows(rows) {
+  return rows.slice().sort((a, b) =>
+    (RX_KIND_RANK[rxKind(a)] ?? 9) - (RX_KIND_RANK[rxKind(b)] ?? 9) ||
+    Math.abs(b.amount) - Math.abs(a.amount));
+}
+
+/* 전체 내역(.lg-cols)과 글자 그대로 같은 헤더 */
+function rxLedgerHead() {
+  return `<div class="lg-cols">
+    <span class="k">종류</span><span class="e"></span><span class="c">분류</span><span class="n">사용처</span>
+    <span class="mm">메모</span><span class="f">회사·고정</span><span class="g">GOOD/BAD</span>
+    <span class="v">금액</span>
+  </div>`;
+}
+
+/* 전체 내역과 같은 규격의 읽기 전용 행 */
+function rxLedgerLine(r) {
+  const k = rxKind(r);
+  const grp = r.mgroup && r.mgroup !== r.vendor ? `<i class="lg-mg">${rxEsc(r.mgroup)}</i>` : '';
+  return `<div class="lg-line lg-ro k-${k}">
+    <span class="k"><i class="lg-kd ${k}">${k}</i></span>
+    <span class="e" aria-hidden="true">${r.emoji || ''}</span>
+    <span class="c"><span class="ct">${[r.minor, r.item].filter(Boolean).map(rxEsc).join(' › ') || '-'}</span></span>
+    <span class="n">${grp}${rxEsc(r.vendor || r.item || '')}</span>
+    <span class="mm">${r.memo ? rxEsc(r.memo) : '<i class="lg-ph">—</i>'}</span>
+    <span class="f">
+      <span class="rx-tg ${r.refund ? 'on' : ''}" title="${r.refund ? '회사 환급 ' + formatCompactWon(r.refund) + '원' : '회사 환급 아님'}">🏢</span>
+      <span class="rx-tg ${r.fixed ? 'on' : ''}" title="${r.fixed ? '고정비' : '고정비 아님'}">📌</span>
+    </span>
+    <span class="g">${k === '지출'
+      ? `<span class="rx-gb ${r.good ? 'good' : r.regret ? 'bad' : 'off'}">${r.good ? 'GOOD' : r.regret ? 'BAD' : '—'}</span>`
+      : '<span class="rx-none" title="지출에만 매깁니다">·</span>'}</span>
+    <span class="v ${k}">${wonComma(r.amount)}</span>
+  </div>`;
+}
+
 function buildLedgerRowsHtml(rows) {
   if (!rows.length) return '<tr><td colspan="6" style="text-align:center;color:var(--text-faint);padding:20px;">표시할 내역이 없어요.</td></tr>';
   return rows.map(r => `<tr>
@@ -9741,21 +9793,10 @@ function renderTodayPage(container, data, d) {
   `;
 
   /* --- 내역 --- */
-  const sortedRows = today.rows.slice().sort((a, b) => b.amount - a.amount);
-  document.getElementById('today-rows-body').innerHTML = `
-    <div class="table-scroll" style="max-height:340px;">
-      <table class="data-table">
-        <thead><tr><th>종류</th><th>분류</th><th>사용처 / 메모</th><th>체크</th><th style="text-align:right">금액</th></tr></thead>
-        <tbody>${sortedRows.length ? sortedRows.map(r => `<tr>
-            <td class="c-kind">${rxKindBadge(r)}</td>
-            <td class="c-cat">${rxCat(r)}</td>
-            <td class="c-vendor">${rxVendor(r)}${r.memo ? `<div class="rx-memo">${rxEsc(r.memo)}</div>` : ''}</td>
-            <td class="c-marks">${rxMarks(r)}</td>
-            <td class="amt c-amt">${rxAmount(r)}</td>
-          </tr>`).join('') : '<tr><td colspan="5" style="text-align:center;color:var(--text-faint);padding:20px;">이 날 기록이 없어요.</td></tr>'}</tbody>
-      </table>
-    </div>
-  `;
+  const sortedRows = rxSortRows(today.rows);
+  document.getElementById('today-rows-body').innerHTML = sortedRows.length
+    ? rxLedgerHead() + `<div class="lg-card lg-ro-card">${sortedRows.map(rxLedgerLine).join('')}</div>`
+    : '<div class="empty-state">이 날 기록이 없어요.</div>';
 
   /* --- 날짜 이동 --- */
   const setDay = (k) => {
@@ -10271,7 +10312,7 @@ function renderYearSubTab(sub, Y, data, d, yrRows, TOP_PCT) {
 
   if (state.charts.yrSub) { state.charts.yrSub.destroy(); state.charts.yrSub = null; }
   if (state.charts.yrPie) { state.charts.yrPie.destroy(); state.charts.yrPie = null; }
-  const PALETTE = ['#4c8c6b', '#c9a227', '#5b8fc7', '#9b7fc2', '#c1483f', '#9b7fc2', '#d9884f'];
+  const PALETTE = ['#4c8c6b', '#c9a227', '#c2749b', '#7b7fd0', '#c1483f', '#39a8bd', '#d9884f'];
   const legendBox = document.getElementById('yr-sub-legend');
   const mkChart = (datasets, opts) => {
     if (legendBox) legendBox.innerHTML = datasets.filter(x => !x.hideLegend).map(x =>
@@ -11489,7 +11530,7 @@ function renderIncomePage(container, data, d) {
   const latest = incomeSeries[incomeSeries.length - 1];
   const incomeLedger = data.ledger.filter(r => r.major.includes('수입'));
   const catNames = Object.keys(data.incomeCategories);
-  const palette = ['#4c8c6b', '#c9a227', '#5b8fc7', '#9b7fc2', '#c1483f'];
+  const palette = ['#4c8c6b', '#c9a227', '#c2749b', '#7b7fd0', '#c1483f'];
 
   /* --- 요약 지표 --- */
   const last12 = incomeSeries.slice(-12);
@@ -12985,7 +13026,7 @@ function tossFreshness(asOf) {
 
 /* ---------------- 토스 실시간 패널 ---------------- */
 
-const TOSS_PALETTE = ['#4c8c6b', '#c9a227', '#5b8fc7', '#9b7fc2', '#c1483f',
+const TOSS_PALETTE = ['#4c8c6b', '#c9a227', '#c2749b', '#7b7fd0', '#c1483f',
                       '#4f9d9d', '#d9884f', '#7f8fa6', '#d9884f', '#6b8f4c'];
 
 function renderTossPanel(hostId, data) {
@@ -15214,7 +15255,7 @@ function computeSavingsInsights(data, d, latestSaving, latestPension, months, by
    scope = 'saving' | 'pension' — 카테고리·이체 채널·색만 다르고 구조는 같다. */
 const SAV_SCOPES = {
   saving: {
-    cat: '저축 자산', label: '저축', color: '#5b8fc7',
+    cat: '저축 자산', label: '저축', color: '#c2749b',
     transfers: ['비상금'], transferLabel: { '비상금': '저축(CMA 등)' },
     minors: ['저축 자산', '비상금']
   },
