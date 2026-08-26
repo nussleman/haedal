@@ -2452,7 +2452,7 @@ body{font-variant-numeric:tabular-nums;}
 #inv-subnav{position:sticky;top:var(--hdr-h,0px);z-index:45;background:var(--bg);
   padding-top:6px;padding-bottom:2px;}
 .bk-wrap{display:block;max-width:1200px;margin:0 auto;
-  --bk-g2:351px; --bk-g3:104px;}
+  --bk-g2:402px; --bk-g3:104px;}
 .bk-stick{position:sticky;top:calc(var(--hdr-h,0px) + var(--inv-nav-h,42px));z-index:40;
   background:var(--bg);padding-top:16px;display:block;}
 
@@ -2538,6 +2538,34 @@ body{font-variant-numeric:tabular-nums;}
 .bk-cols .vd,.bk-row .vd{flex:0 0 78px;}
 .bk-cols .ck,.bk-row .ck{flex:0 0 58px;text-align:right;}
 .bk-cols .rz,.bk-row .rz{flex:0 0 80px;text-align:right;}
+.bk-cols .wl,.bk-row .wl{flex:0 0 42px;}
+.bk-wlc{cursor:pointer;position:relative;}
+.bk-wl{display:inline-flex;align-items:center;justify-content:center;font-style:normal;
+  font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.04em;
+  min-width:30px;height:19px;padding:0 6px;border-radius:5px;border:1px solid transparent;}
+.bk-wl.w-L1{background:rgba(201,162,39,.2);border-color:var(--gold-soft);color:var(--gold-soft);}
+.bk-wl.w-L2{background:rgba(57,168,189,.16);border-color:rgba(57,168,189,.5);color:#7cc4d6;}
+.bk-wl.w-L3{background:rgba(255,255,255,.05);border-color:var(--border);color:var(--text-faint);}
+.bk-wl.none{color:var(--text-faint);opacity:.5;font-weight:400;}
+.bk-wl.f-due{box-shadow:0 0 0 1px rgba(127,192,160,.55);}
+.bk-wl.f-warn::after,.bk-wl.f-bad::after{content:'!';margin-left:3px;font-weight:700;}
+.bk-wl.f-warn::after{color:var(--gold-soft);}
+.bk-wl.f-bad{background:rgba(214,106,96,.18);border-color:rgba(214,106,96,.6);color:#e39189;}
+.bk-wlmenu{left:0;right:auto;top:calc(100% + 3px);min-width:172px;}
+.bk-wlmenu .lg-catopt.off{opacity:.38;cursor:not-allowed;}
+.bk-wlmenu .cnt{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--text-faint);}
+.bk-wlalert{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:12px;
+  padding:7px 12px;border-radius:8px;font-size:11.5px;color:#e0c983;
+  background:rgba(201,162,39,.09);border:1px solid rgba(201,162,39,.28);}
+.bk-wlalert b{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;
+  color:var(--gold-soft);font-weight:600;}
+.bk-wlalert em{font-style:normal;margin-left:auto;color:var(--text-faint);font-size:11px;}
+.sd-tag.wl em{font-style:normal;margin-left:6px;font-family:var(--mono);font-size:9.5px;
+  color:var(--text-faint);font-weight:400;}
+.sd-tag.wl.on em{color:inherit;opacity:.72;}
+.sd-tag.wl.full{opacity:.45;}
+.sd-tag.w-L2.on{background:rgba(57,168,189,.18);border-color:rgba(57,168,189,.55);color:#7cc4d6;}
+.sd-tag.w-L3.on{background:rgba(255,255,255,.07);border-color:var(--border-strong);color:var(--text);}
 
 /* ---- 칸 내용 ---- */
 .bk-row .nm{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text);
@@ -2609,11 +2637,11 @@ body{font-variant-numeric:tabular-nums;}
 
 @media(max-width:1300px){
   .bk-cols .gn,.bk-row .gn,.bk-cols .ck,.bk-row .ck{display:none;}
-  .bk-wrap{--bk-g2:284px;}
+  .bk-wrap{--bk-g2:335px;}
 }
 @media(max-width:1040px){
   .bk-cols .va,.bk-row .va,.bk-cols .sc,.bk-row .sc,.bk-cols .th,.bk-row .th{display:none;}
-  .bk-wrap{--bk-g2:222px;}
+  .bk-wrap{--bk-g2:273px;}
   .bk-stats{flex:1 1 100%;}
   .bk-stat{flex:1;min-width:0;padding:9px 12px;}
   .bk-q{flex:1 1 140px;width:auto;}
@@ -14222,6 +14250,20 @@ const SD_TYPE_OPTS = [
   ['turnaround', '턴어라운드'], ['option', '옵션형'], ['asset', '자산형']
 ];
 
+/* 관심 레벨 — 등급(얼마나 좋은가)이 아니라 매수 준비도(다음 자금이 어디로 가는가)다.
+   정원이 이 체계의 전부다. 상한이 없으면 석 달 안에 전부 L1으로 몰려서 등급이 사라진다.
+   [키, 이름, 정원(0=무제한), 진입 조건, 입력칸 이름, 예시] */
+const SD_WATCH = [
+  ['L1', '대기 발주', 3, '자금 생기면 즉시 매수 — 진입가까지 정해진 것',
+    '진입 조건 — 가격 · 투입액', '예: 46달러 이하 · 1차 60만원'],
+  ['L2', '트리거 대기', 8, '확인 이벤트만 남은 것 — 날짜가 반드시 있어야 한다',
+    '트리거 이벤트', '예: 3분기 실적에서 동일점포 매출 플러스 전환'],
+  ['L3', '아이디어', 0, '이유 한 줄만 있는 것 — 90일 방치되면 지운다',
+    '관심 이유 — 한 문장', '예: 관세 완화 수혜인데 아직 안 봄']
+];
+const SD_WATCH_STALE = 90;   /* L3 자동 정리 기준(일) */
+const SD_WATCH_GRACE = 14;   /* L2 트리거 경과 허용(일) */
+
 const SDX = { rows: [], byName: {}, loaded: false, sel: null, q: '', filter: 'all', timers: {}, saved: '' };
 
 async function sdxLoad(force) {
@@ -14309,6 +14351,48 @@ function sdxStatus(r) {
   if (!sc.full) return { k: 'wip', label: `검토 중 ${sc.score}점` };
   return { k: gr[2] === '매수 금지' ? 'fail' : 'pass', label: `${gr[2]} ${sc.score}점` };
 }
+/* ---------- 관심 레벨 ---------- */
+function sdxWatchCount() {
+  const c = { L1: 0, L2: 0, L3: 0 };
+  SDX.rows.forEach(r => { if (c[r.watch_level] != null) c[r.watch_level]++; });
+  return c;
+}
+function sdxWatchMeta(lv) {
+  return SD_WATCH.find(x => x[0] === lv) || null;
+}
+/* 레벨이 아니라 "규칙을 어긴 상태"를 돌려준다. 멀쩡하면 null.
+   경고를 카드 안에만 두면 안 보니까, 표에도 같은 값을 쓴다. */
+function sdxWatchFlag(r) {
+  if (!r || !r.watch_level) return null;
+  const lv = r.watch_level;
+  const day = (a, b) => Math.floor((a - b) / 864e5);
+  if (lv === 'L1' && !String(r.watch_trigger || '').trim())
+    return { k: 'warn', msg: '진입 조건이 비어 있다 — 조건 없는 L1은 L2다' };
+  if (lv === 'L2' && !r.watch_date)
+    return { k: 'warn', msg: '트리거 날짜 없음 — 날짜 없는 트리거는 L3다' };
+  if (lv === 'L2' && r.watch_date) {
+    const over = day(Date.now(), Date.parse(r.watch_date + 'T00:00:00Z'));
+    if (over > SD_WATCH_GRACE)
+      return { k: 'bad', msg: `트리거 ${over}일 경과 — 승격이든 강등이든 지금 정한다` };
+    if (over >= 0) return { k: 'due', msg: '트리거 날짜 도달 — 확인할 것' };
+  }
+  if (lv === 'L3') {
+    const at = r.watch_at || r.updated_at;
+    if (at) {
+      const d = day(Date.now(), Date.parse(at));
+      if (d > SD_WATCH_STALE) return { k: 'bad', msg: `${d}일 방치 — 정리 대상` };
+    }
+  }
+  return null;
+}
+/* 레벨을 바꾸면 방치 시계도 같이 리셋된다 */
+async function sdxSetWatch(name, lv) {
+  const patch = { watch_level: lv || null, watch_at: new Date().toISOString() };
+  if (!lv) { patch.watch_trigger = null; patch.watch_date = null; }
+  if (lv !== 'L2') patch.watch_date = null;
+  await sdxPatch(name, patch);
+}
+
 function sdxSentence(r) {
   const a = (r && r.why_not || '').trim(), b = (r && r.resolve_when || '').trim(), c = (r && r.resolve_how || '').trim();
   if (!a && !b && !c) return null;
@@ -14507,12 +14591,47 @@ function sdxCard(it) {
       </div>
     </div>
 
+    ${sdxWatchBlock(r, blocked)}
+
     <div class="sdc-sec">
       <div class="sdc-h"><span class="n">결론</span>지금 할 일<i>기준의 기계적 귀결. 기분이 아니라</i></div>
       <div class="sdc-tags">
         ${SD_VERDICT.map(([v, l]) => `<button class="sd-tag act ${r.verdict === v ? 'on' : ''}" data-vd="${v}">${l}</button>`).join('')}
       </div>
       <label class="sdc-memo"><span>메모</span><textarea class="en-in" data-f="memo" rows="4" placeholder="오늘 확인한 숫자, 다음에 볼 것">${enEsc(r.memo || '')}</textarea></label>
+    </div>`;
+}
+
+/* 판정 다음에 온다. 게이트 0에서 걸린 것은 애초에 줄을 설 수 없다. */
+function sdxWatchBlock(r, blocked) {
+  const cur = (r && r.watch_level) || null;
+  const cnt = sdxWatchCount();
+  const meta = sdxWatchMeta(cur);
+  const flag = sdxWatchFlag(r);
+  const head = `<div class="sdc-h"><span class="n">관심</span>매수 준비도<i>다음 자금이 어디로 가는지의 순서 — 정원이 차면 하나를 내려야 올린다</i></div>`;
+  if (blocked) {
+    return `<div class="sdc-sec dim">${head}
+      <div class="sdc-note">게이트 0 탈락. 관심 목록에 올릴 수 있는 대상이 아니다.</div></div>`;
+  }
+  const btns = SD_WATCH.map(([v, l, q, w]) => {
+    const c = cnt[v], full = q && c >= q && cur !== v;
+    return `<button class="sd-tag wl w-${v} ${cur === v ? 'on' : ''} ${full ? 'full' : ''}"
+      data-wl="${v}" title="${w}${full ? ' · 정원이 찼다 — 하나를 내리고 올릴 것' : ''}">${v} ${l}<em>${c}${q ? '/' + q : ''}</em></button>`;
+  }).join('');
+  const over = (cur && meta && meta[2] && cnt[cur] > meta[2]) ? cnt[cur] - meta[2] : 0;
+  return `
+    <div class="sdc-sec">
+      ${head}
+      <div class="sdc-tags">${btns}
+        <button class="sd-tag ${cur ? '' : 'on'}" data-wl="">관심 아님</button></div>
+      ${cur ? `<div class="sdc-fields">
+        <label class="wide"><span>${meta[4]}</span>
+          <input class="en-in" data-f="watch_trigger" value="${enEsc(r.watch_trigger || '')}" placeholder="${meta[5]}"></label>
+        ${cur === 'L2' ? `<label><span>트리거 날짜</span>
+          <input class="en-in" type="date" data-f="watch_date" value="${enEsc(r.watch_date || '')}" style="color-scheme:dark;"></label>` : ''}
+      </div>` : ''}
+      ${flag ? `<div class="sdc-stop ${flag.k === 'bad' ? '' : 'warn'}">${flag.msg}</div>` : ''}
+      ${over ? `<div class="sdc-stop warn">${cur} 정원 ${meta[2]}개를 <b>${over}개</b> 넘었다. 무엇을 내릴지 먼저 정하지 않으면 이 레벨은 순서가 아니다.</div>` : ''}
     </div>`;
 }
 
@@ -14554,6 +14673,13 @@ function sdxBind(host) {
     repaintMain();
   }));
 
+  host.querySelectorAll('[data-wl]').forEach(b => b.addEventListener('click', async () => {
+    const r = sdxRow(nm) || {};
+    const v = b.dataset.wl || null;
+    await sdxSetWatch(nm, r.watch_level === v ? null : v);
+    repaintMain();
+  }));
+
   host.querySelectorAll('[data-f]').forEach(el => {
     const f = el.dataset.f;
     const handler = () => {
@@ -14590,7 +14716,7 @@ function sdxBind(host) {
    보유 현황(토스)과 판정(스터디 카드)을 한 표에 붙인다.
    한 줄에 다 못 넣는 것은 그 종목을 더블클릭했을 때 아래로 펼쳐진다. */
 
-const BK = { q: '', filter: 'all', theme: 'all', grade: 'all', verdict: 'all',
+const BK = { q: '', filter: 'all', theme: 'all', grade: 'all', verdict: 'all', watch: 'all',
   sort: 'value', dir: 'desc', open: null, realized: {} };
 
 /* 테마 앞 그림 — 목록이 길어지면 글자만으로는 훑기 어렵다 */
@@ -14610,7 +14736,7 @@ function bkThemeEmoji(t) {
   return BK_THEME_EMOJI[head] || '🏷️';
 }
 const BK_SORTDIR = {
-  name: 'asc', theme: 'asc', value: 'desc', weight: 'desc',
+  name: 'asc', theme: 'asc', value: 'desc', weight: 'desc', watch: 'asc',
   gain: 'desc', pl: 'desc', realized: 'desc', grade: 'desc', score: 'desc', verdict: 'asc', check: 'asc'
 };
 
@@ -14694,6 +14820,8 @@ function bkMake(name, symbol, h, weight, data) {
     type: (card && card.type) || (fact && fact.type) || null,
     verdict: card && card.verdict || null,
     check: card && card.check_date || null,
+    watch: (card && card.watch_level) || null,
+    watchFlag: sdxWatchFlag(card),
     themes: bkThemes(name, card, data),
     realized: BK.realized[name] != null ? BK.realized[name] : null
   };
@@ -14747,6 +14875,10 @@ function renderBookPage(hostId, data, d) {
       if (BK.verdict === '(미정)') { if (r.verdict) return false; }
       else if (r.verdict !== BK.verdict) return false;
     }
+    if (BK.watch !== 'all') {
+      if (BK.watch === '(없음)') { if (r.watch) return false; }
+      else if (r.watch !== BK.watch) return false;
+    }
     if (BK.filter === 'held') return r.held;
     if (BK.filter === 'none') return !r.held;
     if (BK.filter === 'todo') return r.held && !r.answered && r.g0 !== 'fail';
@@ -14756,7 +14888,8 @@ function renderBookPage(hostId, data, d) {
     return true;
   });
   const active = (BK.filter !== 'all' ? 1 : 0) + (BK.theme !== 'all' ? 1 : 0)
-    + (BK.grade !== 'all' ? 1 : 0) + (BK.verdict !== 'all' ? 1 : 0) + (q ? 1 : 0);
+    + (BK.grade !== 'all' ? 1 : 0) + (BK.verdict !== 'all' ? 1 : 0)
+    + (BK.watch !== 'all' ? 1 : 0) + (q ? 1 : 0);
 
   const gradeRank = { '우량': 5, '성장': 4, '턴어라운드': 3, '옵션형': 2, '매수 금지': 1, '탈락': 0 };
   const vRank = {}; SD_VERDICT.forEach(([v], i) => { vRank[v] = i; });
@@ -14772,7 +14905,11 @@ function renderBookPage(hostId, data, d) {
     grade: (a, b) => (gradeRank[b.grade] ?? -1) - (gradeRank[a.grade] ?? -1) || num(b.value) - num(a.value),
     score: (a, b) => (b.answered ? b.score : -1) - (a.answered ? a.score : -1),
     verdict: (a, b) => (a.verdict ? vRank[a.verdict] : 99) - (b.verdict ? vRank[b.verdict] : 99) || num(b.value) - num(a.value),
-    check: (a, b) => String(a.check || '9999').localeCompare(String(b.check || '9999'))
+    check: (a, b) => String(a.check || '9999').localeCompare(String(b.check || '9999')),
+    /* 같은 레벨 안에서는 확인해야 할 날짜가 가까운 것이 위로 */
+    watch: (a, b) => String(a.watch || 'Z').localeCompare(String(b.watch || 'Z'))
+      || String((a.card && a.card.watch_date) || '9999').localeCompare(String((b.card && b.card.watch_date) || '9999'))
+      || num(b.value) - num(a.value)
   };
   const base = sorts[BK.sort] || sorts.value;
   const flip = BK.dir !== (BK_SORTDIR[BK.sort] || 'desc');
@@ -14797,6 +14934,7 @@ function renderBookPage(hostId, data, d) {
           <span class="tx">${o[1]}</span>${o[2] != null ? `<span class="cnt">${o[2]}</span>` : ''}</div>`).join('')}
       </div>
     </div>`;
+  const wCnt = sdxWatchCount();
   const themeCnt = {};
   allRows.forEach(r => r.themes.forEach(t => { themeCnt[t] = (themeCnt[t] || 0) + 1; }));
   const noThemeCnt = allRows.filter(r => !r.themes.length).length;
@@ -14817,6 +14955,8 @@ function renderBookPage(hostId, data, d) {
               .concat([['(없음)', '테마 없음', noThemeCnt]]))}
             ${pick('grade', '등급', BK.grade, ['우량', '성장', '턴어라운드', '옵션형', '매수 금지', '탈락', '미검토'].map(g => [g, g, null]))}
             ${pick('verdict', '결론', BK.verdict, SD_VERDICT.map(v => [v[0], v[1], null]).concat([['(미정)', '미정', null]]))}
+            ${pick('watch', '관심', BK.watch, SD_WATCH.map(w => [w[0], `${w[0]} ${w[1]}`, wCnt[w[0]]])
+              .concat([['(없음)', '관심 아님', allRows.length - wCnt.L1 - wCnt.L2 - wCnt.L3]]))}
             <span class="bk-spacer"></span>
             <span class="sd-saved" id="sd-saved">${enEsc(SDX.saved)}</span>
             ${s ? `<span class="bk-fresh ${fresh.stale ? 'stale' : ''}" title="15분마다 자동 갱신">마지막 확인 ${s.asOf.slice(11)} · ${fresh.text}${fresh.stale ? ' ⚠️' : ''}</span>` : ''}
@@ -14830,6 +14970,7 @@ function renderBookPage(hostId, data, d) {
           </div>
         </div>
       </div>
+      ${bkWatchAlert(allRows, wCnt)}
       <div class="bk-groups">
         <span class="g1"><i>기본</i></span><span class="g2"><i>판단</i></span><span class="g3"><i>히스토리</i></span>
       </div>
@@ -14843,6 +14984,7 @@ function renderBookPage(hostId, data, d) {
         <span class="pl" data-s="pl">수익률${arrow('pl')}</span>
       </span>
       <span class="grp g2">
+        <span class="wl" data-s="watch">관심${arrow('watch')}</span>
         <span class="gd" data-s="grade">등급${arrow('grade')}</span>
         <span class="sc" data-s="score">점수${arrow('score')}</span>
         <span class="vd" data-s="verdict">결론${arrow('verdict')}</span>
@@ -14872,7 +15014,7 @@ function renderBookPage(hostId, data, d) {
   }));
   const clr = host.querySelector('#bk-clear');
   if (clr) clr.addEventListener('click', () => {
-    BK.filter = 'all'; BK.theme = 'all'; BK.grade = 'all'; BK.verdict = 'all'; BK.q = '';
+    BK.filter = 'all'; BK.theme = 'all'; BK.grade = 'all'; BK.verdict = 'all'; BK.watch = 'all'; BK.q = '';
     renderBookPage(hostId, data, d);
   });
   host.querySelectorAll('.bk-pick').forEach(wrap => {
@@ -14940,6 +15082,10 @@ function renderBookPage(hostId, data, d) {
     e.stopPropagation();
     bkCheckEdit(cell, hostId, data, d);
   }));
+  host.querySelectorAll('.bk-wlc').forEach(cell => cell.addEventListener('click', (e) => {
+    e.stopPropagation();
+    bkWatchMenu(cell, hostId, data, d);
+  }));
   /* 하위 탭도 같이 고정되도록 높이를 재서 넘겨준다 */
   const nav = document.getElementById('inv-subnav');
   if (nav) document.documentElement.style.setProperty('--inv-nav-h', nav.offsetHeight + 'px');
@@ -14981,6 +15127,9 @@ function bkRowHTML(r) {
           : `${r.plRate >= 0 ? '+' : '−'}${Math.abs(r.plRate).toFixed(1)}%`}</span>
       </span>
       <span class="grp g2">
+        <span class="wl bk-wlc" title="클릭해서 관심 레벨 변경">${r.watch
+          ? `<i class="bk-wl w-${r.watch}${r.watchFlag ? ' f-' + r.watchFlag.k : ''}" title="${r.watchFlag ? enEsc(r.watchFlag.msg) : ''}">${r.watch}</i>`
+          : '<i class="bk-wl none">—</i>'}</span>
         <span class="gd bk-gdc" title="클릭해서 등급 지정">
           <i class="bk-gd ${st.k}">${st.label}${r.card && r.card.grade_override ? '<b class="man">*</b>' : ''}</i>${r.capText ? `<em>${r.capText}</em>` : ''}</span>
         <span class="sc">${r.answered ? `${r.score}<em>/14</em>` : '—'}</span>
@@ -15002,7 +15151,7 @@ function bkBindDetail(host, hostId, data, d) {
   sdxBind(detail);
   /* 카드 안에서 게이트를 바꾸면 표의 등급·점수도 같이 움직여야 한다 */
   const repaint = () => renderBookPage(hostId, data, d);
-  detail.querySelectorAll('[data-g],[data-g1],[data-vd]').forEach(b =>
+  detail.querySelectorAll('[data-g],[data-g1],[data-vd],[data-wl]').forEach(b =>
     b.addEventListener('click', () => setTimeout(repaint, 260)));
   detail.querySelectorAll('[data-del]').forEach(b =>
     b.addEventListener('click', () => { BK.open = null; setTimeout(repaint, 260); }));
@@ -15098,6 +15247,52 @@ function bkCheckEdit(cell, hostId, data, d) {
     if (e.key === 'Enter') finish(true);
     if (e.key === 'Escape') finish(false);
   });
+}
+
+/* 정원 초과와 기한 경과는 카드 안에만 두면 안 본다. 표 위에 한 줄로 세운다. */
+function bkWatchAlert(rows, wCnt) {
+  const msg = [];
+  SD_WATCH.forEach(([v, l, q]) => {
+    if (q && wCnt[v] > q) msg.push(`${v} 정원 초과 ${wCnt[v]}/${q}`);
+  });
+  const bad = rows.filter(r => r.watchFlag && r.watchFlag.k === 'bad').length;
+  const due = rows.filter(r => r.watchFlag && r.watchFlag.k === 'due').length;
+  if (due) msg.push(`트리거 도달 ${due}건`);
+  if (bad) msg.push(`기한 경과 · 방치 ${bad}건`);
+  if (!msg.length) return '';
+  return `<div class="bk-wlalert"><b>관심 목록</b>${msg.join(' · ')}
+    <em>내릴 것을 먼저 정하지 않으면 새로 올릴 수 없다</em></div>`;
+}
+
+/* 표에서 바로 레벨을 바꾼다. 정원이 찬 레벨은 눌리지 않는다 —
+   경고만 띄우고 통과시키면 정원은 없는 것과 같다. */
+function bkWatchMenu(cell, hostId, data, d) {
+  const name = cell.closest('.bk-row').dataset.nm;
+  const card = sdxRow(name);
+  const cur = (card || {}).watch_level || null;
+  const blocked = sdxG0State(card) === 'fail';
+  const cnt = sdxWatchCount();
+  document.querySelectorAll('.bk-vmenu,.bk-thmenu,.bk-wlmenu').forEach(m => m.remove());
+  const menu = document.createElement('div');
+  menu.className = 'lg-catdrop bk-wlmenu';
+  if (blocked) {
+    menu.innerHTML = '<div class="lg-catopt"><span class="tx dim">게이트 0 탈락 — 올릴 수 없다</span></div>';
+  } else {
+    menu.innerHTML = SD_WATCH.map(([v, l, q]) => {
+      const c = cnt[v], full = q && c >= q && cur !== v;
+      return `<div class="lg-catopt ${cur === v ? 'on' : ''} ${full ? 'off' : ''}" ${full ? '' : `data-v="${v}"`}>
+        <span class="tx">${v} ${l}</span><span class="cnt">${c}${q ? '/' + q : ''}</span></div>`;
+    }).join('') + '<div class="lg-catopt" data-v=""><span class="tx dim">관심 아님</span></div>';
+  }
+  cell.appendChild(menu);
+  const close = () => menu.remove();
+  menu.querySelectorAll('[data-v]').forEach(el => el.addEventListener('mousedown', async (e) => {
+    e.preventDefault(); e.stopPropagation();
+    close();
+    await sdxSetWatch(name, el.dataset.v || null);
+    renderBookPage(hostId, data, d);
+  }));
+  setTimeout(() => document.addEventListener('mousedown', close, { once: true }), 0);
 }
 
 function bkVerdictMenu(cell, hostId, data, d) {
