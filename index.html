@@ -383,6 +383,7 @@ body{
 .inc-head .l{font-size:var(--fs-tiny);letter-spacing:.04em;color:var(--text-faint);}
 .inc-head b{font-family:var(--mono);font-size:var(--fs-xl);font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1;}
 .inc-head .inc-head-avg b{color:var(--text-dim);}
+.inc-chart-wrap{flex:0 0 auto !important;min-height:0 !important;}
 .inc-head .inc-head-note{flex:1 1 auto;min-width:0;padding-bottom:3px;}
 .inc-head .inc-head-note .pace-tag{margin-left:0;}
 .inc-head .inc-head-rate{margin-left:auto;text-align:right;}
@@ -2487,8 +2488,9 @@ const state = {
   expSub: 'summary',       // 지출 하위: summary | fixed | budget
   nowSub: 'summary',       // 이번달 하위: summary | income | expense
   nowExpFilter: 'all',     // 이번달>지출 내역 필터: all | fixed | var | good | regret
-  nowIncMode: 'cat',       // 이번달>수입 차트 단위: cat(기본) | detail(세부항목)
+  nowIncOpen: null,        // 이번달>수입 차트에서 펼친 분류
   nowIncSel: null,         // 이번달>수입 차트에서 고른 항목 ('분류' 또는 '분류 › 항목')
+  nowMonthPinned: false,   // 사람이 달을 직접 골랐는지 (false면 늘 이번 달로 맞춘다)
   nowAxis: 'expense',      // 페이스 차트 축: income | expense | net (하나만)
   nowOpts: { budget: true, daily: false },
   yearAxis: 'expense',
@@ -3635,8 +3637,8 @@ const valueLabelPlugin = {
         if (step > 1 && (n - 1 - index) % step !== 0) return;
         const pos = element.tooltipPosition ? element.tooltipPosition() : element;
         ctx.save();
-        ctx.font = "600 10px 'IBM Plex Mono', monospace";
-        ctx.fillStyle = dataset.labelColor || '#c7cddb';
+        ctx.font = dataset.labelFont || "600 10px 'IBM Plex Mono', monospace";
+        ctx.fillStyle = (typeof dataset.labelColor === 'function' ? dataset.labelColor(index) : dataset.labelColor) || '#c7cddb';
         const fmtLabel = dataset.labelFormatter || formatCompactWon;
         if (horizontal) {
           ctx.textAlign = value >= 0 ? 'left' : 'right';
@@ -8863,16 +8865,36 @@ const FLOW_AXES = [
    그래서 화면별로 팔레트를 돌리지 않고, 원장 전체의 수입 합계가 큰 분류부터 한 번 배정해
    두고 어디서나 그 표를 쓴다. 세부항목('근로소득 › 본봉')은 부모 분류 색을 따라간다. */
 const INCOME_PALETTE = ['#4c8c6b', '#5b8cb8', '#9b7fc2', '#c9a227', '#c1857a', '#39a8bd', '#d9884f', '#8a9bb0'];
+
+/* 수입 분류·세부항목의 순서는 금액이 아니라 '분류 표'가 정한다.
+   달마다 순서가 바뀌면 같은 자리를 보던 눈이 매번 다시 읽어야 한다.
+   1순위 = categories 테이블(EN.cats)의 sort_order · 못 읽었을 때를 위한 기본값을 같이 둔다.
+   표에 없는데 원장에만 있는 분류는 뒤에 붙인다 — 조용히 빠뜨리지 않기 위해서. */
+const INCOME_TAXONOMY_FALLBACK = [
+  ['근로소득', ['월급', '월급 외', '보너스']],
+  ['부수입', ['부수입']],
+  ['투자 수익', ['판매수익', '배당금', '계좌 이자']],
+  ['저축 수익', ['예적금 이자']],
+  ['그 외', ['그 외 수입']]
+];
+function incomeTaxonomy(ledger) {
+  const order = [];
+  const push = (cat, item) => {
+    if (!cat) return;
+    let g = order.find(x => x.cat === cat);
+    if (!g) { g = { cat, items: [] }; order.push(g); }
+    if (item && g.items.indexOf(item) < 0) g.items.push(item);
+  };
+  const fromDb = (EN.cats || []).filter(c => c.kind === '수입')
+    .slice().sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+  if (fromDb.length) fromDb.forEach(c => push(c.category, c.subcategory));
+  else INCOME_TAXONOMY_FALLBACK.forEach(([c, its]) => its.forEach(it => push(c, it)));
+  (ledger || []).forEach(r => { if (r.major.includes('수입')) push(r.minor || '기타', r.item || '-'); });
+  return order;
+}
 function incomeCatColorMap(ledger) {
-  const tot = {};
-  (ledger || []).forEach(r => {
-    if (!r.major.includes('수입')) return;
-    const k = r.minor || '기타';
-    tot[k] = (tot[k] || 0) + r.amount;
-  });
-  const names = Object.keys(tot).sort((a, b) => tot[b] - tot[a] || a.localeCompare(b, 'ko'));
   const map = {};
-  names.forEach((n, i) => { map[n] = INCOME_PALETTE[i % INCOME_PALETTE.length]; });
+  incomeTaxonomy(ledger).forEach((g, i) => { map[g.cat] = INCOME_PALETTE[i % INCOME_PALETTE.length]; });
   return map;
 }
 function incomeCatColorOf(map, name) {
@@ -8898,7 +8920,9 @@ function renderNowPage(container, data, d) {
   }
 
   const availableKeys = [...new Set(ledger.map(r => ledgerMonthKey(r.date)).filter(Boolean))].sort();
-  if (!state.nowMonthKey) {
+  /* 사람이 직접 고른 달만 붙잡아 둔다. 그러지 않으면 첫 화면을 스냅샷(옛 원장)으로 그릴 때
+     그 원장의 마지막 달에 고정돼, 실데이터가 온 뒤에도 엉뚱한 달이 남는다. */
+  if (!state.nowMonthPinned || !availableKeys.includes(state.nowMonthKey)) {
     const t = thisMonthKey();
     state.nowMonthKey = availableKeys.includes(t) ? t : availableKeys[availableKeys.length - 1];
   }
@@ -8982,83 +9006,76 @@ function renderNowPage(container, data, d) {
   })();
   const topIncomes = scopeRows.filter(r => r.major.includes('수입')).sort((a, b) => b.amount - a.amount).slice(0, 8);
 
-  /* --- 수입: 이번 달 vs 지난 12개월 월평균 ---------------------------------
-     "이번 달을 평소와 견줘 본다"가 이 탭의 전부다. 그래서 기준은 하나로 고정한다:
-     이 달 직전 12개월 중 '기록이 있는 달'의 월평균. (기록이 없는 달까지 분모에
-     넣으면 평균이 실제보다 낮게 나와 자기 위안이 된다.)
-     같은 집계를 분류(minor)와 세부항목(minor › item) 두 단위로 뽑아, 차트에서
-     토글로 갈아끼운다. 합계 행은 맨 위에 끼워 한 장 안에서 같이 읽히게 한다. */
-  const incomeAggBy = (keyOf) => {
-    const isInc = (r) => r.major.includes('수입');
-    const curMap = {};
-    scopeRows.filter(isInc).forEach(r => { curMap[keyOf(r)] = (curMap[keyOf(r)] || 0) + r.amount; });
-
-    const baseKeys = [];
-    for (let i = 1; i <= 12; i++) baseKeys.push(shiftMonthKey(monthKey, -i));
-    const activeKeys = baseKeys.filter(k => ledger.some(r => ledgerMonthKey(r.date) === k));
-    const n = activeKeys.length;
-    const sumMap = {};
-    ledger.filter(r => isInc(r) && activeKeys.includes(ledgerMonthKey(r.date)))
-      .forEach(r => { sumMap[keyOf(r)] = (sumMap[keyOf(r)] || 0) + r.amount; });
-
-    const curTot = Object.values(curMap).reduce((a, b) => a + b, 0);
-    const avgTot = n ? Object.values(sumMap).reduce((a, b) => a + b, 0) / n : 0;
-    const names = [...new Set([...Object.keys(curMap), ...Object.keys(sumMap)])];
-    const rows = names.map(nm => {
-      const cur = curMap[nm] || 0;
-      const avg = n ? (sumMap[nm] || 0) / n : 0;
-      return {
-        name: nm, cur, avg, diff: cur - avg,
-        ratio: avg > 0 ? (cur / avg) * 100 : null,
-        share: curTot > 0 ? (cur / curTot) * 100 : 0,
-        avgShare: avgTot > 0 ? (avg / avgTot) * 100 : 0
-      };
-    }).filter(r => r.cur > 0 || r.avg > 0).sort((a, b) => b.cur - a.cur || b.avg - a.avg);
-    return { rows, curTot, avgTot, months: n };
-  };
-
+  /* --- 수입 ---------------------------------------------------------------
+     기준은 하나로 고정한다: 이 달 직전 12개월 중 '기록이 있는 달'의 월평균.
+     (기록이 없는 달까지 분모에 넣으면 평균이 실제보다 낮게 나와 자기 위안이 된다.)
+     분류·세부항목은 금액이 아니라 분류 표 순서로 세우고, 이번 달 금액이 0이어도 자리를 지킨다. */
   const incCatOf = (r) => r.minor || '기타';
-  const incItemKeyOf = (r) => [incCatOf(r), r.item || '-'].join(' › ');
-  const incomeByCat = incomeAggBy(incCatOf);
-  const incomeByItem = incomeAggBy(incItemKeyOf);
-  const INC_MODE = state.nowIncMode === 'detail' ? 'detail' : 'cat';
+  const incItemOf = (r) => r.item || '-';
+  const incItemKeyOf = (r) => incCatOf(r) + ' › ' + incItemOf(r);
+  const incTaxonomy = incomeTaxonomy(ledger);
   const incCmap = incomeCatColorMap(ledger);
   const incColorOf = (name) => incomeCatColorOf(incCmap, name);
 
-  /* 차트에 그릴 줄 — 합계 › 분류 › 세부항목의 위계를 그대로 세워 둔다.
-     level: 0 합계 · 1 분류 · 2 세부항목 · -1 빈 줄(묶음 사이 간격).
-     sel 이 있는 줄은 눌러서 오른쪽 내역을 그 항목으로 좁힐 수 있다. */
-  const incChartRows = (() => {
-    const out = [];
-    out.push({ label: '합계', level: 0, cur: incomeByCat.curTot, avg: Math.round(incomeByCat.avgTot),
-      share: null, avgShare: null, ratio: incomeByCat.avgTot > 0 ? (incomeByCat.curTot / incomeByCat.avgTot) * 100 : null,
-      diff: incomeByCat.curTot - incomeByCat.avgTot, color: '#8b93a5', sel: null, clearable: true });
-    incomeByCat.rows.forEach((c, ci) => {
-      if (ci === 0 || INC_MODE === 'detail') out.push({ label: '', level: -1, cur: null, avg: null });
-      out.push({ label: c.name, level: 1, cur: c.cur, avg: Math.round(c.avg), share: c.share, avgShare: c.avgShare,
-        ratio: c.ratio, diff: c.diff, color: incColorOf(c.name), sel: c.name });
-      if (INC_MODE !== 'detail') return;
-      incomeByItem.rows
-        .filter(it => it.name.split(' › ')[0] === c.name)
-        .forEach(it => out.push({
-          label: '　' + it.name.split(' › ').slice(1).join(' › '), level: 2,
-          cur: it.cur, avg: Math.round(it.avg), share: it.share, avgShare: it.avgShare,
-          ratio: it.ratio, diff: it.diff, color: incColorOf(c.name), sel: it.name
-        }));
+  const incStats = (() => {
+    const isInc = (r) => r.major.includes('수입');
+    const cur = {}, base = {};
+    const curRows = scopeRows.filter(isInc);
+    curRows.forEach(r => {
+      cur[incCatOf(r)] = (cur[incCatOf(r)] || 0) + r.amount;
+      cur[incItemKeyOf(r)] = (cur[incItemKeyOf(r)] || 0) + r.amount;
     });
-    return out;
+    const keys = [];
+    for (let i = 1; i <= 12; i++) keys.push(shiftMonthKey(monthKey, -i));
+    const active = keys.filter(k => ledger.some(r => ledgerMonthKey(r.date) === k));
+    const n = active.length;
+    const baseRows = ledger.filter(r => isInc(r) && active.includes(ledgerMonthKey(r.date)));
+    baseRows.forEach(r => {
+      base[incCatOf(r)] = (base[incCatOf(r)] || 0) + r.amount;
+      base[incItemKeyOf(r)] = (base[incItemKeyOf(r)] || 0) + r.amount;
+    });
+    const curTot = curRows.reduce((a, r) => a + r.amount, 0);
+    const avgTot = n ? baseRows.reduce((a, r) => a + r.amount, 0) / n : 0;
+    const of = (k) => {
+      const c = cur[k] || 0;
+      const a = n ? (base[k] || 0) / n : 0;
+      return {
+        cur: c, avg: a, diff: c - a,
+        ratio: a > 0 ? (c / a) * 100 : null,
+        share: curTot > 0 ? (c / curTot) * 100 : 0,
+        avgShare: avgTot > 0 ? (a / avgTot) * 100 : 0
+      };
+    };
+    return { of, curTot, avgTot, months: n };
   })();
 
-  /* 차트에서 고른 항목 (분류명 또는 '분류 › 항목') */
-  const incSel = incChartRows.some(r => r.sel && r.sel === state.nowIncSel) ? state.nowIncSel : null;
-  if (state.nowIncSel && !incSel) state.nowIncSel = null;
+  /* 차트 줄 — 합계 · 빈 줄 · 분류(펼치면 그 아래 세부항목). level: 0 합계 · 1 분류 · 2 세부항목 · -1 빈 줄 */
+  const incBuildRows = (openCat) => {
+    const mk = (label, level, sel, cat, st, color) => Object.assign({}, st, {
+      label, level, sel, cat, color, avg: Math.round(st.avg)
+    });
+    const out = [mk('합계', 0, null, null, {
+      cur: incStats.curTot, avg: incStats.avgTot, diff: incStats.curTot - incStats.avgTot,
+      ratio: incStats.avgTot > 0 ? (incStats.curTot / incStats.avgTot) * 100 : null,
+      share: null, avgShare: null
+    }, '#8b93a5')];
+    out.push({ label: '', level: -1, cur: null, avg: null });
+    incTaxonomy.forEach(g => {
+      const open = openCat === g.cat;
+      out.push(mk((open ? '▾ ' : '▸ ') + g.cat, 1, g.cat, g.cat, incStats.of(g.cat), incColorOf(g.cat)));
+      if (!open) return;
+      g.items.forEach(it => {
+        const k = g.cat + ' › ' + it;
+        out.push(mk('　' + it, 2, k, g.cat, incStats.of(k), incColorOf(g.cat)));
+      });
+    });
+    return out;
+  };
 
-  /* 이번 달 수입 원장 (raw) — 고른 항목이 있으면 그것만 */
   const incDayNo = (r) => { const p = parseLedgerDateParts(r.date); return p ? p.d : 0; };
-  const incomeRawRows = scopeRows.filter(r => r.major.includes('수입'))
-    .filter(r => !incSel || (incSel.includes(' › ') ? incItemKeyOf(r) === incSel : incCatOf(r) === incSel))
+  const incRawRowsFor = (sel) => scopeRows.filter(r => r.major.includes('수입'))
+    .filter(r => !sel || (sel.includes(' › ') ? incItemKeyOf(r) === sel : incCatOf(r) === sel))
     .sort((a, b) => incDayNo(b) - incDayNo(a) || b.amount - a.amount);
-  const incomeRawSum = incomeRawRows.reduce((a, r) => a + r.amount, 0);
 
   /* --- 비상금 이체 --- */
   const isEmgTr = (r) => r.major.includes('이체') && String(r.minor || '').includes('비상금');
@@ -9180,37 +9197,31 @@ function renderNowPage(container, data, d) {
     ${NSUB === 'income' ? `
     <div class="g inc-g">
       <div class="panel s7 inc-chart-panel">
-        <div class="panel-title">
-          <div>차트</div>
-          <div class="subnav sub2 inc-rtabs" id="now-inc-modes">
-            <button data-m="cat" class="${INC_MODE === 'cat' ? 'active' : ''}">기본</button>
-            <button data-m="detail" class="${INC_MODE === 'detail' ? 'active' : ''}">세부항목</button>
-          </div>
-        </div>
+        <div class="panel-title"><div>차트</div></div>
         <div class="inc-head">
           <div class="inc-head-cur">
             <span class="l"><i class="inc-sw solid"></i>이번 달 수입</span>
-            <b style="color:var(--income-text)">${formatKrw(incomeByCat.curTot)}</b>
+            <b style="color:var(--income-text)">${formatKrw(incStats.curTot)}</b>
           </div>
           <div class="inc-head-avg">
-            <span class="l"><i class="inc-sw hollow"></i>지난 ${incomeByCat.months || 0}개월 월평균</span>
-            <b>${formatKrw(Math.round(incomeByCat.avgTot))}</b>
+            <span class="l"><i class="inc-sw hollow"></i>지난 ${incStats.months || 0}개월 월평균</span>
+            <b>${formatKrw(Math.round(incStats.avgTot))}</b>
           </div>
-          <div class="inc-head-note">${incomeByCat.months
-            ? `<span class="pace-tag" style="color:${incomeByCat.curTot >= incomeByCat.avgTot ? 'var(--income-text)' : '#d9884f'}">평소보다 ${incomeByCat.curTot >= incomeByCat.avgTot ? '+' : '−'}${wonComma(Math.abs(Math.round(incomeByCat.curTot - incomeByCat.avgTot)))}원</span>`
+          <div class="inc-head-note">${incStats.months
+            ? `<span class="pace-tag" style="color:${incStats.curTot >= incStats.avgTot ? 'var(--income-text)' : '#d9884f'}">평소보다 ${incStats.curTot >= incStats.avgTot ? '+' : '−'}${wonComma(Math.abs(Math.round(incStats.curTot - incStats.avgTot)))}원</span>`
             : ''}</div>
           <div class="inc-head-rate">
             <span class="l">달성률</span>
-            <b style="color:${incomeByCat.avgTot > 0 && incomeByCat.curTot >= incomeByCat.avgTot ? 'var(--income-text)' : 'var(--expense-text)'}">${incomeByCat.avgTot > 0 ? Math.round((incomeByCat.curTot / incomeByCat.avgTot) * 100) + '%' : '—'}</b>
+            <b style="color:${incStats.avgTot > 0 && incStats.curTot >= incStats.avgTot ? 'var(--income-text)' : 'var(--expense-text)'}">${incStats.avgTot > 0 ? Math.round((incStats.curTot / incStats.avgTot) * 100) + '%' : '—'}</b>
           </div>
         </div>
-        <div class="chart-wrap" style="min-height:${Math.max(200, 56 + incChartRows.reduce((a, r) => a + (r.level === -1 ? 16 : 42), 0))}px;"><canvas id="chart-now-income"></canvas></div>
+        <div class="chart-wrap inc-chart-wrap" id="now-inc-chartwrap"><canvas id="chart-now-income"></canvas></div>
       </div>
 
       <div class="panel s5 inc-list-panel">
         <div class="panel-title">
           <div>내역</div>
-          <span class="ptag">${incSel ? `<b style="color:${incColorOf(incSel)}">${rxEsc(incSel)}</b> · ` : ''}${incomeRawRows.length}건 · ${formatKrw(incomeRawSum)}${incSel ? ` <button class="inc-clear" id="inc-sel-clear" title="전체 보기">×</button>` : ''}</span>
+          <span class="ptag" id="now-inc-ptag"></span>
         </div>
         <div id="now-incright-body"></div>
       </div>
@@ -9362,65 +9373,164 @@ function renderNowPage(container, data, d) {
     </div>
   `;
 
-  /* --- 수입 차트: 합계 › 분류 › 세부항목을 한 장에 세운다 ---
-     막대 색 = 분류 색, 채움 = 이번 달, 테두리만 = 평소. 막대 끝에 금액과 비중을 같이 찍고,
-     줄을 누르면 오른쪽 내역이 그 항목으로 좁혀진다. */
+  /* --- 수입 차트 -----------------------------------------------------------
+     합계 · 분류 · (펼친 분류의) 세부항목을 한 장에 세운다. 막대 색 = 분류 색,
+     채움 = 이번 달, 테두리만 = 평소. 줄을 누르면 그 줄이 켜지고 오른쪽 내역이 좁혀진다.
+     누를 때 화면 전체를 다시 그리지 않는다 — 막대가 0에서 다시 자라 보이지 않게. */
   if (NSUB === 'income') {
-    const R = incChartRows;
-    const labels = R.map(r => r.label);
-    const dim = (r) => incSel && r.sel && r.sel !== incSel && !(incSel.startsWith(r.sel + ' › '));
-    const alphaCur = (r) => r.level === -1 ? 0 : dim(r) ? .16 : r.level === 2 ? .6 : .92;
-    const alphaAvg = (r) => r.level === -1 ? 0 : dim(r) ? .05 : r.level === 2 ? .13 : .2;
-    const alphaLine = (r) => r.level === -1 ? 0 : dim(r) ? .18 : r.level === 2 ? .42 : .65;
-    const curShare = R.map(r => r.share);
-    const avgShare = R.map(r => r.avgShare);
-    const withShare = (arr) => (v, i) => `${formatCompactWon(v)}${arr[i] != null && arr[i] > 0 ? ` · ${arr[i].toFixed(0)}%` : ''}`;
+    const wrap = document.getElementById('now-inc-chartwrap');
+    const canvas = document.getElementById('chart-now-income');
+    const rBody = document.getElementById('now-incright-body');
+    const ptag = document.getElementById('now-inc-ptag');
+    const SEL_C = '#e8c96a';
+    let R = incBuildRows(state.nowIncOpen);
+    const heightOf = (rows) => Math.max(220, 56 + rows.length * 42);
+
+    const on = (r) => !state.nowIncSel || (r.sel && (r.sel === state.nowIncSel || state.nowIncSel.startsWith(r.sel + ' › ')));
+    const isSel = (r) => !!r.sel && r.sel === state.nowIncSel;
+    const curBg = (r) => r.level === -1 ? 'transparent'
+      : hexToRgba(r.color, !on(r) ? .14 : isSel(r) ? 1 : r.level === 2 ? .62 : .9);
+    const avgBg = (r) => r.level === -1 ? 'transparent'
+      : hexToRgba(r.color, !on(r) ? .04 : r.level === 2 ? .14 : .2);
+    const avgLine = (r) => r.level === -1 ? 'transparent'
+      : hexToRgba(r.color, !on(r) ? .16 : r.level === 2 ? .45 : .7);
+    const curLine = (r) => isSel(r) ? SEL_C : 'transparent';
     const tickColor = (i) => {
       const r = R[i];
       if (!r) return '#9aa3b6';
+      if (isSel(r)) return SEL_C;
+      if (!on(r)) return '#5d6472';
       if (r.level === 0) return '#e8ecf4';
-      if (r.level === 2) return dim(r) ? '#5d6472' : '#98a1b2';
-      return dim(r) ? '#6b7382' : '#c7cddb';
+      return r.level === 2 ? '#98a1b2' : '#c7cddb';
+    };
+    const fmt = (pick) => (v, i) => {
+      const r = R[i];
+      if (!r || r.level === -1) return '';
+      const sh = pick(r);
+      return `${formatCompactWon(v)}${sh != null && sh > 0 ? ` · ${sh.toFixed(0)}%` : ''}`;
     };
 
-    const canvas = document.getElementById('chart-now-income');
+    /* 켜진 줄은 막대 색만으로는 부족하다 — 줄 전체에 띠를 깔아 준다 */
+    const incRowBand = {
+      id: 'incRowBand',
+      beforeDatasetsDraw(chart) {
+        const i = chart.$selIndex;
+        if (i == null || i < 0) return;
+        const y = chart.scales.y, area = chart.chartArea;
+        if (!y || !area) return;
+        const band = y.height / Math.max(y.ticks.length, 1);
+        const cy = y.getPixelForTick(i);
+        const { ctx } = chart;
+        ctx.save();
+        ctx.fillStyle = 'rgba(232,201,106,0.09)';
+        ctx.fillRect(area.left, cy - band / 2, area.right - area.left, band);
+        ctx.fillStyle = SEL_C;
+        ctx.fillRect(area.left, cy - band / 2 + 2, 3, band - 4);
+        ctx.restore();
+      }
+    };
+
+    const renderList = () => {
+      const sel = state.nowIncSel;
+      const rows = incRawRowsFor(sel);
+      const sum = rows.reduce((a, r) => a + r.amount, 0);
+      if (ptag) {
+        ptag.innerHTML = `${sel ? `<b style="color:${incColorOf(sel)}">${rxEsc(sel)}</b> · ` : ''}${rows.length}건 · ${formatKrw(sum)}${sel ? ` <button class="inc-clear" id="inc-sel-clear" title="전체 보기">×</button>` : ''}`;
+        const cl = document.getElementById('inc-sel-clear');
+        if (cl) cl.addEventListener('click', () => { state.nowIncSel = null; state.nowIncOpen = null; apply(); });
+      }
+      if (!rBody) return;
+      rBody.innerHTML = rows.length ? `
+        <div class="table-scroll" style="max-height:520px;">
+          <table class="data-table inc-raw">
+            <thead><tr><th>날짜</th><th>분류 · 항목</th><th>사용처</th><th style="text-align:right">금액</th></tr></thead>
+            <tbody>${rows.map(r => {
+              const p = parseLedgerDateParts(r.date);
+              return `<tr data-day="${r.dayKey || ''}" title="${rxEsc(r.memo || '')}">
+              <td class="c-date">${p ? `${p.mo}/${p.d}` : r.date}</td>
+              <td class="c-cat">${rxCat(r)}</td>
+              <td class="c-vendor">${rxEsc((r.vendor || '').split('›').pop().trim())}${r.memo ? `<div class="acct-cat">${rxEsc(r.memo)}</div>` : ''}</td>
+              <td class="amt c-amt"><span class="v 수입">${wonComma(r.amount)}</span></td>
+            </tr>`; }).join('')}</tbody>
+          </table>
+        </div>`
+        : `<div class="empty-state">${sel ? `${rxEsc(sel)} 수입이 이번 달엔 없어요.` : '이 기간 수입 내역이 없어요.'}</div>`;
+      rBody.querySelectorAll('tr[data-day]').forEach(tr => tr.addEventListener('click', () => {
+        const k = tr.dataset.day;
+        if (!k || k > todayDayKey()) return;
+        state.todayDayKey = k;
+        goTo('flow', 'today');
+      }));
+    };
+
+    const apply = () => {
+      R = incBuildRows(state.nowIncOpen);
+      const ch = state.charts.nowIncome;
+      if (ch) {
+        ch.$selIndex = R.findIndex(r => r.sel && r.sel === state.nowIncSel);
+        ch.data.labels = R.map(r => r.label);
+        const [d0, d1] = ch.data.datasets;
+        d0.data = R.map(r => r.cur);
+        d0.backgroundColor = R.map(curBg);
+        d0.borderColor = R.map(curLine);
+        d0.borderWidth = R.map(r => isSel(r) ? 2 : 0);
+        d1.data = R.map(r => r.avg);
+        d1.backgroundColor = R.map(avgBg);
+        d1.borderColor = R.map(avgLine);
+        if (wrap) wrap.style.height = heightOf(R) + 'px';
+        ch.resize();
+        ch.update('none');   /* 막대가 0에서 다시 자라지 않게 */
+      }
+      renderList();
+    };
+
+    if (wrap) wrap.style.height = heightOf(R) + 'px';
     if (canvas) {
       if (state.charts.nowIncome) state.charts.nowIncome.destroy();
-      state.charts.nowIncome = new Chart(canvas, {
+      const ch = new Chart(canvas, {
         type: 'bar',
         data: {
-          labels,
+          labels: R.map(r => r.label),
           datasets: [
             {
               label: '이번 달', data: R.map(r => r.cur),
-              backgroundColor: R.map(r => hexToRgba(r.color || '#8b93a5', alphaCur(r))),
-              borderRadius: 3, barPercentage: .84, categoryPercentage: .74,
-              labelColor: '#c7cddb', labelStep: 1, labelOffset: 6,
-              labelFormatter: withShare(curShare)
+              backgroundColor: R.map(curBg), borderColor: R.map(curLine),
+              borderWidth: R.map(r => isSel(r) ? 2 : 0),
+              borderRadius: 3, barPercentage: .84, categoryPercentage: .76,
+              labelColor: (i) => { const r = R[i]; return !r ? '#dfe4ee' : isSel(r) ? SEL_C : !on(r) ? '#4e5563' : '#dfe4ee'; },
+              labelStep: 1, labelOffset: 7,
+              labelFont: "700 12px 'IBM Plex Mono', monospace",
+              labelFormatter: fmt(r => r.share)
             },
             {
-              label: `지난 ${incomeByCat.months || 0}개월 월평균`, data: R.map(r => r.avg),
-              backgroundColor: R.map(r => hexToRgba(r.color || '#8b93a5', alphaAvg(r))),
-              borderColor: R.map(r => hexToRgba(r.color || '#8b93a5', alphaLine(r))), borderWidth: 1,
-              borderRadius: 3, barPercentage: .84, categoryPercentage: .74,
-              labelColor: '#8b93a5', labelStep: 1, labelOffset: 6,
-              labelFormatter: withShare(avgShare)
+              label: `지난 ${incStats.months || 0}개월 월평균`, data: R.map(r => r.avg),
+              backgroundColor: R.map(avgBg), borderColor: R.map(avgLine), borderWidth: 1,
+              borderRadius: 3, barPercentage: .84, categoryPercentage: .76,
+              labelColor: (i) => { const r = R[i]; return !r || on(r) ? '#98a1b2' : '#454b58'; },
+              labelStep: 1, labelOffset: 7,
+              labelFont: "600 11px 'IBM Plex Mono', monospace",
+              labelFormatter: fmt(r => r.avgShare)
             }
           ]
         },
         options: {
           indexAxis: 'y',
           responsive: true, maintainAspectRatio: false,
-          layout: { padding: { right: 92, left: 2 } },
+          layout: { padding: { right: 108, left: 2 } },
           /* 가로 막대라 인덱스 축이 y다. axis:'y' 를 줘야 줄 어디를 눌러도 그 줄이 잡힌다. */
           interaction: { mode: 'index', intersect: false, axis: 'y' },
           onClick: (evt, els) => {
             if (!els || !els.length) return;
             const r = R[els[0].index];
             if (!r || r.level === -1) return;
-            state.nowIncSel = (r.sel && r.sel !== state.nowIncSel) ? r.sel : null;
-            /* 이벤트 처리 중에 차트를 부수면 Chart.js 내부가 터진다 — 한 틱 미룬다 */
-            setTimeout(renderPage, 0);
+            if (r.level === 0) { state.nowIncOpen = null; state.nowIncSel = null; }
+            else if (r.level === 1) {
+              if (state.nowIncSel === r.sel) { state.nowIncOpen = null; state.nowIncSel = null; }
+              else { state.nowIncOpen = r.cat; state.nowIncSel = r.sel; }
+            } else {
+              state.nowIncSel = state.nowIncSel === r.sel ? r.cat : r.sel;
+            }
+            apply();
           },
           onHover: (evt, els) => {
             const t = evt.native && evt.native.target;
@@ -9431,14 +9541,14 @@ function renderNowPage(container, data, d) {
             tooltip: {
               filter: (item) => item.raw !== null && item.raw !== undefined,
               callbacks: {
-                title: (items) => items.length ? String(labels[items[0].dataIndex]).trim() : '',
+                title: (items) => items.length ? String(R[items[0].dataIndex].label).replace(/^[▸▾　]\s*/, '') : '',
                 label: (c) => ` ${c.dataset.label}: ${formatWon(c.raw)}`,
                 afterBody: (items) => {
                   if (!items.length) return '';
                   const r = R[items[0].dataIndex];
                   if (!r || r.level === -1) return '';
                   return [r.ratio === null
-                    ? '평소 기록 없음 (신규)'
+                    ? '평소 기록 없음'
                     : `평소 대비 ${r.ratio.toFixed(0)}% (${r.diff >= 0 ? '+' : '−'}${wonComma(Math.abs(Math.round(r.diff)))}원)`];
                 }
               }
@@ -9450,52 +9560,22 @@ function renderNowPage(container, data, d) {
               ticks: {
                 ...MONO_TICK, crossAlign: 'far', autoSkip: false,
                 color: (ctx) => tickColor(ctx.index),
-                font: (ctx) => ({ family: 'IBM Plex Mono', size: R[ctx.index] && R[ctx.index].level === 2 ? 10 : 11,
-                  weight: R[ctx.index] && R[ctx.index].level <= 1 ? 600 : 400 })
+                font: (ctx) => ({
+                  family: 'IBM Plex Mono',
+                  size: R[ctx.index] && R[ctx.index].level === 2 ? 11 : 12,
+                  weight: R[ctx.index] && (R[ctx.index].level <= 1 || isSel(R[ctx.index])) ? 700 : 400
+                })
               },
               grid: { display: false }
             }
           }
         },
-        plugins: [valueLabelPlugin]
+        plugins: [incRowBand, valueLabelPlugin]
       });
+      state.charts.nowIncome = ch;
+      ch.$selIndex = R.findIndex(r => r.sel && r.sel === state.nowIncSel);
     }
-
-    const modeTabs = document.getElementById('now-inc-modes');
-    if (modeTabs) modeTabs.addEventListener('click', (e) => {
-      const b = e.target.closest('button');
-      if (!b || b.dataset.m === INC_MODE) return;
-      state.nowIncMode = b.dataset.m;
-      renderPage();
-    });
-    const selClear = document.getElementById('inc-sel-clear');
-    if (selClear) selClear.addEventListener('click', () => { state.nowIncSel = null; renderPage(); });
-
-    /* 오른쪽 — 이번 달 수입 원장 */
-    const rBody = document.getElementById('now-incright-body');
-    if (rBody) {
-      rBody.innerHTML = incomeRawRows.length ? `
-        <div class="table-scroll" style="max-height:520px;">
-          <table class="data-table inc-raw">
-            <thead><tr><th>날짜</th><th>분류 · 항목</th><th>사용처</th><th style="text-align:right">금액</th></tr></thead>
-            <tbody>${incomeRawRows.map(r => {
-              const p = parseLedgerDateParts(r.date);
-              return `<tr data-day="${r.dayKey || ''}" title="${rxEsc(r.memo || '')}">
-              <td class="c-date">${p ? `${p.mo}/${p.d}` : r.date}</td>
-              <td class="c-cat">${rxCat(r)}</td>
-              <td class="c-vendor">${rxEsc((r.vendor || '').split('›').pop().trim())}${r.memo ? `<div class="acct-cat">${rxEsc(r.memo)}</div>` : ''}</td>
-              <td class="amt c-amt"><span class="v 수입">${wonComma(r.amount)}</span></td>
-            </tr>`; }).join('')}</tbody>
-          </table>
-        </div>`
-        : '<div class="empty-state">이 기간 수입 내역이 없어요.</div>';
-      rBody.querySelectorAll('tr[data-day]').forEach(tr => tr.addEventListener('click', () => {
-        const k = tr.dataset.day;
-        if (!k || k > todayDayKey()) return;
-        state.todayDayKey = k;
-        goTo('flow', 'today');
-      }));
-    }
+    renderList();
   }
 
   /* --- 카테고리 --- */
@@ -9730,7 +9810,12 @@ function renderNowPage(container, data, d) {
   drawNowFlow();
 
   /* --- 월 이동 --- */
-  const setMonth = (k) => { state.nowMonthKey = k; state.nowWeekIdx = null; renderPage(); };
+  const setMonth = (k, pinned) => {
+    state.nowMonthKey = k;
+    state.nowMonthPinned = pinned !== false;
+    state.nowWeekIdx = null;
+    renderPage();
+  };
   document.getElementById('now-month-select').addEventListener('change', (e) => setMonth(e.target.value));
   document.getElementById('now-prev').addEventListener('click', () => {
     const i = availableKeys.indexOf(monthKey);
@@ -9742,7 +9827,7 @@ function renderNowPage(container, data, d) {
   });
   document.getElementById('now-thismonth').addEventListener('click', () => {
     const t = thisMonthKey();
-    setMonth(availableKeys.includes(t) ? t : availableKeys[availableKeys.length - 1]);
+    setMonth(availableKeys.includes(t) ? t : availableKeys[availableKeys.length - 1], false);
   });
 }
 
@@ -10625,9 +10710,9 @@ function renderYearSubTab(sub, Y, data, d, yrRows, TOP_PCT) {
 
     /* 색은 '이번달 › 수입'과 같은 표를 쓴다 — 화면을 옮겨도 같은 분류는 같은 색 */
     const incCmap = incomeCatColorMap(data.ledger);
+    const incOrder = incomeTaxonomy(data.ledger).map(g => g.cat);
     const cats = [...new Set(inc.map(r => r.minor || '기타'))]
-      .sort((a, b) => inc.filter(r => (r.minor || '기타') === b).reduce((x, r) => x + r.amount, 0)
-                    - inc.filter(r => (r.minor || '기타') === a).reduce((x, r) => x + r.amount, 0));
+      .sort((a, b) => (incOrder.indexOf(a) + 1 || 99) - (incOrder.indexOf(b) + 1 || 99));
     const ds = cats.map((c) => ({
       type: 'bar', label: c, stack: 'inc',
       data: live(bucket(inc.filter(r => (r.minor || '기타') === c), r => r.amount)),
@@ -15867,6 +15952,8 @@ async function init() {
   state.source = 'snapshot';
   applySuggestedGoals(state.data);
   renderAll();
+  /* 분류 표(순서·이름)는 화면 곳곳에서 쓰므로 미리 받아 둔다 */
+  enEnsureRefs().catch(() => {});
   fetchLive(false);
 }
 
