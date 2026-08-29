@@ -1036,6 +1036,49 @@ body{
   .lg-dayadd{opacity:1;}
 }
 
+/* ---------- 전체 내역 : 칸 단위로 옮겨 다니고, 여러 칸을 묶어 고친다 ----------
+   표를 스프레드시트처럼 다룬다. 지금 있는 칸은 테두리로, 묶인 칸은 바탕색으로 알린다. */
+.lg-line [data-ed]{outline:none;}
+.lg-line [data-ed].sel{background:rgba(201,162,39,.13);}
+.lg-line [data-ed].cur{box-shadow:inset 0 0 0 1.5px var(--accent-text);background:rgba(201,162,39,.09);}
+.lg-line [data-ed].cur.sel{background:rgba(201,162,39,.18);}
+.lg-line.rowsel{background:rgba(201,162,39,.05);}
+/* 칸을 묶어 잡는 동안 글자가 딸려 잡히면 지저분해진다 — 고칠 때만 글자를 잡게 둔다 */
+.lg-line [data-ed]{user-select:none;}
+.lg-line [data-ed].editing{user-select:text;}
+
+.lg-bulk{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:420;
+  display:flex;align-items:center;gap:7px;flex-wrap:wrap;max-width:min(1040px,calc(100vw - 24px));
+  background:var(--panel);border:1px solid var(--gold-soft);border-radius:var(--r-lg);
+  padding:8px 11px;box-shadow:0 14px 38px rgba(0,0,0,.5);}
+.lg-bulk .n{font-size:var(--fs-xs);color:var(--text-dim);white-space:nowrap;}
+.lg-bulk .n b{font-family:var(--mono);color:var(--accent-text);}
+.lg-bulk .sep{width:1px;height:20px;background:var(--border);flex:0 0 1px;}
+.lg-bulk button{background:transparent;border:1px solid var(--border);border-radius:var(--r-md);
+  color:var(--text-dim);font-family:var(--sans);font-size:var(--fs-xs);padding:5px 9px;cursor:pointer;
+  white-space:nowrap;line-height:1.2;}
+.lg-bulk button:hover{border-color:var(--border-strong);color:var(--text);background:var(--panel-2);}
+.lg-bulk button.danger:hover{border-color:var(--expense-text);color:var(--expense-text);background:var(--expense-bg);}
+.lg-bulk button.go{background:var(--accent-fill);border-color:transparent;color:var(--ink-on-accent);font-weight:700;}
+.lg-bulk .lg-ed{background:var(--panel-2);height:26px;width:130px;color-scheme:dark;}
+.lg-bulk .one{display:flex;align-items:center;gap:5px;position:relative;}
+.lg-bulk .one .lab{font-family:var(--mono);font-size:var(--fs-micro);color:var(--text-faint);white-space:nowrap;}
+.lg-bulk .one .lg-ed{width:180px;}
+.lg-bulk .one .lg-cpick{position:relative;display:block;width:180px;}
+.lg-bulk .kbd{font-family:var(--mono);font-size:var(--fs-micro);color:var(--text-faint);white-space:nowrap;}
+/* 바가 화면 밑에 붙어 있으니 분류 목록은 위로 편다 */
+.lg-bulk .lg-cpdrop{top:auto;bottom:calc(100% + 5px);max-height:min(340px,50vh);}
+@media(max-width:820px){
+  .lg-bulk{left:8px;right:8px;transform:none;max-width:none;bottom:8px;}
+  .lg-bulk .one .lg-ed,.lg-bulk .one .lg-cpick{width:100%;}
+  .lg-bulk .one{flex:1 1 100%;}
+}
+/* 키보드 안내 — 표 위에 조용히 한 줄 */
+.lg-keys{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin:8px 4px 0;
+  font-size:var(--fs-micro);color:var(--text-faint);}
+.lg-keys kbd{font-family:var(--mono);font-size:var(--fs-micro);background:var(--panel-2);
+  border:1px solid var(--border);border-radius:var(--r-sm);padding:1px 4px;color:var(--text-dim);}
+
 .lg-meta{display:flex;align-items:center;justify-content:space-between;gap:10px;
   font-family:var(--mono);font-size:var(--fs-xs);color:var(--text-dim);margin:16px 4px 0;}
 .lg-pager{display:flex;gap:4px;}
@@ -5787,6 +5830,15 @@ async function renderLedgerPage(body) {
         </div>
       </div>
       <div class="lg-add" id="lg-add"></div>
+      <div class="lg-keys">
+        <span><kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> 칸 이동</span>
+        <span><kbd>Shift</kbd>+이동·클릭 여러 칸 묶기</span>
+        <span><kbd>Space</kbd> 한 행 통째로</span>
+        <span><kbd>Enter</kbd> 고치기 (그냥 쳐도 시작)</span>
+        <span><kbd>Tab</kbd> 오른쪽 칸</span>
+        <span><kbd>⌘</kbd>+<kbd>C</kbd> 복사</span>
+        <span><kbd>Esc</kbd> 해제</span>
+      </div>
       <div id="lg-list"><div class="en-empty">불러오는 중…</div></div>
       <div class="lg-meta">
         <span id="lg-count"></span>
@@ -6023,7 +6075,7 @@ async function enLoadLedger() {
       return `<div class="lg-dg" data-date="${grp.date}"><div class="lg-day">
           <span class="d">${grp.date.slice(2).replace(/-/g, '.')}</span>
           <span class="w">${EN_WD[dt.getDay()]}</span>
-          <button class="lg-dayadd" data-add="${grp.date}" title="이 날짜로 행 추가">+</button>
+          <button class="lg-dayadd" data-add="${grp.date}" title="이 날짜로 행 추가" tabindex="-1">+</button>
           <span class="s">${grp.items.length}건${spend ? ' · 지출 ' + enComma(Math.round(spend)) : ''}</span>
         </div><div class="lg-card">` +
         grp.items.map(r => `<div class="lg-line k-${r.kind}" draggable="true" data-id="${r.id}" data-date="${r.date}"
@@ -6035,14 +6087,14 @@ async function enLoadLedger() {
           <span class="n" data-ed="merchant" title="더블클릭해서 수정">${r.merchant_group ? `<i class="lg-mg">${enEsc(r.merchant_group)}</i>` : ''}${enEsc(r.merchant || r.subcategory)}</span>
           <span class="mm" data-ed="note" title="더블클릭해서 메모 수정">${r.note ? enEsc(r.note) : '<i class="lg-ph">메모</i>'}</span>
           <span class="f">
-            <button class="lg-tg ${r.company_paid ? 'on' : ''}" data-tg="company_paid" title="회사 환급">🏢</button>
+            <button class="lg-tg ${r.company_paid ? 'on' : ''}" data-tg="company_paid" title="회사 환급" tabindex="-1">🏢</button>
             ${lgFixedBtn(r.merchant, r.is_fixed)}
           </span>
           <span class="g">${r.kind === '지출'
-            ? `<button class="lg-gb ${r.good_bad === 'Good' ? 'good' : r.good_bad === 'Bad' ? 'bad' : ''}" data-gb title="클릭해서 Good → Bad → 해제">${r.good_bad === 'Good' ? 'GOOD' : r.good_bad === 'Bad' ? 'BAD' : '—'}</button>`
+            ? `<button class="lg-gb ${r.good_bad === 'Good' ? 'good' : r.good_bad === 'Bad' ? 'bad' : ''}" data-gb tabindex="-1" title="클릭해서 Good → Bad → 해제">${r.good_bad === 'Good' ? 'GOOD' : r.good_bad === 'Bad' ? 'BAD' : '—'}</button>`
             : '<span class="lg-na" title="지출에만 매깁니다">·</span>'}</span>
           <span class="v ${r.kind}" data-ed="amount" title="더블클릭해서 수정">${Number(r.amount) < 0 ? '−' : ''}${enComma(Math.abs(r.amount))}</span>
-          <button class="x" data-id="${r.id}" aria-label="삭제">×</button>
+          <button class="x" data-id="${r.id}" aria-label="삭제" tabindex="-1">×</button>
         </div>`).join('') + '</div></div>';
     }).join('');
     box.querySelectorAll('.x').forEach(b => b.addEventListener('click', async () => {
@@ -6058,6 +6110,7 @@ async function enLoadLedger() {
       lgDraftAdd(b.dataset.add);
     }));
   }
+  lgGridInit(box);
 
   const last = Math.max(1, Math.ceil(total / g.size));
   enQS('#lg-count').textContent = total
@@ -6075,13 +6128,16 @@ async function lgUpdate(id, patch) {
   return true;
 }
 
-function lgCellEdit(cell) {
+function lgCellEdit(cell, opts) {
   if (cell.classList.contains('editing')) return;
+  const seed = opts && opts.seed;
   const line = cell.closest('.lg-line');
   const id = Number(line.dataset.id);
   const what = cell.dataset.ed;
   const prev = cell.innerHTML;
   let done = false;
+  LGK.editing = true;
+  LGK.move = null;
   cell.classList.add('editing');
 
   let input;
@@ -6118,54 +6174,72 @@ function lgCellEdit(cell) {
     }
   }
 
+  if (seed != null && what !== 'cat') input.value = seed;
+
   cell.innerHTML = '';
   cell.appendChild(input);
   if (what === 'merchant') lgMerchantAC(input);
   input.focus();
-  if (input.select) input.select();
+  if (input.select && seed == null) input.select();
+  if (seed != null && input.setSelectionRange) {
+    try { input.setSelectionRange(input.value.length, input.value.length); } catch (err) {}
+  }
+
+  /* 고치고 나면 어디에 서 있을지를 정해 둔다 — 화면을 다시 그려도 그 자리를 되찾게 */
+  const inGrid = !!(cell.closest && cell.closest('#lg-list'));
+  const land = (reloaded) => {
+    const mv = LGK.move; LGK.move = null;
+    LGK.editing = false;
+    if (!inGrid) return;   /* '오늘' 탭에도 같은 행이 쓰인다 — 거긴 표가 아니다 */
+    if (reloaded) { LGK.want = { id, col: what, move: mv }; return; }
+    lgGridLand(cell, mv);
+  };
 
   const finish = async (commit) => {
     if (done) return;
     done = true;
     cell.classList.remove('editing');
-    if (!commit) { cell.innerHTML = prev; return; }
+    const bail = () => { cell.innerHTML = prev; land(false); };
+    if (!commit) { bail(); return; }
     const patch = {};
     if (what === 'cat') {
       const cid = Number(input.value);
-      if (!cid || cid === Number(line.dataset.cat)) { cell.innerHTML = prev; return; }
+      if (!cid || cid === Number(line.dataset.cat)) { bail(); return; }
       patch.category_id = cid;
     } else if (what === 'amount') {
       const t = input.value.trim();
       const neg = /^[-−]/.test(t);
       const n = Number(t.replace(/[^\d]/g, ''));
-      if (!n) { cell.innerHTML = prev; return; }
+      if (!n) { bail(); return; }
       const v = neg ? -n : n;
-      if (v === Number(line.dataset.amt)) { cell.innerHTML = prev; return; }
+      if (v === Number(line.dataset.amt)) { bail(); return; }
       patch.amount = v;
     } else if (what === 'merchant') {
       const v = input.value.trim();
       const was = (line.dataset.mgroup ? line.dataset.mgroup + ' › ' : '') + (line.dataset.merch || '');
-      if (v === was) { cell.innerHTML = prev; return; }
+      if (v === was) { bail(); return; }
       const parts = lgSplitMerchant(v);
       patch.merchant_group = parts.group;
       patch.merchant = parts.merchant;
     } else {
       const v = input.value.trim();
-      if (v === (line.dataset.note || '')) { cell.innerHTML = prev; return; }
+      if (v === (line.dataset.note || '')) { bail(); return; }
       patch.note = v || null;
     }
     const ok = await lgUpdate(id, patch);
-    if (!ok) { cell.innerHTML = prev; return; }
+    if (!ok) { bail(); return; }
     /* 입력칸을 반드시 걷어낸다 — 남겨두면 뒤따르는 화면 갱신이 '편집 중'으로 보고 건너뛴다 */
     cell.innerHTML = prev;
+    land(true);
     enToast('수정했습니다');
     lgTouched();
     enLoadLedger();
   };
 
   input.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') { e.preventDefault(); finish(true); }
-    else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); finish(false); }
+    if (e.key === 'Enter') { e.preventDefault(); LGK.move = e.shiftKey ? 'up' : 'down'; finish(true); }
+    else if (e.key === 'Tab') { e.preventDefault(); LGK.move = e.shiftKey ? 'left' : 'right'; finish(true); }
+    else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); LGK.move = null; finish(false); }
   });
   input.addEventListener('blur', () => finish(true));
   if (what === 'cat') input.addEventListener('change', () => finish(true));
@@ -6214,7 +6288,7 @@ function lgFixedBtn(merchant, on) {
   const tip = mfx
     ? (on ? '고정비 — 사용처 기준' : '사용처는 고정비인데 이 줄만 예외')
     : '고정비';
-  return `<button class="${cls}" data-tg="is_fixed" title="${tip}">📌</button>`;
+  return `<button class="${cls}" data-tg="is_fixed" title="${tip}" tabindex="-1">📌</button>`;
 }
 
 /* 분류를 셀렉트 대신 검색으로 고른다 — 소분류가 수십 개라 스크롤로는 못 찾는다.
@@ -6306,8 +6380,18 @@ function lgMerchantAC(input, onPick) {
   const place = () => {
     const r = input.getBoundingClientRect();
     box.style.left = Math.max(8, Math.min(r.left, window.innerWidth - 310)) + 'px';
-    box.style.top = (r.bottom + 4) + 'px';
     box.style.minWidth = Math.max(r.width, 260) + 'px';
+    /* 아래에 자리가 없으면 위로 편다 — 화면 밑에 붙은 일괄 수정바에서도 목록이 보여야 한다 */
+    const room = window.innerHeight - r.bottom;
+    if (room < 200 && r.top > room) {
+      box.style.top = 'auto';
+      box.style.bottom = (window.innerHeight - r.top + 4) + 'px';
+      box.style.maxHeight = Math.min(280, r.top - 12) + 'px';
+    } else {
+      box.style.bottom = 'auto';
+      box.style.top = (r.bottom + 4) + 'px';
+      box.style.maxHeight = Math.min(280, room - 12) + 'px';
+    }
   };
 
   let list = [], cur = -1;
@@ -6424,29 +6508,390 @@ function lgBindDrag(box) {
   });
 }
 
+/* ---------------- 전체 내역 : 표를 칸 단위로 돌아다니고, 묶어서 고친다 ----------------
+   가계부를 정리하는 일은 한 줄을 고치는 일보다 '같은 걸 여러 줄에서 한꺼번에 고치는' 일이 많다.
+   그래서 표를 스프레드시트처럼 다룬다 — 화살표로 칸을 옮기고, Shift로 범위를 잡고,
+   잡힌 범위에 한 번에 같은 값을 넣는다. 마우스만으로도, 키보드만으로도 끝까지 갈 수 있어야 한다. */
+
+const LGK = {
+  cols: ['cat', 'merchant', 'note', 'amount'],
+  labels: { cat: '분류', merchant: '사용처', note: '메모', amount: '금액' },
+  rows: [], vis: [0, 1, 2, 3],
+  cur: null, anchor: null, editing: false, move: null, want: null
+};
+
+function lgGridCell(r, c) {
+  const row = LGK.rows[r];
+  return row ? row.querySelector(`[data-ed="${LGK.cols[c]}"]`) : null;
+}
+
+function lgGridRange() {
+  if (!LGK.cur) return null;
+  const a = LGK.anchor || LGK.cur;
+  return {
+    r0: Math.min(a.r, LGK.cur.r), r1: Math.max(a.r, LGK.cur.r),
+    c0: Math.min(a.c, LGK.cur.c), c1: Math.max(a.c, LGK.cur.c)
+  };
+}
+
+function lgGridPaint() {
+  const rng = lgGridRange();
+  const many = !!rng && (rng.r0 !== rng.r1 || rng.c0 !== rng.c1);
+  LGK.rows.forEach((row, r) => {
+    let inRow = false;
+    LGK.cols.forEach((name, c) => {
+      const el = row.querySelector(`[data-ed="${name}"]`);
+      if (!el) return;
+      const on = !!rng && r >= rng.r0 && r <= rng.r1 && c >= rng.c0 && c <= rng.c1;
+      const isCur = !!LGK.cur && LGK.cur.r === r && LGK.cur.c === c;
+      el.classList.toggle('sel', on && many);
+      el.classList.toggle('cur', isCur);
+      el.tabIndex = isCur ? 0 : -1;
+      if (on) inRow = true;
+    });
+    row.classList.toggle('rowsel', inRow && many && rng.r0 !== rng.r1);
+  });
+  /* 아무 칸도 안 잡혀 있으면 Tab 으로 표에 들어올 자리를 하나 열어 둔다 */
+  if (!LGK.cur && LGK.rows.length) {
+    const el = lgGridCell(0, LGK.vis[0]);
+    if (el) el.tabIndex = 0;
+  }
+  lgBulkPaint();
+}
+
+function lgGridSet(r, c, extend) {
+  if (r < 0 || r >= LGK.rows.length) return false;
+  if (!LGK.vis.includes(c)) {
+    c = LGK.vis.reduce((best, v) => Math.abs(v - c) < Math.abs(best - c) ? v : best, LGK.vis[0]);
+  }
+  LGK.cur = { r, c };
+  if (!extend) LGK.anchor = { r, c };
+  const el = lgGridCell(r, c);
+  if (el) { el.tabIndex = 0; el.focus({ preventScroll: false }); }
+  lgGridPaint();
+  return true;
+}
+
+function lgGridMove(dr, dc, extend) {
+  if (!LGK.cur) return lgGridSet(0, LGK.vis[0], false);
+  let { r, c } = LGK.cur;
+  if (dc) {
+    let vi = LGK.vis.indexOf(c) + dc;
+    if (vi < 0) { if (r > 0) { r--; vi = LGK.vis.length - 1; } else vi = 0; }
+    else if (vi >= LGK.vis.length) { if (r < LGK.rows.length - 1) { r++; vi = 0; } else vi = LGK.vis.length - 1; }
+    c = LGK.vis[vi];
+  }
+  if (dr) r = Math.max(0, Math.min(LGK.rows.length - 1, r + dr));
+  return lgGridSet(r, c, extend);
+}
+
+function lgGridClear() {
+  LGK.cur = null; LGK.anchor = null;
+  lgGridPaint();
+}
+
+function lgGridEdit(seed) {
+  if (!LGK.cur) return;
+  const el = lgGridCell(LGK.cur.r, LGK.cur.c);
+  if (el) lgCellEdit(el, seed != null ? { seed } : null);
+}
+
+/* 고친 다음 어디에 설지 — Enter 는 아래, Tab 은 오른쪽. 표를 안 쳐다봐도 이어서 칠 수 있게 */
+function lgGridLand(cell, move) {
+  const line = cell && cell.closest('.lg-line');
+  if (!line) return;
+  const r = LGK.rows.indexOf(line);
+  const c = LGK.cols.indexOf(cell.dataset.ed);
+  if (r < 0 || c < 0) return;
+  lgGridSet(r, c, false);
+  if (move === 'down') lgGridMove(1, 0, false);
+  else if (move === 'up') lgGridMove(-1, 0, false);
+  else if (move === 'right') lgGridMove(0, 1, false);
+  else if (move === 'left') lgGridMove(0, -1, false);
+}
+
+function lgGridCopy() {
+  const rng = lgGridRange();
+  if (!rng) return;
+  const out = [];
+  for (let r = rng.r0; r <= rng.r1; r++) {
+    const line = [];
+    for (let c = rng.c0; c <= rng.c1; c++) {
+      if (!LGK.vis.includes(c)) continue;
+      const el = lgGridCell(r, c);
+      line.push(el ? el.textContent.replace(/\s+/g, ' ').trim() : '');
+    }
+    out.push(line.join('\t'));
+  }
+  const text = out.join('\n');
+  try {
+    navigator.clipboard.writeText(text).then(() => enToast(`${out.length}행 복사했습니다`), () => {});
+  } catch (e) { /* 클립보드를 못 쓰는 자리면 조용히 넘어간다 */ }
+}
+
+function lgGridInit(box) {
+  LGK.rows = [...box.querySelectorAll('.lg-line')];
+  LGK.editing = false;
+  const want = LGK.want; LGK.want = null;
+
+  if (!LGK.rows.length) { LGK.cur = null; LGK.anchor = null; lgBulkPaint(); return; }
+
+  /* 좁은 화면에선 분류·메모 열이 접힌다. 접힌 칸으로는 옮겨 가지 않는다. */
+  const first = LGK.rows[0];
+  const vis = LGK.cols.map((name, i) => {
+    const el = first.querySelector(`[data-ed="${name}"]`);
+    return el && el.offsetParent !== null ? i : -1;
+  }).filter(i => i >= 0);
+  LGK.vis = vis.length ? vis : [0, 1, 2, 3];
+
+  if (!box.dataset.grid) {
+    box.dataset.grid = '1';
+    box.addEventListener('mousedown', (e) => {
+      const cell = e.target.closest && e.target.closest('[data-ed]');
+      if (!cell || cell.classList.contains('editing')) return;
+      const r = LGK.rows.indexOf(cell.closest('.lg-line'));
+      const c = LGK.cols.indexOf(cell.dataset.ed);
+      if (r < 0 || c < 0) return;
+      if (e.shiftKey) {
+        e.preventDefault();
+        if (!LGK.anchor) LGK.anchor = LGK.cur || { r, c };
+        LGK.cur = { r, c };
+        const el = lgGridCell(r, c);
+        if (el) { el.tabIndex = 0; el.focus({ preventScroll: true }); }
+        lgGridPaint();
+      } else {
+        lgGridSet(r, c, false);
+      }
+    });
+    box.addEventListener('focusin', (e) => {
+      if (LGK.editing) return;
+      const cell = e.target.closest && e.target.closest('[data-ed]');
+      if (!cell) return;
+      const r = LGK.rows.indexOf(cell.closest('.lg-line'));
+      const c = LGK.cols.indexOf(cell.dataset.ed);
+      if (r < 0 || c < 0) return;
+      if (LGK.cur && LGK.cur.r === r && LGK.cur.c === c) return;
+      LGK.cur = { r, c }; LGK.anchor = { r, c };
+      lgGridPaint();
+    });
+    box.addEventListener('keydown', (e) => {
+      if (LGK.editing) return;
+      const t = e.target;
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA')) return;
+      const k = e.key;
+      const mod = e.metaKey || e.ctrlKey;
+      if (mod && (k === 'c' || k === 'C')) { lgGridCopy(); return; }
+      if (mod && (k === 'a' || k === 'A')) {
+        e.preventDefault();
+        LGK.anchor = { r: 0, c: LGK.vis[0] };
+        lgGridSet(LGK.rows.length - 1, LGK.vis[LGK.vis.length - 1], true);
+        return;
+      }
+      if (mod) return;
+      if (k === 'ArrowDown') { e.preventDefault(); lgGridMove(1, 0, e.shiftKey); }
+      else if (k === 'ArrowUp') { e.preventDefault(); lgGridMove(-1, 0, e.shiftKey); }
+      else if (k === 'ArrowRight') { e.preventDefault(); lgGridMove(0, 1, e.shiftKey); }
+      else if (k === 'ArrowLeft') { e.preventDefault(); lgGridMove(0, -1, e.shiftKey); }
+      else if (k === 'Tab') { e.preventDefault(); lgGridMove(0, e.shiftKey ? -1 : 1, false); }
+      else if (k === 'Home') { e.preventDefault(); lgGridSet(LGK.cur ? LGK.cur.r : 0, LGK.vis[0], e.shiftKey); }
+      else if (k === 'End') { e.preventDefault(); lgGridSet(LGK.cur ? LGK.cur.r : 0, LGK.vis[LGK.vis.length - 1], e.shiftKey); }
+      else if (k === 'Enter' || k === 'F2') { e.preventDefault(); lgGridEdit(); }
+      else if (k === 'Escape') { e.preventDefault(); lgGridClear(); }
+      else if (k === ' ') {
+        /* 한 행을 통째로 — 토글·삭제처럼 행 단위로 할 일이 많다 */
+        e.preventDefault();
+        if (!LGK.cur) return;
+        LGK.anchor = { r: LGK.cur.r, c: LGK.vis[0] };
+        lgGridSet(LGK.cur.r, LGK.vis[LGK.vis.length - 1], true);
+      }
+      else if (!e.altKey && k.length === 1) {
+        /* 그냥 치기 시작하면 그 글자로 고치기가 열린다 */
+        if (LGK.cur && LGK.cols[LGK.cur.c] === 'cat') { e.preventDefault(); lgGridEdit(); return; }
+        e.preventDefault();
+        lgGridEdit(k);
+      }
+    });
+  }
+
+  if (want) {
+    const r = LGK.rows.findIndex(el => Number(el.dataset.id) === want.id);
+    const c = LGK.cols.indexOf(want.col);
+    if (r >= 0 && c >= 0) {
+      lgGridSet(r, c, false);
+      if (want.move) lgGridMove(want.move === 'down' ? 1 : want.move === 'up' ? -1 : 0,
+        want.move === 'right' ? 1 : want.move === 'left' ? -1 : 0, false);
+      return;
+    }
+  }
+  LGK.cur = null; LGK.anchor = null;
+  lgGridPaint();
+}
+
+/* ---------------- 묶은 칸을 한 번에 고치는 바 ----------------
+   무엇이 몇 개 잡혔는지 먼저 말하고, 그 다음에 할 수 있는 일을 늘어놓는다.
+   한 열만 잡혔으면 '같은 값으로'가 앞에 오고, 여러 열이면 행 단위 손질만 남는다. */
+function lgBulkRows() {
+  const rng = lgGridRange();
+  if (!rng) return [];
+  const out = [];
+  for (let r = rng.r0; r <= rng.r1; r++) if (LGK.rows[r]) out.push(LGK.rows[r]);
+  return out;
+}
+
+async function lgBulkApply(ids, patch, msg) {
+  if (!ids.length) return;
+  const { error } = await (await enClient()).from('transactions').update(patch).in('id', ids);
+  if (error) { enToast('저장하지 못했습니다'); return; }
+  enToast(msg || `${ids.length}건 고쳤습니다`);
+  LGK.cur = null; LGK.anchor = null;
+  lgTouched();
+  enLoadLedger();
+}
+
+function lgBulkPaint() {
+  const host = document.querySelector('.lg-wrap');
+  const old = document.getElementById('lg-bulk');
+  const rng = lgGridRange();
+  const many = !!rng && (rng.r0 !== rng.r1 || rng.c0 !== rng.c1);
+  if (!many || !host) { if (old) old.remove(); return; }
+
+  const rows = lgBulkRows();
+  const ids = rows.map(el => Number(el.dataset.id));
+  const cols = [];
+  for (let c = rng.c0; c <= rng.c1; c++) if (LGK.vis.includes(c)) cols.push(c);
+  const cellCount = rows.length * Math.max(cols.length, 1);
+  const one = cols.length === 1 ? LGK.cols[cols[0]] : null;
+
+  const oneHTML = !one ? '' :
+    one === 'cat'
+      ? `<span class="one"><span class="lab">분류</span><span class="lg-cpick">
+           <input class="lg-ed" id="lg-bk-catq" placeholder="분류 검색 → 고르면 바로 적용" autocomplete="off">
+           <input type="hidden" id="lg-bk-cat"></span></span>`
+      : `<span class="one"><span class="lab">${LGK.labels[one]}</span>
+           <input class="lg-ed${one === 'amount' ? ' mono' : ''}" id="lg-bk-val" autocomplete="off"
+                  placeholder="${one === 'amount' ? '금액' : one === 'merchant' ? '사용처 (그룹 › 이름)' : '메모 — 비우면 지움'}">
+           <button class="go" id="lg-bk-go">적용</button></span>`;
+
+  const html = `
+    <span class="n"><b>${rows.length}</b>행 · <b>${cellCount}</b>칸 잡힘</span>
+    ${oneHTML}
+    <span class="sep"></span>
+    <input class="lg-ed" type="date" id="lg-bk-date" title="잡힌 행의 날짜를 한꺼번에">
+    <button data-b="company_paid" title="회사 환급 전환">🏢</button>
+    <button data-b="is_fixed" title="고정비 전환">📌</button>
+    <button data-b="Good">GOOD</button>
+    <button data-b="Bad">BAD</button>
+    <button data-b="gbnull">GOOD/BAD 해제</button>
+    <span class="sep"></span>
+    <button class="danger" data-b="del">삭제</button>
+    <button data-b="close">해제 <span class="kbd">Esc</span></button>`;
+
+  let bar = old;
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.className = 'lg-bulk';
+    bar.id = 'lg-bulk';
+    host.appendChild(bar);
+  }
+  bar.innerHTML = html;
+
+  if (one === 'cat') {
+    lgCatPick(bar.querySelector('#lg-bk-catq'), bar.querySelector('#lg-bk-cat'), (c) => {
+      lgBulkApply(ids, { category_id: c.id }, `${ids.length}건을 '${c.subcategory}'로 옮겼습니다`);
+    });
+  } else if (one) {
+    const val = bar.querySelector('#lg-bk-val');
+    if (one === 'merchant') lgMerchantAC(val);
+    if (one === 'amount') val.addEventListener('input', () => {
+      const minus = /^\s*[-−]/.test(val.value);
+      const raw = val.value.replace(/[^\d]/g, '');
+      val.value = raw ? (minus ? '−' : '') + enComma(raw) : (minus ? '−' : '');
+    });
+    const go = () => {
+      const v = val.value.trim();
+      if (one === 'amount') {
+        const neg = /^[-−]/.test(v);
+        const n = Number(v.replace(/[^\d]/g, ''));
+        if (!n) { enToast('금액을 적어주세요'); return; }
+        lgBulkApply(ids, { amount: neg ? -n : n }, `${ids.length}건의 금액을 맞췄습니다`);
+      } else if (one === 'merchant') {
+        if (!v) { enToast('사용처를 적어주세요'); return; }
+        const p = lgSplitMerchant(v);
+        lgBulkApply(ids, { merchant_group: p.group, merchant: p.merchant }, `${ids.length}건의 사용처를 맞췄습니다`);
+      } else {
+        lgBulkApply(ids, { note: v || null }, v ? `${ids.length}건에 메모를 넣었습니다` : `${ids.length}건의 메모를 지웠습니다`);
+      }
+    };
+    bar.querySelector('#lg-bk-go').addEventListener('click', go);
+    val.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.defaultPrevented) { e.preventDefault(); go(); }
+    });
+  }
+
+  bar.querySelector('#lg-bk-date').addEventListener('change', (e) => {
+    const d = e.target.value;
+    if (d) lgBulkApply(ids, { date: d }, `${ids.length}건을 ${d.slice(2).replace(/-/g, '.')} 로 옮겼습니다`);
+  });
+
+  bar.querySelectorAll('[data-b]').forEach(b => b.addEventListener('click', async () => {
+    const k = b.dataset.b;
+    if (k === 'close') { lgGridClear(); return; }
+    if (k === 'del') {
+      if (!confirm(`${ids.length}건을 삭제할까요? 되돌릴 수 없습니다.`)) return;
+      const { error } = await (await enClient()).from('transactions').delete().in('id', ids);
+      if (error) { enToast('삭제하지 못했습니다'); return; }
+      enToast(`${ids.length}건 삭제했습니다`);
+      LGK.cur = null; LGK.anchor = null;
+      lgTouched();
+      enLoadLedger();
+      return;
+    }
+    if (k === 'company_paid' || k === 'is_fixed') {
+      /* 다 켜져 있으면 끄고, 하나라도 꺼져 있으면 모두 켠다 — 결과를 예측할 수 있게 */
+      const allOn = rows.every(el => {
+        const t = el.querySelector(`[data-tg="${k}"]`);
+        return t && t.classList.contains('on');
+      });
+      const patch = {}; patch[k] = !allOn;
+      lgBulkApply(ids, patch, `${ids.length}건 ${k === 'is_fixed' ? '고정비' : '회사 환급'} ${allOn ? '해제' : '표시'}했습니다`);
+      return;
+    }
+    /* Good/Bad 는 지출에만 매긴다 */
+    const spend = rows.filter(el => el.classList.contains('k-지출')).map(el => Number(el.dataset.id));
+    if (!spend.length) { enToast('지출 행에만 매길 수 있어요'); return; }
+    const v = k === 'gbnull' ? null : k;
+    lgBulkApply(spend, { good_bad: v }, `지출 ${spend.length}건 ${v ? v.toUpperCase() : 'GOOD/BAD 해제'}`);
+  }));
+}
+
 /* ---------------- 전체 내역 : 표 위에서 행을 여러 개 만들어 한 번에 저장 ----------------
    따로 화면을 만들지 않는다. 목록 맨 위에 빈 행이 쌓이고, 다 채우면 한 번에 넣는다.
    같은 날짜·금액·사용처가 이미 있으면 저장 직전에 알려준다. */
 
+/* 새 기록 행에서 오갈 수 있는 칸 — 화면에 놓인 차례와 같게 둔다 */
+const LG_DCOLS = ['date', 'merchant', 'catq', 'amount', 'note'];
+
 function lgDraftRowHTML(i, seed) {
   const c = EN.catById[seed.catId];
+  /* 칸 순서 = 생각하는 순서. 어디서 샀나 → 무슨 갈래인가 → 얼마인가 → 남길 말.
+     사용처를 먼저 적으면 분류·고정비가 따라오므로 분류 칸은 대개 그냥 지나친다. */
   return `<div class="lg-dr" data-dr="${i}">
     <span class="dt"><input class="lg-ed" type="date" data-d="date" value="${enEsc(seed.date)}" style="color-scheme:dark;"></span>
+    <span class="nm"><input class="lg-ed" data-d="merchant" placeholder="사용처" autocomplete="off" value="${enEsc(seed.merchant || '')}"></span>
     <span class="ck"><i class="lg-kd ${c ? c.kind : ''}" data-kd>${c ? c.kind : '—'}</i>
       <span class="lg-cpick">
         <input class="lg-ed" data-d="catq" placeholder="분류 검색" autocomplete="off"
                value="${c ? enEsc(c.category + ' › ' + c.subcategory) : ''}">
         <input type="hidden" data-d="cat" value="${seed.catId || ''}">
       </span></span>
-    <span class="nm"><input class="lg-ed" data-d="merchant" placeholder="사용처" autocomplete="off" value="${enEsc(seed.merchant || '')}"></span>
+    <span class="am"><input class="lg-ed mono" data-d="amount" inputmode="numeric" placeholder="0" value="${enEsc(seed.amount || '')}"></span>
     <span class="no"><input class="lg-ed" data-d="note" placeholder="메모" autocomplete="off" value="${enEsc(seed.note || '')}"></span>
     <span class="tg">
-      <button class="lg-tg ${seed.company_paid ? 'on' : ''}" data-dtg="company_paid" title="회사 환급">🏢</button>
-      <button class="lg-tg ${seed.is_fixed || enMerchFixed(seed.merchant) ? 'on' : ''}${enMerchFixed(seed.merchant) ? ' auto' : ''}" data-dtg="is_fixed" title="고정비">📌</button>
+      <button class="lg-tg ${seed.company_paid ? 'on' : ''}" data-dtg="company_paid" title="회사 환급" tabindex="-1">🏢</button>
+      <button class="lg-tg ${seed.is_fixed || enMerchFixed(seed.merchant) ? 'on' : ''}${enMerchFixed(seed.merchant) ? ' auto' : ''}" data-dtg="is_fixed" title="고정비" tabindex="-1">📌</button>
     </span>
-    <span class="gb"><button class="lg-gb ${c && c.kind !== '지출' ? 'off' : ''} ${seed.good_bad === 'Good' ? 'good' : seed.good_bad === 'Bad' ? 'bad' : ''}" data-dgb ${c && c.kind !== '지출' ? 'disabled' : ''}>${seed.good_bad === 'Good' ? 'GOOD' : seed.good_bad === 'Bad' ? 'BAD' : '—'}</button></span>
-    <span class="am"><input class="lg-ed mono" data-d="amount" inputmode="numeric" placeholder="0" value="${enEsc(seed.amount || '')}"></span>
-    <button class="x" data-drx="${i}" aria-label="이 행 삭제">×</button>
+    <span class="gb"><button class="lg-gb ${c && c.kind !== '지출' ? 'off' : ''} ${seed.good_bad === 'Good' ? 'good' : seed.good_bad === 'Bad' ? 'bad' : ''}" data-dgb tabindex="-1" ${c && c.kind !== '지출' ? 'disabled' : ''}>${seed.good_bad === 'Good' ? 'GOOD' : seed.good_bad === 'Bad' ? 'BAD' : '—'}</button></span>
+    <button class="x" data-drx="${i}" aria-label="이 행 삭제" tabindex="-1">×</button>
   </div>`;
 }
 
@@ -6462,7 +6907,9 @@ function lgRenderAdd(focusIdx) {
   host.innerHTML = `
     <div class="lg-addbar">
       <span class="t">새 기록 <b>${EN.draft.length}</b>건</span>
-      <span class="hint">금액에서 <kbd>Enter</kbd> 다음 행 · <kbd>Ctrl</kbd>+<kbd>Enter</kbd> 모두 저장</span>
+      <span class="hint"><kbd>Enter</kbd> 다음 칸 · 금액에서 <kbd>Enter</kbd> 새 행 ·
+        <kbd>Shift</kbd>+<kbd>Enter</kbd> 아무 데서나 새 행 · <kbd>↑↓←→</kbd> 칸 이동 ·
+        <kbd>⌘</kbd>+<kbd>D</kbd> 행 복제 · <kbd>⌘</kbd>+<kbd>Enter</kbd> 모두 저장</span>
       <button class="lg-addghost" id="lg-drclear">비우기</button>
       <button class="lg-addghost" id="lg-drmore">+ 행 추가</button>
       <button class="lg-addsave" id="lg-drsave">모두 저장</button>
@@ -6544,18 +6991,86 @@ function lgRenderAdd(focusIdx) {
     lgRenderAdd();
   }));
 
+  /* 칸 사이를 손대지 않고 돌아다닌다.
+     ↑↓ 는 같은 칸의 위·아래 행, ←→ 는 글자 끝에 닿았을 때만 옆 칸으로 — 글자 고치는 걸 막지 않는다. */
+  const DCOLS = LG_DCOLS;
+  const drFocus = (r, c) => {
+    const el = host.querySelector(`.lg-dr[data-dr="${r}"] [data-d="${DCOLS[c]}"]`);
+    if (!el || el.type === 'hidden' || el.offsetParent === null) return false;
+    el.focus();
+    if (el.select) { try { el.select(); } catch (err) {} }
+    return true;
+  };
+  const drStep = (r, c, dr, dc) => {
+    const n = host.querySelectorAll('.lg-dr').length;
+    let rr = r + dr, cc = c + dc;
+    for (let guard = 0; guard < 24; guard++) {
+      if (cc < 0) { cc = DCOLS.length - 1; rr--; }
+      if (cc > DCOLS.length - 1) { cc = 0; rr++; }
+      if (rr < 0 || rr >= n) return false;
+      if (drFocus(rr, cc)) return true;
+      if (dc) cc += (dc > 0 ? 1 : -1); else return false;
+    }
+    return false;
+  };
+  const caretStart = (el) => { try { return el.selectionStart === 0 && el.selectionEnd === 0; } catch (err) { return true; } };
+  const caretEnd = (el) => { try { return el.selectionStart === el.value.length && el.selectionEnd === el.value.length; } catch (err) { return true; } };
+
+  /* 칸 안내는 한 번만 건다 — 행을 그릴 때마다 걸면 Enter 한 번에 행이 두세 개씩 생긴다 */
+  if (!host.dataset.keys) {
+  host.dataset.keys = '1';
   host.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); lgDraftSave(); return; }
-    if (e.key !== 'Enter') return;
     const t = e.target;
-    if (!t || !t.dataset || t.dataset.d !== 'amount') return;
-    e.preventDefault();
+    if (!t || !t.dataset || !t.dataset.d) return;
     const row = t.closest('.lg-dr');
+    if (!row) return;
     const i = Number(row.dataset.dr);
-    lgDraftSync();
-    if (i === EN.draft.length - 1) lgDraftAdd(EN.draft[i].date, EN.draft[i].catId);
-    else lgRenderAdd(i + 1);
+    const c = DCOLS.indexOf(t.dataset.d);
+    if (c < 0) return;
+
+    /* 어디서든 한 번에 새 행 */
+    if (e.key === 'Enter' && e.shiftKey) {
+      e.preventDefault();
+      lgDraftSync();
+      const s = EN.draft[i] || {};
+      lgDraftAdd(s.date, s.catId);
+      return;
+    }
+    /* 이 행 그대로 한 벌 더 (금액만 비운다) — 같은 가게에서 여러 건 적을 때.
+       아직 아무것도 안 쓴 행이면 바로 윗 행을 물려받는다. */
+    if ((e.key === 'd' || e.key === 'D') && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      lgDraftSync();
+      const here = EN.draft[i];
+      const blank = here && !here.merchant && !here.note && !here.amount;
+      const s = (blank && EN.draft[i - 1]) ? EN.draft[i - 1] : here;
+      if (!s) return;
+      EN.draft.splice(i + 1, 0, { ...s, amount: '' });
+      lgRenderAdd(i + 1);
+      return;
+    }
+    /* 자동완성·분류 목록이 이미 가져간 키는 건드리지 않는다 */
+    if (e.defaultPrevented) return;
+
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (t.dataset.d === 'amount') {
+        lgDraftSync();
+        if (i === EN.draft.length - 1) lgDraftAdd(EN.draft[i].date, EN.draft[i].catId);
+        else lgRenderAdd(i + 1);
+        return;
+      }
+      drStep(i, c, 0, 1);
+      return;
+    }
+    if (e.key === 'ArrowDown') { if (drStep(i, c, 1, 0)) e.preventDefault(); return; }
+    if (e.key === 'ArrowUp') { if (drStep(i, c, -1, 0)) e.preventDefault(); return; }
+    if (e.key === 'ArrowRight' && caretEnd(t)) { if (drStep(i, c, 0, 1)) e.preventDefault(); return; }
+    if (e.key === 'ArrowLeft' && caretStart(t)) { if (drStep(i, c, 0, -1)) e.preventDefault(); return; }
+    if (e.key === 'Escape') { t.blur(); }
   });
+  }
 
   host.querySelector('#lg-drmore').addEventListener('click', () => {
     lgDraftSync();
@@ -6570,12 +7085,11 @@ function lgRenderAdd(focusIdx) {
   host.querySelector('#lg-drsave').addEventListener('click', lgDraftSave);
 
   const rows = host.querySelectorAll('.lg-dr');
+  /* 언제나 사용처부터 — 여기서 분류와 고정비가 따라 붙으니 첫 칸이어야 한다 */
   const target = rows[focusIdx == null ? rows.length - 1 : focusIdx];
   if (target) {
-    const hid = target.querySelector('[data-d="cat"]');
     const nm = target.querySelector('[data-d="merchant"]');
-    const cq = target.querySelector('[data-d="catq"]');
-    (hid.value ? nm : cq).focus();
+    if (nm) { nm.focus(); try { nm.select(); } catch (err) {} }
   }
 }
 
