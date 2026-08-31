@@ -397,13 +397,33 @@ body{
 .inc-list-panel .panel-title{align-items:center;}
 /* 이번달 › 지출: 고정비 / 변동비 / 잘한소비 / 아낀 소비 — 차트·카드·내역에 함께 걸리는 필터 */
 .exp-fchips{display:flex;flex-wrap:wrap;gap:6px;margin-left:auto;}
-.exp-fchip{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:999px;
+.exp-fchip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;
   border:1px solid var(--border);background:none;color:var(--text-faint);cursor:pointer;
-  font-size:var(--fs-tiny);font-weight:500;line-height:1.5;}
-.exp-fchip b{font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--text-dim);}
+  font-size:var(--fs-sm);font-weight:500;line-height:1.5;}
+.exp-fchip b{font-family:'IBM Plex Mono',monospace;font-size:var(--fs-sm);font-weight:600;color:var(--text-dim);}
 .exp-fchip:hover{border-color:var(--gold-soft);color:var(--text-dim);}
 .exp-fchip.on{border-color:var(--gold-soft);background:rgba(232,201,106,.07);color:var(--text);font-weight:600;}
 .exp-fchip.on b{color:var(--text);}
+/* 지출 내역: 좁은 패널 안에서도 전체 내역과 같은 규격으로 그 자리에서 고친다.
+   종류는 전부 '지출'이라 배지를 빼고, 그 폭을 사용처에 준다. */
+.exp-editscroll{max-height:560px;overflow-y:auto;scrollbar-width:thin;margin:0 -2px;padding:0 2px;}
+.exp-editlist .lg-cols{margin-top:0;border-top:0;position:sticky;top:0;z-index:3;background:var(--panel);}
+.exp-editlist .lg-cols .k,.exp-editlist .lg-line .k{display:none;}
+.exp-editlist .lg-cols,.exp-editlist .lg-line{gap:7px;padding:0 10px;}
+.exp-editlist .lg-cols .e,.exp-editlist .lg-line .e{flex:0 0 16px;}
+.exp-editlist .lg-cols .c,.exp-editlist .lg-line .c{flex:0 0 132px;}
+.exp-editlist .lg-cols .n,.exp-editlist .lg-line .n{flex:1 1 90px;min-width:72px;}
+.exp-editlist .lg-cols .mm,.exp-editlist .lg-line .mm{flex:0 0 84px;}
+.exp-editlist .lg-cols .f,.exp-editlist .lg-line .f{flex:0 0 46px;}
+.exp-editlist .lg-cols .g,.exp-editlist .lg-line .g{flex:0 0 52px;}
+.exp-editlist .lg-cols .v,.exp-editlist .lg-line .v{flex:0 0 84px;}
+.exp-editlist .lg-cols .x,.exp-editlist .lg-line .x{flex:0 0 16px;}
+.exp-editlist .lg-day{margin:12px 2px 5px;}
+.exp-editlist .lg-dg:first-child .lg-day{margin-top:10px;}
+/* 폭이 모자라면 메모부터 접는다 — 금액이 밀려 잘리는 것보다 낫다 */
+@media (max-width:1400px){
+  .exp-editlist .lg-cols .mm,.exp-editlist .lg-line .mm{display:none;}
+}
 .data-table.inc-raw th{white-space:nowrap;}
 .data-table.inc-raw tbody tr{cursor:pointer;}
 .data-table.inc-raw tbody tr:hover{background:var(--panel-2);}
@@ -9006,6 +9026,51 @@ function rxMountEditableRows(host, rows, emptyMsg) {
   }).catch(() => {});
 }
 
+/* 한 달치처럼 여러 날이 섞인 목록을 날짜로 묶어 붙인다 (이번달 › 지출).
+   행 규격·편집 계약은 전체 내역과 같아서 lgBindEdit 를 그대로 쓴다. */
+function rxMountEditableDays(host, rows, emptyMsg) {
+  if (!host) return;
+  if (!rows.length) { host.innerHTML = `<div class="empty-state">${emptyMsg || '기록이 없어요.'}</div>`; return; }
+  const editable = rows.some(r => r.id != null);
+  const groups = [];
+  const idx = {};
+  rows.forEach(r => {
+    const k = r.dayKey || r.date;
+    if (idx[k] === undefined) { idx[k] = groups.length; groups.push({ key: k, date: r.date, items: [] }); }
+    groups[idx[k]].items.push(r);
+  });
+  host.innerHTML = rxLedgerHead(editable) + groups.map(g => {
+    const sum = g.items.reduce((a, r) => a + (Number(r.amount) || 0) - (r.refund || 0), 0);
+    const dt = /^\d{4}-\d{2}-\d{2}$/.test(String(g.key)) ? new Date(g.key + 'T00:00:00') : null;
+    const p = parseLedgerDateParts(g.date);
+    return `<div class="lg-dg"><div class="lg-day">
+        <span class="d">${p ? `${p.mo}/${p.d}` : rxEsc(String(g.date))}</span>
+        ${dt ? `<span class="w">${EN_WD[dt.getDay()]}</span>` : ''}
+        <span class="s">${g.items.length}건 · ${wonComma(sum)}</span>
+      </div><div class="lg-card">${g.items.map(r => (r.id != null ? rxLedgerLineEdit(r) : rxLedgerLine(r))).join('')}</div>
+    </div>`;
+  }).join('');
+  if (!editable) return;
+  enEnsureRefs().then(() => {
+    if (!host.isConnected) return;
+    host.querySelectorAll('.lg-line[data-id]').forEach(line => {
+      const btn = line.querySelector('[data-tg="is_fixed"]');
+      if (!btn) return;
+      const mfx = enMerchFixed(line.dataset.merch);
+      const on = btn.classList.contains('on');
+      btn.classList.toggle('auto', mfx && on);
+      btn.classList.toggle('exc', mfx && !on);
+    });
+    lgBindEdit(host);
+    host.querySelectorAll('.x').forEach(b => b.addEventListener('click', async () => {
+      if (!confirm('이 기록을 삭제할까요?')) return;
+      await (await enClient()).from('transactions').delete().eq('id', Number(b.dataset.id));
+      enToast('삭제했습니다');
+      lgTouched();
+    }));
+  }).catch(() => {});
+}
+
 /* 전체 내역과 같은 규격의 읽기 전용 행 */
 function rxLedgerLine(r) {
   const k = rxKind(r);
@@ -9666,11 +9731,6 @@ function renderNowPage(container, data, d) {
   const EXPF = ['all', 'fixed', 'var', 'good', 'regret'].includes(state.nowExpFilter) ? state.nowExpFilter : 'all';
   const expFilterFn = { all: () => true, fixed: (r) => r.fixed, var: (r) => !r.fixed, good: (r) => r.good, regret: (r) => r.regret }[EXPF];
 
-  /* --- 유독 큰 지출: 이 달 지출 합계의 5% 이상인 단건만 --- */
-  const OUTLIER_PCT = 5;
-  const outlierCut = expNet * (OUTLIER_PCT / 100);
-  const outliers = expRows.filter(r => netOfR(r) >= outlierCut && netOfR(r) > 0).sort((a, b) => netOfR(b) - netOfR(a));
-
   /* --- 지출 ---------------------------------------------------------------
      수입 탭과 같은 눈으로 본다: 이 달 직전 12개월 중 '기록이 있는 달'의 월평균을 기준선으로
      깔고, 분류·세부항목은 금액이 아니라 분류 표 순서로 세운다. 고정비/변동비/잘한소비/
@@ -9868,25 +9928,14 @@ function renderNowPage(container, data, d) {
         <div class="chart-wrap inc-chart-wrap" id="now-exp-chartwrap"><canvas id="chart-now-expense"></canvas></div>
       </div>
 
-      <div class="panel s5 inc-list-panel">
+      <div class="panel s5 inc-list-panel exp-editlist">
         <div class="panel-title">
           <div>내역</div>
           <span class="ptag" id="now-exp-ptag"></span>
         </div>
-        <div id="now-expright-body"></div>
+        <div class="exp-editscroll"><div id="now-expright-body"></div></div>
+        <div class="settings-note">칸을 더블클릭하면 그 자리에서 고쳐집니다 · 🏢 회사 환급 · 📌 고정비 · GOOD/BAD 는 눌러서 바꿉니다.</div>
       </div>
-    </div>
-
-    ${outliers.length ? `
-    <div class="g">
-      <div class="panel s12">
-        <div class="panel-title"><div>유독 큰 지출</div><span class="ptag">합계의 ${OUTLIER_PCT}% 이상</span></div>
-        <div id="now-outlier-body"></div>
-      </div>
-    </div>` : ''}
-
-    <div class="bt2-wrap" style="margin-top:4px;">
-      <div id="now-budget-body"></div>
     </div>` : ''}
 
     ${NSUB === 'saving' ? `
@@ -9924,20 +9973,6 @@ function renderNowPage(container, data, d) {
       </div>
     </div>` : ''}
   `;
-
-  if (NSUB === 'expense') {
-    renderBudgetTable(data, d, monthKey, 'now-budget-body');
-
-    const olBody = document.getElementById('now-outlier-body');
-    if (olBody) {
-      olBody.innerHTML = `
-        ${outliers.map(r => `<div class="acct-row">
-          <span class="acct-name">${r.item || r.minor}<div class="acct-cat">${r.date} · ${(r.vendor || r.minor || '').split('›').pop().trim()}</div></span>
-          <span class="acct-amt" style="color:var(--expense-text)">${formatWon(netOfR(r))}<div class="acct-cat" style="text-align:right">${expNet > 0 ? ((netOfR(r) / expNet) * 100).toFixed(0) : 0}%</div></span>
-        </div>`).join('')}
-        <div class="settings-note">이번 달 지출 합계의 <b>${OUTLIER_PCT}%</b>(${formatCompactWon(Math.round(outlierCut))}원)를 넘는 단건만 띄웁니다.</div>`;
-    }
-  }
 
   container.querySelectorAll('.stat-card[data-goto]').forEach(el => el.addEventListener('click', () => {
     state.nowSub = el.dataset.goto;
@@ -10377,29 +10412,9 @@ function renderNowPage(container, data, d) {
       const rows = expRawRowsFor(sel);
       const sum = rows.reduce((a, r) => a + netOfR(r), 0);
       if (ptag) ptag.textContent = `${rows.length}건 · ${formatKrw(sum)}`;
-      if (!rBody) return;
-      rBody.innerHTML = rows.length ? `
-        <div class="table-scroll" style="max-height:520px;">
-          <table class="data-table inc-raw">
-            <thead><tr><th>날짜</th><th>분류 · 항목</th><th>사용처</th><th>체크</th><th style="text-align:right">금액</th></tr></thead>
-            <tbody>${rows.map(r => {
-              const p = parseLedgerDateParts(r.date);
-              return `<tr data-day="${r.dayKey || ''}" title="${rxEsc(r.memo || '')}">
-              <td class="c-date">${p ? `${p.mo}/${p.d}` : r.date}</td>
-              <td class="c-cat">${rxCat(r)}</td>
-              <td class="c-vendor">${rxEsc((r.vendor || '').split('›').pop().trim())}${r.memo ? `<div class="acct-cat">${rxEsc(r.memo)}</div>` : ''}</td>
-              <td class="c-marks">${rxMarks(r)}</td>
-              <td class="amt c-amt"><span class="v 지출">${wonComma(netOfR(r))}</span></td>
-            </tr>`; }).join('')}</tbody>
-          </table>
-        </div>`
-        : `<div class="empty-state">${sel ? `${rxEsc(sel)} 지출이 이번 달엔 없어요.` : '이 조건의 지출 내역이 없어요.'}</div>`;
-      rBody.querySelectorAll('tr[data-day]').forEach(tr => tr.addEventListener('click', () => {
-        const k = tr.dataset.day;
-        if (!k || k > todayDayKey()) return;
-        state.todayDayKey = k;
-        goTo('flow', 'today');
-      }));
+      /* 다른 화면으로 보내지 않는다 — 고칠 곳은 보고 있는 자리다 */
+      rxMountEditableDays(rBody, rows,
+        sel ? `${rxEsc(sel)} 지출이 이번 달엔 없어요.` : '이 조건의 지출 내역이 없어요.');
     };
 
     const apply = () => {
