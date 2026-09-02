@@ -2465,6 +2465,58 @@ body{font-variant-numeric:tabular-nums;}
 .bk-fair .sub.up{color:var(--income-text);} .bk-fair .sub.down{color:var(--expense-text);}
 .bk-fair.none{color:var(--text-faint);font-family:var(--sans);font-size:var(--fs-xs);text-align:center;}
 
+/* ---------- 현황 › 자산 스냅샷 ---------- */
+.sn-wrap{padding-top:26px;padding-bottom:60px;}
+.sn-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px;}
+.sn-mo{display:flex;align-items:center;gap:6px;}
+.sn-nav{width:28px;height:28px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--panel);
+  color:var(--text-dim);cursor:pointer;font-size:var(--fs-md);line-height:1;}
+.sn-nav:hover{border-color:var(--border-strong);color:var(--text);}
+.sn-sel{width:auto;min-width:110px;font-family:var(--mono);}
+.sn-badge{font-size:var(--fs-xs);padding:3px 9px;border-radius:var(--r-pill);margin-left:4px;}
+.sn-badge.ok{background:var(--income-bg);color:var(--income-text);}
+.sn-badge.new{background:var(--accent-bg,rgba(232,201,106,.12));color:var(--accent-text);}
+.sn-acts{margin-left:auto;display:flex;gap:8px;align-items:center;}
+.sn-sum{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
+.sn-sum>div{flex:1 1 160px;background:var(--panel);border:1px solid var(--border);border-radius:var(--r-md);padding:10px 14px;}
+.sn-sum .k{display:block;font-size:var(--fs-xs);color:var(--text-faint);margin-bottom:3px;}
+.sn-sum b{font-family:var(--mono);font-size:var(--fs-xl);color:var(--text);}
+.sn-sum b.up{color:var(--income-text);} .sn-sum b.down{color:var(--expense-text);}
+.sn-card{background:var(--panel);border:1px solid var(--border);border-radius:var(--r-md);overflow:hidden;}
+.sn-cols,.sn-row{display:flex;align-items:center;gap:10px;padding:0 14px;}
+.sn-cols{height:32px;font-size:var(--fs-tiny);color:var(--text-faint);border-bottom:1px solid var(--border);
+  letter-spacing:.04em;text-transform:none;}
+.sn-cols .ac,.sn-row .ac{flex:1 1 180px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.sn-cols .pv,.sn-row .pv{flex:0 0 110px;text-align:right;font-family:var(--mono);font-size:var(--fs-sm);color:var(--text-faint);}
+.sn-cols .in{flex:0 0 150px;text-align:right;}
+.sn-cols .dl,.sn-row .dl{flex:0 0 110px;text-align:right;font-family:var(--mono);font-size:var(--fs-sm);color:var(--text-faint);}
+.sn-cols .x,.sn-row .sn-x{flex:0 0 24px;}
+.sn-row{height:40px;border-bottom:1px solid var(--border);}
+.sn-row:hover{background:var(--panel-2);}
+.sn-row .ac{font-size:var(--fs-base);color:var(--text);}
+.sn-row .dl.up{color:var(--income-text);} .sn-row .dl.down{color:var(--expense-text);}
+.sn-in{flex:0 0 150px;text-align:right;font-family:var(--mono);height:28px;padding:0 8px;}
+.sn-x{border:none;background:transparent;color:var(--text-faint);cursor:pointer;font-size:var(--fs-md);line-height:1;padding:2px;}
+.sn-x:hover{color:var(--expense-text);}
+.sn-cls{display:flex;align-items:center;gap:7px;padding:9px 14px 6px;font-size:var(--fs-xs);color:var(--text-dim);
+  background:var(--bg-2);border-bottom:1px solid var(--border);}
+.sn-cls i{width:7px;height:7px;border-radius:50%;display:inline-block;}
+.sn-cls b{margin-left:auto;font-family:var(--mono);color:var(--text-faint);}
+.sn-addrow{display:flex;gap:8px;align-items:center;padding:12px 14px;}
+.sn-addrow select{flex:0 0 120px;} .sn-addrow input{flex:1 1 200px;}
+.sn-hist{margin-top:26px;}
+.sn-histhead{font-size:var(--fs-sm);color:var(--text-dim);margin-bottom:8px;}
+.sn-hist .data-table td.r,.sn-hist .data-table th.r{text-align:right;}
+.sn-hist .data-table td.mono{font-family:var(--mono);}
+.sn-hist .data-table td.up{color:var(--income-text);} .sn-hist .data-table td.down{color:var(--expense-text);}
+.sn-hrow{cursor:pointer;} .sn-hrow:hover{background:var(--panel-2);}
+.sn-hrow.on{background:var(--panel-2);} .sn-hrow.on td:first-child{color:var(--accent-text);}
+@media (max-width:720px){
+  .sn-cols .pv,.sn-row .pv{display:none;}
+  .sn-cols .dl,.sn-row .dl{flex:0 0 86px;}
+  .sn-in{flex:0 0 120px;}
+}
+
 </style>
 </head>
 <body>
@@ -3866,7 +3918,8 @@ const SECTION_SUBS = {
     ['goals', '목표'],
     ['structure', '시뮬레이션'],
     ['flowmap', '흐름표'],
-    ['ledger', '전체 내역']
+    ['ledger', '입출금'],
+    ['snapshot', '자산 스냅샷']
   ]
 };
 
@@ -5105,11 +5158,7 @@ function renderShell() {
           <span class="tagline">당신의 자산관리 파트너</span>
         </div>
         <div class="sync-box">
-          <span class="sync-dot" id="sync-dot"></span>
-          <span id="sync-label">불러오는 중…</span>
-          <button class="btn small" id="refresh-btn">↻ 새로고침</button>
           <button class="btn small" id="signout-btn">로그아웃</button>
-          <a class="btn small" href="${SHEET_URL}" target="_blank" rel="noopener">↗ 원본 시트</a>
         </div>
       </div>
       <div id="banner-slot"></div>
@@ -5123,7 +5172,6 @@ function renderShell() {
     <div id="page-content"></div>
     <div class="footer"></div>
   `;
-  document.getElementById('refresh-btn').addEventListener('click', () => fetchLive(true));
   document.getElementById('entry-btn').addEventListener('click', () => enOpen());
   document.getElementById('signout-btn').addEventListener('click', enSignOut);
   document.getElementById('navbar').addEventListener('click', (e) => {
@@ -5216,6 +5264,7 @@ function renderPage() {
   } else {
     if (SUB === 'goals') { body.innerHTML = '<div id="home-goals"></div>'; renderGoalBoard(data, d); }
     else if (SUB === 'ledger') renderLedgerShell(body);
+    else if (SUB === 'snapshot') renderSnapshotPage(body);
     else if (SUB === 'flowmap') renderFlowMapPage(body, data, d);
     else renderStructurePage(body, data, d);
   }
@@ -16755,6 +16804,265 @@ async function saveBudgets() {
   try { await window.storage.set('category-budgets', JSON.stringify(state.budgets), false); } catch (e) {}
 }
 
+/* ================= 현황 › 자산 스냅샷 =================
+   달마다 계좌 잔액을 한 번 적어 두는 자리. Supabase asset_snapshots 가 유일한 원본이고,
+   여기서 저장하면 자산·흐름·목표 화면이 같은 값을 그대로 쓴다. (시트는 더 이상 쓰지 않는다) */
+
+const SNAP = { rows: [], month: null, uid: null, loaded: false, saving: false, extra: [], err: null };
+
+function snapNowMonth() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+function snapMonthKeyOf(v) { return String(v || '').slice(0, 7); }          /* '2026-09-01' → '2026-09' */
+function snapMonthLabel(k) { return `${String(k).slice(2, 4)}년 ${String(k).slice(5, 7)}월`; }
+function snapMonthShift(k, n) {
+  const y = parseInt(k.slice(0, 4), 10), m = parseInt(k.slice(5, 7), 10);
+  const d = new Date(y, m - 1 + n, 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+/* DB 행 → 화면 곳곳이 쓰는 자산 행 모양 ('26년 09월') */
+function snapRowToAssetRow(r) {
+  return {
+    date: snapMonthLabel(snapMonthKeyOf(r.month)),
+    category: r.asset_class,
+    account: r.account,
+    amount: Number(r.amount) || 0
+  };
+}
+
+async function snapLoad(force) {
+  if (SNAP.loaded && !force) return;
+  const sb = await enClient();
+  if (!SNAP.uid) {
+    const { data } = await sb.auth.getUser();
+    SNAP.uid = data && data.user ? data.user.id : null;
+  }
+  const { data, error } = await sb.from('asset_snapshots')
+    .select('id,month,asset_class,account,amount')
+    .order('month', { ascending: true });
+  if (error) throw new Error(error.message);
+  SNAP.rows = (data || []).map(r => ({
+    id: r.id, mk: snapMonthKeyOf(r.month), cls: r.asset_class,
+    account: r.account, amount: Number(r.amount) || 0
+  }));
+  SNAP.loaded = true;
+}
+
+/* 지금까지 쓴 적 있는 계좌 = 입력 칸의 기본 목록. 분류는 가장 최근에 쓴 값을 따른다. */
+function snapAccounts() {
+  const map = new Map();
+  SNAP.rows.forEach(r => map.set(r.account, r.cls));
+  SNAP.extra.forEach(e => { if (!map.has(e.account)) map.set(e.account, e.cls); });
+  const list = [...map.entries()].map(([account, cls]) => ({ account, cls }));
+  const rank = (c) => { const i = CAT_ORDER.indexOf(c); return i === -1 ? 99 : i; };
+  return list.sort((a, b) => rank(a.cls) - rank(b.cls) || a.account.localeCompare(b.account, 'ko'));
+}
+function snapMonthRows(mk) {
+  const m = {};
+  SNAP.rows.forEach(r => { if (r.mk === mk) m[r.account] = r; });
+  return m;
+}
+function snapMonthTotal(mk) {
+  return SNAP.rows.reduce((a, r) => a + (r.mk === mk ? r.amount : 0), 0);
+}
+function snapMonthList() {
+  const set = new Set(SNAP.rows.map(r => r.mk));
+  set.add(snapNowMonth());
+  if (SNAP.month) set.add(SNAP.month);
+  return [...set].sort().reverse();
+}
+const snapNum = (v) => {
+  const t = String(v == null ? '' : v).replace(/[^0-9-]/g, '');
+  if (t === '' || t === '-') return null;
+  const n = parseInt(t, 10);
+  return isNaN(n) ? null : n;
+};
+
+/* 화면 전체가 같은 값을 보게 맞춘다 — 저장 직후 자산·흐름·목표가 바로 따라온다. */
+function snapPushToDashboard() {
+  if (!state.data) return;
+  state.data = { ...state.data, assetRows: SNAP.rows.map(r => snapRowToAssetRow({
+    month: r.mk + '-01', asset_class: r.cls, account: r.account, amount: r.amount
+  })), assetSource: 'db' };
+  applySuggestedGoals(state.data);
+}
+
+async function renderSnapshotPage(body) {
+  body.innerHTML = '<div class="lg-wrap sn-wrap"><div class="en-empty">자산 스냅샷을 불러오는 중…</div></div>';
+  try {
+    await snapLoad(false);
+    SNAP.err = null;
+  } catch (e) {
+    body.innerHTML = `<div class="lg-wrap sn-wrap"><div class="en-empty">자산 스냅샷을 불러오지 못했습니다 — ${enEsc(e.message || e)}</div></div>`;
+    return;
+  }
+  if (!SNAP.month) SNAP.month = snapNowMonth();
+  const mk = SNAP.month;
+  const prevKey = snapMonthShift(mk, -1);
+  const cur = snapMonthRows(mk), prev = snapMonthRows(prevKey);
+  const accounts = snapAccounts();
+  const months = snapMonthList();
+  const filled = Object.keys(cur).length;
+  const total = snapMonthTotal(mk), prevTotal = snapMonthTotal(prevKey);
+  const diff = filled && prevTotal ? total - prevTotal : null;
+
+  const byCls = {};
+  accounts.forEach(a => { (byCls[a.cls] = byCls[a.cls] || []).push(a); });
+  const clsOrder = [...CAT_ORDER.filter(c => byCls[c]), ...Object.keys(byCls).filter(c => !CAT_ORDER.includes(c))];
+
+  const rowHtml = (a) => {
+    const c = cur[a.account], p = prev[a.account];
+    const dv = c && p ? c.amount - p.amount : null;
+    return `<div class="sn-row">
+      <span class="ac">${enEsc(a.account)}</span>
+      <span class="pv">${p ? wonComma(p.amount) : '—'}</span>
+      <input class="en-in sn-in" inputmode="numeric" data-acct="${enEsc(a.account)}" data-cls="${enEsc(a.cls)}"
+             value="${c ? wonComma(c.amount) : ''}" placeholder="미입력">
+      <span class="dl ${dv > 0 ? 'up' : dv < 0 ? 'down' : ''}">${dv === null ? '' : (dv > 0 ? '+' : '') + wonComma(dv)}</span>
+      <button class="sn-x" data-acct="${enEsc(a.account)}" title="이 달 값 비우기">×</button>
+    </div>`;
+  };
+
+  body.innerHTML = `
+    <div class="lg-wrap sn-wrap">
+      <div class="sn-head">
+        <div class="sn-mo">
+          <button class="sn-nav" id="sn-prev" aria-label="이전 달">‹</button>
+          <select class="en-in sn-sel" id="sn-msel">
+            ${months.map(m => `<option value="${m}" ${m === mk ? 'selected' : ''}>${snapMonthLabel(m)}</option>`).join('')}
+          </select>
+          <button class="sn-nav" id="sn-next" aria-label="다음 달">›</button>
+          <span class="sn-badge ${filled ? 'ok' : 'new'}">${filled ? `${filled}개 계좌 기록됨` : '미입력'}</span>
+        </div>
+        <div class="sn-acts">
+          <button class="lg-reset" id="sn-fill">전월 값 채우기</button>
+          <button class="bk-add" id="sn-save">저장</button>
+        </div>
+      </div>
+
+      <div class="sn-sum">
+        <div><span class="k">${snapMonthLabel(mk)} 합계</span><b>${filled ? formatKrw(total) : '—'}</b></div>
+        <div><span class="k">전월(${snapMonthLabel(prevKey)})</span><b>${prevTotal ? formatKrw(prevTotal) : '—'}</b></div>
+        <div><span class="k">증감</span><b class="${diff > 0 ? 'up' : diff < 0 ? 'down' : ''}">${diff === null ? '—' : (diff > 0 ? '+' : '') + formatKrw(diff)}</b></div>
+      </div>
+
+      <div class="sn-card">
+        <div class="sn-cols"><span class="ac">계좌</span><span class="pv">전월</span><span class="in">${snapMonthLabel(mk)} 잔액</span><span class="dl">증감</span><span class="x"></span></div>
+        ${clsOrder.map(c => `
+          <div class="sn-cls"><i style="background:${CAT_COLORS[c] || 'var(--text-faint)'}"></i>${enEsc(c)}
+            <b>${byCls[c].some(x => cur[x.account]) ? wonComma(byCls[c].reduce((a, x) => a + (cur[x.account] ? cur[x.account].amount : 0), 0)) : '—'}</b></div>
+          ${byCls[c].map(rowHtml).join('')}`).join('')}
+        <div class="sn-addrow">
+          <select class="en-in" id="sn-newcls">${CAT_ORDER.map(c => `<option value="${enEsc(c)}">${enEsc(c)}</option>`).join('')}</select>
+          <input class="en-in" id="sn-newacct" placeholder="새 계좌 이름">
+          <button class="lg-reset" id="sn-addacct">+ 계좌 추가</button>
+        </div>
+      </div>
+
+      <div class="sn-hist">
+        <div class="sn-histhead">월별 기록</div>
+        <table class="data-table">
+          <thead><tr><th>월</th><th class="r">합계</th><th class="r">증감</th><th class="r">계좌</th></tr></thead>
+          <tbody>
+            ${months.filter(m => snapMonthTotal(m)).slice(0, 18).map(m => {
+              const t = snapMonthTotal(m), pt = snapMonthTotal(snapMonthShift(m, -1));
+              const dd = pt ? t - pt : null;
+              return `<tr class="sn-hrow ${m === mk ? 'on' : ''}" data-m="${m}">
+                <td>${snapMonthLabel(m)}</td>
+                <td class="r mono">${wonComma(t)}</td>
+                <td class="r mono ${dd > 0 ? 'up' : dd < 0 ? 'down' : ''}">${dd === null ? '—' : (dd > 0 ? '+' : '') + wonComma(dd)}</td>
+                <td class="r mono">${Object.keys(snapMonthRows(m)).length}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+
+  const go = (m) => { SNAP.month = m; SNAP.extra = []; renderSnapshotPage(body); };
+  document.getElementById('sn-prev').addEventListener('click', () => go(snapMonthShift(mk, -1)));
+  document.getElementById('sn-next').addEventListener('click', () => go(snapMonthShift(mk, 1)));
+  document.getElementById('sn-msel').addEventListener('change', (e) => go(e.target.value));
+  body.querySelectorAll('.sn-hrow').forEach(tr => tr.addEventListener('click', () => go(tr.dataset.m)));
+
+  body.querySelectorAll('.sn-in').forEach(el => {
+    el.addEventListener('blur', () => {
+      const n = snapNum(el.value);
+      el.value = n === null ? '' : wonComma(n);
+    });
+    el.addEventListener('keydown', (e) => { if (e.key === 'Enter') snapSave(body); });
+  });
+  body.querySelectorAll('.sn-x').forEach(b => b.addEventListener('click', () => {
+    const el = body.querySelector(`.sn-in[data-acct="${CSS.escape(b.dataset.acct)}"]`);
+    if (el) { el.value = ''; el.focus(); }
+  }));
+
+  document.getElementById('sn-fill').addEventListener('click', () => {
+    body.querySelectorAll('.sn-in').forEach(el => {
+      if (snapNum(el.value) !== null) return;
+      const p = prev[el.dataset.acct];
+      if (p) el.value = wonComma(p.amount);
+    });
+    enToast('전월 값을 비어 있던 칸에만 채웠어요. 확인하고 저장하세요.');
+  });
+
+  const addAcct = () => {
+    const name = (document.getElementById('sn-newacct').value || '').trim();
+    const cls = document.getElementById('sn-newcls').value;
+    if (!name) return;
+    if (snapAccounts().some(a => a.account === name)) { enToast('이미 있는 계좌입니다'); return; }
+    SNAP.extra.push({ account: name, cls });
+    renderSnapshotPage(body);
+  };
+  document.getElementById('sn-addacct').addEventListener('click', addAcct);
+  document.getElementById('sn-newacct').addEventListener('keydown', (e) => { if (e.key === 'Enter') addAcct(); });
+  document.getElementById('sn-save').addEventListener('click', () => snapSave(body));
+}
+
+/* 저장 — 값이 있는 칸은 넣거나 고치고, 비운 칸은 그 달 기록에서 지운다.
+   (owner_id, month, account) 가 유일 키라서 같은 달 같은 계좌는 늘 한 줄만 남는다. */
+async function snapSave(body) {
+  if (SNAP.saving) return;
+  const mk = SNAP.month, monthDate = mk + '-01';
+  const cur = snapMonthRows(mk);
+  const ups = [], dels = [];
+  body.querySelectorAll('.sn-in').forEach(el => {
+    const acct = el.dataset.acct, cls = el.dataset.cls;
+    const n = snapNum(el.value);
+    const ex = cur[acct];
+    if (n === null) { if (ex) dels.push(ex.id); return; }
+    if (ex && ex.amount === n && ex.cls === cls) return;
+    ups.push({ owner_id: SNAP.uid, month: monthDate, asset_class: cls, account: acct, amount: n });
+  });
+  if (!ups.length && !dels.length) { enToast('바뀐 값이 없어요'); return; }
+
+  SNAP.saving = true;
+  const btn = document.getElementById('sn-save');
+  if (btn) { btn.disabled = true; btn.textContent = '저장 중…'; }
+  try {
+    const sb = await enClient();
+    if (ups.length) {
+      const { error } = await sb.from('asset_snapshots').upsert(ups, { onConflict: 'owner_id,month,account' });
+      if (error) throw new Error(error.message);
+    }
+    if (dels.length) {
+      const { error } = await sb.from('asset_snapshots').delete().in('id', dels);
+      if (error) throw new Error(error.message);
+    }
+    await snapLoad(true);
+    SNAP.extra = [];
+    snapPushToDashboard();
+    enToast(`${snapMonthLabel(mk)} 저장했습니다 (${ups.length}건 반영${dels.length ? `, ${dels.length}건 삭제` : ''})`);
+    renderSnapshotPage(body);
+  } catch (e) {
+    enToast('저장하지 못했습니다 — ' + (e.message || e));
+    if (btn) { btn.disabled = false; btn.textContent = '저장'; }
+  } finally {
+    SNAP.saving = false;
+  }
+}
+
 /* ---------------- fetch & init ---------------- */
 
 async function fetchCsvRows(gid) {
@@ -16806,13 +17114,33 @@ async function fetchLedgerFromDB() {
   }).filter(r => r.amount);
 }
 
+/* 자산 스냅샷도 Supabase 가 유일한 원본이다.
+   현황 › 자산 스냅샷에서 넣은 값이 자산·흐름·목표 화면까지 그대로 흘러가야 하므로,
+   시트의 '자산 스냅샷' 탭은 DB를 못 읽었을 때의 예비로만 남긴다. */
+async function fetchAssetsFromDB() {
+  const sb = await enClient();
+  const raw = [];
+  for (let from = 0; from < 20000; from += 1000) {
+    const { data, error } = await sb.from('asset_snapshots')
+      .select('id,month,asset_class,account,amount')
+      .order('month', { ascending: true }).range(from, from + 999);
+    if (error) throw new Error('자산 스냅샷을 불러오지 못했습니다: ' + error.message);
+    if (!data || !data.length) break;
+    raw.push(...data);
+    if (data.length < 1000) break;
+  }
+  /* 시트 파서가 내주던 모양 그대로 맞춘다 — 아래 집계 코드를 건드리지 않기 위해서 */
+  return raw.map(snapRowToAssetRow);
+}
+
 async function fetchAllTabsAndMerge() {
   /* 토스 탭 조회는 실패해도 대시보드 전체를 막지 않도록 병렬로 따로 돌린다. */
-  const [results, tossResult, factsResult, dbLedger] = await Promise.all([
+  const [results, tossResult, factsResult, dbLedger, dbAssets] = await Promise.all([
     Promise.allSettled(TAB_GIDS.map(fetchCsvRows)),
     fetchTossData().catch(() => null),
     fetchStockFacts().catch(() => null),
-    fetchLedgerFromDB().catch((e) => { console.error('ledger from DB failed', e); return null; })
+    fetchLedgerFromDB().catch((e) => { console.error('ledger from DB failed', e); return null; }),
+    fetchAssetsFromDB().catch((e) => { console.error('assets from DB failed', e); return null; })
   ]);
   const failures = results.filter(r => r.status === 'rejected');
   const rowSets = results.filter(r => r.status === 'fulfilled').map(r => r.value);
@@ -16820,17 +17148,21 @@ async function fetchAllTabsAndMerge() {
     throw new Error(failures[0] ? failures[0].reason.message : '탭을 하나도 불러오지 못했어요');
   }
 
-  let assetRows = [], ledger = dbLedger || [], investmentTags = [], goals = [], stockCategoryMap = {}, indexPrices = {};
+  let assetRows = (dbAssets && dbAssets.length) ? dbAssets : [], ledger = dbLedger || [], investmentTags = [], goals = [], stockCategoryMap = {}, indexPrices = {};
   const ledgerSource = dbLedger ? 'db' : 'sheet';
+  const assetSource = assetRows.length ? 'db' : 'sheet';
   for (const rows of rowSets) {
     try {
       const ip = parseIndexFromRows(rows);
       if (Object.keys(ip).length > Object.keys(indexPrices).length) indexPrices = ip;
     } catch (e) {}
-    try {
-      const ar = parseAssetsFromRows(rows);
-      if (ar.length > assetRows.length) assetRows = ar;
-    } catch (e) {}
+    if (assetSource !== 'db') {
+      /* DB를 못 읽었을 때만 시트를 예비로 쓴다 */
+      try {
+        const ar = parseAssetsFromRows(rows);
+        if (ar.length > assetRows.length) assetRows = ar;
+      } catch (e) {}
+    }
     if (!dbLedger) {
       /* DB를 못 읽었을 때만 시트를 예비로 쓴다 */
       try {
@@ -16865,7 +17197,7 @@ async function fetchAllTabsAndMerge() {
   const data = {
     months: pivot.months, incomeTotal: pivot.incomeTotal, expenseTotal: pivot.expenseTotal,
     expenseCategories: pivot.expenseCategories, incomeCategories: pivot.incomeCategories, transferCategories: pivot.transferCategories,
-    assetRows, ledger, ledgerSource, investmentTags, goals, stockCategoryMap,
+    assetRows, assetSource, ledger, ledgerSource, investmentTags, goals, stockCategoryMap,
     toss: tossResult,
     stockFacts: factsResult || {},
     indexPrices: Object.keys(indexPrices).length ? indexPrices : INDEX_SEED,
