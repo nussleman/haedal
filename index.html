@@ -2518,16 +2518,28 @@ body{font-variant-numeric:tabular-nums;}
 }
 
 /* ---------- 목록 관리 ---------- */
-.dbm-page{max-width:1100px;margin:0 auto;padding:26px 0 60px;}
-.dbm-head{display:flex;align-items:baseline;gap:10px;margin-bottom:12px;}
+.dbm-page{display:flex;align-items:flex-start;gap:0;min-height:calc(100vh - var(--hdr-h, 130px) - 34px);}
+.dbm-rail{
+  flex:0 0 176px;align-self:stretch;position:sticky;top:calc(var(--hdr-h, 0px) + 6px);
+  margin-left:calc(-1 * clamp(16px, 2.5vw, 40px));
+  padding:18px 14px 18px clamp(16px, 2.5vw, 40px);
+  border-right:1px solid var(--border);background:var(--bg-2);
+  border-radius:0 var(--r-md) var(--r-md) 0;
+}
+.dbm-rail .rl{font-family:var(--mono);font-size:var(--fs-micro);letter-spacing:.14em;
+  color:var(--text-faint);margin:0 0 10px 5px;}
+.dbm-rail button{display:flex;width:100%;align-items:center;gap:7px;height:34px;padding:0 11px;margin-bottom:3px;
+  border:1px solid transparent;border-radius:var(--r-md);background:transparent;color:var(--text-dim);
+  font-family:var(--sans);font-size:var(--fs-base);cursor:pointer;text-align:left;
+  transition:background .15s,color .15s;}
+.dbm-rail button:hover{background:var(--panel-2);color:var(--text);}
+.dbm-rail button.on{background:var(--accent-fill);border-color:var(--accent-fill);
+  color:var(--ink-on-accent);font-weight:700;}
+.dbm-rail button i{margin-left:auto;font-style:normal;font-family:var(--mono);font-size:var(--fs-tiny);opacity:.7;}
+.dbm-main{flex:1 1 auto;min-width:0;padding:18px 0 60px 24px;}
+.dbm-head{display:flex;align-items:baseline;gap:10px;margin-bottom:14px;}
 .dbm-head h3{font-family:var(--serif);font-size:var(--fs-xl);margin:0;font-weight:700;}
 .dbm-sub{font-size:var(--fs-xs);color:var(--text-faint);flex:1 1 auto;}
-.dbm-tabs{display:flex;gap:6px;border-bottom:1px solid var(--border);padding-bottom:10px;margin-bottom:10px;flex-wrap:wrap;}
-.dbm-tabs button{height:30px;padding:0 12px;border-radius:var(--r-pill);border:1px solid var(--border);
-  background:transparent;color:var(--text-dim);font-size:var(--fs-sm);cursor:pointer;display:inline-flex;align-items:center;gap:5px;}
-.dbm-tabs button:hover{border-color:var(--border-strong);color:var(--text);}
-.dbm-tabs button.on{background:var(--accent-fill);border-color:var(--accent-fill);color:var(--ink-on-accent);font-weight:700;}
-.dbm-tabs button i{font-style:normal;font-family:var(--mono);font-size:var(--fs-tiny);opacity:.75;}
 .dbm-body{min-height:0;}
 .dbm-bar{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
 .dbm-bar .grow{flex:1 1 180px;}
@@ -2555,6 +2567,13 @@ body{font-variant-numeric:tabular-nums;}
 .dbm-body .lg-wrap{max-width:none;}
 .dbm-body .lg-stick,.dbm-body .mg-stick{position:static;}
 @media(max-width:820px){
+  .dbm-page{flex-direction:column;}
+  .dbm-rail{flex:0 0 auto;align-self:stretch;position:static;display:flex;gap:6px;overflow-x:auto;
+    margin:0 calc(-1 * clamp(12px,1.6vw,26px));padding:10px clamp(12px,1.6vw,26px);
+    border-right:0;border-bottom:1px solid var(--border);border-radius:0;}
+  .dbm-rail .rl{display:none;}
+  .dbm-rail button{width:auto;flex:0 0 auto;margin:0;}
+  .dbm-main{padding:16px 0 40px;}
   .dbm-new,.dbm-row,.dbm-cols{flex-wrap:wrap;}
 }
 
@@ -2747,6 +2766,7 @@ const state = {
   yearOpts: { budget: true, prevYear: true },
   yearSeries: { expense: true, budget: true, prevExpense: true, income: false, net: false },
   assetSub: 'overview',    // 자산 하위 탭: overview | investment | savings
+  systemSub: 'dbm',        // 시스템 하위 탭: dbm(목록)
   homeSub: 'goals',        // 현황 하위 탭: goals | structure
   goalMoves: {},           // 드래그로 옮긴 목표 시기 (시트 반영 전 로컬 오버라이드)
   goalMetric: {},          // 목표 행별 수동 연동 지표 key
@@ -4019,7 +4039,8 @@ function setSyncState(status) {
 const NAV_ITEMS = [
   { id: 'flow', label: '흐름' },
   { id: 'assets', label: '자산' },
-  { id: 'status', label: '현황' }
+  { id: 'status', label: '현황' },
+  { id: 'system', label: '시스템' }
 ];
 
 const SECTION_SUBS = {
@@ -4042,10 +4063,13 @@ const SECTION_SUBS = {
     ['ledger', '입출금'],
     ['savings', '아낀 돈'],
     ['snapshot', '자산 스냅샷']
+  ],
+  system: [
+    ['dbm', '목록']
   ]
 };
 
-const SECTION_STATE_KEY = { flow: 'flowSub', assets: 'assetSub', status: 'homeSub' };
+const SECTION_STATE_KEY = { flow: 'flowSub', assets: 'assetSub', status: 'homeSub', system: 'systemSub' };
 
 function currentSub(section) {
   const subs = SECTION_SUBS[section] || [];
@@ -5288,7 +5312,6 @@ function renderShell() {
         <nav class="navbar" id="navbar"></nav>
         <div class="navacts">
           <button class="nav-act accent" id="entry-btn" title="가계부 기록 (N)">＋ 기록<kbd>N</kbd></button>
-          <button class="nav-act" id="dbm-btn" title="목록 관리 — 분류·사용처·계좌·종목·테마 (M)">☰ 목록<kbd>M</kbd></button>
         </div>
       </div>
     </div>
@@ -5296,7 +5319,6 @@ function renderShell() {
     <div class="footer"></div>
   `;
   document.getElementById('entry-btn').addEventListener('click', () => enOpen());
-  document.getElementById('dbm-btn').addEventListener('click', () => dbmOpen());
   document.getElementById('signout-btn').addEventListener('click', enSignOut);
   document.getElementById('navbar').addEventListener('click', (e) => {
     const btn = e.target.closest('.nav-btn');
@@ -5372,8 +5394,6 @@ function renderNav() {
           navNeedsDot(n.id, v) ? '<span class="nav-dot" title="이번 달 자산 스냅샷이 아직 비어 있어요"></span>' : ''}</button>`).join('')}
     </div>`;
   }).join('<span class="nav-div"></span>');
-  const db = document.getElementById('dbm-btn');
-  if (db) db.classList.toggle('on', state.page === 'dbm');
 }
 
 function renderPage() {
@@ -5385,19 +5405,19 @@ function renderPage() {
   const d = computeDerived(data);
   destroyPageCharts();
   const body = document.getElementById('page-content');
-  const section = (state.page === 'dbm' || NAV_ITEMS.some(n => n.id === state.page)) ? state.page : 'flow';
+  const section = NAV_ITEMS.some(n => n.id === state.page) ? state.page : 'flow';
   state.page = section;
   const SUB = currentSub(section);
   renderNav();
   body.innerHTML = '';
-
-  if (section === 'dbm') { dbmRender(body); return; }
 
   if (section === 'flow') {
     if (SUB === 'now') renderNowPage(body, data, d);
     else if (SUB === 'year') renderYearPage(body, data, d);
     else if (SUB === 'calendar') renderCalendarPage(body, data, d);
     else renderTodayPage(body, data, d);
+  } else if (section === 'system') {
+    dbmRender(body);
   } else if (section === 'assets') {
     if (SUB === 'overview') renderAssetsPage(body, data, d);
     else if (SUB === 'investment') renderInvestmentPage(body, data, d);
@@ -17279,9 +17299,8 @@ const dbmTextToTags = (s) => String(s || '').split(',').map(x => x.trim()).filte
 /* 목록 관리는 다른 메뉴와 똑같이 메뉴바 아래 한 화면을 쓴다 (모달 아님) */
 function dbmOpen(tab) {
   if (tab) DBM.tab = tab;
-  state.page = 'dbm';
   window.scrollTo({ top: 0 });
-  renderPage();
+  goTo('system', 'dbm');
 }
 
 async function dbmLoad(tabId, force) {
@@ -17302,15 +17321,18 @@ function dbmRender(host) {
   const t = dbmTab(DBM.tab) || DBM_TABS[0];
   el.innerHTML = `
     <div class="dbm-page">
-      <div class="dbm-head">
-        <h3>목록 관리</h3>
-        <span class="dbm-sub">${enEsc(t.desc)}</span>
-      </div>
-      <div class="dbm-tabs" id="dbm-tabs">
+      <nav class="dbm-rail" id="dbm-tabs">
+        <div class="rl">목록</div>
         ${DBM_TABS.map(x => `<button data-t="${x.id}" class="${x.id === DBM.tab ? 'on' : ''}">${x.label}${
           DBM.rows[x.id] ? `<i>${DBM.rows[x.id].length}</i>` : ''}</button>`).join('')}
+      </nav>
+      <div class="dbm-main">
+        <div class="dbm-head">
+          <h3>${enEsc(t.label)}</h3>
+          <span class="dbm-sub">${enEsc(t.desc)}</span>
+        </div>
+        <div class="dbm-body" id="dbm-body"><div class="en-empty">불러오는 중…</div></div>
       </div>
-      <div class="dbm-body" id="dbm-body"><div class="en-empty">불러오는 중…</div></div>
     </div>`;
   document.getElementById('dbm-tabs').addEventListener('click', (e) => {
     const b = e.target.closest('button[data-t]');
