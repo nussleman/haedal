@@ -2589,6 +2589,35 @@ body{font-variant-numeric:tabular-nums;}
 }
 .lg-nosub{padding-top:26px;}
 
+/* ---------- 현황 › 아낀 돈 ---------- */
+.sv-mo{display:flex;align-items:center;gap:6px;}
+.sv-sel{width:auto;min-width:110px;height:28px;font-family:var(--mono);font-size:var(--fs-sm);padding:0 8px;}
+.stat-card .value.sv-v{color:var(--net-text);}
+.sv-sub{font-size:var(--fs-xs);color:var(--text-faint);margin-top:4px;}
+.sv-chips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px;}
+.sv-chip{height:30px;padding:0 11px;border-radius:var(--r-pill);border:1px solid var(--border);
+  background:var(--bg-2);color:var(--text-dim);font-size:var(--fs-xs);cursor:pointer;}
+.sv-chip:hover{border-color:var(--border-strong);color:var(--text);}
+.sv-chip.on{background:var(--net-bg);border-color:var(--net-fill);color:var(--net-strong);font-weight:700;}
+.sv-list{border:1px solid var(--border);border-radius:var(--r-md);overflow:hidden;}
+.sv-row{display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid var(--border);cursor:pointer;}
+.sv-row:last-child{border-bottom:0;}
+.sv-row:hover{background:var(--panel-2);}
+.sv-row.on{background:var(--net-bg);}
+.sv-row .em{flex:0 0 22px;text-align:center;}
+.sv-row .dt{flex:0 0 46px;font-family:var(--mono);font-size:var(--fs-xs);color:var(--text-faint);}
+.sv-row .tt{flex:1 1 auto;min-width:0;font-size:var(--fs-base);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.sv-row .tt i{font-style:normal;color:var(--text-faint);font-size:var(--fs-xs);margin-left:7px;}
+.sv-row .kd{flex:0 0 74px;font-size:var(--fs-xs);color:var(--text-faint);text-align:right;}
+.sv-row .vv{flex:0 0 92px;text-align:right;font-family:var(--mono);font-size:var(--fs-base);color:var(--net-text);}
+.sv-x{flex:0 0 22px;border:none;background:transparent;color:var(--text-faint);cursor:pointer;font-size:var(--fs-md);line-height:1;}
+.sv-x:hover{color:var(--expense-text);}
+.sv-bar{margin-bottom:12px;}
+.sv-bar .bl{display:flex;justify-content:space-between;font-size:var(--fs-sm);margin-bottom:5px;}
+.sv-bar .bl b{font-family:var(--mono);color:var(--text-dim);}
+.sv-bar .bt{height:7px;border-radius:4px;background:var(--bg-2);overflow:hidden;}
+.sv-bar .bt i{display:block;height:100%;border-radius:4px;background:var(--net-fill);}
+
 </style>
 </head>
 <body>
@@ -3991,6 +4020,7 @@ const SECTION_SUBS = {
     ['structure', '시뮬레이션'],
     ['flowmap', '흐름표'],
     ['ledger', '입출금'],
+    ['savings', '아낀 돈'],
     ['snapshot', '자산 스냅샷']
   ]
 };
@@ -5354,6 +5384,7 @@ function renderPage() {
   } else {
     if (SUB === 'goals') { body.innerHTML = '<div id="home-goals"></div>'; renderGoalBoard(data, d); }
     else if (SUB === 'ledger') renderLedgerShell(body);
+    else if (SUB === 'savings') renderSavingsPageWeb(body, data);
     else if (SUB === 'snapshot') renderSnapshotPage(body);
     else if (SUB === 'flowmap') renderFlowMapPage(body, data, d);
     else renderStructurePage(body, data, d);
@@ -17498,6 +17529,268 @@ async function fetchStocksFromDB() {
   if (error) throw new Error(error.message);
   DBM.rows.stock = data || [];
   return data || [];
+}
+
+/* ================= 현황 › 아낀 돈 =================
+   계좌를 드나든 돈이 아니라 "얻어먹었다 / 사려다 참았다"를 세는 기록.
+   가계부(transactions)와 완전히 분리된 savings_log 표에 쌓이므로
+   수입·지출·자산 집계에는 절대 섞이지 않는다. 여기서만 따로 본다. */
+
+const SV_KINDS = ['얻어먹음', '참았음', '할인·쿠폰', '더 싼 걸로', '기타'];
+const SV_EMOJI = { '얻어먹음': '🫶', '참았음': '✊', '할인·쿠폰': '🏷️', '더 싼 걸로': '🔁', '기타': '💧' };
+
+const SV = { rows: [], loaded: false, month: null, editId: null, busy: false,
+             draft: null, range: 12 };
+function svFresh() { return { date: enToday(), amount: '', kind: '참았음', title: '', note: '' }; }
+
+async function svLoad(force) {
+  if (SV.loaded && !force) return;
+  const sb = await enClient();
+  const { data, error } = await sb.from('savings_log')
+    .select('id,date,amount,kind,title,note').order('date', { ascending: false }).order('id', { ascending: false });
+  if (error) throw new Error(error.message);
+  SV.rows = (data || []).map(r => ({ ...r, amount: Number(r.amount) || 0, mk: String(r.date).slice(0, 7) }));
+  SV.loaded = true;
+}
+
+const svMonthLabel = (mk) => `${mk.slice(0, 4)}년 ${+mk.slice(5, 7)}월`;
+function svShift(mk, n) {
+  const d = new Date(+mk.slice(0, 4), +mk.slice(5, 7) - 1 + n, 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+const svNowMonth = () => enToday().slice(0, 7);
+const svSum = (rows) => rows.reduce((a, r) => a + r.amount, 0);
+
+/* 그 달의 지출(가계부)을 가져와 "지출 대비 몇 %를 아꼈나"를 계산한다 */
+function svMonthExpense(data, mk) {
+  const key = parseInt(mk.slice(0, 4), 10) * 100 + parseInt(mk.slice(5, 7), 10);
+  const idx = (data.months || []).findIndex(m => pivotMonthKey(m) === key);
+  if (idx === -1) return null;
+  const v = (data.expenseTotal || [])[idx];
+  return v || null;
+}
+
+async function renderSavingsPageWeb(body, data) {
+  body.innerHTML = '<div class="panel full"><div class="empty-state">아낀 돈 기록을 불러오는 중…</div></div>';
+  try { await svLoad(false); }
+  catch (e) {
+    body.innerHTML = `<div class="panel full"><div class="empty-state">불러오지 못했습니다 — ${enEsc(e.message || e)}</div></div>`;
+    return;
+  }
+  if (!SV.month) SV.month = svNowMonth();
+  if (!SV.draft) SV.draft = svFresh();
+
+  const mk = SV.month;
+  const cur = SV.rows.filter(r => r.mk === mk);
+  const prev = SV.rows.filter(r => r.mk === svShift(mk, -1));
+  const year = mk.slice(0, 4);
+  const curSum = svSum(cur), prevSum = svSum(prev);
+  const yearSum = svSum(SV.rows.filter(r => r.mk.slice(0, 4) === year));
+  const allSum = svSum(SV.rows);
+  const exp = svMonthExpense(data, mk);
+  const ratio = exp ? (curSum / exp * 100) : null;
+
+  const byKind = {};
+  cur.forEach(r => { byKind[r.kind] = (byKind[r.kind] || 0) + r.amount; });
+  const kindRows = Object.entries(byKind).sort((a, b) => b[1] - a[1]);
+
+  /* 월 선택 목록 = 기록이 있는 달 + 이번 달 */
+  const months = [...new Set([...SV.rows.map(r => r.mk), svNowMonth(), mk])].sort().reverse();
+  const ed = SV.editId ? SV.rows.find(r => r.id === SV.editId) : null;
+  const dr = SV.draft;
+
+  body.innerHTML = `
+    <div class="g">
+      <div class="panel s8">
+        <div class="panel-title">
+          <div>아낀 돈</div>
+          <div class="sv-mo">
+            <button class="btn small" id="sv-prev">‹</button>
+            <select class="en-in sv-sel" id="sv-msel">
+              ${months.map(m => `<option value="${m}" ${m === mk ? 'selected' : ''}>${svMonthLabel(m)}</option>`).join('')}
+            </select>
+            <button class="btn small" id="sv-next">›</button>
+          </div>
+        </div>
+
+        <div class="stat-grid" style="margin-bottom:14px;">
+          <div class="stat-card">
+            <div class="label">${svMonthLabel(mk)}</div>
+            <div class="value sv-v">${formatKrw(curSum)}</div>
+            <div class="sv-sub">${cur.length}건${prevSum ? ` · 전월 ${formatCompactWon(prevSum)}원` : ''}</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">지출 대비</div>
+            <div class="value sv-v">${ratio === null ? '—' : ratio.toFixed(1) + '%'}</div>
+            <div class="sv-sub">${exp ? `그 달 지출 ${formatCompactWon(exp)}원` : '그 달 지출 데이터 없음'}</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">${year}년 누적</div>
+            <div class="value sv-v">${formatKrw(yearSum)}</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">전체 누적</div>
+            <div class="value sv-v">${formatKrw(allSum)}</div>
+            <div class="sv-sub">${SV.rows.length}건</div>
+          </div>
+        </div>
+
+        <div class="chart-wrap"><canvas id="sv-chart"></canvas></div>
+        <div class="settings-note" style="margin-top:10px;">
+          통장에 남지 않는 돈이라 가계부와 섞지 않고 따로 셉니다. 참은 돈은 쓰지 않은 지출, 얻어먹은 돈은 남이 대신 낸 지출이에요.
+        </div>
+      </div>
+
+      <div class="panel s4">
+        <div class="panel-title"><div>${ed ? '기록 수정' : '기록 추가'}</div>${
+          ed ? '<button class="btn small" id="sv-cancel">취소</button>' : ''}</div>
+        <label class="fld"><span>금액</span>
+          <input class="en-in" id="sv-amt" inputmode="numeric" placeholder="0" value="${dr.amount ? wonComma(Number(dr.amount)) : ''}"></label>
+        <label class="fld"><span>어떻게</span></label>
+        <div class="sv-chips">${SV_KINDS.map(k =>
+          `<button class="sv-chip ${dr.kind === k ? 'on' : ''}" data-k="${k}">${SV_EMOJI[k]} ${k}</button>`).join('')}</div>
+        <label class="fld"><span>무엇을</span>
+          <input class="en-in" id="sv-title" placeholder="예: 팀 회식 얻어먹음 / 택시 참고 지하철" value="${enEsc(dr.title)}"></label>
+        <label class="fld"><span>날짜</span>
+          <input class="en-in" id="sv-date" type="date" value="${dr.date}"></label>
+        <label class="fld"><span>메모</span>
+          <input class="en-in" id="sv-note" placeholder="선택" value="${enEsc(dr.note || '')}"></label>
+        <p class="en-err" id="sv-err"></p>
+        <button class="bk-add" id="sv-save" style="width:100%;height:36px;">${ed ? '수정 저장' : '+ 아낀 돈 기록'}</button>
+      </div>
+
+      <div class="panel s8">
+        <div class="panel-title"><div>${svMonthLabel(mk)} 기록</div></div>
+        ${cur.length ? `<div class="sv-list">${cur.map(r => `
+          <div class="sv-row ${SV.editId === r.id ? 'on' : ''}" data-row="${r.id}">
+            <span class="em">${SV_EMOJI[r.kind] || '💧'}</span>
+            <span class="dt">${r.date.slice(5).replace('-', '.')}</span>
+            <span class="tt">${enEsc(r.title)}${r.note ? `<i>${enEsc(r.note)}</i>` : ''}</span>
+            <span class="kd">${enEsc(r.kind)}</span>
+            <span class="vv">${wonComma(r.amount)}</span>
+            <button class="sv-x" data-del="${r.id}" title="삭제">×</button>
+          </div>`).join('')}</div>`
+        : '<div class="empty-state">이 달 기록이 없습니다. 오른쪽에서 첫 기록을 넣어보세요.</div>'}
+      </div>
+
+      <div class="panel s4">
+        <div class="panel-title"><div>유형별</div></div>
+        ${kindRows.length ? kindRows.map(([k, v]) => `
+          <div class="sv-bar">
+            <div class="bl"><span>${SV_EMOJI[k] || '💧'} ${enEsc(k)}</span><b>${wonComma(v)}</b></div>
+            <div class="bt"><i style="width:${Math.round(v / curSum * 100)}%"></i></div>
+          </div>`).join('')
+        : '<div class="empty-state">이 달 기록이 없습니다.</div>'}
+      </div>
+    </div>`;
+
+  /* ---- 월별 추이 ---- */
+  const series = [];
+  for (let i = 11; i >= 0; i--) {
+    const m = svShift(mk, -i);
+    series.push({ m, v: svSum(SV.rows.filter(r => r.mk === m)) });
+  }
+  if (state.charts.svChart) { try { state.charts.svChart.destroy(); } catch (e) {} }
+  try {
+  state.charts.svChart = new Chart(document.getElementById('sv-chart'), {
+    type: 'bar',
+    data: {
+      labels: series.map(x => `'${x.m.slice(2, 4)}.${x.m.slice(5, 7)}`),
+      datasets: [{
+        label: '아낀 돈',
+        data: series.map(x => x.v),
+        backgroundColor: series.map(x => x.m === mk ? '#c0a8e0' : 'rgba(155,127,194,0.55)'),
+        borderRadius: 3
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, layout: { padding: { top: 14 } },
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` ${formatWon(c.raw)}` } } },
+      scales: {
+        x: { ticks: MONO_TICK, grid: { display: false } },
+        y: { ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT }
+      }
+    }
+  });
+  } catch (e) { console.error('savings chart', e); }
+
+  /* ---- 이벤트 ---- */
+  const go = (m) => { SV.month = m; SV.editId = null; SV.draft = svFresh(); renderPage(); };
+  document.getElementById('sv-prev').addEventListener('click', () => go(svShift(mk, -1)));
+  document.getElementById('sv-next').addEventListener('click', () => go(svShift(mk, 1)));
+  document.getElementById('sv-msel').addEventListener('change', (e) => go(e.target.value));
+
+  const amtEl = document.getElementById('sv-amt');
+  amtEl.addEventListener('input', () => {
+    const raw = amtEl.value.replace(/[^0-9]/g, '');
+    dr.amount = raw;
+    amtEl.value = raw ? Number(raw).toLocaleString('ko-KR') : '';
+  });
+  document.getElementById('sv-title').addEventListener('input', (e) => { dr.title = e.target.value; });
+  document.getElementById('sv-note').addEventListener('input', (e) => { dr.note = e.target.value; });
+  document.getElementById('sv-date').addEventListener('change', (e) => { dr.date = e.target.value; });
+  body.querySelectorAll('.sv-chip').forEach(b => b.addEventListener('click', () => {
+    dr.kind = b.dataset.k;
+    body.querySelectorAll('.sv-chip').forEach(x => x.classList.toggle('on', x === b));
+  }));
+  document.getElementById('sv-save').addEventListener('click', () => svSave(body));
+  const cancel = document.getElementById('sv-cancel');
+  if (cancel) cancel.addEventListener('click', () => { SV.editId = null; SV.draft = svFresh(); renderPage(); });
+
+  body.querySelectorAll('.sv-row').forEach(row => row.addEventListener('click', (e) => {
+    if (e.target.closest('[data-del]')) return;
+    const r = SV.rows.find(x => x.id === Number(row.dataset.row));
+    if (!r) return;
+    SV.editId = r.id;
+    SV.draft = { date: r.date, amount: String(r.amount), kind: r.kind, title: r.title, note: r.note || '' };
+    renderPage();
+  }));
+  body.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', () => svDelete(Number(b.dataset.del))));
+}
+
+async function svSave(body) {
+  if (SV.busy) return;
+  const dr = SV.draft;
+  const n = Number(dr.amount || 0);
+  const err = document.getElementById('sv-err');
+  if (!n) { err.textContent = '금액을 입력하세요.'; return; }
+  if (!dr.title.trim()) { err.textContent = '무엇을 아꼈는지 한 줄만 적어주세요.'; return; }
+  err.textContent = '';
+  SV.busy = true;
+  const btn = document.getElementById('sv-save');
+  if (btn) { btn.disabled = true; btn.textContent = '저장 중…'; }
+  try {
+    const sb = await enClient();
+    const rec = { date: dr.date, amount: n, kind: dr.kind, title: dr.title.trim(), note: dr.note.trim() || null };
+    const { error } = SV.editId
+      ? await sb.from('savings_log').update({ ...rec, updated_at: new Date().toISOString() }).eq('id', SV.editId)
+      : await sb.from('savings_log').insert([rec]);
+    if (error) throw new Error(error.message);
+    enToast(SV.editId ? '수정했습니다' : `${wonComma(n)}원 아꼈습니다 👏`);
+    SV.editId = null;
+    const keep = { kind: dr.kind, date: dr.date };
+    SV.draft = svFresh(); SV.draft.kind = keep.kind; SV.draft.date = keep.date;
+    SV.month = rec.date.slice(0, 7);
+    await svLoad(true);
+    renderPage();
+  } catch (e) {
+    err.textContent = '저장하지 못했습니다 — ' + (e.message || e);
+    if (btn) { btn.disabled = false; btn.textContent = '+ 아낀 돈 기록'; }
+  } finally { SV.busy = false; }
+}
+
+async function svDelete(id) {
+  const r = SV.rows.find(x => x.id === id);
+  if (!r || !confirm(`'${r.title}' 기록을 삭제할까요?`)) return;
+  try {
+    const sb = await enClient();
+    const { error } = await sb.from('savings_log').delete().eq('id', id);
+    if (error) throw new Error(error.message);
+    if (SV.editId === id) { SV.editId = null; SV.draft = svFresh(); }
+    await svLoad(true);
+    enToast('삭제했습니다');
+    renderPage();
+  } catch (e) { enToast('삭제하지 못했습니다 — ' + (e.message || e)); }
 }
 
 /* ---------------- fetch & init ---------------- */
