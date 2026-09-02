@@ -2519,15 +2519,22 @@ body{font-variant-numeric:tabular-nums;}
 
 /* ---------- 목록 관리 ---------- */
 .dbm-page{display:flex;align-items:flex-start;gap:0;min-height:calc(100vh - var(--hdr-h, 130px) - 34px);}
-.dbm-rail{
-  flex:0 0 176px;align-self:stretch;position:sticky;top:calc(var(--hdr-h, 0px) + 6px);
+
+/* 왼쪽 패널 — 기둥은 화면 끝까지, 메뉴는 스크롤해도 그 자리에 남는다 */
+.dbm-railcol{
+  flex:0 0 auto;box-sizing:border-box;align-self:stretch;
+  width:calc(176px + clamp(16px, 2.5vw, 40px));
   margin-left:calc(-1 * clamp(16px, 2.5vw, 40px));
-  padding:18px 14px 18px clamp(16px, 2.5vw, 40px);
-  border-right:1px solid var(--border);background:var(--bg-2);
+  padding-left:clamp(16px, 2.5vw, 40px);
+  background:var(--bg-2);border-right:1px solid var(--border);
   border-radius:0 var(--r-md) var(--r-md) 0;
 }
-.dbm-rail .rl{font-family:var(--mono);font-size:var(--fs-micro);letter-spacing:.14em;
-  color:var(--text-faint);margin:0 0 10px 5px;}
+.dbm-rail{
+  position:sticky;top:calc(var(--hdr-h, 0px) + 16px);
+  padding:0 14px 16px 0;
+  max-height:calc(100vh - var(--hdr-h, 130px) - 32px);overflow-y:auto;
+  scrollbar-width:thin;
+}
 .dbm-rail button{display:flex;width:100%;align-items:center;gap:7px;height:34px;padding:0 11px;margin-bottom:3px;
   border:1px solid transparent;border-radius:var(--r-md);background:transparent;color:var(--text-dim);
   font-family:var(--sans);font-size:var(--fs-base);cursor:pointer;text-align:left;
@@ -2536,45 +2543,72 @@ body{font-variant-numeric:tabular-nums;}
 .dbm-rail button.on{background:var(--accent-fill);border-color:var(--accent-fill);
   color:var(--ink-on-accent);font-weight:700;}
 .dbm-rail button i{margin-left:auto;font-style:normal;font-family:var(--mono);font-size:var(--fs-tiny);opacity:.7;}
-.dbm-main{flex:1 1 auto;min-width:0;padding:18px 0 60px 24px;}
-.dbm-head{display:flex;align-items:baseline;gap:10px;margin-bottom:14px;}
-.dbm-head h3{font-family:var(--serif);font-size:var(--fs-xl);margin:0;font-weight:700;}
-.dbm-sub{font-size:var(--fs-xs);color:var(--text-faint);flex:1 1 auto;}
+.dbm-main{flex:1 1 auto;min-width:0;padding:0 0 80px 24px;}
 .dbm-body{min-height:0;}
-.dbm-bar{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
-.dbm-bar .grow{flex:1 1 180px;}
+
+/* 도구 + 표 머리글은 한 덩어리로 붙어 있는다 (그 사이 여백까지) */
+.dbm-tools{position:sticky;z-index:26;background:var(--bg);padding:18px 0 0;}
+.dbm-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-bottom:12px;}
+.dbm-bar .grow{flex:1 1 200px;height:32px;}
 .dbm-count{font-size:var(--fs-xs);color:var(--text-faint);font-family:var(--mono);}
 .dbm-seg{display:inline-flex;gap:4px;}
-.dbm-seg button{height:28px;padding:0 9px;border-radius:var(--r-sm);border:1px solid var(--border);background:transparent;
+.dbm-seg button{height:30px;padding:0 10px;border-radius:var(--r-sm);border:1px solid var(--border);background:transparent;
   color:var(--text-dim);font-size:var(--fs-xs);cursor:pointer;display:inline-flex;align-items:center;gap:4px;}
-.dbm-seg button.on{border-color:var(--accent-fill);color:var(--accent-text);}
+.dbm-seg button:hover{border-color:var(--border-strong);color:var(--text);}
+.dbm-seg button.on{border-color:var(--accent-fill);color:var(--accent-text);background:rgba(201,162,39,.08);}
 .dbm-seg button i{font-style:normal;font-family:var(--mono);font-size:var(--fs-micro);opacity:.7;}
-.dbm-new{display:flex;align-items:center;gap:7px;padding:9px 10px;margin-bottom:8px;
-  border:1px dashed var(--border-strong);border-radius:var(--r-md);background:var(--bg-2);flex-wrap:nowrap;}
-.dbm-newlab{font-size:var(--fs-tiny);color:var(--text-faint);margin:0 0 5px 2px;}
-.dbm-newact{display:flex;justify-content:flex-end;margin:-4px 0 12px;}
-.dbm-cols{display:flex;align-items:center;gap:7px;padding:0 10px 6px;font-size:var(--fs-tiny);color:var(--text-faint);}
-.dbm-list{border:1px solid var(--border);border-radius:var(--r-md);overflow:hidden;}
-.dbm-row{display:flex;align-items:center;gap:7px;padding:6px 10px;border-bottom:1px solid var(--border);}
-.dbm-row:last-child{border-bottom:0;}
-.dbm-row:hover{background:var(--panel-2);}
-.dbm-row.dirty{background:rgba(232,201,106,.07);}
-.dbm-row .cl,.dbm-new .cl,.dbm-cols .cl{min-width:0;}
-.dbm-row .en-in,.dbm-new .en-in{width:100%;height:28px;font-size:var(--fs-sm);padding:0 7px;}
-.dbm-row input[type=checkbox],.dbm-new input[type=checkbox]{width:15px;height:15px;accent-color:var(--accent-fill);cursor:pointer;}
+
+/* ---- 표 ---- */
+.dbm-table{width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed;}
+.dbm-table.head{margin:0;}
+.dbm-table th{
+  position:sticky;z-index:25;background:var(--bg-2);
+  font-family:var(--sans);font-weight:600;font-size:var(--fs-tiny);color:var(--text-faint);
+  text-align:left;padding:8px 8px;white-space:nowrap;cursor:pointer;user-select:none;
+  border-top:1px solid var(--border);border-bottom:1px solid var(--border-strong);
+}
+.dbm-table th:first-child{border-left:1px solid var(--border);border-top-left-radius:var(--r-md);}
+.dbm-table th:last-child{border-right:1px solid var(--border);border-top-right-radius:var(--r-md);cursor:default;}
+.dbm-table th:hover{color:var(--text-dim);}
+.dbm-table th.on{color:var(--accent-text);}
+.dbm-table th.mid{text-align:center;}
+.dbm-table th .ar{font-size:var(--fs-micro);margin-left:3px;}
+.dbm-table.body td{padding:4px 8px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.dbm-table.body td:first-child{border-left:1px solid var(--border);}
+.dbm-table.body td:last-child{border-right:1px solid var(--border);}
+.dbm-table.body tr:last-child td{border-bottom:1px solid var(--border);}
+.dbm-table.body tr:last-child td:first-child{border-bottom-left-radius:var(--r-md);}
+.dbm-table.body tr:last-child td:last-child{border-bottom-right-radius:var(--r-md);}
+.dbm-table.body tr:hover td{background:var(--panel-2);}
+.dbm-table.body tr.dirty td{background:rgba(232,201,106,.07);}
+.dbm-table td.mid{text-align:center;}
+.dbm-table td.none{color:var(--text-faint);font-size:var(--fs-sm);text-align:center;padding:26px 0;}
+.dbm-table .en-in{width:100%;height:30px;font-size:var(--fs-sm);padding:0 8px;}
+.dbm-table select.en-in{padding-right:2px;}
+.dbm-table input[type=checkbox]{width:15px;height:15px;accent-color:var(--accent-fill);cursor:pointer;}
+.dbm-newrow td{background:rgba(233,231,223,0.03);}
+.dbm-newrow:hover td{background:rgba(233,231,223,0.05);}
+.dbm-newrow .en-in{border-style:dashed;}
+.dbm-plus{border:1px solid var(--accent-fill);background:transparent;color:var(--accent-text);
+  width:24px;height:24px;border-radius:var(--r-sm);cursor:pointer;font-size:var(--fs-md);line-height:1;padding:0;}
+.dbm-plus:hover{background:var(--accent-fill);color:var(--ink-on-accent);}
 .dbm-x{border:none;background:transparent;color:var(--text-faint);cursor:pointer;font-size:var(--fs-md);line-height:1;padding:2px;}
 .dbm-x:hover{color:var(--expense-text);}
+
+/* 사용처 화면은 자기 도구 막대를 그대로 쓰되 같은 높이에 붙는다 */
 .dbm-body .lg-wrap{max-width:none;}
-.dbm-body .lg-stick,.dbm-body .mg-stick{position:static;}
+.dbm-body .lg-shell{padding-top:0;}
+.dbm-body .mg-stick,.dbm-body .lg-stick{top:var(--hdr-h, 0px);}
+
 @media(max-width:820px){
   .dbm-page{flex-direction:column;}
-  .dbm-rail{flex:0 0 auto;align-self:stretch;position:static;display:flex;gap:6px;overflow-x:auto;
-    margin:0 calc(-1 * clamp(12px,1.6vw,26px));padding:10px clamp(12px,1.6vw,26px);
+  .dbm-railcol{width:auto;align-self:stretch;margin:0 calc(-1 * clamp(12px,1.6vw,26px));padding:0;
     border-right:0;border-bottom:1px solid var(--border);border-radius:0;}
-  .dbm-rail .rl{display:none;}
+  .dbm-rail{position:static;max-height:none;overflow-x:auto;overflow-y:visible;display:flex;gap:6px;
+    padding:10px clamp(12px,1.6vw,26px);}
   .dbm-rail button{width:auto;flex:0 0 auto;margin:0;}
-  .dbm-main{padding:16px 0 40px;}
-  .dbm-new,.dbm-row,.dbm-cols{flex-wrap:wrap;}
+  .dbm-main{padding:0 0 40px;}
+  .dbm-table{table-layout:auto;}
 }
 
 /* ---------- 자산 스냅샷 미입력 알림 점 ---------- */
@@ -5326,6 +5360,7 @@ function renderShell() {
     goTo(btn.dataset.page, btn.dataset.sub);
   });
   renderNav();
+  enSyncHeaderOffset();
 }
 
 function renderBanner() {
@@ -17247,34 +17282,41 @@ const DBM_TABS = [
 
 const DBM_COLS = {
   cat: [
-    { k: 'kind', l: '종류', t: 'sel', o: ['수입', '지출', '이체', '자산'], w: '0 0 78px' },
-    { k: 'emoji_kind', l: '이모지', t: 'txt', w: '0 0 56px' },
-    { k: 'category', l: '분류', t: 'txt', w: '1 1 130px' },
-    { k: 'emoji_category', l: '이모지', t: 'txt', w: '0 0 56px' },
-    { k: 'subcategory', l: '세부분류', t: 'txt', w: '1 1 150px' },
-    { k: 'sort_order', l: '순서', t: 'num', w: '0 0 62px' },
-    { k: 'is_active', l: '사용', t: 'bool', w: '0 0 46px' }
+    { k: 'kind', l: '종류', t: 'sel', o: ['수입', '지출', '이체', '자산'], w: '96px' },
+    { k: 'emoji_kind', l: '이모지', t: 'txt', w: '68px', mid: true },
+    { k: 'category', l: '분류', t: 'txt', w: 'auto' },
+    { k: 'emoji_category', l: '이모지', t: 'txt', w: '68px', mid: true },
+    { k: 'subcategory', l: '세부분류', t: 'txt', w: 'auto' },
+    { k: 'sort_order', l: '순서', t: 'num', w: '76px' },
+    { k: 'is_active', l: '사용', t: 'bool', w: '58px', mid: true }
   ],
   acct: [
-    { k: 'name', l: '계좌', t: 'txt', w: '1 1 200px' },
-    { k: 'asset_class', l: '분류', t: 'sel', o: ['현금 자산', '투자 자산', '저축 자산', '연금 자산'], w: '0 0 110px' },
-    { k: 'sort_order', l: '순서', t: 'num', w: '0 0 62px' },
-    { k: 'note', l: '메모', t: 'txt', w: '1 1 160px' },
-    { k: 'is_active', l: '사용', t: 'bool', w: '0 0 46px' }
+    { k: 'name', l: '계좌', t: 'txt', w: 'auto' },
+    { k: 'asset_class', l: '분류', t: 'sel', o: ['현금 자산', '투자 자산', '저축 자산', '연금 자산'], w: '128px' },
+    { k: 'sort_order', l: '순서', t: 'num', w: '76px' },
+    { k: 'note', l: '메모', t: 'txt', w: 'auto' },
+    { k: 'is_active', l: '사용', t: 'bool', w: '58px', mid: true }
   ],
   stock: [
-    { k: 'name', l: '종목', t: 'txt', w: '1 1 170px' },
-    { k: 'ticker', l: '티커', t: 'txt', w: '0 0 82px' },
-    { k: 'market', l: '시장', t: 'sel', o: ['', 'US', 'KR'], w: '0 0 66px' },
-    { k: 'themes', l: '테마 (쉼표로 구분)', t: 'tags', w: '1 1 190px' },
-    { k: 'category', l: '유형', t: 'txt', w: '0 0 100px' },
-    { k: 'is_active', l: '보유', t: 'bool', w: '0 0 46px' }
+    { k: 'name', l: '종목', t: 'txt', w: 'auto' },
+    { k: 'ticker', l: '티커', t: 'txt', w: '96px' },
+    { k: 'market', l: '시장', t: 'sel', o: ['', 'US', 'KR'], w: '84px' },
+    { k: 'themes', l: '테마', t: 'tags', w: 'auto' },
+    { k: 'category', l: '유형', t: 'txt', w: '110px' },
+    { k: 'is_active', l: '보유', t: 'bool', w: '58px', mid: true }
   ],
   theme: [
-    { k: 'name', l: '테마', t: 'txt', w: '0 0 150px' },
-    { k: 'note', l: '메모', t: 'txt', w: '1 1 260px' },
-    { k: 'sort_order', l: '순서', t: 'num', w: '0 0 62px' }
+    { k: 'name', l: '테마', t: 'txt', w: '180px' },
+    { k: 'note', l: '메모', t: 'txt', w: 'auto' },
+    { k: 'sort_order', l: '순서', t: 'num', w: '76px' }
   ]
+};
+
+/* 탭마다 하나씩만 두는 빠른 필터 */
+const DBM_FILTER = {
+  cat: { k: 'kind', l: '종류', opts: ['수입', '지출', '이체', '자산'] },
+  acct: { k: 'asset_class', l: '분류', opts: ['현금 자산', '투자 자산', '저축 자산', '연금 자산'] },
+  stock: { k: 'market', l: '시장', opts: ['US', 'KR'] }
 };
 
 const DBM_ORDER = {
@@ -17290,7 +17332,7 @@ const DBM_NEW = {
   theme: { name: '', note: '', sort_order: 0 }
 };
 
-const DBM = { tab: 'cat', rows: {}, q: '', kind: 'all', dirty: {}, draft: null, busy: false };
+const DBM = { tab: 'cat', rows: {}, q: '', filter: {}, sort: {}, dirty: {}, draft: null, busy: false };
 
 const dbmTab = (id) => DBM_TABS.find(t => t.id === id);
 const dbmTagsToText = (v) => Array.isArray(v) ? v.join(', ') : (v || '');
@@ -17318,26 +17360,23 @@ async function dbmLoad(tabId, force) {
 function dbmRender(host) {
   const el = host || document.getElementById('page-content');
   if (!el) return;
-  const t = dbmTab(DBM.tab) || DBM_TABS[0];
+  enSyncHeaderOffset();
   el.innerHTML = `
     <div class="dbm-page">
-      <nav class="dbm-rail" id="dbm-tabs">
-        <div class="rl">목록</div>
-        ${DBM_TABS.map(x => `<button data-t="${x.id}" class="${x.id === DBM.tab ? 'on' : ''}">${x.label}${
-          DBM.rows[x.id] ? `<i>${DBM.rows[x.id].length}</i>` : ''}</button>`).join('')}
-      </nav>
+      <div class="dbm-railcol">
+        <nav class="dbm-rail" id="dbm-tabs">
+          ${DBM_TABS.map(x => `<button data-t="${x.id}" class="${x.id === DBM.tab ? 'on' : ''}">${x.label}${
+            DBM.rows[x.id] ? `<i>${DBM.rows[x.id].length}</i>` : ''}</button>`).join('')}
+        </nav>
+      </div>
       <div class="dbm-main">
-        <div class="dbm-head">
-          <h3>${enEsc(t.label)}</h3>
-          <span class="dbm-sub">${enEsc(t.desc)}</span>
-        </div>
         <div class="dbm-body" id="dbm-body"><div class="en-empty">불러오는 중…</div></div>
       </div>
     </div>`;
   document.getElementById('dbm-tabs').addEventListener('click', (e) => {
     const b = e.target.closest('button[data-t]');
     if (!b) return;
-    DBM.tab = b.dataset.t; DBM.q = ''; DBM.kind = 'all'; DBM.draft = null; DBM.dirty = {};
+    DBM.tab = b.dataset.t; DBM.q = ''; DBM.draft = null; DBM.dirty = {};
     dbmRender();
   });
   dbmRenderPane();
@@ -17354,65 +17393,121 @@ async function dbmRenderPane() {
   const tabId = DBM.tab;
   const cols = DBM_COLS[tabId];
   const all = DBM.rows[tabId] || [];
+  const fl = DBM_FILTER[tabId];
+  const fv = DBM.filter[tabId] || 'all';
   const q = DBM.q.trim().toLowerCase();
-  const rows = all.filter(r => {
-    if (tabId === 'cat' && DBM.kind !== 'all' && r.kind !== DBM.kind) return false;
+
+  let rows = all.filter(r => {
+    if (fl && fv !== 'all' && String(r[fl.k] || '') !== fv) return false;
     if (!q) return true;
     return cols.some(c => String(c.t === 'tags' ? dbmTagsToText(r[c.k]) : (r[c.k] == null ? '' : r[c.k])).toLowerCase().includes(q));
   });
+
+  /* 정렬 — 머리글을 눌러 바꾼다. 기본은 탭마다 정해둔 순서. */
+  const sort = DBM.sort[tabId];
+  if (sort) {
+    const c = cols.find(x => x.k === sort.k) || {};
+    const val = (r) => c.t === 'tags' ? dbmTagsToText(r[sort.k])
+      : c.t === 'bool' ? (r[sort.k] ? 1 : 0)
+      : c.t === 'num' ? (Number(r[sort.k]) || 0)
+      : String(r[sort.k] == null ? '' : r[sort.k]);
+    rows = rows.slice().sort((a, b) => {
+      const x = val(a), y = val(b);
+      const n = typeof x === 'number' ? x - y : String(x).localeCompare(String(y), 'ko');
+      return sort.dir === 'desc' ? -n : n;
+    });
+  }
 
   const themeList = (DBM.rows.theme || []).map(x => x.name);
   const cell = (c, r, idPrefix) => {
     const id = `${idPrefix}-${c.k}`;
     const v = r[c.k];
-    if (c.t === 'bool') return `<span class="cl" style="flex:${c.w}"><input type="checkbox" id="${id}" data-k="${c.k}" ${v ? 'checked' : ''}></span>`;
-    if (c.t === 'sel') return `<span class="cl" style="flex:${c.w}"><select class="en-in" id="${id}" data-k="${c.k}">${
-      c.o.map(o => `<option value="${enEsc(o)}" ${String(v || '') === o ? 'selected' : ''}>${enEsc(o || '—')}</option>`).join('')}</select></span>`;
+    const cls = c.mid ? ' class="mid"' : '';
+    if (c.t === 'bool') return `<td${cls}><input type="checkbox" id="${id}" data-k="${c.k}" ${v ? 'checked' : ''}></td>`;
+    if (c.t === 'sel') return `<td${cls}><select class="en-in" id="${id}" data-k="${c.k}">${
+      c.o.map(o => `<option value="${enEsc(o)}" ${String(v || '') === o ? 'selected' : ''}>${enEsc(o || '—')}</option>`).join('')}</select></td>`;
     const val = c.t === 'tags' ? dbmTagsToText(v) : (v == null ? '' : v);
-    return `<span class="cl" style="flex:${c.w}"><input class="en-in" id="${id}" data-k="${c.k}"
+    return `<td${cls}><input class="en-in" id="${id}" data-k="${c.k}"
       ${c.t === 'num' ? 'inputmode="numeric"' : ''} ${c.t === 'tags' ? 'list="dbm-themes"' : ''}
-      value="${enEsc(val)}" placeholder="${enEsc(c.l)}"></span>`;
+      value="${enEsc(val)}" placeholder="${enEsc(c.l)}"></td>`;
   };
-
   const draft = DBM.draft || { ...DBM_NEW[tabId] };
+  const dirtyN = Object.keys(DBM.dirty).length;
+  const arrow = (k) => sort && sort.k === k ? `<b class="ar">${sort.dir === 'asc' ? '▲' : '▼'}</b>` : '';
+
   host.innerHTML = `
     <datalist id="dbm-themes">${themeList.map(x => `<option value="${enEsc(x)}">`).join('')}</datalist>
-    <div class="dbm-bar">
-      <input class="en-in grow" id="dbm-q" placeholder="검색" value="${enEsc(DBM.q)}">
-      ${tabId === 'cat' ? `<div class="dbm-seg" id="dbm-kind">${
-        [['all', '전체'], ['수입', '수입'], ['지출', '지출'], ['이체', '이체'], ['자산', '자산']].map(([v, l]) =>
-          `<button data-k="${v}" class="${DBM.kind === v ? 'on' : ''}">${l}<i>${
-            v === 'all' ? all.length : all.filter(r => r.kind === v).length}</i></button>`).join('')}</div>` : ''}
-      <span class="dbm-count">${rows.length}개</span>
-      <button class="bk-add" id="dbm-save" ${Object.keys(DBM.dirty).length ? '' : 'disabled'}>변경 저장${
-        Object.keys(DBM.dirty).length ? ` (${Object.keys(DBM.dirty).length})` : ''}</button>
+
+    <div class="dbm-tools" id="dbm-tools">
+      <div class="dbm-bar">
+        <input class="en-in grow" id="dbm-q" placeholder="검색" value="${enEsc(DBM.q)}">
+        ${fl ? `<div class="dbm-seg" id="dbm-fl">${
+          [['all', '전체']].concat(fl.opts.map(o => [o, o])).map(([v, l]) =>
+            `<button data-f="${enEsc(v)}" class="${fv === v ? 'on' : ''}">${enEsc(l)}<i>${
+              v === 'all' ? all.length : all.filter(r => String(r[fl.k] || '') === v).length}</i></button>`).join('')}</div>` : ''}
+        <span class="dbm-count">${rows.length}개</span>
+        <button class="lg-reset" id="dbm-reload">다시 읽기</button>
+        <button class="bk-add" id="dbm-save" ${dirtyN ? '' : 'disabled'}>변경 저장${dirtyN ? ` (${dirtyN})` : ''}</button>
+      </div>
+      <table class="dbm-table head">
+        <colgroup>${cols.map(c => `<col style="width:${c.w}">`).join('')}<col style="width:38px"></colgroup>
+        <thead><tr>
+          ${cols.map(c => `<th data-s="${c.k}" class="${c.mid ? 'mid ' : ''}${sort && sort.k === c.k ? 'on' : ''}">${enEsc(c.l)}${arrow(c.k)}</th>`).join('')}
+          <th class="mid"></th>
+        </tr></thead>
+      </table>
     </div>
 
-    <div class="dbm-newlab">새 항목</div>
-    <div class="dbm-new">
-      ${cols.map(c => cell(c, draft, 'dbmn')).join('')}
-      <span class="cl" style="flex:0 0 26px"></span>
-    </div>
-    <div class="dbm-newact"><button class="lg-reset" id="dbm-add">+ 추가</button></div>
+    <table class="dbm-table body">
+      <colgroup>${cols.map(c => `<col style="width:${c.w}">`).join('')}<col style="width:38px"></colgroup>
+      <tbody>
+        <tr class="dbm-newrow">
+          ${cols.map(c => cell(c, draft, 'dbmn')).join('')}
+          <td class="mid"><button class="dbm-plus" id="dbm-add" title="새 항목 추가">＋</button></td>
+        </tr>
+        ${rows.length ? rows.map(r => `<tr data-id="${r.id}" class="${DBM.dirty[r.id] ? 'dirty' : ''}">
+          ${cols.map(c => cell(c, r, 'dbm' + r.id)).join('')}
+          <td class="mid"><button class="dbm-x" data-del="${r.id}" title="삭제">×</button></td>
+        </tr>`).join('')
+        : `<tr><td class="none" colspan="${cols.length + 1}">항목이 없습니다.</td></tr>`}
+      </tbody>
+    </table>`;
 
-    <div class="dbm-cols">${cols.map(c => `<span class="cl" style="flex:${c.w}">${enEsc(c.l)}</span>`).join('')}<span class="cl" style="flex:0 0 26px"></span></div>
-    <div class="dbm-list">
-      ${rows.length ? rows.map(r => `<div class="dbm-row ${DBM.dirty[r.id] ? 'dirty' : ''}" data-id="${r.id}">
-        ${cols.map(c => cell(c, r, 'dbm' + r.id)).join('')}
-        <span class="cl" style="flex:0 0 26px"><button class="dbm-x" data-del="${r.id}" title="삭제">×</button></span>
-      </div>`).join('') : '<div class="en-empty">항목이 없습니다.</div>'}
-    </div>`;
+  /* 도구 + 머리글이 함께 붙어 있도록 머리글의 sticky 위치를 도구 높이만큼 내린다 */
+  const tools = document.getElementById('dbm-tools');
+  const setTop = () => {
+    const hEl = document.querySelector('.site-header');
+    const hdr = hEl ? Math.round(hEl.getBoundingClientRect().height) : 0;
+    const th = tools.querySelector('thead');
+    const barH = tools.querySelector('.dbm-bar').offsetHeight;
+    tools.style.top = hdr + 'px';
+    if (th) th.style.top = (hdr + barH + 18) + 'px';
+    document.documentElement.style.setProperty('--hdr-h', hdr + 'px');
+  };
+  setTop();
+  requestAnimationFrame(setTop);
+  setTimeout(setTop, 200);
+  if (!dbmRenderPane._resize) {
+    dbmRenderPane._resize = true;
+    window.addEventListener('resize', () => { if (document.getElementById('dbm-tools')) setTop(); });
+  }
 
   const qEl = document.getElementById('dbm-q');
   qEl.addEventListener('input', () => { DBM.q = qEl.value; dbmRenderPane(); });
-  const kindEl = document.getElementById('dbm-kind');
-  if (kindEl) kindEl.addEventListener('click', (e) => {
-    const b = e.target.closest('button[data-k]'); if (!b) return;
-    DBM.kind = b.dataset.k; dbmRenderPane();
+  const flEl = document.getElementById('dbm-fl');
+  if (flEl) flEl.addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-f]'); if (!b) return;
+    DBM.filter[tabId] = b.dataset.f; dbmRenderPane();
   });
+  host.querySelectorAll('th[data-s]').forEach(th => th.addEventListener('click', () => {
+    const k = th.dataset.s;
+    const cur = DBM.sort[tabId];
+    DBM.sort[tabId] = (cur && cur.k === k) ? (cur.dir === 'asc' ? { k, dir: 'desc' } : null) : { k, dir: 'asc' };
+    dbmRenderPane();
+  }));
 
-  /* 기존 행 편집 — 바뀐 값만 모았다가 한 번에 저장한다 */
-  host.querySelectorAll('.dbm-row').forEach(row => {
+  /* 표에서 바로 고친다 — 바뀐 값만 모았다가 '변경 저장'으로 한 번에 반영 */
+  host.querySelectorAll('tbody tr[data-id]').forEach(row => {
     const id = Number(row.dataset.id);
     const rec = all.find(r => r.id === id);
     row.querySelectorAll('[data-k]').forEach(el => {
@@ -17432,12 +17527,18 @@ async function dbmRenderPane() {
         const n = Object.keys(DBM.dirty).length;
         sv.disabled = !n; sv.textContent = n ? `변경 저장 (${n})` : '변경 저장';
       });
+      el.addEventListener('keydown', (e) => { if (e.key === 'Enter') { el.blur(); dbmSave(); } });
     });
   });
 
   host.querySelectorAll('.dbm-x').forEach(b => b.addEventListener('click', () => dbmDelete(Number(b.dataset.del))));
   document.getElementById('dbm-save').addEventListener('click', dbmSave);
   document.getElementById('dbm-add').addEventListener('click', dbmAdd);
+  document.getElementById('dbm-reload').addEventListener('click', async () => {
+    DBM.dirty = {}; await dbmLoad(tabId, true); dbmRender();
+  });
+  host.querySelectorAll('.dbm-newrow [data-k]').forEach(el =>
+    el.addEventListener('keydown', (e) => { if (e.key === 'Enter') dbmAdd(); }));
 }
 
 function dbmReadDraft() {
