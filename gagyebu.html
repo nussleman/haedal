@@ -81,14 +81,14 @@ main>.inner{max-width:560px;margin:0 auto;}
 /* 홈 인디케이터만 피하고 그 외 여백은 두지 않는다 — 화면 맨 아래에 붙어 보이게 */
 .tabbar{flex:0 0 auto;display:flex;align-items:center;gap:4px;
   background:var(--bg-2);border-top:1px solid var(--border);
-  padding-bottom:max(2px, calc(var(--bot) - 14px));}
-.tabbar button.tb{flex:1;background:none;border:0;padding:7px 0 4px;color:var(--text-faint);
-  font-size:11px;display:flex;flex-direction:column;align-items:center;gap:3px;}
-.tabbar button.tb .g{font-size:18px;line-height:1;}
+  padding-bottom:max(2px, calc(var(--bot) - 22px));}
+.tabbar button.tb{flex:1;background:none;border:0;padding:5px 0 1px;color:var(--text-faint);
+  font-size:10px;line-height:1.4;display:flex;flex-direction:column;align-items:center;gap:2px;}
+.tabbar button.tb .g{font-size:16px;line-height:1;}
 .tabbar button.tb.on{color:var(--accent-text);}
 .tabbar.ctx{background:var(--panel);}
-.tabbar .back{flex:0 0 auto;width:36px;height:36px;margin:5px 2px 5px 8px;border-radius:50%;
-  border:1px solid var(--border-strong);background:var(--bg-2);color:var(--text);font-size:17px;line-height:1;}
+.tabbar .back{flex:0 0 auto;width:31px;height:31px;margin:3px 2px 3px 8px;border-radius:50%;
+  border:1px solid var(--border-strong);background:var(--bg-2);color:var(--text);font-size:15px;line-height:1;}
 body.kb .tabbar{display:none;}
 
 /* ---------- 공통 ---------- */
