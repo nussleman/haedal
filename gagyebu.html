@@ -43,8 +43,11 @@ html{height:100%;}
    이렇게 해야 스크롤·키보드에 따라 하단 메뉴가 오르락내리락하지 않는다. */
 body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:var(--sans);
   font-size:15px;line-height:1.5;
-  position:fixed;left:0;right:0;top:0;height:var(--vvh);
+  position:fixed;left:0;right:0;top:0;bottom:0;
   display:flex;flex-direction:column;overflow:hidden;overscroll-behavior:none;}
+/* 키보드가 올라온 동안에만 실제 보이는 높이로 줄인다.
+   평소에는 bottom:0 으로 화면 맨 아래에 딱 붙는다. */
+body.kb{bottom:auto;height:var(--vvh);}
 
 button,input,select,textarea{font-family:inherit;font-size:16px;color:inherit;touch-action:manipulation;}
 button{cursor:pointer;}
@@ -75,15 +78,16 @@ main>.inner{max-width:560px;margin:0 auto;}
 #dock .inner{max-width:560px;margin:0 auto;}
 
 /* ---------- 탭바 ---------- */
+/* 홈 인디케이터만 피하고 그 외 여백은 두지 않는다 — 화면 맨 아래에 붙어 보이게 */
 .tabbar{flex:0 0 auto;display:flex;align-items:center;gap:4px;
   background:var(--bg-2);border-top:1px solid var(--border);
-  padding-bottom:var(--bot);}
-.tabbar button.tb{flex:1;background:none;border:0;padding:8px 0 7px;color:var(--text-faint);
+  padding-bottom:max(2px, calc(var(--bot) - 14px));}
+.tabbar button.tb{flex:1;background:none;border:0;padding:7px 0 4px;color:var(--text-faint);
   font-size:11px;display:flex;flex-direction:column;align-items:center;gap:3px;}
 .tabbar button.tb .g{font-size:18px;line-height:1;}
 .tabbar button.tb.on{color:var(--accent-text);}
 .tabbar.ctx{background:var(--panel);}
-.tabbar .back{flex:0 0 auto;width:38px;height:38px;margin:6px 2px 6px 8px;border-radius:50%;
+.tabbar .back{flex:0 0 auto;width:36px;height:36px;margin:5px 2px 5px 8px;border-radius:50%;
   border:1px solid var(--border-strong);background:var(--bg-2);color:var(--text);font-size:17px;line-height:1;}
 body.kb .tabbar{display:none;}
 
@@ -334,10 +338,11 @@ function toast(msg) {
 (function fixViewport() {
   const vv = window.visualViewport;
   const set = () => {
-    const h = vv ? vv.height : window.innerHeight;
-    document.documentElement.style.setProperty('--vvh', h + 'px');
-    if (vv) document.body.style.top = vv.offsetTop + 'px';
-    document.body.classList.toggle('kb', !!vv && (window.innerHeight - vv.height) > 120);
+    if (!vv) return;
+    const kb = (window.innerHeight - vv.height) > 120;
+    document.documentElement.style.setProperty('--vvh', vv.height + 'px');
+    document.body.style.top = kb ? vv.offsetTop + 'px' : '0px';
+    document.body.classList.toggle('kb', kb);
   };
   if (vv) { vv.addEventListener('resize', set); vv.addEventListener('scroll', set); }
   window.addEventListener('orientationchange', () => setTimeout(set, 250));
@@ -506,6 +511,23 @@ function amtHtml(v, neg, cls) {
   return `<div class="amt ${v ? '' : 'zero'} ${neg ? 'neg' : ''} ${cls || ''}">
     <b>${neg && v ? '−' : ''}${v ? Number(v).toLocaleString('ko-KR') : '0'}</b><span>원</span></div>`;
 }
+/* 키패드를 누를 때 화면 전체를 다시 그리면 메모 같은 입력칸의 한글 조합이 끊긴다.
+   그래서 금액 표시와 저장 버튼만 갈아 끼운다. */
+function paintAmtBox(sel, v, neg, cls) {
+  const box = $(sel);
+  if (!box) return;
+  box.className = 'amt' + (v ? '' : ' zero') + (neg ? ' neg' : '') + (cls ? ' ' + cls : '');
+  box.innerHTML = `<b>${neg && v ? '−' : ''}${v ? Number(v).toLocaleString('ko-KR') : '0'}</b><span>원</span>`;
+}
+function paintAddAmount() {
+  const d = S.d, sv = isSaveMode();
+  paintAmtBox('#main .amt', d.amount, d.neg, sv ? 'sv' : '');
+  const btn = $('#f-save');
+  if (btn) {
+    btn.disabled = !d.amount;
+    btn.textContent = (d.amount ? Number(d.amount).toLocaleString('ko-KR') + '원 ' : '') + (sv ? '아꼈다고 기록' : '기록하기');
+  }
+}
 
 /* ---------------- 기록 ----------------
    ① 사용처를 고르면 지난번 분류(=지출·수입·이체)가 자동으로 따라오고
@@ -514,20 +536,7 @@ function amtHtml(v, neg, cls) {
 function renderAdd(m, dock) {
   const d = S.d;
   if (d.step === 2) return renderAddAmount(m, dock);
-
-  const q = d.merchant.trim().toLowerCase();
-  let list = Object.values(S.merchStats);
-  if (q) list = list.filter(x => x.name.toLowerCase().includes(q));
-  list = list.sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'ko')).slice(0, 40);
-  const exact = q && list.some(x => x.name.toLowerCase() === q);
   const t = todayStat();
-
-  const mark = (name) => {
-    if (!q) return esc(name);
-    const at = name.toLowerCase().indexOf(q);
-    if (at < 0) return esc(name);
-    return esc(name.slice(0, at)) + '<mark>' + esc(name.slice(at, at + q.length)) + '</mark>' + esc(name.slice(at + q.length));
-  };
 
   m.innerHTML = `
     <div class="seg">
@@ -537,13 +546,7 @@ function renderAdd(m, dock) {
 
     <div class="steplab"><b>1</b> ${isSaveMode() ? '무엇을 아꼈나요?' : '어디에 썼나요?'}</div>
 
-    <div class="mlist">
-      ${list.map(x => `<button class="mrow" data-m="${esc(x.name)}">
-          <span class="nm">${mark(x.name)}</span>
-          ${x.catId ? `<span class="ct">${esc(catLabel(x.catId))}</span>` : ''}
-          ${x.count ? `<span class="n">${x.count}</span>` : ''}
-        </button>`).join('') || '<div class="empty">아래 칸에 직접 입력하세요.</div>'}
-    </div>
+    <div class="mlist" id="f-mlist"></div>
 
     <button class="skip" id="f-nomerch">${isSaveMode() ? '이름 없이 기록 →' : '사용처 없이 기록 →'}</button>
 
@@ -551,37 +554,68 @@ function renderAdd(m, dock) {
       <span>오늘 ${t.n}건</span><b class="mono" style="color:var(--expense-text)">${comma(t.exp)}원</b></div>` : ''}`;
 
   dock.innerHTML = `<div class="inner">
-    ${q && !exact ? `<button class="newmerch" id="f-newmerch" style="margin-bottom:7px;">＋ '${esc(d.merchant.trim())}' 새로 쓰기</button>` : ''}
+    <div id="f-newwrap"></div>
     <input class="in" id="f-merch" placeholder="${isSaveMode() ? '무엇을 · 검색하거나 직접 입력' : '사용처 검색 · 입력'}"
            autocomplete="off" autocapitalize="off" enterkeyhint="next" value="${esc(d.merchant)}">
   </div>`;
+
+  paintMerchList();
 
   $$('.seg button', m).forEach(b => b.addEventListener('click', () => {
     d.kind = b.dataset.k; d.catId = null; d.cat = null; renderTab();
   }));
 
+  /* 한글은 여러 번의 input 이벤트로 한 글자가 조합된다.
+     그래서 타이핑 중에는 입력칸을 절대 다시 그리지 않고 아래 목록만 갈아 끼운다. */
   const mi = $('#f-merch');
-  mi.addEventListener('input', () => {
-    d.merchant = mi.value;
-    const at = mi.selectionStart;
-    renderTab();
-    const e2 = $('#f-merch');
-    if (e2) { e2.focus(); try { e2.setSelectionRange(at, at); } catch (x) {} }
-  });
+  const sync = () => { d.merchant = mi.value; paintMerchList(); };
+  mi.addEventListener('input', sync);
+  mi.addEventListener('compositionupdate', sync);
+  mi.addEventListener('compositionend', sync);
   mi.addEventListener('keydown', (e) => {
-    if (e.key !== 'Enter') return;
+    if (e.key !== 'Enter' || e.isComposing || e.keyCode === 229) return;
     e.preventDefault();
-    const name = d.merchant.trim();
-    if (name) pickMerch(name);
+    const name = mi.value.trim();
+    if (name) { d.merchant = name; pickMerch(name); }
   });
   if (d.focusMerch) { d.focusMerch = false; setTimeout(() => { const e2 = $('#f-merch'); if (e2) e2.focus(); }, 30); }
 
-  $$('[data-m]', m).forEach(b => b.addEventListener('click', () => pickMerch(b.dataset.m)));
-  const nm = $('#f-newmerch');
-  if (nm) nm.addEventListener('click', () => pickMerch(d.merchant.trim()));
   $('#f-nomerch').addEventListener('click', () => { d.merchant = ''; goAmount(); });
   const tb = $('#f-today');
   if (tb) tb.addEventListener('click', () => { S.tab = 'today'; render(); });
+}
+
+/* 목록·'새로 쓰기' 버튼만 다시 그린다 (입력칸은 건드리지 않는다) */
+function paintMerchList() {
+  const host = $('#f-mlist');
+  if (!host) return;
+  const d = S.d;
+  const q = d.merchant.trim().toLowerCase();
+  let list = Object.values(S.merchStats);
+  if (q) list = list.filter(x => x.name.toLowerCase().includes(q));
+  list = list.sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'ko')).slice(0, 40);
+  const exact = q && list.some(x => x.name.toLowerCase() === q);
+
+  const mark = (name) => {
+    if (!q) return esc(name);
+    const at = name.toLowerCase().indexOf(q);
+    if (at < 0) return esc(name);
+    return esc(name.slice(0, at)) + '<mark>' + esc(name.slice(at, at + q.length)) + '</mark>' + esc(name.slice(at + q.length));
+  };
+
+  host.innerHTML = list.map(x => `<button class="mrow" data-m="${esc(x.name)}">
+      <span class="nm">${mark(x.name)}</span>
+      ${x.catId ? `<span class="ct">${esc(catLabel(x.catId))}</span>` : ''}
+      ${x.count ? `<span class="n">${x.count}</span>` : ''}
+    </button>`).join('') || '<div class="empty">아래 칸에 직접 입력하세요.</div>';
+  $$('[data-m]', host).forEach(b => b.addEventListener('click', () => pickMerch(b.dataset.m)));
+
+  const wrap = $('#f-newwrap');
+  if (!wrap) return;
+  wrap.innerHTML = (q && !exact)
+    ? `<button class="newmerch" id="f-newmerch" style="margin-bottom:7px;">＋ '${esc(d.merchant.trim())}' 새로 쓰기</button>` : '';
+  const nm = $('#f-newmerch');
+  if (nm) nm.addEventListener('click', () => pickMerch(d.merchant.trim()));
 }
 
 function todayStat() {
@@ -684,9 +718,9 @@ function renderAddAmount(m, dock) {
       d.amount ? Number(d.amount).toLocaleString('ko-KR') + '원 ' : ''}${sv ? '아꼈다고 기록' : '기록하기'}</button>
   </div>`;
 
-  bindPad('pad1', () => d.amount, (v) => { d.amount = v; }, renderTab);
+  bindPad('pad1', () => d.amount, (v) => { d.amount = v; }, paintAddAmount);
   $('#f-back').addEventListener('click', () => { d.step = 1; d.focusMerch = true; renderTab(); });
-  $$('[data-a]', m).forEach(b => b.addEventListener('click', () => { d.amount = b.dataset.a; renderTab(); }));
+  $$('[data-a]', m).forEach(b => b.addEventListener('click', () => { d.amount = b.dataset.a; paintAddAmount(); }));
   $$('[data-sk]', m).forEach(b => b.addEventListener('click', () => { d.svKind = b.dataset.sk; renderTab(); }));
   const cp = $('#f-catpick');
   if (cp) cp.addEventListener('click', () => { d.catOpen = !d.catOpen; renderTab(); });
@@ -951,7 +985,7 @@ function drawEdit() {
       <button class="del" id="e-del">삭제</button>
     </div>`);
 
-  bindPad('pad2', () => e.amount, (v) => { e.amount = v; }, drawEdit);
+  bindPad('pad2', () => e.amount, (v) => { e.amount = v; }, () => paintAmtBox('#sheet .amt', e.amount, e.neg, ''));
   $('#e-x').addEventListener('click', sheetClose);
   $$('[data-eg]').forEach(b => b.addEventListener('click', () => { e._g = b.dataset.eg; drawEdit(); }));
   $$('[data-ec]').forEach(b => b.addEventListener('click', () => { e.category_id = Number(b.dataset.ec); drawEdit(); }));
@@ -1026,7 +1060,7 @@ function drawSaveEdit() {
       <button class="del" id="e-del">삭제</button>
     </div>`);
 
-  bindPad('pad3', () => e.amount, (v) => { e.amount = v; }, drawSaveEdit);
+  bindPad('pad3', () => e.amount, (v) => { e.amount = v; }, () => paintAmtBox('#sheet .amt', e.amount, false, 'sv'));
   $('#e-x').addEventListener('click', sheetClose);
   $$('[data-ek]').forEach(b => b.addEventListener('click', () => { e.kind = b.dataset.ek; drawSaveEdit(); }));
   $('#e-title').addEventListener('input', (x) => { e.title = x.target.value; });
@@ -1141,29 +1175,31 @@ function mgToolbar(placeholder, addLabel) {
     <button class="mgadd" id="mg-add">＋ ${addLabel}</button>
   </div>`;
 }
-function bindMgToolbar(m, onAdd) {
+/* 여기서도 검색칸은 다시 그리지 않는다 — 한글 조합이 끊기지 않게 목록만 갈아 끼운다 */
+function bindMgToolbar(m, onAdd, paint) {
   const q = $('#mg-q', m);
-  q.addEventListener('input', () => {
-    S.mg.q = q.value;
-    const at = q.selectionStart;
-    renderTab();
-    const e2 = $('#mg-q'); if (e2) { e2.focus(); try { e2.setSelectionRange(at, at); } catch (x) {} }
-  });
+  const sync = () => { S.mg.q = q.value; paint(); };
+  q.addEventListener('input', sync);
+  q.addEventListener('compositionupdate', sync);
+  q.addEventListener('compositionend', sync);
   $('#mg-add', m).addEventListener('click', onAdd);
 }
 
 /* ---- 사용처 ---- */
 function renderMerchDB(m) {
-  const q = S.mg.q.trim().toLowerCase();
-  const rows = S.merchants
-    .filter(r => !q || r.name.toLowerCase().includes(q) || String(r.merchant_group || '').toLowerCase().includes(q))
-    .sort((a, b) => (S.merchStats[b.name] ? S.merchStats[b.name].count : 0) - (S.merchStats[a.name] ? S.merchStats[a.name].count : 0)
-      || a.name.localeCompare(b.name, 'ko'));
-
   m.innerHTML = `
     ${mgToolbar('사용처 · 그룹 검색', '추가')}
     <p class="mgnote">등록된 ${S.merchants.length}곳. 고정비로 지정하면 그 사용처의 기록이 고정비로 잡힙니다.</p>
-    ${rows.length ? `<div class="list">${rows.map(r => {
+    <div id="mg-list"></div>`;
+
+  const paint = () => {
+    const host = $('#mg-list'); if (!host) return;
+    const q = S.mg.q.trim().toLowerCase();
+    const rows = S.merchants
+      .filter(r => !q || r.name.toLowerCase().includes(q) || String(r.merchant_group || '').toLowerCase().includes(q))
+      .sort((a, b) => (S.merchStats[b.name] ? S.merchStats[b.name].count : 0) - (S.merchStats[a.name] ? S.merchStats[a.name].count : 0)
+        || a.name.localeCompare(b.name, 'ko'));
+    host.innerHTML = rows.length ? `<div class="list">${rows.map(r => {
       const st = S.merchStats[r.name];
       return `<button class="dbrow" data-mid="${r.id}">
         <span class="em">${r.is_fixed ? '📌' : '🏷️'}</span>
@@ -1172,11 +1208,13 @@ function renderMerchDB(m) {
             [r.merchant_group ? esc(r.merchant_group) : '', st && st.catId ? esc(catLabel(st.catId)) : ''].filter(Boolean).join(' · ')}</div>` : ''}</span>
         <span class="tag">${st && st.count ? st.count + '건' : ''}</span>
       </button>`;
-    }).join('')}</div>` : '<div class="empty">사용처가 없습니다.</div>'}`;
+    }).join('')}</div>` : '<div class="empty">사용처가 없습니다.</div>';
+    $$('[data-mid]', host).forEach(b => b.addEventListener('click', () =>
+      editMerch(S.merchants.find(x => x.id === Number(b.dataset.mid)))));
+  };
 
-  bindMgToolbar(m, () => editMerch(null));
-  $$('[data-mid]', m).forEach(b => b.addEventListener('click', () =>
-    editMerch(S.merchants.find(x => x.id === Number(b.dataset.mid)))));
+  paint();
+  bindMgToolbar(m, () => editMerch(null), paint);
 }
 
 function editMerch(row) {
@@ -1234,27 +1272,36 @@ function editMerch(row) {
 /* ---- 분류 ---- */
 const CAT_KINDS = ['지출', '수입', '이체', '자산'];
 function renderCatDB(m) {
-  const q = S.mg.q.trim().toLowerCase();
-  const rows = (S.allCats || [])
-    .filter(r => r.kind === S.mg.catKind)
-    .filter(r => !q || (r.category + ' ' + r.subcategory).toLowerCase().includes(q))
-    .sort((a, b) => (a.sort_order - b.sort_order) || a.category.localeCompare(b.category, 'ko'));
-
   m.innerHTML = `
     ${mgToolbar('분류 · 세부분류 검색', '추가')}
     <div class="chips" style="margin-bottom:9px;">${CAT_KINDS.map(k =>
       `<button class="chip sm ${S.mg.catKind === k ? 'on' : ''}" data-ck="${k}">${k}</button>`).join('')}</div>
-    ${rows.length ? `<div class="list">${rows.map(r => `
+    <div id="mg-list"></div>`;
+
+  const paint = () => {
+    const host = $('#mg-list'); if (!host) return;
+    const q = S.mg.q.trim().toLowerCase();
+    const rows = (S.allCats || [])
+      .filter(r => r.kind === S.mg.catKind)
+      .filter(r => !q || (r.category + ' ' + r.subcategory).toLowerCase().includes(q))
+      .sort((a, b) => (a.sort_order - b.sort_order) || a.category.localeCompare(b.category, 'ko'));
+    host.innerHTML = rows.length ? `<div class="list">${rows.map(r => `
       <button class="dbrow ${r.is_active === false ? 'off' : ''}" data-cid="${r.id}">
         <span class="em">${r.emoji_category || r.emoji_kind || '·'}</span>
         <span class="nm">${esc(r.subcategory)}<div class="sub">${esc(r.category)}</div></span>
         <span class="tag">${r.sort_order}</span>
-      </button>`).join('')}</div>` : '<div class="empty">분류가 없습니다.</div>'}`;
+      </button>`).join('')}</div>` : '<div class="empty">분류가 없습니다.</div>';
+    $$('[data-cid]', host).forEach(b => b.addEventListener('click', () =>
+      editCat((S.allCats || []).find(x => x.id === Number(b.dataset.cid)))));
+  };
 
-  bindMgToolbar(m, () => editCat(null));
-  $$('[data-ck]', m).forEach(b => b.addEventListener('click', () => { S.mg.catKind = b.dataset.ck; renderTab(); }));
-  $$('[data-cid]', m).forEach(b => b.addEventListener('click', () =>
-    editCat((S.allCats || []).find(x => x.id === Number(b.dataset.cid)))));
+  paint();
+  bindMgToolbar(m, () => editCat(null), paint);
+  $$('[data-ck]', m).forEach(b => b.addEventListener('click', () => {
+    S.mg.catKind = b.dataset.ck;
+    $$('[data-ck]', m).forEach(x => x.classList.toggle('on', x.dataset.ck === S.mg.catKind));
+    paint();
+  }));
 }
 
 function editCat(row) {
@@ -1344,20 +1391,27 @@ function renderAcctDB(m) {
     loadAccounts().then(() => renderTab()).catch(() => { m.innerHTML = '<div class="empty">불러오지 못했습니다.</div>'; });
     return;
   }
-  const q = S.mg.q.trim().toLowerCase();
-  const rows = S.accounts.filter(r => !q || (r.name + ' ' + r.asset_class).toLowerCase().includes(q));
   m.innerHTML = `
     ${mgToolbar('계좌 검색', '추가')}
     <p class="mgnote">자산 스냅샷에 적는 계좌 목록입니다.</p>
-    ${rows.length ? `<div class="list">${rows.map(r => `
+    <div id="mg-list"></div>`;
+
+  const paint = () => {
+    const host = $('#mg-list'); if (!host) return;
+    const q = S.mg.q.trim().toLowerCase();
+    const rows = S.accounts.filter(r => !q || (r.name + ' ' + r.asset_class).toLowerCase().includes(q));
+    host.innerHTML = rows.length ? `<div class="list">${rows.map(r => `
       <button class="dbrow ${r.is_active === false ? 'off' : ''}" data-aid="${r.id}">
         <span class="em">🏦</span>
         <span class="nm">${esc(r.name)}<div class="sub">${esc(r.asset_class)}${r.note ? ' · ' + esc(r.note) : ''}</div></span>
         <span class="tag">${r.sort_order}</span>
-      </button>`).join('')}</div>` : '<div class="empty">계좌가 없습니다.</div>'}`;
-  bindMgToolbar(m, () => editAcct(null));
-  $$('[data-aid]', m).forEach(b => b.addEventListener('click', () =>
-    editAcct(S.accounts.find(x => x.id === Number(b.dataset.aid)))));
+      </button>`).join('')}</div>` : '<div class="empty">계좌가 없습니다.</div>';
+    $$('[data-aid]', host).forEach(b => b.addEventListener('click', () =>
+      editAcct(S.accounts.find(x => x.id === Number(b.dataset.aid)))));
+  };
+
+  paint();
+  bindMgToolbar(m, () => editAcct(null), paint);
 }
 function editAcct(row) {
   const e = row ? { ...row } : { id: null, name: S.mg.q.trim(), asset_class: '현금 자산', sort_order: 0, note: '', is_active: true };
