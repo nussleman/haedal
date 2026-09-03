@@ -35,175 +35,229 @@
   --r-sm:6px; --r-md:10px; --r-lg:14px; --r-pill:999px;
   --top:env(safe-area-inset-top,0px);
   --bot:env(safe-area-inset-bottom,0px);
-  --tabh:56px;
+  --vvh:100dvh;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:var(--sans);
-  font-size:15px;line-height:1.5;overscroll-behavior-y:none;}
+html{height:100%;}
+/* 화면을 통째로 고정해 두고 안쪽만 굴린다.
+   이렇게 해야 스크롤·키보드에 따라 하단 메뉴가 오르락내리락하지 않는다. */
+body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:var(--sans);
+  font-size:15px;line-height:1.5;
+  position:fixed;left:0;right:0;top:0;height:var(--vvh);
+  display:flex;flex-direction:column;overflow:hidden;overscroll-behavior:none;}
 
 button,input,select,textarea{font-family:inherit;font-size:16px;color:inherit;touch-action:manipulation;}
 button{cursor:pointer;}
 .mono{font-family:var(--mono);}
 
 /* ---------- 상단바 ---------- */
-.top{position:sticky;top:0;z-index:40;background:rgba(14,18,26,0.94);backdrop-filter:blur(8px);
-  border-bottom:1px solid var(--border);padding:10px 14px;padding-top:calc(10px + var(--top));
+.top{flex:0 0 auto;background:var(--bg);border-bottom:1px solid var(--border);
+  padding:10px 14px;padding-top:calc(10px + var(--top));
   display:flex;align-items:center;gap:8px;}
-/* 금액은 분류를 고르는 동안에도 계속 보이도록 상단에 고정한다 */
-.stick{position:sticky;top:calc(46px + var(--top));z-index:30;background:var(--bg);
-  margin:0 -14px;padding:0 14px 10px;}
-.stick .amt{margin-top:0;}
 .top h1{font-family:var(--serif);font-size:17px;margin:0;font-weight:700;}
+.top .sub{font-size:11px;color:var(--text-faint);margin-left:2px;}
 .top .sp{margin-left:auto;}
-.top .mini{background:none;border:1px solid var(--border);border-radius:var(--r-sm);
-  color:var(--text-faint);font-size:12px;padding:4px 9px;}
+.burger{width:38px;height:34px;border-radius:var(--r-sm);border:1px solid var(--border);
+  background:transparent;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:3.5px;}
+.burger i{display:block;width:16px;height:1.6px;background:var(--text-dim);border-radius:2px;}
+.burger:active i{background:var(--accent-text);}
+.topbtn{height:32px;padding:0 11px;border-radius:var(--r-sm);border:1px solid var(--border);
+  background:transparent;color:var(--text-faint);font-size:12px;}
 
-/* ---------- 본문 · 탭바 ---------- */
-main{padding:14px 14px calc(var(--tabh) + var(--bot) + 78px);max-width:560px;margin:0 auto;}
-.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:50;display:flex;
-  background:rgba(20,26,37,0.96);backdrop-filter:blur(10px);border-top:1px solid var(--border);
+/* ---------- 본문 ---------- */
+main{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding:12px 14px 22px;}
+main>.inner{max-width:560px;margin:0 auto;}
+
+/* ---------- 아래 고정 영역(키패드 · 저장 · 검색) ---------- */
+#dock{flex:0 0 auto;background:var(--bg);border-top:1px solid var(--border);padding:8px 14px 10px;}
+#dock:empty{display:none;padding:0;border-top:0;}
+#dock .inner{max-width:560px;margin:0 auto;}
+
+/* ---------- 탭바 ---------- */
+.tabbar{flex:0 0 auto;display:flex;align-items:center;gap:4px;
+  background:var(--bg-2);border-top:1px solid var(--border);
   padding-bottom:var(--bot);}
-.tabbar button{flex:1;background:none;border:0;padding:9px 0 8px;color:var(--text-faint);
+.tabbar button.tb{flex:1;background:none;border:0;padding:8px 0 7px;color:var(--text-faint);
   font-size:11px;display:flex;flex-direction:column;align-items:center;gap:3px;}
-.tabbar button .g{font-size:19px;line-height:1;}
-.tabbar button.on{color:var(--accent-text);}
+.tabbar button.tb .g{font-size:18px;line-height:1;}
+.tabbar button.tb.on{color:var(--accent-text);}
+.tabbar.ctx{background:var(--panel);}
+.tabbar .back{flex:0 0 auto;width:38px;height:38px;margin:6px 2px 6px 8px;border-radius:50%;
+  border:1px solid var(--border-strong);background:var(--bg-2);color:var(--text);font-size:17px;line-height:1;}
+body.kb .tabbar{display:none;}
 
 /* ---------- 공통 ---------- */
 .card{background:var(--panel);border:1px solid var(--border);border-radius:var(--r-md);padding:12px 14px;}
 .row{display:flex;align-items:center;gap:8px;}
 .lab{font-size:12px;color:var(--text-faint);margin:14px 2px 6px;display:block;}
+.lab:first-child{margin-top:2px;}
 .in{width:100%;height:44px;padding:0 12px;background:var(--bg-2);border:1px solid var(--border);
   border-radius:var(--r-md);color:var(--text);}
 .in:focus{outline:none;border-color:var(--accent);}
-textarea.in{height:64px;padding:10px 12px;resize:none;line-height:1.5;}
-.seg{display:flex;gap:6px;}
-.seg button{flex:1;height:38px;border-radius:var(--r-md);border:1px solid var(--border);
-  background:var(--bg-2);color:var(--text-dim);font-size:14px;font-weight:500;}
+.seg{display:flex;gap:5px;}
+.seg button{flex:1;height:36px;border-radius:var(--r-md);border:1px solid var(--border);
+  background:var(--bg-2);color:var(--text-dim);font-size:13.5px;font-weight:500;padding:0;}
 .seg button.on{border-color:transparent;font-weight:700;}
 .seg button.on[data-k="지출"]{background:var(--expense-bg);color:var(--expense-text);border-color:var(--expense);}
 .seg button.on[data-k="수입"]{background:var(--income-bg);color:var(--income-text);border-color:var(--income);}
 .seg button.on[data-k="이체"]{background:var(--transfer-bg);color:var(--transfer-text);border-color:var(--transfer);}
+.seg button.on[data-k="아낀돈"]{background:var(--save-bg);color:var(--save-text);border-color:var(--save);}
 .chips{display:flex;gap:6px;flex-wrap:wrap;}
 .chip{height:34px;padding:0 12px;border-radius:var(--r-pill);border:1px solid var(--border);
   background:var(--bg-2);color:var(--text-dim);font-size:13px;display:inline-flex;align-items:center;gap:5px;}
 .chip.on{background:var(--accent);border-color:var(--accent);color:var(--ink-on-accent);font-weight:700;}
 .chip.sm{height:30px;font-size:12px;padding:0 10px;}
+.chip.sv.on{background:var(--save);border-color:var(--save);color:#fff;}
 .tog{height:34px;padding:0 12px;border-radius:var(--r-pill);border:1px solid var(--border);
   background:transparent;color:var(--text-faint);font-size:13px;}
 .tog[aria-pressed="true"]{border-color:var(--accent);color:var(--accent-text);background:rgba(201,162,39,.1);}
 .tog.g[aria-pressed="true"]{border-color:var(--income);color:var(--income-text);background:var(--income-bg);}
 .tog.b[aria-pressed="true"]{border-color:var(--expense);color:var(--expense-text);background:var(--expense-bg);}
-.empty{text-align:center;color:var(--text-faint);font-size:13px;padding:26px 0;}
-.err{color:var(--expense-text);font-size:13px;min-height:18px;margin:6px 2px 0;}
+.empty{text-align:center;color:var(--text-faint);font-size:13px;padding:22px 0;}
+.err{color:var(--expense-text);font-size:13px;min-height:0;margin:4px 2px 0;}
+.err:empty{margin:0;}
 
 /* ---------- 금액 · 키패드 ---------- */
 .amt{background:var(--panel);border:1px solid var(--border-strong);border-radius:var(--r-lg);
-  padding:14px 16px;display:flex;align-items:baseline;justify-content:flex-end;gap:6px;margin-top:10px;}
-.amt b{font-family:var(--mono);font-size:34px;font-weight:600;letter-spacing:-0.5px;}
+  padding:12px 16px;display:flex;align-items:baseline;justify-content:flex-end;gap:6px;}
+.amt b{font-family:var(--mono);font-size:32px;font-weight:600;letter-spacing:-0.5px;}
 .amt.zero b{color:var(--text-faint);}
 .amt.neg b{color:var(--expense-text);}
+.amt.sv b{color:var(--save-text);}
 .amt span{font-size:15px;color:var(--text-faint);}
-.pad{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:10px;}
-.pad button{height:52px;border-radius:var(--r-md);border:1px solid var(--border);background:var(--panel-2);
-  font-family:var(--mono);font-size:21px;font-weight:600;color:var(--text);}
+.pad{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+.pad button{height:46px;border-radius:var(--r-md);border:1px solid var(--border);background:var(--panel-2);
+  font-family:var(--mono);font-size:20px;font-weight:600;color:var(--text);}
 .pad button:active{background:var(--accent);color:var(--ink-on-accent);}
 .pad button.fn{font-family:var(--sans);font-size:15px;color:var(--text-dim);background:var(--bg-2);}
-.save{position:fixed;left:50%;transform:translateX(-50%);width:calc(100% - 28px);max-width:532px;
-  bottom:calc(var(--tabh) + var(--bot) + 10px);z-index:45;height:50px;
-  border:0;border-radius:var(--r-md);background:var(--accent);color:var(--ink-on-accent);
-  font-size:16px;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.55);}
-.save.inline{position:static;transform:none;width:100%;max-width:none;box-shadow:none;margin-top:14px;}
-.save:disabled{opacity:.5;}
+.save{width:100%;height:48px;margin-top:8px;border:0;border-radius:var(--r-md);
+  background:var(--accent);color:var(--ink-on-accent);font-size:16px;font-weight:700;}
+.save:disabled{opacity:.45;}
 .save.sv{background:var(--save);color:#fff;}
+.save.inline{margin-top:14px;}
 
-/* ---------- 기록 : 사용처 → 금액 ---------- */
-.steplab{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-dim);margin:16px 2px 8px;}
-.steplab b{width:19px;height:19px;border-radius:50%;background:var(--accent);color:var(--ink-on-accent);
+/* ---------- 기록 ---------- */
+.steplab{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--text-dim);margin:13px 2px 7px;}
+.steplab b{width:18px;height:18px;border-radius:50%;background:var(--accent);color:var(--ink-on-accent);
   font-size:11px;display:inline-flex;align-items:center;justify-content:center;}
-.in.big{height:50px;font-size:17px;}
-.mchips{margin-top:12px;max-height:none;}
-.mchips .chip{max-width:100%;}
-.chip i{font-style:normal;font-family:var(--mono);font-size:10px;opacity:.6;}
-.newmerch{width:100%;height:42px;margin-top:8px;border-radius:var(--r-md);
-  border:1px dashed var(--accent);background:rgba(201,162,39,.08);color:var(--accent-text);font-size:14px;}
-.skip{width:100%;height:38px;margin-top:14px;border:0;background:transparent;
-  color:var(--text-faint);font-size:13px;text-decoration:underline;text-underline-offset:3px;}
-.todaybox{display:flex;justify-content:space-between;align-items:center;margin-top:18px;padding:11px 14px;
-  background:var(--panel);border:1px solid var(--border);border-radius:var(--r-md);font-size:13px;color:var(--text-dim);}
-.todaybox b{font-family:var(--mono);color:var(--expense-text);}
-.stepbar{display:flex;align-items:center;gap:8px;margin-top:4px;}
-.backchip{flex:1 1 auto;min-width:0;height:40px;padding:0 13px;border-radius:var(--r-md);
+.mlist{display:flex;flex-direction:column;gap:5px;margin-top:2px;}
+.mrow{display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:var(--r-md);
+  border:1px solid var(--border);background:var(--panel);text-align:left;width:100%;}
+.mrow:active{background:var(--panel-2);}
+.mrow .nm{flex:1 1 auto;min-width:0;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.mrow .ct{flex:0 0 auto;font-size:11px;color:var(--text-faint);font-family:var(--mono);
+  max-width:44%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.mrow .n{flex:0 0 auto;font-family:var(--mono);font-size:10px;color:var(--text-faint);opacity:.75;}
+.mrow mark{background:none;color:var(--accent-text);font-weight:700;}
+.newmerch{width:100%;height:40px;border-radius:var(--r-md);
+  border:1px dashed var(--accent);background:rgba(201,162,39,.08);color:var(--accent-text);font-size:13.5px;}
+.skip{width:100%;height:34px;margin-top:10px;border:0;background:transparent;
+  color:var(--text-faint);font-size:12.5px;text-decoration:underline;text-underline-offset:3px;}
+.stepbar{display:flex;align-items:center;gap:8px;}
+.backchip{flex:1 1 auto;min-width:0;height:38px;padding:0 12px;border-radius:var(--r-md);
   border:1px solid var(--border-strong);background:var(--panel);color:var(--text);
-  font-size:15px;font-weight:500;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.kindpill{flex:0 0 auto;height:40px;padding:0 13px;display:inline-flex;align-items:center;border-radius:var(--r-md);
-  font-size:14px;font-weight:700;}
+  font-size:14.5px;font-weight:500;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.kindpill{flex:0 0 auto;height:38px;padding:0 12px;display:inline-flex;align-items:center;border-radius:var(--r-md);
+  font-size:13.5px;font-weight:700;}
 .kindpill.e{background:var(--expense-bg);color:var(--expense-text);}
 .kindpill.i{background:var(--income-bg);color:var(--income-text);}
 .kindpill.t{background:var(--transfer-bg);color:var(--transfer-text);}
-.ochips{margin-top:9px;}
+.kindpill.s{background:var(--save-bg);color:var(--save-text);}
+.ochips{margin-top:8px;}
 .ochips .chip{font-family:var(--mono);}
-.catrow{margin-top:14px;}
-.catpick{width:100%;height:46px;padding:0 14px;display:flex;align-items:center;gap:7px;
+.catpick{width:100%;height:44px;padding:0 13px;display:flex;align-items:center;gap:7px;
   border-radius:var(--r-md);border:1px dashed var(--border-strong);background:var(--bg-2);
-  color:var(--text-faint);font-size:15px;}
+  color:var(--text-faint);font-size:14.5px;}
 .catpick.on{border-style:solid;border-color:var(--accent);color:var(--text);background:var(--panel);}
 .catpick i{margin-left:auto;font-style:normal;font-size:11px;color:var(--text-faint);}
-details.more{margin-top:14px;border-top:1px solid var(--border);padding-top:10px;}
-details.more summary{list-style:none;cursor:pointer;font-size:13px;color:var(--text-faint);padding:4px 2px;}
+details.more{margin-top:12px;border-top:1px solid var(--border);padding-top:9px;}
+details.more summary{list-style:none;cursor:pointer;font-size:12.5px;color:var(--text-faint);padding:3px 2px;}
 details.more summary::-webkit-details-marker{display:none;}
 details.more summary::after{content:' ▾';}
 details.more[open] summary::after{content:' ▴';}
 
 /* ---------- 월 이동 · 요약 ---------- */
-.mnav{display:flex;align-items:center;gap:8px;justify-content:center;margin-bottom:12px;}
-.mnav button{width:36px;height:36px;border-radius:var(--r-md);border:1px solid var(--border);
-  background:var(--bg-2);color:var(--text-dim);font-size:17px;line-height:1;}
-.mnav b{font-family:var(--mono);font-size:16px;min-width:118px;text-align:center;}
-.sum3{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:14px;}
-.sum3 div{background:var(--panel);border:1px solid var(--border);border-radius:var(--r-md);padding:9px 10px;text-align:center;}
-.sum3 span{display:block;font-size:11px;color:var(--text-faint);margin-bottom:3px;}
-.sum3 b{font-family:var(--mono);font-size:15px;}
+.mnav{display:flex;align-items:center;gap:8px;justify-content:center;margin-bottom:10px;}
+.mnav button{width:34px;height:34px;border-radius:var(--r-md);border:1px solid var(--border);
+  background:var(--bg-2);color:var(--text-dim);font-size:16px;line-height:1;}
+.mnav b{font-family:var(--mono);font-size:15px;min-width:112px;text-align:center;}
+.sum3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px;}
+.sum3 div{background:var(--panel);border:1px solid var(--border);border-radius:var(--r-md);padding:8px 9px;text-align:center;}
+.sum3 span{display:block;font-size:10.5px;color:var(--text-faint);margin-bottom:2px;}
+.sum3 b{font-family:var(--mono);font-size:14.5px;}
 .sum3 b.i{color:var(--income-text);} .sum3 b.e{color:var(--expense-text);} .sum3 b.n{color:var(--accent-text);}
+.sum3 b.s{color:var(--save-text);}
 
-/* ---------- 내역 ---------- */
-.day{margin-top:16px;}
-.day .dh{display:flex;justify-content:space-between;align-items:baseline;padding:0 3px 6px;
-  font-size:12px;color:var(--text-faint);}
+/* ---------- 내역 (컴팩트) ---------- */
+.day{margin-top:12px;}
+.day:first-child{margin-top:2px;}
+.day .dh{display:flex;justify-content:space-between;align-items:baseline;padding:0 3px 4px;
+  font-size:11px;color:var(--text-faint);}
 .day .dh b{font-family:var(--mono);}
 .list{background:var(--panel);border:1px solid var(--border);border-radius:var(--r-md);overflow:hidden;}
-.it{display:flex;align-items:center;gap:10px;padding:11px 13px;border-bottom:1px solid var(--border);}
+.it{display:flex;align-items:center;gap:8px;padding:7px 11px;border-bottom:1px solid var(--border);}
 .it:last-child{border-bottom:0;}
 .it:active{background:var(--panel-2);}
-.it .em{width:26px;text-align:center;font-size:16px;flex:0 0 26px;}
+.it .em{width:20px;text-align:center;font-size:14px;flex:0 0 20px;}
 .it .tx{flex:1 1 auto;min-width:0;}
-.it .t1{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.it .t2{font-size:11px;color:var(--text-faint);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.it .v{font-family:var(--mono);font-size:14px;flex:0 0 auto;white-space:nowrap;}
+.it .t1{font-size:13.5px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.it .t2{font-size:10.5px;line-height:1.3;color:var(--text-faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.it .v{font-family:var(--mono);font-size:13.5px;flex:0 0 auto;white-space:nowrap;}
 .it .v.e{color:var(--expense-text);} .it .v.i{color:var(--income-text);}
 .it .v.t{color:var(--transfer-text);} .it .v.s{color:var(--save-text);}
-.mk{font-size:10px;color:var(--text-faint);margin-left:4px;}
+.mk{font-size:9.5px;color:var(--text-faint);margin-left:3px;}
 
-/* ---------- 시트(수정) ---------- */
+/* ---------- 오늘 ---------- */
+.hero{background:var(--panel);border:1px solid var(--border-strong);border-radius:var(--r-lg);
+  padding:16px 16px 14px;text-align:center;}
+.hero .k{font-size:12px;color:var(--text-faint);}
+.hero .v{font-family:var(--mono);font-size:34px;font-weight:600;margin-top:2px;color:var(--expense-text);}
+.hero .s{font-size:12px;color:var(--text-faint);margin-top:3px;}
+.pace{display:flex;gap:6px;margin-top:10px;}
+.pace div{flex:1;background:var(--panel);border:1px solid var(--border);border-radius:var(--r-md);
+  padding:8px 9px;text-align:center;}
+.pace span{display:block;font-size:10.5px;color:var(--text-faint);}
+.pace b{font-family:var(--mono);font-size:14px;}
+
+/* ---------- 시트 ---------- */
 .sheet{position:fixed;inset:0;z-index:80;background:rgba(6,9,14,.72);display:flex;align-items:flex-end;}
 .sheet[hidden]{display:none;}
-.sheet .box{width:100%;max-height:92vh;overflow-y:auto;background:var(--bg);border-radius:var(--r-lg) var(--r-lg) 0 0;
+.sheet .box{width:100%;max-height:88vh;overflow-y:auto;background:var(--bg);border-radius:var(--r-lg) var(--r-lg) 0 0;
   border-top:1px solid var(--border-strong);padding:14px 14px calc(var(--bot) + 18px);}
-.sheet .sh{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+.sheet .sh{display:flex;align-items:center;gap:10px;margin-bottom:4px;}
 .sheet .sh h3{margin:0;font-size:16px;font-family:var(--serif);}
 .sheet .x{margin-left:auto;background:none;border:0;color:var(--text-faint);font-size:22px;line-height:1;padding:2px 6px;}
-.del{width:100%;height:44px;margin-top:10px;border-radius:var(--r-md);border:1px solid rgba(193,72,63,.5);
+.del{width:100%;height:42px;margin-top:9px;border-radius:var(--r-md);border:1px solid rgba(193,72,63,.5);
   background:transparent;color:var(--expense-text);font-size:14px;}
 
 /* ---------- 요약 막대 ---------- */
-.bar{margin-top:9px;}
-.bar .bl{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;}
+.bar{margin-top:8px;}
+.bar:first-child{margin-top:0;}
+.bar .bl{display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;}
 .bar .bl b{font-family:var(--mono);color:var(--text-dim);}
-.bar .bt{height:7px;border-radius:4px;background:var(--bg-2);overflow:hidden;}
+.bar .bt{height:6px;border-radius:4px;background:var(--bg-2);overflow:hidden;}
 .bar .bf{height:100%;border-radius:4px;background:var(--expense);}
-.mini{display:flex;align-items:flex-end;gap:5px;height:78px;margin-top:10px;}
+.mini{display:flex;align-items:flex-end;gap:5px;height:74px;margin-top:8px;}
 .mini div{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px;height:100%;}
 .mini i{width:100%;background:var(--expense);border-radius:3px 3px 0 0;display:block;min-height:2px;}
 .mini span{font-size:9px;color:var(--text-faint);font-family:var(--mono);}
+
+/* ---------- 목록 관리 ---------- */
+.mgtool{display:flex;gap:6px;align-items:center;margin-bottom:9px;}
+.mgtool .in{height:40px;}
+.mgadd{flex:0 0 auto;height:40px;padding:0 13px;border-radius:var(--r-md);border:1px solid var(--accent);
+  background:rgba(201,162,39,.1);color:var(--accent-text);font-size:14px;font-weight:700;}
+.dbrow{display:flex;align-items:center;gap:9px;padding:9px 11px;border-bottom:1px solid var(--border);
+  width:100%;background:none;border-left:0;border-right:0;border-top:0;text-align:left;color:inherit;}
+.dbrow:last-child{border-bottom:0;}
+.dbrow:active{background:var(--panel-2);}
+.dbrow .em{flex:0 0 20px;text-align:center;font-size:14px;}
+.dbrow .nm{flex:1 1 auto;min-width:0;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.dbrow .sub{font-size:10.5px;color:var(--text-faint);}
+.dbrow .tag{flex:0 0 auto;font-size:10px;color:var(--text-faint);font-family:var(--mono);}
+.dbrow.off .nm{color:var(--text-faint);text-decoration:line-through;}
+.mgnote{font-size:12px;color:var(--text-faint);margin:0 2px 10px;}
 
 /* ---------- 로그인 ---------- */
 #lock{position:fixed;inset:0;z-index:200;background:var(--bg);display:flex;align-items:center;justify-content:center;
@@ -217,7 +271,8 @@ details.more[open] summary::after{content:' ▴';}
   color:var(--ink-on-accent);font-size:16px;font-weight:700;margin-top:6px;}
 
 /* ---------- 토스트 ---------- */
-#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--tabh) + var(--bot) + 22px);
+/* 저장 버튼·키패드를 가리지 않도록 위쪽에 띄운다 */
+#toast{position:fixed;left:50%;transform:translateX(-50%);top:calc(60px + var(--top));
   z-index:120;background:var(--accent);color:var(--ink-on-accent);font-size:13px;font-weight:700;
   padding:9px 16px;border-radius:var(--r-pill);opacity:0;pointer-events:none;transition:opacity .2s;
   box-shadow:0 6px 20px rgba(0,0,0,.5);max-width:88vw;text-align:center;}
@@ -225,15 +280,22 @@ details.more[open] summary::after{content:' ▴';}
 </style>
 </head>
 <body>
-<div id="app"></div>
-<div class="tabbar" id="tabbar" hidden></div>
+<div class="top" id="top" hidden></div>
+<main id="main"><div class="empty" style="padding-top:70px;">불러오는 중…</div></main>
+<div id="dock"></div>
+<nav class="tabbar" id="tabbar" hidden></nav>
 <div class="sheet" id="sheet" hidden></div>
 <div id="toast"></div>
 
 <script>
 /* ================= 해달 가계부 (모바일) =================
    해달 대시보드와 같은 Supabase 를 쓴다. 기록·수정·삭제가 바로 DB 에 반영되고,
-   대시보드는 그 값을 그대로 읽는다. 로그인한 본인 행만 보인다(RLS). */
+   대시보드는 그 값을 그대로 읽는다. 로그인한 본인 행만 보인다(RLS).
+
+   화면 구조
+     기본 탭 : 기록 · 오늘 · 내역 · 요약
+     ☰ 전체메뉴로 들어가면 하단이 '← 뒤로 · 사용처 · 분류 · 계좌'로 바뀐다(토스증권 방식).
+   '아낀 돈'도 결국 기록이라, 별도 탭이 아니라 기록 화면의 네 번째 종류로 넣었다. */
 
 const SB_URL  = 'https://rjxmrpifrhybucexuvli.supabase.co';
 const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqeG1ycGlmcmh5YnVjZXh1dmxpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU1NjU1OTAsImV4cCI6MjEwMTE0MTU5MH0.xSzE02pjZYqbx9nPLb8RVsQF9w7hJHEx2cO0JDOLLSU';
@@ -268,46 +330,79 @@ function toast(msg) {
   clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('on'), 1800);
 }
 
+/* 키보드가 올라와도 화면 아래가 흔들리지 않게 실제 보이는 높이를 직접 잡아 준다 */
+(function fixViewport() {
+  const vv = window.visualViewport;
+  const set = () => {
+    const h = vv ? vv.height : window.innerHeight;
+    document.documentElement.style.setProperty('--vvh', h + 'px');
+    if (vv) document.body.style.top = vv.offsetTop + 'px';
+    document.body.classList.toggle('kb', !!vv && (window.innerHeight - vv.height) > 120);
+  };
+  if (vv) { vv.addEventListener('resize', set); vv.addEventListener('scroll', set); }
+  window.addEventListener('orientationchange', () => setTimeout(set, 250));
+  set();
+})();
+
 const S = {
-  tab: 'add',
+  ctx: 'main',              /* main | menu */
+  tab: 'add',               /* main: add|today|list|sum   menu: merch|cat|acct */
   cats: [], merchants: [], merchStats: {},
   month: nowMonth(), tx: [], sav: [], savAll: [],
-  loaded: false, busy: false,
-  d: null,   /* 기록 입력값 */
-  s: null,   /* 아낀 돈 입력값 */
-  edit: null
+  listFilter: 'all',
+  loaded: false,
+  d: null,                  /* 기록 입력값 */
+  edit: null,               /* 기록 수정 */
+  mg: { q: '', catKind: '지출', edit: null, busy: false }
 };
-function freshDraft() { return { step: 1, kind: '지출', amount: '', neg: false, catId: null, cat: null, catOpen: false, moreOpen: false, merchant: '', note: '', date: todayKey(), good: null, fixed: false, co: false }; }
-function freshSave() { return { amount: '', kind: '참았음', title: '', note: '', date: todayKey() }; }
-S.d = freshDraft(); S.s = freshSave();
+function freshDraft() {
+  return { step: 1, kind: '지출', amount: '', neg: false, catId: null, cat: null, catOpen: false,
+           moreOpen: false, merchant: '', note: '', date: todayKey(),
+           good: null, fixed: false, co: false, svKind: '참았음' };
+}
+S.d = freshDraft();
+
+const isSaveMode = () => S.d.kind === '아낀돈';
 
 /* ---------------- 기준 데이터 ---------------- */
 async function loadRefs() {
   const c = await sb();
   const [cats, merch, recent] = await Promise.all([
     c.from('categories').select('id,kind,category,subcategory,emoji_kind,emoji_category,sort_order,is_active').order('sort_order'),
-    c.from('merchants').select('name,merchant_group,is_fixed').order('name'),
-    c.from('transactions').select('merchant,category_id,date,amount').not('merchant', 'is', null).order('date', { ascending: false }).limit(800)
+    c.from('merchants').select('id,name,merchant_group,is_fixed').order('name'),
+    c.from('transactions').select('merchant,category_id,date,amount').not('merchant', 'is', null).order('date', { ascending: false }).limit(1200)
   ]);
   if (cats.error) throw new Error(cats.error.message);
   S.cats = (cats.data || []).filter(x => x.is_active !== false);
+  S.allCats = cats.data || [];
   S.merchants = merch.data || [];
-  /* 사용처별 통계 — 얼마나 자주 썼는지, 마지막 분류, 자주 찍은 금액.
-     고르면 분류가 자동으로 따라오고 금액도 한 번에 넣을 수 있다. */
+  buildMerchStats(recent.data || []);
+  S.loaded = true;
+}
+
+/* 사용처별 통계 — 얼마나 자주 썼는지, '가장 많이 쓴' 분류, 자주 찍은 금액.
+   고르면 분류(=수입·지출·이체)가 자동으로 따라오고 금액도 한 번에 넣을 수 있다.
+   웹과 같은 기준으로 최빈 분류를 쓴다 — 한 번의 예외 때문에 종류가 바뀌면 안 되니까. */
+function buildMerchStats(recent) {
   const st = {};
-  (recent.data || []).forEach(r => {
+  recent.forEach(r => {
     const n = (r.merchant || '').trim();
     if (!n) return;
-    const o = st[n] || (st[n] = { name: n, count: 0, catId: null, amounts: [], last: r.date });
+    const o = st[n] || (st[n] = { name: n, count: 0, catCnt: {}, catId: null, amounts: [], last: r.date });
     o.count++;
-    if (!o.catId) o.catId = r.category_id;
+    if (r.category_id) o.catCnt[r.category_id] = (o.catCnt[r.category_id] || 0) + 1;
     const a = Math.abs(Number(r.amount) || 0);
     if (a) o.amounts.push(a);
+    if (!o.last || r.date > o.last) o.last = r.date;
+  });
+  Object.values(st).forEach(o => {
+    let best = null, n = -1;
+    Object.keys(o.catCnt).forEach(cid => { if (o.catCnt[cid] > n) { n = o.catCnt[cid]; best = Number(cid); } });
+    o.catId = best;
   });
   /* 사용처 표에만 있고 아직 기록이 없는 것도 목록에 띄운다 */
-  S.merchants.forEach(x => { if (!st[x.name]) st[x.name] = { name: x.name, count: 0, catId: null, amounts: [], last: '' }; });
+  S.merchants.forEach(x => { if (!st[x.name]) st[x.name] = { name: x.name, count: 0, catCnt: {}, catId: null, amounts: [], last: '' }; });
   S.merchStats = st;
-  S.loaded = true;
 }
 
 async function loadMonth() {
@@ -325,43 +420,64 @@ async function loadMonth() {
   S.savAll = all.data || [];
 }
 
-const catById = (id) => S.cats.find(x => x.id === id);
+const catById = (id) => S.cats.find(x => x.id === id) || (S.allCats || []).find(x => x.id === id);
 const kindOf = (id) => { const c = catById(id); return c ? c.kind : '지출'; };
-const kindCls = (k) => k === '수입' ? 'i' : k === '이체' ? 't' : 'e';
+const kindCls = (k) => k === '수입' ? 'i' : k === '이체' ? 't' : k === '아낀돈' ? 's' : 'e';
 const catLabel = (id) => { const c = catById(id); return c ? `${c.category} › ${c.subcategory}` : '분류 없음'; };
 const catEmoji = (id) => { const c = catById(id); return (c && (c.emoji_category || c.emoji_kind)) || '·'; };
+const merchOf = (name) => S.merchants.find(x => x.name === name);
 
-/* ================= 화면 ================= */
+/* ================= 화면 뼈대 ================= */
+const MAIN_TABS = [['add', '✏️', '기록'], ['today', '☀️', '오늘'], ['list', '📒', '내역'], ['sum', '📊', '요약']];
+const MENU_TABS = [['merch', '🏷️', '사용처'], ['cat', '🗂️', '분류'], ['acct', '🏦', '계좌']];
+
 function render() {
-  const app = $('#app');
-  app.innerHTML = `
-    <div class="top">
-      <h1>해달 가계부</h1>
-      <span class="sp"></span>
-      <button class="mini" id="out">로그아웃</button>
-    </div>
-    <main id="main"></main>`;
-  $('#out').addEventListener('click', async () => { (await sb()).auth.signOut(); location.reload(); });
+  const top = $('#top');
+  top.hidden = false;
+  top.innerHTML = S.ctx === 'menu'
+    ? `<h1>전체메뉴</h1><span class="sub">목록 관리</span><span class="sp"></span>
+       <button class="topbtn" id="t-out">로그아웃</button>`
+    : `<h1>해달 가계부</h1><span class="sp"></span>
+       <button class="burger" id="t-menu" aria-label="전체메뉴"><i></i><i></i><i></i></button>`;
+  const mb = $('#t-menu');
+  if (mb) mb.addEventListener('click', () => { S.ctx = 'menu'; S.tab = 'merch'; render(); });
+  const ob = $('#t-out');
+  if (ob) ob.addEventListener('click', async () => { (await sb()).auth.signOut(); location.reload(); });
 
   const bar = $('#tabbar');
   bar.hidden = false;
-  const tabs = [['add', '✏️', '기록'], ['list', '📒', '내역'], ['save', '🪙', '아낀 돈'], ['sum', '📊', '요약']];
-  bar.innerHTML = tabs.map(([id, g, l]) =>
-    `<button data-t="${id}" class="${S.tab === id ? 'on' : ''}"><span class="g">${g}</span>${l}</button>`).join('');
+  bar.className = 'tabbar' + (S.ctx === 'menu' ? ' ctx' : '');
+  const tabs = S.ctx === 'menu' ? MENU_TABS : MAIN_TABS;
+  bar.innerHTML = (S.ctx === 'menu' ? '<button class="back" id="tb-back" aria-label="뒤로">←</button>' : '')
+    + tabs.map(([id, g, l]) =>
+      `<button class="tb" data-t="${id}" class="${S.tab === id ? 'on' : ''}"><span class="g">${g}</span>${l}</button>`).join('');
+  $$('.tb', bar).forEach(b => b.classList.toggle('on', b.dataset.t === S.tab));
   bar.onclick = (e) => {
+    if (e.target.closest('#tb-back')) { S.ctx = 'main'; S.tab = 'add'; render(); return; }
     const b = e.target.closest('button[data-t]'); if (!b) return;
-    S.tab = b.dataset.t; window.scrollTo(0, 0); render();
+    S.tab = b.dataset.t; scrollTop(); render();
   };
   renderTab();
 }
+function scrollTop() { const m = $('#main'); if (m) m.scrollTop = 0; }
 
 function renderTab() {
   const m = $('#main');
+  const dock = $('#dock');
   if (!m) return;
-  if (S.tab === 'add') renderAdd(m);
-  else if (S.tab === 'list') renderList(m);
-  else if (S.tab === 'save') renderSave(m);
-  else renderSum(m);
+  dock.innerHTML = '';
+  m.innerHTML = '<div class="inner"></div>';
+  const inner = $('.inner', m);
+  if (S.ctx === 'menu') {
+    if (S.tab === 'cat') renderCatDB(inner);
+    else if (S.tab === 'acct') renderAcctDB(inner);
+    else renderMerchDB(inner);
+    return;
+  }
+  if (S.tab === 'add') renderAdd(inner, dock);
+  else if (S.tab === 'today') renderToday(inner);
+  else if (S.tab === 'list') renderList(inner);
+  else renderSum(inner);
 }
 
 /* ---------------- 키패드 ---------------- */
@@ -375,7 +491,8 @@ function padHtml(id) {
   </div>`;
 }
 function bindPad(id, get, set, after) {
-  $('#' + id).addEventListener('click', (e) => {
+  const el = $('#' + id); if (!el) return;
+  el.addEventListener('click', (e) => {
     const b = e.target.closest('button[data-k]'); if (!b) return;
     const k = b.dataset.k;
     let v = get();
@@ -390,60 +507,81 @@ function amtHtml(v, neg, cls) {
     <b>${neg && v ? '−' : ''}${v ? Number(v).toLocaleString('ko-KR') : '0'}</b><span>원</span></div>`;
 }
 
-/* ---------------- 기록 : 사용처 → 금액 → 저장 ----------------
-   폰에서 가장 자주 하는 일이라, 두 걸음으로 끝나게 만든다.
-   ① 사용처를 고르면 지난번에 쓰던 분류가 따라오고
-   ② 금액만 찍으면 저장. 나머지(날짜·메모·표시)는 접어 둔다. */
-function renderAdd(m) {
+/* ---------------- 기록 ----------------
+   ① 사용처를 고르면 지난번 분류(=지출·수입·이체)가 자동으로 따라오고
+   ② 바로 금액 칸으로 넘어간다. 검색창·키패드·저장은 늘 화면 맨 아래에 붙어 있어서
+   손가락이 위아래로 왔다갔다 하지 않는다. */
+function renderAdd(m, dock) {
   const d = S.d;
-  if (d.step === 2) return renderAddAmount(m);
+  if (d.step === 2) return renderAddAmount(m, dock);
 
   const q = d.merchant.trim().toLowerCase();
   let list = Object.values(S.merchStats);
   if (q) list = list.filter(x => x.name.toLowerCase().includes(q));
-  list = list.sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'ko')).slice(0, 18);
+  list = list.sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'ko')).slice(0, 40);
   const exact = q && list.some(x => x.name.toLowerCase() === q);
   const t = todayStat();
 
+  const mark = (name) => {
+    if (!q) return esc(name);
+    const at = name.toLowerCase().indexOf(q);
+    if (at < 0) return esc(name);
+    return esc(name.slice(0, at)) + '<mark>' + esc(name.slice(at, at + q.length)) + '</mark>' + esc(name.slice(at + q.length));
+  };
+
   m.innerHTML = `
     <div class="seg">
-      ${['지출', '수입', '이체'].map(k => `<button data-k="${k}" class="${d.kind === k ? 'on' : ''}">${k}</button>`).join('')}
+      ${['지출', '수입', '이체', '아낀돈'].map(k =>
+        `<button data-k="${k}" class="${d.kind === k ? 'on' : ''}">${k === '아낀돈' ? '아낀 돈' : k}</button>`).join('')}
     </div>
 
-    <div class="steplab"><b>1</b> 어디에 썼나요?</div>
-    <input class="in big" id="f-merch" placeholder="사용처 검색 · 입력" autocomplete="off"
-           autocapitalize="off" value="${esc(d.merchant)}">
+    <div class="steplab"><b>1</b> ${isSaveMode() ? '무엇을 아꼈나요?' : '어디에 썼나요?'}</div>
 
-    ${q && !exact ? `<button class="newmerch" id="f-newmerch">＋ '${esc(d.merchant.trim())}' 새 사용처로 쓰기</button>` : ''}
-
-    <div class="chips mchips">
-      ${list.map(x => `<button class="chip" data-m="${esc(x.name)}">${esc(x.name)}${
-        x.count ? `<i>${x.count}</i>` : ''}</button>`).join('') || '<div class="empty">사용처 기록이 없습니다. 위에 직접 입력하세요.</div>'}
+    <div class="mlist">
+      ${list.map(x => `<button class="mrow" data-m="${esc(x.name)}">
+          <span class="nm">${mark(x.name)}</span>
+          ${x.catId ? `<span class="ct">${esc(catLabel(x.catId))}</span>` : ''}
+          ${x.count ? `<span class="n">${x.count}</span>` : ''}
+        </button>`).join('') || '<div class="empty">아래 칸에 직접 입력하세요.</div>'}
     </div>
 
-    <button class="skip" id="f-nomerch">사용처 없이 기록 →</button>
+    <button class="skip" id="f-nomerch">${isSaveMode() ? '이름 없이 기록 →' : '사용처 없이 기록 →'}</button>
 
-    ${t.n ? `<div class="todaybox" id="f-today">
-      <span>오늘 ${t.n}건</span><b>${comma(t.exp)}원</b></div>` : ''}`;
+    ${t.n ? `<div class="card" id="f-today" style="margin-top:12px;display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--text-dim);">
+      <span>오늘 ${t.n}건</span><b class="mono" style="color:var(--expense-text)">${comma(t.exp)}원</b></div>` : ''}`;
+
+  dock.innerHTML = `<div class="inner">
+    ${q && !exact ? `<button class="newmerch" id="f-newmerch" style="margin-bottom:7px;">＋ '${esc(d.merchant.trim())}' 새로 쓰기</button>` : ''}
+    <input class="in" id="f-merch" placeholder="${isSaveMode() ? '무엇을 · 검색하거나 직접 입력' : '사용처 검색 · 입력'}"
+           autocomplete="off" autocapitalize="off" enterkeyhint="next" value="${esc(d.merchant)}">
+  </div>`;
 
   $$('.seg button', m).forEach(b => b.addEventListener('click', () => {
     d.kind = b.dataset.k; d.catId = null; d.cat = null; renderTab();
   }));
 
   const mi = $('#f-merch');
-  mi.addEventListener('input', () => { d.merchant = mi.value; renderTab(); requestAnimationFrame(() => { const e = $('#f-merch'); if (e) { e.focus(); e.setSelectionRange(e.value.length, e.value.length); } }); });
+  mi.addEventListener('input', () => {
+    d.merchant = mi.value;
+    const at = mi.selectionStart;
+    renderTab();
+    const e2 = $('#f-merch');
+    if (e2) { e2.focus(); try { e2.setSelectionRange(at, at); } catch (x) {} }
+  });
   mi.addEventListener('keydown', (e) => {
     if (e.key !== 'Enter') return;
+    e.preventDefault();
     const name = d.merchant.trim();
     if (name) pickMerch(name);
   });
+  if (d.focusMerch) { d.focusMerch = false; setTimeout(() => { const e2 = $('#f-merch'); if (e2) e2.focus(); }, 30); }
 
   $$('[data-m]', m).forEach(b => b.addEventListener('click', () => pickMerch(b.dataset.m)));
   const nm = $('#f-newmerch');
   if (nm) nm.addEventListener('click', () => pickMerch(d.merchant.trim()));
   $('#f-nomerch').addEventListener('click', () => { d.merchant = ''; goAmount(); });
   const tb = $('#f-today');
-  if (tb) tb.addEventListener('click', () => { S.tab = 'list'; render(); });
+  if (tb) tb.addEventListener('click', () => { S.tab = 'today'; render(); });
 }
 
 function todayStat() {
@@ -452,21 +590,31 @@ function todayStat() {
   return { n: rows.length, exp: rows.reduce((a, r) => a + (kindOf(r.category_id) === '지출' ? Number(r.amount) : 0), 0) };
 }
 
-/* 사용처를 고르면 지난번 분류를 그대로 데려온다 */
+/* 사용처를 고르면 지난번 분류를 그대로 데려온다 — 종류(지출·수입·이체)도 같이 바뀐다 */
 function pickMerch(name) {
   const d = S.d;
   d.merchant = name;
-  const st = S.merchStats[name];
-  if (st && st.catId && catById(st.catId)) {
-    const c = catById(st.catId);
-    d.kind = c.kind; d.cat = c.category; d.catId = st.catId;
+  if (!isSaveMode()) {
+    const st = S.merchStats[name];
+    if (st && st.catId && catById(st.catId)) {
+      const c = catById(st.catId);
+      d.kind = c.kind; d.cat = c.category; d.catId = st.catId;
+    }
+    const mm = merchOf(name);
+    if (mm && mm.is_fixed) d.fixed = true;
   }
   goAmount();
 }
-function goAmount() { S.d.step = 2; S.d.catOpen = false; window.scrollTo(0, 0); renderTab(); }
+function goAmount() {
+  S.d.step = 2;
+  S.d.catOpen = !isSaveMode() && !S.d.catId;   /* 분류가 안 잡혔으면 바로 고를 수 있게 펼쳐 둔다 */
+  scrollTop();
+  renderTab();
+}
 
-function renderAddAmount(m) {
+function renderAddAmount(m, dock) {
   const d = S.d;
+  const sv = isSaveMode();
   const st = S.merchStats[d.merchant.trim()];
   /* 그 사용처에서 자주 찍었던 금액 — 한 번 눌러 끝낸다 */
   const often = (() => {
@@ -484,56 +632,69 @@ function renderAddAmount(m) {
 
   m.innerHTML = `
     <div class="stepbar">
-      <button class="backchip" id="f-back">‹ ${esc(d.merchant.trim() || '사용처 없음')}</button>
-      <span class="kindpill ${kindCls(d.kind)}">${d.kind}</span>
+      <button class="backchip" id="f-back">‹ ${esc(d.merchant.trim() || (sv ? '이름 없음' : '사용처 없음'))}</button>
+      <span class="kindpill ${kindCls(d.kind)}">${sv ? '아낀 돈' : d.kind}</span>
     </div>
 
     <div class="steplab"><b>2</b> 얼마인가요?</div>
-    <div class="stick">${amtHtml(d.amount, d.neg)}</div>
+    ${amtHtml(d.amount, d.neg, sv ? 'sv' : '')}
     ${often.length ? `<div class="chips ochips">${often.map(a =>
       `<button class="chip" data-a="${a}">${comma(a)}</button>`).join('')}</div>` : ''}
-    ${padHtml('pad1')}
 
-    <div class="catrow">
-      <button class="catpick ${d.catId ? 'on' : ''}" id="f-catpick">
-        ${d.catId ? `${catEmoji(d.catId)} ${esc(catLabel(d.catId))}` : '분류 선택'}
-        <i>${d.catOpen ? '▲' : '▼'}</i>
-      </button>
-    </div>
-    ${d.catOpen ? `
-      <div class="chips" style="margin-top:8px;">${groups.map(g =>
-        `<button class="chip sm" data-g="${esc(g)}" ${g === openGroup ? 'style="border-color:var(--accent);color:var(--accent-text);"' : ''}>${esc(g)}</button>`).join('')}</div>
-      <div class="chips" style="margin-top:7px;">${subs.map(c =>
-        `<button class="chip ${d.catId === c.id ? 'on' : ''}" data-c="${c.id}">${c.emoji_category || ''} ${esc(c.subcategory)}</button>`).join('')}</div>` : ''}
+    ${sv ? `
+      <div class="steplab"><b>3</b> 어떻게 아꼈나요?</div>
+      <div class="chips">${SAVE_KINDS.map(k =>
+        `<button class="chip sv ${d.svKind === k ? 'on' : ''}" data-sk="${k}">${SAVE_EMOJI[k]} ${k}</button>`).join('')}</div>
+    ` : `
+      <div style="margin-top:13px;">
+        <button class="catpick ${d.catId ? 'on' : ''}" id="f-catpick">
+          ${d.catId ? `${catEmoji(d.catId)} ${esc(catLabel(d.catId))}` : '분류 선택'}
+          <i>${d.catOpen ? '▲' : '▼'}</i>
+        </button>
+      </div>
+      ${d.catOpen ? `
+        <div class="chips" style="margin-top:8px;">${groups.map(g =>
+          `<button class="chip sm" data-g="${esc(g)}" ${g === openGroup ? 'style="border-color:var(--accent);color:var(--accent-text);"' : ''}>${esc(g)}</button>`).join('')}</div>
+        <div class="chips" style="margin-top:7px;">${subs.map(c =>
+          `<button class="chip ${d.catId === c.id ? 'on' : ''}" data-c="${c.id}">${c.emoji_category || ''} ${esc(c.subcategory)}</button>`).join('')}</div>` : ''}
+    `}
 
     <details class="more" ${d.moreOpen ? 'open' : ''}>
-      <summary>날짜 · 메모 · 표시</summary>
+      <summary>날짜 · 메모${sv ? '' : ' · 표시'}</summary>
       <div class="row" style="margin-top:10px;">
         <button class="chip sm" data-d="0">오늘</button>
         <button class="chip sm" data-d="-1">어제</button>
         <input class="in" type="date" id="f-date" value="${d.date}" style="flex:1;">
       </div>
       <input class="in" id="f-note" placeholder="메모" value="${esc(d.note)}" style="margin-top:8px;">
-      <div class="row" style="margin-top:8px;flex-wrap:wrap;gap:6px;">
+      ${sv ? '' : `<div class="row" style="margin-top:8px;flex-wrap:wrap;gap:6px;">
         <button class="tog" id="t-neg" aria-pressed="${d.neg}">− 환불</button>
         <button class="tog" id="t-fx" aria-pressed="${d.fixed}">📌 고정비</button>
         <button class="tog" id="t-co" aria-pressed="${d.co}">🏢 회사</button>
         <button class="tog g" id="t-good" aria-pressed="${d.good === 'Good'}">👍</button>
         <button class="tog b" id="t-bad" aria-pressed="${d.good === 'Bad'}">👎</button>
-      </div>
+      </div>`}
     </details>
 
-    <p class="err" id="f-err"></p>
-    <button class="save" id="f-save" ${d.amount ? '' : 'disabled'}>${
-      d.amount ? Number(d.amount).toLocaleString('ko-KR') + '원 ' : ''}기록하기</button>`;
+    <p class="err" id="f-err"></p>`;
+
+  dock.innerHTML = `<div class="inner">
+    ${padHtml('pad1')}
+    <button class="save ${sv ? 'sv' : ''}" id="f-save" ${d.amount ? '' : 'disabled'}>${
+      d.amount ? Number(d.amount).toLocaleString('ko-KR') + '원 ' : ''}${sv ? '아꼈다고 기록' : '기록하기'}</button>
+  </div>`;
 
   bindPad('pad1', () => d.amount, (v) => { d.amount = v; }, renderTab);
-  $('#f-back').addEventListener('click', () => { d.step = 1; renderTab(); });
+  $('#f-back').addEventListener('click', () => { d.step = 1; d.focusMerch = true; renderTab(); });
   $$('[data-a]', m).forEach(b => b.addEventListener('click', () => { d.amount = b.dataset.a; renderTab(); }));
-  $('#f-catpick').addEventListener('click', () => { d.catOpen = !d.catOpen; renderTab(); });
+  $$('[data-sk]', m).forEach(b => b.addEventListener('click', () => { d.svKind = b.dataset.sk; renderTab(); }));
+  const cp = $('#f-catpick');
+  if (cp) cp.addEventListener('click', () => { d.catOpen = !d.catOpen; renderTab(); });
   $$('[data-g]', m).forEach(b => b.addEventListener('click', () => { d.cat = b.dataset.g; renderTab(); }));
   $$('[data-c]', m).forEach(b => b.addEventListener('click', () => {
-    d.catId = Number(b.dataset.c); d.catOpen = false; renderTab();
+    d.catId = Number(b.dataset.c);
+    const c = catById(d.catId); if (c) d.kind = c.kind;
+    d.catOpen = false; renderTab();
   }));
   $$('[data-d]', m).forEach(b => b.addEventListener('click', () => {
     const dt = new Date(); dt.setDate(dt.getDate() + Number(b.dataset.d));
@@ -544,51 +705,109 @@ function renderAddAmount(m) {
   det.addEventListener('toggle', () => { d.moreOpen = det.open; });
   $('#f-date').addEventListener('change', (e) => { d.date = e.target.value; });
   $('#f-note').addEventListener('input', (e) => { d.note = e.target.value; });
-  $('#t-neg').addEventListener('click', () => { d.neg = !d.neg; d.moreOpen = true; renderTab(); });
-  $('#t-fx').addEventListener('click', () => { d.fixed = !d.fixed; d.moreOpen = true; renderTab(); });
-  $('#t-co').addEventListener('click', () => { d.co = !d.co; d.moreOpen = true; renderTab(); });
-  $('#t-good').addEventListener('click', () => { d.good = d.good === 'Good' ? null : 'Good'; d.moreOpen = true; renderTab(); });
-  $('#t-bad').addEventListener('click', () => { d.good = d.good === 'Bad' ? null : 'Bad'; d.moreOpen = true; renderTab(); });
-  $('#f-save').addEventListener('click', saveTx);
+  const on = (id, fn) => { const el = $(id); if (el) el.addEventListener('click', fn); };
+  on('#t-neg', () => { d.neg = !d.neg; d.moreOpen = true; renderTab(); });
+  on('#t-fx', () => { d.fixed = !d.fixed; d.moreOpen = true; renderTab(); });
+  on('#t-co', () => { d.co = !d.co; d.moreOpen = true; renderTab(); });
+  on('#t-good', () => { d.good = d.good === 'Good' ? null : 'Good'; d.moreOpen = true; renderTab(); });
+  on('#t-bad', () => { d.good = d.good === 'Bad' ? null : 'Bad'; d.moreOpen = true; renderTab(); });
+  $('#f-save').addEventListener('click', saveDraft);
 }
 
-async function saveTx() {
+async function saveDraft() {
   const d = S.d;
+  const sv = isSaveMode();
   const n = Number(d.amount || 0);
   const err = $('#f-err');
   if (!n) { err.textContent = '금액을 입력하세요.'; return; }
-  if (!d.catId) { err.textContent = '분류를 선택하세요.'; return; }
+  if (sv && !d.merchant.trim()) { err.textContent = '무엇을 아꼈는지 한 줄만 적어주세요.'; return; }
+  if (!sv && !d.catId) { err.textContent = '분류를 선택하세요.'; d.catOpen = true; renderTab(); return; }
   err.textContent = '';
   const btn = $('#f-save'); btn.disabled = true; btn.textContent = '저장 중…';
   try {
-    const g = S.merchants.find(x => x.name === d.merchant.trim());
-    const { error } = await (await sb()).from('transactions').insert({
-      date: d.date,
-      category_id: d.catId,
-      amount: d.neg ? -n : n,
-      merchant: d.merchant.trim() || null,
-      merchant_group: g ? g.merchant_group : null,
-      note: d.note.trim() || null,
-      good_bad: d.good,
-      company_paid: d.co,
-      is_fixed: d.fixed
-    });
-    if (error) throw new Error(error.message);
-    const nm = d.merchant.trim();
-    if (nm) {
-      const o = S.merchStats[nm] || (S.merchStats[nm] = { name: nm, count: 0, catId: null, amounts: [], last: d.date });
-      o.count++; o.catId = d.catId; o.amounts.unshift(n); o.last = d.date;
+    const c = await sb();
+    if (sv) {
+      const { error } = await c.from('savings_log').insert({
+        date: d.date, amount: n, kind: d.svKind,
+        title: d.merchant.trim(), note: d.note.trim() || null
+      });
+      if (error) throw new Error(error.message);
+      toast(comma(n) + '원 아꼈습니다 👏');
+    } else {
+      const g = merchOf(d.merchant.trim());
+      const { error } = await c.from('transactions').insert({
+        date: d.date,
+        category_id: d.catId,
+        amount: d.neg ? -n : n,
+        merchant: d.merchant.trim() || null,
+        merchant_group: g ? g.merchant_group : null,
+        note: d.note.trim() || null,
+        good_bad: d.good,
+        company_paid: d.co,
+        is_fixed: d.fixed
+      });
+      if (error) throw new Error(error.message);
+      const nm = d.merchant.trim();
+      if (nm) {
+        const o = S.merchStats[nm] || (S.merchStats[nm] = { name: nm, count: 0, catCnt: {}, catId: null, amounts: [], last: d.date });
+        o.count++; o.catCnt[d.catId] = (o.catCnt[d.catId] || 0) + 1; o.catId = d.catId;
+        o.amounts.unshift(n); o.last = d.date;
+      }
+      toast(comma(n) + '원 기록했습니다');
     }
-    toast(comma(n) + '원 기록했습니다');
-    const keep = { date: d.date, kind: d.kind };
-    S.d = freshDraft(); S.d.date = keep.date; S.d.kind = keep.kind;
+    const keep = { date: d.date, kind: d.kind, svKind: d.svKind };
+    S.d = freshDraft();
+    S.d.date = keep.date; S.d.kind = keep.kind; S.d.svKind = keep.svKind; S.d.focusMerch = true;
+    if (monthOf(keep.date) !== S.month) S.month = monthOf(keep.date);
     await loadMonth();
     renderTab();
   } catch (e) {
     err.textContent = '저장하지 못했습니다 — ' + (e.message || e);
-    btn.disabled = false; btn.textContent = '기록하기';
-    S.d.step = 2;
+    btn.disabled = false;
   }
+}
+
+/* ---------------- 오늘 ---------------- */
+function renderToday(m) {
+  const k = todayKey();
+  const rows = S.tx.filter(r => r.date === k);
+  const todayExp = rows.reduce((a, r) => a + (kindOf(r.category_id) === '지출' ? Number(r.amount) : 0), 0);
+  const t = monthTotals();
+  const now = new Date();
+  const dim = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  const passed = monthOf(k) === S.month ? now.getDate() : dim;
+  const perDay = passed ? t.exp / passed : 0;
+  const monthSave = S.sav.reduce((a, r) => a + Number(r.amount), 0);
+  const todaySave = S.sav.filter(r => r.date === k);
+  const recent = S.tx.slice(0, 8);
+
+  m.innerHTML = `
+    <div class="hero">
+      <div class="k">오늘 쓴 돈</div>
+      <div class="v">${comma(todayExp)}<span style="font-size:17px;"> 원</span></div>
+      <div class="s">${rows.length}건${todaySave.length ? ` · 아낀 돈 ${comma(todaySave.reduce((a, r) => a + Number(r.amount), 0))}원` : ''}</div>
+    </div>
+
+    <div class="pace">
+      <div><span>이달 지출</span><b class="e" style="color:var(--expense-text)">${comma(t.exp)}</b></div>
+      <div><span>하루 평균</span><b>${comma(perDay)}</b></div>
+      <div><span>이달 예상</span><b>${comma(perDay * dim)}</b></div>
+    </div>
+    <div class="pace">
+      <div><span>이달 수입</span><b style="color:var(--income-text)">${comma(t.inc)}</b></div>
+      <div><span>이달 순액</span><b style="color:var(--accent-text)">${comma(t.net)}</b></div>
+      <div><span>이달 아낌</span><b style="color:var(--save-text)">${comma(monthSave)}</b></div>
+    </div>
+
+    <span class="lab">오늘 기록</span>
+    ${rows.length ? `<div class="list">${rows.map(r => txRow(r)).join('')}</div>`
+      : '<div class="empty">아직 오늘 기록이 없습니다.</div>'}
+
+    <span class="lab">최근 기록</span>
+    ${recent.length ? `<div class="list">${recent.map(r => txRow(r, true)).join('')}</div>`
+      : '<div class="empty">이 달 기록이 없습니다.</div>'}`;
+
+  $$('[data-tx]', m).forEach(b => b.addEventListener('click', () => openEdit(Number(b.dataset.tx))));
 }
 
 /* ---------------- 내역 ---------------- */
@@ -614,53 +833,87 @@ function bindMnav(m) {
   }));
 }
 
+const LIST_FILTERS = [['all', '전체'], ['지출', '지출'], ['수입', '수입'], ['이체', '이체'], ['아낀돈', '아낀 돈']];
+
 function renderList(m) {
   const t = monthTotals();
-  const days = [...new Set(S.tx.map(r => r.date))].sort().reverse();
+  const f = S.listFilter;
+  const monthSave = S.sav.reduce((a, r) => a + Number(r.amount), 0);
+
+  /* 아낀 돈도 결국 그날의 기록이라 같은 날짜 줄에 섞어서 보여준다 */
+  const items = [];
+  if (f === 'all' || f !== '아낀돈') {
+    S.tx.filter(r => f === 'all' || kindOf(r.category_id) === f).forEach(r => items.push({ t: 'tx', d: r.date, r }));
+  }
+  if (f === 'all' || f === '아낀돈') {
+    S.sav.forEach(r => items.push({ t: 'sv', d: r.date, r }));
+  }
+  const days = [...new Set(items.map(x => x.d))].sort().reverse();
+
   m.innerHTML = `
     ${mnavHtml()}
     <div class="sum3">
       <div><span>수입</span><b class="i">${comma(t.inc)}</b></div>
       <div><span>지출</span><b class="e">${comma(t.exp)}</b></div>
-      <div><span>순액</span><b class="n">${comma(t.net)}</b></div>
+      <div><span>아낌</span><b class="s">${comma(monthSave)}</b></div>
     </div>
+    <div class="chips" style="margin-bottom:4px;">${LIST_FILTERS.map(([v, l]) =>
+      `<button class="chip sm ${f === v ? 'on' : ''}" data-f="${v}">${l}</button>`).join('')}</div>
     ${days.length ? days.map(dk => {
-      const rows = S.tx.filter(r => r.date === dk);
-      const dayExp = rows.reduce((a, r) => a + (kindOf(r.category_id) === '지출' ? Number(r.amount) : 0), 0);
+      const rows = items.filter(x => x.d === dk);
+      const dayExp = rows.reduce((a, x) => a + (x.t === 'tx' && kindOf(x.r.category_id) === '지출' ? Number(x.r.amount) : 0), 0);
       return `<div class="day">
         <div class="dh"><span>${dayLabel(dk)}</span><b>${dayExp ? '지출 ' + comma(dayExp) : ''}</b></div>
-        <div class="list">${rows.map(r => txRow(r)).join('')}</div>
+        <div class="list">${rows.map(x => x.t === 'tx' ? txRow(x.r) : svRow(x.r)).join('')}</div>
       </div>`;
-    }).join('') : '<div class="empty">이 달 기록이 없습니다.</div>'}`;
+    }).join('') : '<div class="empty">기록이 없습니다.</div>'}`;
+
   bindMnav(m);
+  $$('[data-f]', m).forEach(b => b.addEventListener('click', () => { S.listFilter = b.dataset.f; scrollTop(); renderTab(); }));
   $$('[data-tx]', m).forEach(b => b.addEventListener('click', () => openEdit(Number(b.dataset.tx))));
+  $$('[data-sv]', m).forEach(b => b.addEventListener('click', () => openSaveEdit(Number(b.dataset.sv))));
 }
 
-function txRow(r) {
+function txRow(r, withDate) {
   const k = kindOf(r.category_id);
   const marks = (r.is_fixed ? '<span class="mk">📌</span>' : '') + (r.company_paid ? '<span class="mk">🏢</span>' : '')
     + (r.good_bad === 'Good' ? '<span class="mk">👍</span>' : r.good_bad === 'Bad' ? '<span class="mk">👎</span>' : '');
+  const sub = (withDate ? r.date.slice(5).replace('-', '.') + ' · ' : '') + catLabel(r.category_id) + (r.note ? ' · ' + r.note : '');
   return `<div class="it" data-tx="${r.id}">
     <span class="em">${catEmoji(r.category_id)}</span>
     <span class="tx">
       <div class="t1">${esc(r.merchant || catLabel(r.category_id))}${marks}</div>
-      <div class="t2">${esc(catLabel(r.category_id))}${r.note ? ' · ' + esc(r.note) : ''}</div>
+      <div class="t2">${esc(sub)}</div>
     </span>
     <span class="v ${kindCls(k)}">${k === '지출' ? '−' : k === '수입' ? '+' : ''}${comma(Math.abs(Number(r.amount)))}</span>
   </div>`;
 }
+function svRow(r) {
+  return `<div class="it" data-sv="${r.id}">
+    <span class="em">${SAVE_EMOJI[r.kind] || '💧'}</span>
+    <span class="tx">
+      <div class="t1">${esc(r.title)}</div>
+      <div class="t2">아낀 돈 · ${esc(r.kind)}${r.note ? ' · ' + esc(r.note) : ''}</div>
+    </span>
+    <span class="v s">${comma(Number(r.amount))}</span>
+  </div>`;
+}
 
-/* ---------------- 수정 시트 ---------------- */
+/* ---------------- 기록 수정 시트 ---------------- */
+function sheetOpen(html) {
+  const sh = $('#sheet');
+  sh.hidden = false;
+  sh.innerHTML = html;
+  sh.onclick = (e) => { if (e.target === sh) sheetClose(); };
+}
+function sheetClose() { $('#sheet').hidden = true; $('#sheet').innerHTML = ''; S.edit = null; S.mg.edit = null; }
+
 function openEdit(id) {
   const r = S.tx.find(x => x.id === id);
   if (!r) return;
   S.edit = { ...r, amount: String(Math.abs(Number(r.amount))), neg: Number(r.amount) < 0 };
-  const sh = $('#sheet');
-  sh.hidden = false;
   drawEdit();
-  sh.onclick = (e) => { if (e.target === sh) closeEdit(); };
 }
-function closeEdit() { $('#sheet').hidden = true; S.edit = null; }
 
 function drawEdit() {
   const e = S.edit;
@@ -671,11 +924,11 @@ function drawEdit() {
   const openGroup = e._g || (c ? c.category : groups[0]);
   const subs = cats.filter(x => x.category === openGroup);
 
-  $('#sheet').innerHTML = `
+  sheetOpen(`
     <div class="box">
       <div class="sh"><h3>기록 수정</h3><button class="x" id="e-x">×</button></div>
       ${amtHtml(e.amount, e.neg)}
-      ${padHtml('pad2')}
+      <div style="margin-top:9px;">${padHtml('pad2')}</div>
       <span class="lab">분류</span>
       <div class="chips">${groups.map(g =>
         `<button class="chip sm" data-eg="${esc(g)}" ${g === openGroup ? 'style="border-color:var(--accent);color:var(--accent-text);"' : ''}>${esc(g)}</button>`).join('')}</div>
@@ -687,7 +940,8 @@ function drawEdit() {
       <input class="in" type="date" id="e-date" value="${e.date}">
       <span class="lab">메모</span>
       <input class="in" id="e-note" value="${esc(e.note || '')}">
-      <div class="row" style="margin-top:9px;">
+      <div class="row" style="margin-top:9px;flex-wrap:wrap;gap:6px;">
+        <button class="tog" id="e-neg" aria-pressed="${!!e.neg}">− 환불</button>
         <button class="tog" id="e-fx" aria-pressed="${!!e.is_fixed}">📌 고정비</button>
         <button class="tog" id="e-co" aria-pressed="${!!e.company_paid}">🏢 회사</button>
         <button class="tog g" id="e-good" aria-pressed="${e.good_bad === 'Good'}">👍</button>
@@ -695,15 +949,16 @@ function drawEdit() {
       </div>
       <button class="save inline" id="e-save">저장</button>
       <button class="del" id="e-del">삭제</button>
-    </div>`;
+    </div>`);
 
   bindPad('pad2', () => e.amount, (v) => { e.amount = v; }, drawEdit);
-  $('#e-x').addEventListener('click', closeEdit);
+  $('#e-x').addEventListener('click', sheetClose);
   $$('[data-eg]').forEach(b => b.addEventListener('click', () => { e._g = b.dataset.eg; drawEdit(); }));
   $$('[data-ec]').forEach(b => b.addEventListener('click', () => { e.category_id = Number(b.dataset.ec); drawEdit(); }));
   $('#e-merch').addEventListener('input', (x) => { e.merchant = x.target.value; });
   $('#e-date').addEventListener('change', (x) => { e.date = x.target.value; });
   $('#e-note').addEventListener('input', (x) => { e.note = x.target.value; });
+  $('#e-neg').addEventListener('click', () => { e.neg = !e.neg; drawEdit(); });
   $('#e-fx').addEventListener('click', () => { e.is_fixed = !e.is_fixed; drawEdit(); });
   $('#e-co').addEventListener('click', () => { e.company_paid = !e.company_paid; drawEdit(); });
   $('#e-good').addEventListener('click', () => { e.good_bad = e.good_bad === 'Good' ? null : 'Good'; drawEdit(); });
@@ -718,13 +973,16 @@ async function saveEdit() {
   if (!n) { toast('금액을 입력하세요'); return; }
   const btn = $('#e-save'); btn.disabled = true; btn.textContent = '저장 중…';
   try {
+    const g = merchOf((e.merchant || '').trim());
     const { error } = await (await sb()).from('transactions').update({
       date: e.date, category_id: e.category_id, amount: e.neg ? -n : n,
-      merchant: (e.merchant || '').trim() || null, note: (e.note || '').trim() || null,
+      merchant: (e.merchant || '').trim() || null,
+      merchant_group: g ? g.merchant_group : null,
+      note: (e.note || '').trim() || null,
       good_bad: e.good_bad || null, is_fixed: !!e.is_fixed, company_paid: !!e.company_paid
     }).eq('id', e.id);
     if (error) throw new Error(error.message);
-    closeEdit(); await loadMonth(); renderTab(); toast('수정했습니다');
+    sheetClose(); await loadMonth(); renderTab(); toast('수정했습니다');
   } catch (err) {
     toast('저장 실패 — ' + (err.message || err));
     btn.disabled = false; btn.textContent = '저장';
@@ -735,111 +993,66 @@ async function delEdit() {
   try {
     const { error } = await (await sb()).from('transactions').delete().eq('id', S.edit.id);
     if (error) throw new Error(error.message);
-    closeEdit(); await loadMonth(); renderTab(); toast('삭제했습니다');
+    sheetClose(); await loadMonth(); renderTab(); toast('삭제했습니다');
   } catch (e) { toast('삭제 실패 — ' + (e.message || e)); }
 }
 
-/* ---------------- 아낀 돈 ----------------
+/* ---------------- 아낀 돈 수정 시트 ----------------
    계좌를 드나든 돈이 아니라 "안 썼다 / 얻어먹었다"를 세는 기록.
    그래서 가계부(transactions)와 완전히 분리된 표에 쌓이고, 수입·지출 집계에 섞이지 않는다. */
-function renderSave(m) {
-  const s = S.s;
-  const monthSum = S.sav.reduce((a, r) => a + Number(r.amount), 0);
-  const allSum = S.savAll.reduce((a, r) => a + Number(r.amount), 0);
-  const byKind = {};
-  S.sav.forEach(r => { byKind[r.kind] = (byKind[r.kind] || 0) + Number(r.amount); });
-
-  m.innerHTML = `
-    ${mnavHtml()}
-    <div class="sum3" style="grid-template-columns:1fr 1fr;">
-      <div><span>${monthLabel(S.month)} 아낌</span><b class="n">${comma(monthSum)}</b></div>
-      <div><span>지금까지 누적</span><b class="n">${comma(allSum)}</b></div>
-    </div>
-
-    <div class="card">
-      <div style="font-size:13px;color:var(--text-faint);margin-bottom:2px;">얻어먹었거나, 사려다 참았거나 — 안 쓴 돈</div>
-      <span class="lab" style="margin-top:6px;">어떻게</span>
-      <div class="chips">${SAVE_KINDS.map(k =>
-        `<button class="chip ${s.kind === k ? 'on' : ''}" data-sk="${k}">${SAVE_EMOJI[k]} ${k}</button>`).join('')}</div>
-      <span class="lab">무엇을</span>
-      <input class="in" id="s-title" placeholder="예: 팀 회식 얻어먹음 / 택시 참고 지하철" value="${esc(s.title)}">
-      <span class="lab">얼마를</span>
-      ${amtHtml(s.amount, false, 'sv')}
-      ${padHtml('pad3')}
-      <span class="lab">날짜</span>
-      <div class="row">
-        <button class="chip sm" data-sd="0">오늘</button>
-        <button class="chip sm" data-sd="-1">어제</button>
-        <input class="in" type="date" id="s-date" value="${s.date}" style="flex:1;">
-      </div>
-      <span class="lab">메모</span>
-      <input class="in" id="s-note" placeholder="선택" value="${esc(s.note)}">
-      <p class="err" id="s-err"></p>
-      <button class="save sv inline" id="s-save">아낀 돈 기록</button>
-    </div>
-
-    <span class="lab">${monthLabel(S.month)} 기록 ${S.sav.length ? `· ${S.sav.length}건` : ''}</span>
-    ${S.sav.length ? `<div class="list">${S.sav.map(r => `
-      <div class="it" data-sv="${r.id}">
-        <span class="em">${SAVE_EMOJI[r.kind] || '💧'}</span>
-        <span class="tx">
-          <div class="t1">${esc(r.title)}</div>
-          <div class="t2">${esc(r.kind)} · ${r.date.slice(5).replace('-', '.')}${r.note ? ' · ' + esc(r.note) : ''}</div>
-        </span>
-        <span class="v s">${comma(Number(r.amount))}</span>
-      </div>`).join('')}</div>` : '<div class="empty">이 달 기록이 없습니다.</div>'}
-
-    ${Object.keys(byKind).length ? `<span class="lab">이 달 유형별</span>
-      <div class="card">${Object.entries(byKind).sort((a, b) => b[1] - a[1]).map(([k, v]) => `
-        <div class="bar"><div class="bl"><span>${SAVE_EMOJI[k] || '💧'} ${esc(k)}</span><b>${comma(v)}</b></div>
-        <div class="bt"><div class="bf" style="width:${Math.round(v / monthSum * 100)}%;background:var(--save)"></div></div></div>`).join('')}
-      </div>` : ''}`;
-
-  bindMnav(m);
-  bindPad('pad3', () => s.amount, (v) => { s.amount = v; }, renderTab);
-  $$('[data-sk]', m).forEach(b => b.addEventListener('click', () => { s.kind = b.dataset.sk; renderTab(); }));
-  $$('[data-sd]', m).forEach(b => b.addEventListener('click', () => {
-    const dt = new Date(); dt.setDate(dt.getDate() + Number(b.dataset.sd));
-    dt.setMinutes(dt.getMinutes() - dt.getTimezoneOffset());
-    s.date = dt.toISOString().slice(0, 10); renderTab();
-  }));
-  $('#s-title').addEventListener('input', (e) => { s.title = e.target.value; });
-  $('#s-note').addEventListener('input', (e) => { s.note = e.target.value; });
-  $('#s-date').addEventListener('change', (e) => { s.date = e.target.value; });
-  $('#s-save').addEventListener('click', saveSaving);
-  $$('[data-sv]', m).forEach(b => b.addEventListener('click', () => delSaving(Number(b.dataset.sv))));
-}
-
-async function saveSaving() {
-  const s = S.s;
-  const n = Number(s.amount || 0);
-  const err = $('#s-err');
-  if (!n) { err.textContent = '금액을 입력하세요.'; return; }
-  if (!s.title.trim()) { err.textContent = '무엇을 아꼈는지 한 줄만 적어주세요.'; return; }
-  err.textContent = '';
-  const btn = $('#s-save'); btn.disabled = true; btn.textContent = '저장 중…';
-  try {
-    const { error } = await (await sb()).from('savings_log').insert({
-      date: s.date, amount: n, kind: s.kind, title: s.title.trim(), note: s.note.trim() || null
-    });
-    if (error) throw new Error(error.message);
-    toast(comma(n) + '원 아꼈습니다 👏');
-    const keep = { kind: s.kind, date: s.date };
-    S.s = freshSave(); S.s.kind = keep.kind; S.s.date = keep.date;
-    await loadMonth(); renderTab();
-  } catch (e) {
-    err.textContent = '저장하지 못했습니다 — ' + (e.message || e);
-    btn.disabled = false; btn.textContent = '아낀 돈 기록';
-  }
-}
-async function delSaving(id) {
+function openSaveEdit(id) {
   const r = S.sav.find(x => x.id === id);
-  if (!r || !confirm(`'${r.title}' 기록을 삭제할까요?`)) return;
-  try {
-    const { error } = await (await sb()).from('savings_log').delete().eq('id', id);
-    if (error) throw new Error(error.message);
-    await loadMonth(); renderTab(); toast('삭제했습니다');
-  } catch (e) { toast('삭제 실패 — ' + (e.message || e)); }
+  if (!r) return;
+  S.edit = { _sv: true, ...r, amount: String(Math.abs(Number(r.amount))) };
+  drawSaveEdit();
+}
+function drawSaveEdit() {
+  const e = S.edit;
+  sheetOpen(`
+    <div class="box">
+      <div class="sh"><h3>아낀 돈 수정</h3><button class="x" id="e-x">×</button></div>
+      ${amtHtml(e.amount, false, 'sv')}
+      <div style="margin-top:9px;">${padHtml('pad3')}</div>
+      <span class="lab">어떻게</span>
+      <div class="chips">${SAVE_KINDS.map(k =>
+        `<button class="chip sv ${e.kind === k ? 'on' : ''}" data-ek="${k}">${SAVE_EMOJI[k]} ${k}</button>`).join('')}</div>
+      <span class="lab">무엇을</span>
+      <input class="in" id="e-title" value="${esc(e.title || '')}">
+      <span class="lab">날짜</span>
+      <input class="in" type="date" id="e-date" value="${e.date}">
+      <span class="lab">메모</span>
+      <input class="in" id="e-note" value="${esc(e.note || '')}">
+      <button class="save sv inline" id="e-save">저장</button>
+      <button class="del" id="e-del">삭제</button>
+    </div>`);
+
+  bindPad('pad3', () => e.amount, (v) => { e.amount = v; }, drawSaveEdit);
+  $('#e-x').addEventListener('click', sheetClose);
+  $$('[data-ek]').forEach(b => b.addEventListener('click', () => { e.kind = b.dataset.ek; drawSaveEdit(); }));
+  $('#e-title').addEventListener('input', (x) => { e.title = x.target.value; });
+  $('#e-date').addEventListener('change', (x) => { e.date = x.target.value; });
+  $('#e-note').addEventListener('input', (x) => { e.note = x.target.value; });
+  $('#e-save').addEventListener('click', async () => {
+    const n = Number(e.amount || 0);
+    if (!n) { toast('금액을 입력하세요'); return; }
+    if (!String(e.title || '').trim()) { toast('무엇을 아꼈는지 적어주세요'); return; }
+    try {
+      const { error } = await (await sb()).from('savings_log').update({
+        date: e.date, amount: n, kind: e.kind, title: e.title.trim(),
+        note: (e.note || '').trim() || null, updated_at: new Date().toISOString()
+      }).eq('id', e.id);
+      if (error) throw new Error(error.message);
+      sheetClose(); await loadMonth(); renderTab(); toast('수정했습니다');
+    } catch (err) { toast('저장 실패 — ' + (err.message || err)); }
+  });
+  $('#e-del').addEventListener('click', async () => {
+    if (!confirm(`'${e.title}' 기록을 삭제할까요?`)) return;
+    try {
+      const { error } = await (await sb()).from('savings_log').delete().eq('id', e.id);
+      if (error) throw new Error(error.message);
+      sheetClose(); await loadMonth(); renderTab(); toast('삭제했습니다');
+    } catch (err) { toast('삭제 실패 — ' + (err.message || err)); }
+  });
 }
 
 /* ---------------- 요약 ---------------- */
@@ -862,6 +1075,7 @@ function renderSum(m) {
   const t = monthTotals();
   const rate = t.inc > 0 ? Math.round((t.inc - t.exp) / t.inc * 100) : null;
   const monthSave = S.sav.reduce((a, r) => a + Number(r.amount), 0);
+  const allSave = S.savAll.reduce((a, r) => a + Number(r.amount), 0);
   const byCat = {};
   S.tx.forEach(r => {
     if (kindOf(r.category_id) !== '지출') return;
@@ -871,6 +1085,9 @@ function renderSum(m) {
   });
   const top = Object.entries(byCat).sort((a, b) => b[1] - a[1]).slice(0, 8);
   const max = top.length ? top[0][1] : 1;
+  const byKind = {};
+  S.sav.forEach(r => { byKind[r.kind] = (byKind[r.kind] || 0) + Number(r.amount); });
+  const kindRows = Object.entries(byKind).sort((a, b) => b[1] - a[1]);
 
   m.innerHTML = `
     ${mnavHtml()}
@@ -879,9 +1096,10 @@ function renderSum(m) {
       <div><span>지출</span><b class="e">${comma(t.exp)}</b></div>
       <div><span>순액</span><b class="n">${comma(t.net)}</b></div>
     </div>
-    <div class="sum3" style="grid-template-columns:1fr 1fr;">
+    <div class="sum3" style="grid-template-columns:repeat(3,1fr);">
       <div><span>저축률</span><b class="n">${rate === null ? '—' : rate + '%'}</b></div>
-      <div><span>아낀 돈</span><b style="color:var(--save-text)">${comma(monthSave)}</b></div>
+      <div><span>이달 아낌</span><b class="s">${comma(monthSave)}</b></div>
+      <div><span>누적 아낌</span><b class="s">${comma(allSave)}</b></div>
     </div>
 
     <span class="lab">지출 많은 분류</span>
@@ -889,6 +1107,12 @@ function renderSum(m) {
       <div class="bar"><div class="bl"><span>${esc(k)}</span><b>${comma(v)}</b></div>
       <div class="bt"><div class="bf" style="width:${Math.round(v / max * 100)}%"></div></div></div>`).join('')
       : '<div class="empty">지출 기록이 없습니다.</div>'}</div>
+
+    ${kindRows.length ? `<span class="lab">아낀 돈 유형별</span>
+      <div class="card">${kindRows.map(([k, v]) => `
+        <div class="bar"><div class="bl"><span>${SAVE_EMOJI[k] || '💧'} ${esc(k)}</span><b>${comma(v)}</b></div>
+        <div class="bt"><div class="bf" style="width:${Math.round(v / monthSave * 100)}%;background:var(--save)"></div></div></div>`).join('')}
+      </div>` : ''}
 
     <span class="lab">최근 6개월 지출</span>
     <div class="card" id="sum6"><div class="empty">불러오는 중…</div></div>`;
@@ -900,11 +1124,307 @@ function renderSum(m) {
     const vals = SUM6.months.map(x => SUM6.by[x] || 0);
     const mx = Math.max(1, ...vals);
     host.innerHTML = `<div class="mini">${SUM6.months.map((x, i) => `
-      <div><i style="height:${Math.max(2, Math.round(vals[i] / mx * 62))}px;${x === S.month ? 'background:var(--accent)' : ''}"></i>
+      <div><i style="height:${Math.max(2, Math.round(vals[i] / mx * 60))}px;${x === S.month ? 'background:var(--accent)' : ''}"></i>
       <span>${x.slice(5)}월</span></div>`).join('')}</div>
       <div style="text-align:center;font-size:11px;color:var(--text-faint);margin-top:7px;font-family:var(--mono);">
         평균 ${comma(vals.reduce((a, b) => a + b, 0) / vals.length)}원</div>`;
   }).catch(() => {});
+}
+
+/* ================= 전체메뉴 : 목록 관리 =================
+   사용처·분류·계좌는 가계부를 쓰다 보면 계속 손보게 되는 것들이라
+   웹까지 가지 않고 폰에서 바로 고칠 수 있게 둔다. 웹의 '목록'과 같은 표를 본다. */
+
+function mgToolbar(placeholder, addLabel) {
+  return `<div class="mgtool">
+    <input class="in" id="mg-q" placeholder="${placeholder}" autocomplete="off" value="${esc(S.mg.q)}">
+    <button class="mgadd" id="mg-add">＋ ${addLabel}</button>
+  </div>`;
+}
+function bindMgToolbar(m, onAdd) {
+  const q = $('#mg-q', m);
+  q.addEventListener('input', () => {
+    S.mg.q = q.value;
+    const at = q.selectionStart;
+    renderTab();
+    const e2 = $('#mg-q'); if (e2) { e2.focus(); try { e2.setSelectionRange(at, at); } catch (x) {} }
+  });
+  $('#mg-add', m).addEventListener('click', onAdd);
+}
+
+/* ---- 사용처 ---- */
+function renderMerchDB(m) {
+  const q = S.mg.q.trim().toLowerCase();
+  const rows = S.merchants
+    .filter(r => !q || r.name.toLowerCase().includes(q) || String(r.merchant_group || '').toLowerCase().includes(q))
+    .sort((a, b) => (S.merchStats[b.name] ? S.merchStats[b.name].count : 0) - (S.merchStats[a.name] ? S.merchStats[a.name].count : 0)
+      || a.name.localeCompare(b.name, 'ko'));
+
+  m.innerHTML = `
+    ${mgToolbar('사용처 · 그룹 검색', '추가')}
+    <p class="mgnote">등록된 ${S.merchants.length}곳. 고정비로 지정하면 그 사용처의 기록이 고정비로 잡힙니다.</p>
+    ${rows.length ? `<div class="list">${rows.map(r => {
+      const st = S.merchStats[r.name];
+      return `<button class="dbrow" data-mid="${r.id}">
+        <span class="em">${r.is_fixed ? '📌' : '🏷️'}</span>
+        <span class="nm">${esc(r.name)}
+          ${r.merchant_group || (st && st.catId) ? `<div class="sub">${
+            [r.merchant_group ? esc(r.merchant_group) : '', st && st.catId ? esc(catLabel(st.catId)) : ''].filter(Boolean).join(' · ')}</div>` : ''}</span>
+        <span class="tag">${st && st.count ? st.count + '건' : ''}</span>
+      </button>`;
+    }).join('')}</div>` : '<div class="empty">사용처가 없습니다.</div>'}`;
+
+  bindMgToolbar(m, () => editMerch(null));
+  $$('[data-mid]', m).forEach(b => b.addEventListener('click', () =>
+    editMerch(S.merchants.find(x => x.id === Number(b.dataset.mid)))));
+}
+
+function editMerch(row) {
+  const e = row ? { ...row } : { id: null, name: S.mg.q.trim(), merchant_group: '', is_fixed: false };
+  const groups = [...new Set(S.merchants.map(x => x.merchant_group).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'ko'));
+  sheetOpen(`
+    <div class="box">
+      <div class="sh"><h3>${row ? '사용처 수정' : '사용처 추가'}</h3><button class="x" id="g-x">×</button></div>
+      <span class="lab">이름</span>
+      <input class="in" id="g-name" value="${esc(e.name)}" placeholder="예: 매머드커피">
+      <span class="lab">그룹 <span style="opacity:.7">— 선택</span></span>
+      <input class="in" id="g-group" value="${esc(e.merchant_group || '')}" placeholder="예: 카페" list="g-groups">
+      <datalist id="g-groups">${groups.map(g => `<option value="${esc(g)}">`).join('')}</datalist>
+      <div class="row" style="margin-top:12px;">
+        <button class="tog" id="g-fx" aria-pressed="${!!e.is_fixed}">📌 고정비 사용처</button>
+      </div>
+      <p class="err" id="g-err"></p>
+      <button class="save inline" id="g-save">저장</button>
+      ${row ? '<button class="del" id="g-del">삭제</button>' : ''}
+    </div>`);
+  $('#g-x').addEventListener('click', sheetClose);
+  $('#g-fx').addEventListener('click', () => {
+    e.is_fixed = !e.is_fixed;
+    $('#g-fx').setAttribute('aria-pressed', String(e.is_fixed));
+  });
+  $('#g-save').addEventListener('click', async () => {
+    const name = $('#g-name').value.trim();
+    const group = $('#g-group').value.trim();
+    if (!name) { $('#g-err').textContent = '이름을 입력하세요.'; return; }
+    const btn = $('#g-save'); btn.disabled = true; btn.textContent = '저장 중…';
+    try {
+      const c = await sb();
+      const payload = { name, merchant_group: group || null, is_fixed: !!e.is_fixed };
+      const { error } = e.id
+        ? await c.from('merchants').update(payload).eq('id', e.id)
+        : await c.from('merchants').insert(payload);
+      if (error) throw new Error(error.message);
+      sheetClose(); await reloadRefs(); toast('저장했습니다');
+    } catch (err) {
+      $('#g-err').textContent = '저장하지 못했습니다 — ' + (err.message || err);
+      btn.disabled = false; btn.textContent = '저장';
+    }
+  });
+  const del = $('#g-del');
+  if (del) del.addEventListener('click', async () => {
+    if (!confirm(`'${e.name}'을(를) 사용처 목록에서 지울까요?\n이미 기록된 내역은 그대로 남습니다.`)) return;
+    try {
+      const { error } = await (await sb()).from('merchants').delete().eq('id', e.id);
+      if (error) throw new Error(error.message);
+      sheetClose(); await reloadRefs(); toast('삭제했습니다');
+    } catch (err) { toast('삭제 실패 — ' + (err.message || err)); }
+  });
+}
+
+/* ---- 분류 ---- */
+const CAT_KINDS = ['지출', '수입', '이체', '자산'];
+function renderCatDB(m) {
+  const q = S.mg.q.trim().toLowerCase();
+  const rows = (S.allCats || [])
+    .filter(r => r.kind === S.mg.catKind)
+    .filter(r => !q || (r.category + ' ' + r.subcategory).toLowerCase().includes(q))
+    .sort((a, b) => (a.sort_order - b.sort_order) || a.category.localeCompare(b.category, 'ko'));
+
+  m.innerHTML = `
+    ${mgToolbar('분류 · 세부분류 검색', '추가')}
+    <div class="chips" style="margin-bottom:9px;">${CAT_KINDS.map(k =>
+      `<button class="chip sm ${S.mg.catKind === k ? 'on' : ''}" data-ck="${k}">${k}</button>`).join('')}</div>
+    ${rows.length ? `<div class="list">${rows.map(r => `
+      <button class="dbrow ${r.is_active === false ? 'off' : ''}" data-cid="${r.id}">
+        <span class="em">${r.emoji_category || r.emoji_kind || '·'}</span>
+        <span class="nm">${esc(r.subcategory)}<div class="sub">${esc(r.category)}</div></span>
+        <span class="tag">${r.sort_order}</span>
+      </button>`).join('')}</div>` : '<div class="empty">분류가 없습니다.</div>'}`;
+
+  bindMgToolbar(m, () => editCat(null));
+  $$('[data-ck]', m).forEach(b => b.addEventListener('click', () => { S.mg.catKind = b.dataset.ck; renderTab(); }));
+  $$('[data-cid]', m).forEach(b => b.addEventListener('click', () =>
+    editCat((S.allCats || []).find(x => x.id === Number(b.dataset.cid)))));
+}
+
+function editCat(row) {
+  const e = row ? { ...row } : {
+    id: null, kind: S.mg.catKind, category: '', subcategory: S.mg.q.trim(),
+    emoji_kind: '', emoji_category: '', sort_order: 0, is_active: true
+  };
+  const cats = [...new Set((S.allCats || []).filter(x => x.kind === e.kind).map(x => x.category))].sort((a, b) => a.localeCompare(b, 'ko'));
+  sheetOpen(`
+    <div class="box">
+      <div class="sh"><h3>${row ? '분류 수정' : '분류 추가'}</h3><button class="x" id="g-x">×</button></div>
+      <span class="lab">종류</span>
+      <div class="chips">${CAT_KINDS.map(k =>
+        `<button class="chip sm ${e.kind === k ? 'on' : ''}" data-gk="${k}">${k}</button>`).join('')}</div>
+      <span class="lab">분류</span>
+      <input class="in" id="g-cat" value="${esc(e.category)}" placeholder="예: 식비" list="g-cats">
+      <datalist id="g-cats">${cats.map(g => `<option value="${esc(g)}">`).join('')}</datalist>
+      <span class="lab">세부분류</span>
+      <input class="in" id="g-sub" value="${esc(e.subcategory)}" placeholder="예: 카페">
+      <div class="row" style="margin-top:12px;gap:8px;">
+        <label style="flex:1;font-size:12px;color:var(--text-faint);">이모지
+          <input class="in" id="g-emo" value="${esc(e.emoji_category || '')}" style="margin-top:4px;"></label>
+        <label style="flex:1;font-size:12px;color:var(--text-faint);">순서
+          <input class="in" id="g-sort" type="number" inputmode="numeric" value="${Number(e.sort_order) || 0}" style="margin-top:4px;"></label>
+      </div>
+      <div class="row" style="margin-top:12px;">
+        <button class="tog" id="g-act" aria-pressed="${e.is_active !== false}">사용</button>
+      </div>
+      <p class="err" id="g-err"></p>
+      <button class="save inline" id="g-save">저장</button>
+      ${row ? '<button class="del" id="g-del">삭제</button>' : ''}
+    </div>`);
+  $('#g-x').addEventListener('click', sheetClose);
+  $$('[data-gk]').forEach(b => b.addEventListener('click', () => {
+    e.kind = b.dataset.gk;
+    $$('[data-gk]').forEach(x => x.classList.toggle('on', x.dataset.gk === e.kind));
+  }));
+  $('#g-act').addEventListener('click', () => {
+    e.is_active = e.is_active === false ? true : false;
+    $('#g-act').setAttribute('aria-pressed', String(e.is_active !== false));
+  });
+  $('#g-save').addEventListener('click', async () => {
+    const payload = {
+      kind: e.kind,
+      category: $('#g-cat').value.trim(),
+      subcategory: $('#g-sub').value.trim(),
+      emoji_category: $('#g-emo').value.trim() || null,
+      sort_order: Number($('#g-sort').value) || 0,
+      is_active: e.is_active !== false
+    };
+    if (!payload.category || !payload.subcategory) { $('#g-err').textContent = '분류와 세부분류를 입력하세요.'; return; }
+    const btn = $('#g-save'); btn.disabled = true; btn.textContent = '저장 중…';
+    try {
+      const c = await sb();
+      const { error } = e.id
+        ? await c.from('categories').update(payload).eq('id', e.id)
+        : await c.from('categories').insert(payload);
+      if (error) throw new Error(error.message);
+      sheetClose(); await reloadRefs(); toast('저장했습니다');
+    } catch (err) {
+      $('#g-err').textContent = '저장하지 못했습니다 — ' + (err.message || err);
+      btn.disabled = false; btn.textContent = '저장';
+    }
+  });
+  const del = $('#g-del');
+  if (del) del.addEventListener('click', async () => {
+    if (!confirm(`'${e.category} › ${e.subcategory}'를 삭제할까요?\n이 분류로 기록된 내역이 있으면 지워지지 않습니다 — 그럴 땐 '사용'을 꺼두세요.`)) return;
+    try {
+      const { error } = await (await sb()).from('categories').delete().eq('id', e.id);
+      if (error) throw new Error(error.message);
+      sheetClose(); await reloadRefs(); toast('삭제했습니다');
+    } catch (err) { toast('삭제하지 못했습니다 — 기록이 남아 있는 분류입니다'); }
+  });
+}
+
+/* ---- 계좌 ---- */
+const ACCT_CLASSES = ['현금 자산', '투자 자산', '저축 자산', '연금 자산'];
+async function loadAccounts(force) {
+  if (S.accounts && !force) return;
+  const { data } = await (await sb()).from('accounts')
+    .select('id,name,asset_class,sort_order,note,is_active').order('sort_order');
+  S.accounts = data || [];
+}
+function renderAcctDB(m) {
+  if (!S.accounts) {
+    m.innerHTML = '<div class="empty">불러오는 중…</div>';
+    loadAccounts().then(() => renderTab()).catch(() => { m.innerHTML = '<div class="empty">불러오지 못했습니다.</div>'; });
+    return;
+  }
+  const q = S.mg.q.trim().toLowerCase();
+  const rows = S.accounts.filter(r => !q || (r.name + ' ' + r.asset_class).toLowerCase().includes(q));
+  m.innerHTML = `
+    ${mgToolbar('계좌 검색', '추가')}
+    <p class="mgnote">자산 스냅샷에 적는 계좌 목록입니다.</p>
+    ${rows.length ? `<div class="list">${rows.map(r => `
+      <button class="dbrow ${r.is_active === false ? 'off' : ''}" data-aid="${r.id}">
+        <span class="em">🏦</span>
+        <span class="nm">${esc(r.name)}<div class="sub">${esc(r.asset_class)}${r.note ? ' · ' + esc(r.note) : ''}</div></span>
+        <span class="tag">${r.sort_order}</span>
+      </button>`).join('')}</div>` : '<div class="empty">계좌가 없습니다.</div>'}`;
+  bindMgToolbar(m, () => editAcct(null));
+  $$('[data-aid]', m).forEach(b => b.addEventListener('click', () =>
+    editAcct(S.accounts.find(x => x.id === Number(b.dataset.aid)))));
+}
+function editAcct(row) {
+  const e = row ? { ...row } : { id: null, name: S.mg.q.trim(), asset_class: '현금 자산', sort_order: 0, note: '', is_active: true };
+  sheetOpen(`
+    <div class="box">
+      <div class="sh"><h3>${row ? '계좌 수정' : '계좌 추가'}</h3><button class="x" id="g-x">×</button></div>
+      <span class="lab">계좌 이름</span>
+      <input class="in" id="g-name" value="${esc(e.name)}" placeholder="예: 토스뱅크 생활비">
+      <span class="lab">분류</span>
+      <div class="chips">${ACCT_CLASSES.map(k =>
+        `<button class="chip sm ${e.asset_class === k ? 'on' : ''}" data-ac="${k}">${k}</button>`).join('')}</div>
+      <div class="row" style="margin-top:12px;gap:8px;">
+        <label style="flex:1;font-size:12px;color:var(--text-faint);">순서
+          <input class="in" id="g-sort" type="number" inputmode="numeric" value="${Number(e.sort_order) || 0}" style="margin-top:4px;"></label>
+      </div>
+      <span class="lab">메모</span>
+      <input class="in" id="g-note" value="${esc(e.note || '')}" placeholder="선택">
+      <div class="row" style="margin-top:12px;">
+        <button class="tog" id="g-act" aria-pressed="${e.is_active !== false}">사용</button>
+      </div>
+      <p class="err" id="g-err"></p>
+      <button class="save inline" id="g-save">저장</button>
+      ${row ? '<button class="del" id="g-del">삭제</button>' : ''}
+    </div>`);
+  $('#g-x').addEventListener('click', sheetClose);
+  $$('[data-ac]').forEach(b => b.addEventListener('click', () => {
+    e.asset_class = b.dataset.ac;
+    $$('[data-ac]').forEach(x => x.classList.toggle('on', x.dataset.ac === e.asset_class));
+  }));
+  $('#g-act').addEventListener('click', () => {
+    e.is_active = e.is_active === false ? true : false;
+    $('#g-act').setAttribute('aria-pressed', String(e.is_active !== false));
+  });
+  $('#g-save').addEventListener('click', async () => {
+    const payload = {
+      name: $('#g-name').value.trim(), asset_class: e.asset_class,
+      sort_order: Number($('#g-sort').value) || 0,
+      note: $('#g-note').value.trim() || null, is_active: e.is_active !== false
+    };
+    if (!payload.name) { $('#g-err').textContent = '계좌 이름을 입력하세요.'; return; }
+    const btn = $('#g-save'); btn.disabled = true; btn.textContent = '저장 중…';
+    try {
+      const c = await sb();
+      const { error } = e.id
+        ? await c.from('accounts').update(payload).eq('id', e.id)
+        : await c.from('accounts').insert(payload);
+      if (error) throw new Error(error.message);
+      sheetClose(); await loadAccounts(true); renderTab(); toast('저장했습니다');
+    } catch (err) {
+      $('#g-err').textContent = '저장하지 못했습니다 — ' + (err.message || err);
+      btn.disabled = false; btn.textContent = '저장';
+    }
+  });
+  const del = $('#g-del');
+  if (del) del.addEventListener('click', async () => {
+    if (!confirm(`'${e.name}' 계좌를 삭제할까요?`)) return;
+    try {
+      const { error } = await (await sb()).from('accounts').delete().eq('id', e.id);
+      if (error) throw new Error(error.message);
+      sheetClose(); await loadAccounts(true); renderTab(); toast('삭제했습니다');
+    } catch (err) { toast('삭제하지 못했습니다 — 스냅샷에 쓰인 계좌입니다'); }
+  });
+}
+
+async function reloadRefs() {
+  await loadRefs();
+  renderTab();
 }
 
 /* ---------------- 로그인 · 시작 ---------------- */
@@ -937,20 +1457,20 @@ function showLock(msg) {
 }
 
 async function start() {
-  document.getElementById('app').innerHTML = '<div class="empty" style="padding-top:80px;">불러오는 중…</div>';
+  $('#main').innerHTML = '<div class="empty" style="padding-top:70px;">불러오는 중…</div>';
   try {
     await loadRefs();
     await loadMonth();
     render();
   } catch (e) {
-    document.getElementById('app').innerHTML = `<div class="empty" style="padding-top:70px;">불러오지 못했습니다.<br>${esc(e.message || e)}</div>`;
+    $('#main').innerHTML = `<div class="empty" style="padding-top:60px;">불러오지 못했습니다.<br>${esc(e.message || e)}</div>`;
   }
 }
 
 (async () => {
   let c;
   try { c = await sb(); }
-  catch (e) { document.body.innerHTML = '<div class="empty" style="padding-top:90px;">네트워크를 확인하고 다시 열어주세요.</div>'; return; }
+  catch (e) { $('#main').innerHTML = '<div class="empty" style="padding-top:80px;">네트워크를 확인하고 다시 열어주세요.</div>'; return; }
   const { data } = await c.auth.getSession();
   if (data.session) start(); else showLock();
   c.auth.onAuthStateChange((evt) => { if (evt === 'SIGNED_OUT') location.reload(); });
