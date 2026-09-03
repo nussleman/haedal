@@ -4118,6 +4118,40 @@ function goTo(section, sub) {
   renderPage();
 }
 
+/* ---------------- 주소 기억 ----------------
+   새로고침하거나 링크를 다시 열었을 때 홈으로 튕기지 않고 보던 화면 그대로 열리게,
+   지금 보는 섹션·하위탭을 주소(#현황/아낀돈)에 적어 둔다. */
+let ROUTE_SILENT = false;
+function routeWrite(section, sub) {
+  const h = '#' + section + (sub ? '/' + sub : '');
+  if (location.hash === h) return;
+  ROUTE_SILENT = true;
+  try { history.replaceState(null, '', location.pathname + location.search + h); }
+  catch (e) { location.hash = h; }
+  setTimeout(() => { ROUTE_SILENT = false; }, 0);
+}
+function routeRead() {
+  let raw = String(location.hash || '').replace(/^#/, '');
+  try { raw = decodeURIComponent(raw); } catch (e) {}
+  raw = raw.trim();
+  if (!raw) return null;
+  const [sec, sub] = raw.split('/');
+  if (!NAV_ITEMS.some(n => n.id === sec)) return null;
+  const subs = SECTION_SUBS[sec] || [];
+  return { section: sec, sub: subs.some(x => x[0] === sub) ? sub : null };
+}
+function routeApply() {
+  const r = routeRead();
+  if (!r) return false;
+  state.page = r.section;
+  if (r.sub && SECTION_STATE_KEY[r.section]) state[SECTION_STATE_KEY[r.section]] = r.sub;
+  return true;
+}
+window.addEventListener('hashchange', () => {
+  if (ROUTE_SILENT) return;
+  if (routeApply() && state.data) renderPage();
+});
+
 /* ================= 추가 기능: 증감 분해 · 목표 배분 · 데이터 품질 · 부채 · 운용 점검 · 후회 소비 · 흐름표 ================= */
 
 /* ---------------- 자산 증감 분해 ---------------- */
@@ -5443,6 +5477,7 @@ function renderPage() {
   const section = NAV_ITEMS.some(n => n.id === state.page) ? state.page : 'flow';
   state.page = section;
   const SUB = currentSub(section);
+  routeWrite(section, SUB);
   renderNav();
   body.innerHTML = '';
 
@@ -5804,22 +5839,18 @@ function enRenderEntry() {
   enQS('#en-merch').focus();
 }
 
-/* 사용처 자동완성 : 분류까지 함께 보여준다 */
-function enSetupMerchant() {
-  const inp = enQS('#en-merch');
-  const box = enQS('#en-ac');
+/* 사용처 자동완성 : 분류까지 함께 보여준다.
+   가계부 기록과 '아낀 돈'이 같은 사용처 사전을 쓴다 — 이름을 두 군데서 따로 관리하지 않으려고. */
+function enAttachMerchantAC(inp, box, opt) {
+  const o = opt || {};
   let list = [], cur = -1;
 
   const close = () => { box.hidden = true; inp.setAttribute('aria-expanded', 'false'); cur = -1; };
   const pick = (name) => {
     const gp = (EN.merchGroup && EN.merchGroup[name]) || '';
-    inp.value = (gp ? gp + ' › ' : '') + name;
-    const cid = EN.merchCat[name];
-    if (cid) { EN.catId = cid; enSyncCat(); }
-    const fx = enQS('#en-fx');
-    if (fx && enMerchFixed(name)) fx.setAttribute('aria-pressed', 'true');
+    inp.value = o.withGroup ? ((gp ? gp + ' › ' : '') + name) : name;
     close();
-    enQS('#en-amt').focus();
+    if (o.onPick) o.onPick(name);
   };
   const paint = () => {
     box.querySelectorAll('.en-ac-item').forEach((el, k) => el.classList.toggle('on', k === cur));
@@ -5857,7 +5888,7 @@ function enSetupMerchant() {
   inp.addEventListener('blur', () => setTimeout(close, 120));
   inp.addEventListener('keydown', e => {
     if (box.hidden) {
-      if (e.key === 'Enter') { e.preventDefault(); enQS('#en-amt').focus(); }
+      if (e.key === 'Enter') { e.preventDefault(); if (o.onNext) o.onNext(); }
       return;
     }
     if (e.key === 'ArrowDown') { e.preventDefault(); cur = Math.min(cur + 1, list.length - 1); paint(); }
@@ -5865,8 +5896,22 @@ function enSetupMerchant() {
     else if (e.key === 'Enter') {
       e.preventDefault();
       if (cur >= 0) pick(list[cur]);
-      else { close(); enQS('#en-amt').focus(); }
+      else { close(); if (o.onNext) o.onNext(); }
     } else if (e.key === 'Escape') { e.stopPropagation(); close(); }
+  });
+}
+
+function enSetupMerchant() {
+  enAttachMerchantAC(enQS('#en-merch'), enQS('#en-ac'), {
+    withGroup: true,
+    onNext: () => enQS('#en-amt').focus(),
+    onPick: (name) => {
+      const cid = EN.merchCat[name];
+      if (cid) { EN.catId = cid; enSyncCat(); }
+      const fx = enQS('#en-fx');
+      if (fx && enMerchFixed(name)) fx.setAttribute('aria-pressed', 'true');
+      enQS('#en-amt').focus();
+    }
   });
 }
 
@@ -17693,6 +17738,7 @@ function svMonthExpense(data, mk) {
 
 async function renderSavingsPageWeb(body, data) {
   body.innerHTML = '<div class="panel full"><div class="empty-state">아낀 돈 기록을 불러오는 중…</div></div>';
+  enEnsureRefs().catch(() => {});   /* '무엇을' 칸이 쓰는 사용처 사전 */
   try { await svLoad(false); }
   catch (e) {
     body.innerHTML = `<div class="panel full"><div class="empty-state">불러오지 못했습니다 — ${enEsc(e.message || e)}</div></div>`;
@@ -17770,8 +17816,11 @@ async function renderSavingsPageWeb(body, data) {
         <label class="fld"><span>어떻게</span></label>
         <div class="sv-chips">${SV_KINDS.map(k =>
           `<button class="sv-chip ${dr.kind === k ? 'on' : ''}" data-k="${k}">${SV_EMOJI[k]} ${k}</button>`).join('')}</div>
-        <label class="fld"><span>무엇을</span>
-          <input class="en-in" id="sv-title" placeholder="예: 팀 회식 얻어먹음 / 택시 참고 지하철" value="${enEsc(dr.title)}"></label>
+        <label class="fld" style="position:relative;"><span>무엇을</span>
+          <input class="en-in" id="sv-title" autocomplete="off" placeholder="예: 매머드커피 · 팀 회식"
+                 role="combobox" aria-expanded="false" aria-autocomplete="list" aria-controls="sv-ac"
+                 value="${enEsc(dr.title)}">
+          <div class="en-ac" id="sv-ac" role="listbox" hidden></div></label>
         <label class="fld"><span>날짜</span>
           <input class="en-in" id="sv-date" type="date" value="${dr.date}"></label>
         <label class="fld"><span>메모</span>
@@ -17847,7 +17896,13 @@ async function renderSavingsPageWeb(body, data) {
     dr.amount = raw;
     amtEl.value = raw ? Number(raw).toLocaleString('ko-KR') : '';
   });
-  document.getElementById('sv-title').addEventListener('input', (e) => { dr.title = e.target.value; });
+  const svTitle = document.getElementById('sv-title');
+  svTitle.addEventListener('input', (e) => { dr.title = e.target.value; });
+  /* 가계부 기록과 같은 사용처 사전을 쓴다 */
+  enAttachMerchantAC(svTitle, document.getElementById('sv-ac'), {
+    onNext: () => document.getElementById('sv-amt').focus(),
+    onPick: (name) => { dr.title = name; document.getElementById('sv-amt').focus(); }
+  });
   document.getElementById('sv-note').addEventListener('input', (e) => { dr.note = e.target.value; });
   document.getElementById('sv-date').addEventListener('change', (e) => { dr.date = e.target.value; });
   body.querySelectorAll('.sv-chip').forEach(b => b.addEventListener('click', () => {
@@ -18104,6 +18159,7 @@ async function fetchLive(manual) {
 }
 
 async function init() {
+  routeApply();          /* 주소에 적힌 화면이 있으면 거기서 시작한다 */
   renderShell();
   await Promise.all([loadBudgets(), loadSettings(), sdxLoad(true)]);
   state.data = SNAPSHOT_DATA;
