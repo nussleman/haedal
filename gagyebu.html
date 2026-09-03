@@ -106,7 +106,6 @@ body.kb .tabbar{display:none;}
 .seg button.on[data-k="지출"]{background:var(--expense-bg);color:var(--expense-text);border-color:var(--expense);}
 .seg button.on[data-k="수입"]{background:var(--income-bg);color:var(--income-text);border-color:var(--income);}
 .seg button.on[data-k="이체"]{background:var(--transfer-bg);color:var(--transfer-text);border-color:var(--transfer);}
-.seg button.on[data-k="아낀돈"]{background:var(--save-bg);color:var(--save-text);border-color:var(--save);}
 .chips{display:flex;gap:6px;flex-wrap:wrap;}
 .chip{height:34px;padding:0 12px;border-radius:var(--r-pill);border:1px solid var(--border);
   background:var(--bg-2);color:var(--text-dim);font-size:13px;display:inline-flex;align-items:center;gap:5px;}
@@ -299,13 +298,10 @@ details.more[open] summary::after{content:' ▴';}
    화면 구조
      기본 탭 : 기록 · 오늘 · 내역 · 요약
      ☰ 전체메뉴로 들어가면 하단이 '← 뒤로 · 사용처 · 분류 · 계좌'로 바뀐다(토스증권 방식).
-   '아낀 돈'도 결국 기록이라, 별도 탭이 아니라 기록 화면의 네 번째 종류로 넣었다. */
+   기록 화면 위쪽에서 지출·수입·이체를 고른다. */
 
 const SB_URL  = 'https://rjxmrpifrhybucexuvli.supabase.co';
 const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqeG1ycGlmcmh5YnVjZXh1dmxpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU1NjU1OTAsImV4cCI6MjEwMTE0MTU5MH0.xSzE02pjZYqbx9nPLb8RVsQF9w7hJHEx2cO0JDOLLSU';
-
-const SAVE_KINDS = ['얻어먹음', '참았음', '할인·쿠폰', '더 싼 걸로', '기타'];
-const SAVE_EMOJI = { '얻어먹음': '🫶', '참았음': '✊', '할인·쿠폰': '🏷️', '더 싼 걸로': '🔁', '기타': '💧' };
 
 let SB = null;
 async function sb() {
@@ -353,7 +349,7 @@ const S = {
   ctx: 'main',              /* main | menu */
   tab: 'add',               /* main: add|today|list|sum   menu: merch|cat|acct */
   cats: [], merchants: [], merchStats: {},
-  month: nowMonth(), tx: [], sav: [], savAll: [],
+  month: nowMonth(), tx: [],
   listFilter: 'all',
   loaded: false,
   d: null,                  /* 기록 입력값 */
@@ -363,11 +359,9 @@ const S = {
 function freshDraft() {
   return { step: 1, kind: '지출', amount: '', neg: false, catId: null, cat: null, catOpen: false,
            moreOpen: false, merchant: '', note: '', date: todayKey(),
-           good: null, fixed: false, co: false, svKind: '참았음' };
+           good: null, fixed: false, co: false };
 }
 S.d = freshDraft();
-
-const isSaveMode = () => S.d.kind === '아낀돈';
 
 /* ---------------- 기준 데이터 ---------------- */
 async function loadRefs() {
@@ -413,21 +407,15 @@ function buildMerchStats(recent) {
 async function loadMonth() {
   const c = await sb();
   const [from, to] = monthRange(S.month);
-  const [tx, sv, all] = await Promise.all([
-    c.from('transactions').select('id,date,category_id,amount,merchant,merchant_group,note,good_bad,is_fixed,company_paid')
-      .gte('date', from).lt('date', to).order('date', { ascending: false }).order('id', { ascending: false }),
-    c.from('savings_log').select('id,date,amount,kind,title,note')
-      .gte('date', from).lt('date', to).order('date', { ascending: false }).order('id', { ascending: false }),
-    c.from('savings_log').select('amount')
-  ]);
+  const tx = await c.from('transactions')
+    .select('id,date,category_id,amount,merchant,merchant_group,note,good_bad,is_fixed,company_paid')
+    .gte('date', from).lt('date', to).order('date', { ascending: false }).order('id', { ascending: false });
   S.tx = tx.data || [];
-  S.sav = sv.data || [];
-  S.savAll = all.data || [];
 }
 
 const catById = (id) => S.cats.find(x => x.id === id) || (S.allCats || []).find(x => x.id === id);
 const kindOf = (id) => { const c = catById(id); return c ? c.kind : '지출'; };
-const kindCls = (k) => k === '수입' ? 'i' : k === '이체' ? 't' : k === '아낀돈' ? 's' : 'e';
+const kindCls = (k) => k === '수입' ? 'i' : k === '이체' ? 't' : 'e';
 const catLabel = (id) => { const c = catById(id); return c ? `${c.category} › ${c.subcategory}` : '분류 없음'; };
 const catEmoji = (id) => { const c = catById(id); return (c && (c.emoji_category || c.emoji_kind)) || '·'; };
 const merchOf = (name) => S.merchants.find(x => x.name === name);
@@ -520,12 +508,12 @@ function paintAmtBox(sel, v, neg, cls) {
   box.innerHTML = `<b>${neg && v ? '−' : ''}${v ? Number(v).toLocaleString('ko-KR') : '0'}</b><span>원</span>`;
 }
 function paintAddAmount() {
-  const d = S.d, sv = isSaveMode();
-  paintAmtBox('#main .amt', d.amount, d.neg, sv ? 'sv' : '');
+  const d = S.d;
+  paintAmtBox('#main .amt', d.amount, d.neg, '');
   const btn = $('#f-save');
   if (btn) {
     btn.disabled = !d.amount;
-    btn.textContent = (d.amount ? Number(d.amount).toLocaleString('ko-KR') + '원 ' : '') + (sv ? '아꼈다고 기록' : '기록하기');
+    btn.textContent = (d.amount ? Number(d.amount).toLocaleString('ko-KR') + '원 ' : '') + '기록하기';
   }
 }
 
@@ -540,22 +528,22 @@ function renderAdd(m, dock) {
 
   m.innerHTML = `
     <div class="seg">
-      ${['지출', '수입', '이체', '아낀돈'].map(k =>
-        `<button data-k="${k}" class="${d.kind === k ? 'on' : ''}">${k === '아낀돈' ? '아낀 돈' : k}</button>`).join('')}
+      ${['지출', '수입', '이체'].map(k =>
+        `<button data-k="${k}" class="${d.kind === k ? 'on' : ''}">${k}</button>`).join('')}
     </div>
 
-    <div class="steplab"><b>1</b> ${isSaveMode() ? '무엇을 아꼈나요?' : '어디에 썼나요?'}</div>
+    <div class="steplab"><b>1</b> 어디에 썼나요?</div>
 
     <div class="mlist" id="f-mlist"></div>
 
-    <button class="skip" id="f-nomerch">${isSaveMode() ? '이름 없이 기록 →' : '사용처 없이 기록 →'}</button>
+    <button class="skip" id="f-nomerch">사용처 없이 기록 →</button>
 
     ${t.n ? `<div class="card" id="f-today" style="margin-top:12px;display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--text-dim);">
       <span>오늘 ${t.n}건</span><b class="mono" style="color:var(--expense-text)">${comma(t.exp)}원</b></div>` : ''}`;
 
   dock.innerHTML = `<div class="inner">
     <div id="f-newwrap"></div>
-    <input class="in" id="f-merch" placeholder="${isSaveMode() ? '무엇을 · 검색하거나 직접 입력' : '사용처 검색 · 입력'}"
+    <input class="in" id="f-merch" placeholder="사용처 검색 · 입력"
            autocomplete="off" autocapitalize="off" enterkeyhint="next" value="${esc(d.merchant)}">
   </div>`;
 
@@ -628,27 +616,24 @@ function todayStat() {
 function pickMerch(name) {
   const d = S.d;
   d.merchant = name;
-  if (!isSaveMode()) {
-    const st = S.merchStats[name];
-    if (st && st.catId && catById(st.catId)) {
-      const c = catById(st.catId);
-      d.kind = c.kind; d.cat = c.category; d.catId = st.catId;
-    }
-    const mm = merchOf(name);
-    if (mm && mm.is_fixed) d.fixed = true;
+  const st = S.merchStats[name];
+  if (st && st.catId && catById(st.catId)) {
+    const c = catById(st.catId);
+    d.kind = c.kind; d.cat = c.category; d.catId = st.catId;
   }
+  const mm = merchOf(name);
+  if (mm && mm.is_fixed) d.fixed = true;
   goAmount();
 }
 function goAmount() {
   S.d.step = 2;
-  S.d.catOpen = !isSaveMode() && !S.d.catId;   /* 분류가 안 잡혔으면 바로 고를 수 있게 펼쳐 둔다 */
+  S.d.catOpen = !S.d.catId;   /* 분류가 안 잡혔으면 바로 고를 수 있게 펼쳐 둔다 */
   scrollTop();
   renderTab();
 }
 
 function renderAddAmount(m, dock) {
   const d = S.d;
-  const sv = isSaveMode();
   const st = S.merchStats[d.merchant.trim()];
   /* 그 사용처에서 자주 찍었던 금액 — 한 번 눌러 끝낸다 */
   const often = (() => {
@@ -666,62 +651,55 @@ function renderAddAmount(m, dock) {
 
   m.innerHTML = `
     <div class="stepbar">
-      <button class="backchip" id="f-back">‹ ${esc(d.merchant.trim() || (sv ? '이름 없음' : '사용처 없음'))}</button>
-      <span class="kindpill ${kindCls(d.kind)}">${sv ? '아낀 돈' : d.kind}</span>
+      <button class="backchip" id="f-back">‹ ${esc(d.merchant.trim() || '사용처 없음')}</button>
+      <span class="kindpill ${kindCls(d.kind)}">${d.kind}</span>
     </div>
 
     <div class="steplab"><b>2</b> 얼마인가요?</div>
-    ${amtHtml(d.amount, d.neg, sv ? 'sv' : '')}
+    ${amtHtml(d.amount, d.neg, '')}
     ${often.length ? `<div class="chips ochips">${often.map(a =>
       `<button class="chip" data-a="${a}">${comma(a)}</button>`).join('')}</div>` : ''}
 
-    ${sv ? `
-      <div class="steplab"><b>3</b> 어떻게 아꼈나요?</div>
-      <div class="chips">${SAVE_KINDS.map(k =>
-        `<button class="chip sv ${d.svKind === k ? 'on' : ''}" data-sk="${k}">${SAVE_EMOJI[k]} ${k}</button>`).join('')}</div>
-    ` : `
-      <div style="margin-top:13px;">
-        <button class="catpick ${d.catId ? 'on' : ''}" id="f-catpick">
-          ${d.catId ? `${catEmoji(d.catId)} ${esc(catLabel(d.catId))}` : '분류 선택'}
-          <i>${d.catOpen ? '▲' : '▼'}</i>
-        </button>
-      </div>
-      ${d.catOpen ? `
-        <div class="chips" style="margin-top:8px;">${groups.map(g =>
-          `<button class="chip sm" data-g="${esc(g)}" ${g === openGroup ? 'style="border-color:var(--accent);color:var(--accent-text);"' : ''}>${esc(g)}</button>`).join('')}</div>
-        <div class="chips" style="margin-top:7px;">${subs.map(c =>
-          `<button class="chip ${d.catId === c.id ? 'on' : ''}" data-c="${c.id}">${c.emoji_category || ''} ${esc(c.subcategory)}</button>`).join('')}</div>` : ''}
-    `}
+    <div style="margin-top:13px;">
+      <button class="catpick ${d.catId ? 'on' : ''}" id="f-catpick">
+        ${d.catId ? `${catEmoji(d.catId)} ${esc(catLabel(d.catId))}` : '분류 선택'}
+        <i>${d.catOpen ? '▲' : '▼'}</i>
+      </button>
+    </div>
+    ${d.catOpen ? `
+      <div class="chips" style="margin-top:8px;">${groups.map(g =>
+        `<button class="chip sm" data-g="${esc(g)}" ${g === openGroup ? 'style="border-color:var(--accent);color:var(--accent-text);"' : ''}>${esc(g)}</button>`).join('')}</div>
+      <div class="chips" style="margin-top:7px;">${subs.map(c =>
+        `<button class="chip ${d.catId === c.id ? 'on' : ''}" data-c="${c.id}">${c.emoji_category || ''} ${esc(c.subcategory)}</button>`).join('')}</div>` : ''}
 
     <details class="more" ${d.moreOpen ? 'open' : ''}>
-      <summary>날짜 · 메모${sv ? '' : ' · 표시'}</summary>
+      <summary>날짜 · 메모 · 표시</summary>
       <div class="row" style="margin-top:10px;">
         <button class="chip sm" data-d="0">오늘</button>
         <button class="chip sm" data-d="-1">어제</button>
         <input class="in" type="date" id="f-date" value="${d.date}" style="flex:1;">
       </div>
       <input class="in" id="f-note" placeholder="메모" value="${esc(d.note)}" style="margin-top:8px;">
-      ${sv ? '' : `<div class="row" style="margin-top:8px;flex-wrap:wrap;gap:6px;">
+      <div class="row" style="margin-top:8px;flex-wrap:wrap;gap:6px;">
         <button class="tog" id="t-neg" aria-pressed="${d.neg}">− 환불</button>
         <button class="tog" id="t-fx" aria-pressed="${d.fixed}">📌 고정비</button>
         <button class="tog" id="t-co" aria-pressed="${d.co}">🏢 회사</button>
         <button class="tog g" id="t-good" aria-pressed="${d.good === 'Good'}">👍</button>
         <button class="tog b" id="t-bad" aria-pressed="${d.good === 'Bad'}">👎</button>
-      </div>`}
+      </div>
     </details>
 
     <p class="err" id="f-err"></p>`;
 
   dock.innerHTML = `<div class="inner">
     ${padHtml('pad1')}
-    <button class="save ${sv ? 'sv' : ''}" id="f-save" ${d.amount ? '' : 'disabled'}>${
-      d.amount ? Number(d.amount).toLocaleString('ko-KR') + '원 ' : ''}${sv ? '아꼈다고 기록' : '기록하기'}</button>
+    <button class="save" id="f-save" ${d.amount ? '' : 'disabled'}>${
+      d.amount ? Number(d.amount).toLocaleString('ko-KR') + '원 ' : ''}기록하기</button>
   </div>`;
 
   bindPad('pad1', () => d.amount, (v) => { d.amount = v; }, paintAddAmount);
   $('#f-back').addEventListener('click', () => { d.step = 1; d.focusMerch = true; renderTab(); });
   $$('[data-a]', m).forEach(b => b.addEventListener('click', () => { d.amount = b.dataset.a; paintAddAmount(); }));
-  $$('[data-sk]', m).forEach(b => b.addEventListener('click', () => { d.svKind = b.dataset.sk; renderTab(); }));
   const cp = $('#f-catpick');
   if (cp) cp.addEventListener('click', () => { d.catOpen = !d.catOpen; renderTab(); });
   $$('[data-g]', m).forEach(b => b.addEventListener('click', () => { d.cat = b.dataset.g; renderTab(); }));
@@ -750,48 +728,37 @@ function renderAddAmount(m, dock) {
 
 async function saveDraft() {
   const d = S.d;
-  const sv = isSaveMode();
   const n = Number(d.amount || 0);
   const err = $('#f-err');
   if (!n) { err.textContent = '금액을 입력하세요.'; return; }
-  if (sv && !d.merchant.trim()) { err.textContent = '무엇을 아꼈는지 한 줄만 적어주세요.'; return; }
-  if (!sv && !d.catId) { err.textContent = '분류를 선택하세요.'; d.catOpen = true; renderTab(); return; }
+  if (!d.catId) { err.textContent = '분류를 선택하세요.'; d.catOpen = true; renderTab(); return; }
   err.textContent = '';
   const btn = $('#f-save'); btn.disabled = true; btn.textContent = '저장 중…';
   try {
     const c = await sb();
-    if (sv) {
-      const { error } = await c.from('savings_log').insert({
-        date: d.date, amount: n, kind: d.svKind,
-        title: d.merchant.trim(), note: d.note.trim() || null
-      });
-      if (error) throw new Error(error.message);
-      toast(comma(n) + '원 아꼈습니다 👏');
-    } else {
-      const g = merchOf(d.merchant.trim());
-      const { error } = await c.from('transactions').insert({
-        date: d.date,
-        category_id: d.catId,
-        amount: d.neg ? -n : n,
-        merchant: d.merchant.trim() || null,
-        merchant_group: g ? g.merchant_group : null,
-        note: d.note.trim() || null,
-        good_bad: d.good,
-        company_paid: d.co,
-        is_fixed: d.fixed
-      });
-      if (error) throw new Error(error.message);
-      const nm = d.merchant.trim();
-      if (nm) {
-        const o = S.merchStats[nm] || (S.merchStats[nm] = { name: nm, count: 0, catCnt: {}, catId: null, amounts: [], last: d.date });
-        o.count++; o.catCnt[d.catId] = (o.catCnt[d.catId] || 0) + 1; o.catId = d.catId;
-        o.amounts.unshift(n); o.last = d.date;
-      }
-      toast(comma(n) + '원 기록했습니다');
+    const g = merchOf(d.merchant.trim());
+    const { error } = await c.from('transactions').insert({
+      date: d.date,
+      category_id: d.catId,
+      amount: d.neg ? -n : n,
+      merchant: d.merchant.trim() || null,
+      merchant_group: g ? g.merchant_group : null,
+      note: d.note.trim() || null,
+      good_bad: d.good,
+      company_paid: d.co,
+      is_fixed: d.fixed
+    });
+    if (error) throw new Error(error.message);
+    const nm = d.merchant.trim();
+    if (nm) {
+      const o = S.merchStats[nm] || (S.merchStats[nm] = { name: nm, count: 0, catCnt: {}, catId: null, amounts: [], last: d.date });
+      o.count++; o.catCnt[d.catId] = (o.catCnt[d.catId] || 0) + 1; o.catId = d.catId;
+      o.amounts.unshift(n); o.last = d.date;
     }
-    const keep = { date: d.date, kind: d.kind, svKind: d.svKind };
+    toast(comma(n) + '원 기록했습니다');
+    const keep = { date: d.date, kind: d.kind };
     S.d = freshDraft();
-    S.d.date = keep.date; S.d.kind = keep.kind; S.d.svKind = keep.svKind; S.d.focusMerch = true;
+    S.d.date = keep.date; S.d.kind = keep.kind; S.d.focusMerch = true;
     if (monthOf(keep.date) !== S.month) S.month = monthOf(keep.date);
     await loadMonth();
     renderTab();
@@ -811,15 +778,13 @@ function renderToday(m) {
   const dim = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
   const passed = monthOf(k) === S.month ? now.getDate() : dim;
   const perDay = passed ? t.exp / passed : 0;
-  const monthSave = S.sav.reduce((a, r) => a + Number(r.amount), 0);
-  const todaySave = S.sav.filter(r => r.date === k);
   const recent = S.tx.slice(0, 8);
 
   m.innerHTML = `
     <div class="hero">
       <div class="k">오늘 쓴 돈</div>
       <div class="v">${comma(todayExp)}<span style="font-size:17px;"> 원</span></div>
-      <div class="s">${rows.length}건${todaySave.length ? ` · 아낀 돈 ${comma(todaySave.reduce((a, r) => a + Number(r.amount), 0))}원` : ''}</div>
+      <div class="s">${rows.length}건</div>
     </div>
 
     <div class="pace">
@@ -830,7 +795,7 @@ function renderToday(m) {
     <div class="pace">
       <div><span>이달 수입</span><b style="color:var(--income-text)">${comma(t.inc)}</b></div>
       <div><span>이달 순액</span><b style="color:var(--accent-text)">${comma(t.net)}</b></div>
-      <div><span>이달 아낌</span><b style="color:var(--save-text)">${comma(monthSave)}</b></div>
+      <div><span>기록 수</span><b>${S.tx.length}</b></div>
     </div>
 
     <span class="lab">오늘 기록</span>
@@ -867,45 +832,35 @@ function bindMnav(m) {
   }));
 }
 
-const LIST_FILTERS = [['all', '전체'], ['지출', '지출'], ['수입', '수입'], ['이체', '이체'], ['아낀돈', '아낀 돈']];
+const LIST_FILTERS = [['all', '전체'], ['지출', '지출'], ['수입', '수입'], ['이체', '이체']];
 
 function renderList(m) {
   const t = monthTotals();
   const f = S.listFilter;
-  const monthSave = S.sav.reduce((a, r) => a + Number(r.amount), 0);
-
-  /* 아낀 돈도 결국 그날의 기록이라 같은 날짜 줄에 섞어서 보여준다 */
-  const items = [];
-  if (f === 'all' || f !== '아낀돈') {
-    S.tx.filter(r => f === 'all' || kindOf(r.category_id) === f).forEach(r => items.push({ t: 'tx', d: r.date, r }));
-  }
-  if (f === 'all' || f === '아낀돈') {
-    S.sav.forEach(r => items.push({ t: 'sv', d: r.date, r }));
-  }
-  const days = [...new Set(items.map(x => x.d))].sort().reverse();
+  const items = S.tx.filter(r => f === 'all' || kindOf(r.category_id) === f);
+  const days = [...new Set(items.map(r => r.date))].sort().reverse();
 
   m.innerHTML = `
     ${mnavHtml()}
     <div class="sum3">
       <div><span>수입</span><b class="i">${comma(t.inc)}</b></div>
       <div><span>지출</span><b class="e">${comma(t.exp)}</b></div>
-      <div><span>아낌</span><b class="s">${comma(monthSave)}</b></div>
+      <div><span>순액</span><b class="n">${comma(t.net)}</b></div>
     </div>
     <div class="chips" style="margin-bottom:4px;">${LIST_FILTERS.map(([v, l]) =>
       `<button class="chip sm ${f === v ? 'on' : ''}" data-f="${v}">${l}</button>`).join('')}</div>
     ${days.length ? days.map(dk => {
-      const rows = items.filter(x => x.d === dk);
-      const dayExp = rows.reduce((a, x) => a + (x.t === 'tx' && kindOf(x.r.category_id) === '지출' ? Number(x.r.amount) : 0), 0);
+      const rows = items.filter(r => r.date === dk);
+      const dayExp = rows.reduce((a, r) => a + (kindOf(r.category_id) === '지출' ? Number(r.amount) : 0), 0);
       return `<div class="day">
         <div class="dh"><span>${dayLabel(dk)}</span><b>${dayExp ? '지출 ' + comma(dayExp) : ''}</b></div>
-        <div class="list">${rows.map(x => x.t === 'tx' ? txRow(x.r) : svRow(x.r)).join('')}</div>
+        <div class="list">${rows.map(r => txRow(r)).join('')}</div>
       </div>`;
     }).join('') : '<div class="empty">기록이 없습니다.</div>'}`;
 
   bindMnav(m);
   $$('[data-f]', m).forEach(b => b.addEventListener('click', () => { S.listFilter = b.dataset.f; scrollTop(); renderTab(); }));
   $$('[data-tx]', m).forEach(b => b.addEventListener('click', () => openEdit(Number(b.dataset.tx))));
-  $$('[data-sv]', m).forEach(b => b.addEventListener('click', () => openSaveEdit(Number(b.dataset.sv))));
 }
 
 function txRow(r, withDate) {
@@ -922,17 +877,6 @@ function txRow(r, withDate) {
     <span class="v ${kindCls(k)}">${k === '지출' ? '−' : k === '수입' ? '+' : ''}${comma(Math.abs(Number(r.amount)))}</span>
   </div>`;
 }
-function svRow(r) {
-  return `<div class="it" data-sv="${r.id}">
-    <span class="em">${SAVE_EMOJI[r.kind] || '💧'}</span>
-    <span class="tx">
-      <div class="t1">${esc(r.title)}</div>
-      <div class="t2">아낀 돈 · ${esc(r.kind)}${r.note ? ' · ' + esc(r.note) : ''}</div>
-    </span>
-    <span class="v s">${comma(Number(r.amount))}</span>
-  </div>`;
-}
-
 /* ---------------- 기록 수정 시트 ---------------- */
 function sheetOpen(html) {
   const sh = $('#sheet');
@@ -1031,64 +975,6 @@ async function delEdit() {
   } catch (e) { toast('삭제 실패 — ' + (e.message || e)); }
 }
 
-/* ---------------- 아낀 돈 수정 시트 ----------------
-   계좌를 드나든 돈이 아니라 "안 썼다 / 얻어먹었다"를 세는 기록.
-   그래서 가계부(transactions)와 완전히 분리된 표에 쌓이고, 수입·지출 집계에 섞이지 않는다. */
-function openSaveEdit(id) {
-  const r = S.sav.find(x => x.id === id);
-  if (!r) return;
-  S.edit = { _sv: true, ...r, amount: String(Math.abs(Number(r.amount))) };
-  drawSaveEdit();
-}
-function drawSaveEdit() {
-  const e = S.edit;
-  sheetOpen(`
-    <div class="box">
-      <div class="sh"><h3>아낀 돈 수정</h3><button class="x" id="e-x">×</button></div>
-      ${amtHtml(e.amount, false, 'sv')}
-      <div style="margin-top:9px;">${padHtml('pad3')}</div>
-      <span class="lab">어떻게</span>
-      <div class="chips">${SAVE_KINDS.map(k =>
-        `<button class="chip sv ${e.kind === k ? 'on' : ''}" data-ek="${k}">${SAVE_EMOJI[k]} ${k}</button>`).join('')}</div>
-      <span class="lab">무엇을</span>
-      <input class="in" id="e-title" value="${esc(e.title || '')}">
-      <span class="lab">날짜</span>
-      <input class="in" type="date" id="e-date" value="${e.date}">
-      <span class="lab">메모</span>
-      <input class="in" id="e-note" value="${esc(e.note || '')}">
-      <button class="save sv inline" id="e-save">저장</button>
-      <button class="del" id="e-del">삭제</button>
-    </div>`);
-
-  bindPad('pad3', () => e.amount, (v) => { e.amount = v; }, () => paintAmtBox('#sheet .amt', e.amount, false, 'sv'));
-  $('#e-x').addEventListener('click', sheetClose);
-  $$('[data-ek]').forEach(b => b.addEventListener('click', () => { e.kind = b.dataset.ek; drawSaveEdit(); }));
-  $('#e-title').addEventListener('input', (x) => { e.title = x.target.value; });
-  $('#e-date').addEventListener('change', (x) => { e.date = x.target.value; });
-  $('#e-note').addEventListener('input', (x) => { e.note = x.target.value; });
-  $('#e-save').addEventListener('click', async () => {
-    const n = Number(e.amount || 0);
-    if (!n) { toast('금액을 입력하세요'); return; }
-    if (!String(e.title || '').trim()) { toast('무엇을 아꼈는지 적어주세요'); return; }
-    try {
-      const { error } = await (await sb()).from('savings_log').update({
-        date: e.date, amount: n, kind: e.kind, title: e.title.trim(),
-        note: (e.note || '').trim() || null, updated_at: new Date().toISOString()
-      }).eq('id', e.id);
-      if (error) throw new Error(error.message);
-      sheetClose(); await loadMonth(); renderTab(); toast('수정했습니다');
-    } catch (err) { toast('저장 실패 — ' + (err.message || err)); }
-  });
-  $('#e-del').addEventListener('click', async () => {
-    if (!confirm(`'${e.title}' 기록을 삭제할까요?`)) return;
-    try {
-      const { error } = await (await sb()).from('savings_log').delete().eq('id', e.id);
-      if (error) throw new Error(error.message);
-      sheetClose(); await loadMonth(); renderTab(); toast('삭제했습니다');
-    } catch (err) { toast('삭제 실패 — ' + (err.message || err)); }
-  });
-}
-
 /* ---------------- 요약 ---------------- */
 let SUM6 = null;
 async function loadSum6() {
@@ -1108,8 +994,6 @@ async function loadSum6() {
 function renderSum(m) {
   const t = monthTotals();
   const rate = t.inc > 0 ? Math.round((t.inc - t.exp) / t.inc * 100) : null;
-  const monthSave = S.sav.reduce((a, r) => a + Number(r.amount), 0);
-  const allSave = S.savAll.reduce((a, r) => a + Number(r.amount), 0);
   const byCat = {};
   S.tx.forEach(r => {
     if (kindOf(r.category_id) !== '지출') return;
@@ -1119,9 +1003,7 @@ function renderSum(m) {
   });
   const top = Object.entries(byCat).sort((a, b) => b[1] - a[1]).slice(0, 8);
   const max = top.length ? top[0][1] : 1;
-  const byKind = {};
-  S.sav.forEach(r => { byKind[r.kind] = (byKind[r.kind] || 0) + Number(r.amount); });
-  const kindRows = Object.entries(byKind).sort((a, b) => b[1] - a[1]);
+  const fixed = S.tx.reduce((a, r) => a + (r.is_fixed && kindOf(r.category_id) === '지출' ? Number(r.amount) : 0), 0);
 
   m.innerHTML = `
     ${mnavHtml()}
@@ -1132,8 +1014,8 @@ function renderSum(m) {
     </div>
     <div class="sum3" style="grid-template-columns:repeat(3,1fr);">
       <div><span>저축률</span><b class="n">${rate === null ? '—' : rate + '%'}</b></div>
-      <div><span>이달 아낌</span><b class="s">${comma(monthSave)}</b></div>
-      <div><span>누적 아낌</span><b class="s">${comma(allSave)}</b></div>
+      <div><span>고정비</span><b class="e">${comma(fixed)}</b></div>
+      <div><span>변동비</span><b class="e">${comma(t.exp - fixed)}</b></div>
     </div>
 
     <span class="lab">지출 많은 분류</span>
@@ -1141,12 +1023,6 @@ function renderSum(m) {
       <div class="bar"><div class="bl"><span>${esc(k)}</span><b>${comma(v)}</b></div>
       <div class="bt"><div class="bf" style="width:${Math.round(v / max * 100)}%"></div></div></div>`).join('')
       : '<div class="empty">지출 기록이 없습니다.</div>'}</div>
-
-    ${kindRows.length ? `<span class="lab">아낀 돈 유형별</span>
-      <div class="card">${kindRows.map(([k, v]) => `
-        <div class="bar"><div class="bl"><span>${SAVE_EMOJI[k] || '💧'} ${esc(k)}</span><b>${comma(v)}</b></div>
-        <div class="bt"><div class="bf" style="width:${Math.round(v / monthSave * 100)}%;background:var(--save)"></div></div></div>`).join('')}
-      </div>` : ''}
 
     <span class="lab">최근 6개월 지출</span>
     <div class="card" id="sum6"><div class="empty">불러오는 중…</div></div>`;
