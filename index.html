@@ -2519,11 +2519,13 @@ body{font-variant-numeric:tabular-nums;}
 
 /* ---------- 목록 관리 ----------
    여기만 밝은 표로 둔다. 값을 오래 들여다보고 고치는 화면이라, 시트처럼 밝은 바탕이 눈이 덜 아프다. */
-.dbm-page{
+.dbm-page,.dbm-pop{
   --l-bg:#f4f6f8; --l-panel:#ffffff; --l-head:#eaeef3; --l-alt:#fafbfc;
   --l-line:#dde2e8; --l-line-2:#bfc7d1;
   --l-text:#1f2733; --l-dim:#4d5766; --l-faint:#7c8798;
   --l-accent:#8a6d16; --l-accent-bg:#fdf5dd; --l-focus:#c9a227;
+}
+.dbm-page{
   display:flex;align-items:stretch;gap:0;
   min-height:calc(100vh - var(--hdr-h, 130px) - 34px);
   background:var(--l-bg);color:var(--l-text);
@@ -2539,7 +2541,7 @@ body{font-variant-numeric:tabular-nums;}
   border:1px solid transparent;border-radius:var(--r-sm);background:transparent;color:var(--l-dim);
   font-family:var(--sans);font-size:var(--fs-base);cursor:pointer;text-align:left;}
 .dbm-rail button:hover{background:#ffffff;color:var(--l-text);}
-.dbm-rail button.on{background:var(--l-panel);border-color:var(--l-line-2);color:var(--l-text);font-weight:700;
+.dbm-rail button.on{background:var(--l-panel);border-color:var(--l-line-2);color:var(--l-text);font-weight:500;
   box-shadow:inset 3px 0 0 var(--l-focus);}
 .dbm-rail button i{margin-left:auto;font-style:normal;font-family:var(--mono);font-size:var(--fs-tiny);color:var(--l-faint);}
 .dbm-main{flex:1 1 auto;min-width:0;padding:0 14px 40px;background:var(--l-bg);
@@ -2550,15 +2552,15 @@ body{font-variant-numeric:tabular-nums;}
 .dbm-tools{position:sticky;z-index:26;background:var(--l-bg);padding:12px 0 0;}
 .dbm-bar{display:flex;align-items:center;gap:7px;flex-wrap:nowrap;padding-bottom:10px;overflow:hidden;}
 .dbm-bar .en-in{background:var(--l-panel);border:1px solid var(--l-line-2);color:var(--l-text);
-  height:30px;font-size:var(--fs-base);border-radius:var(--r-sm);}
+  height:30px;font-size:var(--fs-base);border-radius:9px;}
 .dbm-bar .en-in::placeholder{color:var(--l-faint);}
 .dbm-bar .en-in:focus{outline:none;border-color:var(--l-focus);box-shadow:0 0 0 2px rgba(201,162,39,.25);}
-.dbm-bar .grow{flex:1 1 120px;min-width:90px;padding:0 9px;}
-.dbm-fsel{flex:0 0 auto;max-width:190px;padding:0 6px;}
+.dbm-bar .grow{flex:0 0 132px;min-width:0;padding:0 10px;}
+.dbm-fsel{flex:0 0 auto;max-width:186px;padding:0 7px;}
 .dbm-count{flex:0 0 auto;font-size:var(--fs-xs);color:var(--l-faint);font-family:var(--mono);
   margin-left:auto;padding-left:4px;white-space:nowrap;}
-.dbm-btn{flex:0 0 auto;height:30px;padding:0 11px;border-radius:var(--r-sm);cursor:pointer;white-space:nowrap;
-  font-family:var(--sans);font-size:var(--fs-xs);font-weight:600;
+.dbm-btn{flex:0 0 auto;height:30px;padding:0 12px;border-radius:9px;cursor:pointer;white-space:nowrap;
+  font-family:var(--sans);font-size:var(--fs-xs);font-weight:400;
   border:1px solid var(--l-line-2);background:var(--l-panel);color:var(--l-dim);}
 .dbm-btn:hover{border-color:var(--l-faint);color:var(--l-text);}
 .dbm-btn.on{background:var(--l-accent-bg);border-color:var(--l-focus);color:var(--l-accent);}
@@ -2566,75 +2568,98 @@ body{font-variant-numeric:tabular-nums;}
 .dbm-btn.go:disabled{opacity:.4;cursor:default;}
 
 /* ---- 새 항목 : 표 밖에 따로 둔다 ---- */
-.dbm-addbox{border:1px dashed var(--l-focus);background:var(--l-accent-bg);border-radius:var(--r-sm);
-  padding:7px 9px;margin-bottom:10px;}
-.dbm-addhead{display:flex;align-items:center;gap:8px;font-size:var(--fs-xs);font-weight:700;
-  color:var(--l-accent);margin-bottom:6px;}
+.dbm-addbox{border:1px solid var(--l-focus);background:var(--l-accent-bg);border-radius:11px;
+  padding:9px 11px;margin-bottom:11px;}
+.dbm-addhead{display:flex;align-items:center;gap:8px;font-size:var(--fs-xs);font-weight:500;
+  color:var(--l-accent);margin-bottom:7px;}
 .dbm-addhead .sp{margin-left:auto;}
 .dbm-addgrid{display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
 .dbm-addgrid label{display:flex;align-items:center;gap:5px;font-size:var(--fs-xs);color:var(--l-dim);}
-.dbm-addgrid .en-in{height:28px;font-size:var(--fs-base);padding:0 8px;border-radius:var(--r-xs);
+.dbm-addgrid .en-in{height:28px;font-size:var(--fs-base);padding:0 9px;border-radius:8px;
   background:var(--l-panel);border:1px solid var(--l-line-2);color:var(--l-text);width:132px;}
 .dbm-addgrid .en-in.wide{width:180px;}
 .dbm-addgrid .en-in.narrow{width:74px;}
 .dbm-addgrid .en-in:focus{outline:none;border-color:var(--l-focus);}
 .dbm-addgrid input[type=checkbox]{width:15px;height:15px;accent-color:var(--l-focus);}
 
-/* ---- 표 : 스프레드시트처럼 ----
-   칸마다 상자를 그리지 않는다. 격자선은 셀 테두리로만 긋고 입력칸은 셀을 꽉 채워
-   투명하게 깐다. 그래야 마우스를 올렸을 때 줄 전체가 통으로 밝아진다. */
-.dbm-table{width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed;background:var(--l-panel);}
+/* ---- 표 : 기능은 시트, 생김새는 이 사이트 ----
+   격자로 훑어 보되 모서리는 둥글게, 값은 칩으로 고른다. */
+.dbm-table{width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed;}
 .dbm-table.head{margin:0;}
 .dbm-table th{
   position:sticky;z-index:25;background:var(--l-head);
-  font-family:var(--sans);font-weight:700;font-size:var(--fs-xs);color:var(--l-dim);
-  text-align:left;padding:7px 9px;white-space:nowrap;cursor:pointer;user-select:none;
-  border-top:1px solid var(--l-line-2);border-bottom:1px solid var(--l-line-2);
-  border-right:1px solid var(--l-line);
+  font-family:var(--sans);font-weight:500;font-size:var(--fs-xs);color:var(--l-dim);
+  text-align:left;padding:8px 11px;white-space:nowrap;cursor:pointer;user-select:none;
+  border-top:1px solid var(--l-line-2);border-bottom:1px solid var(--l-line);
 }
-.dbm-table th:first-child{border-left:1px solid var(--l-line-2);}
-.dbm-table th:last-child{border-right:1px solid var(--l-line-2);cursor:default;}
-.dbm-table th:hover{color:var(--l-text);background:#e2e7ee;}
-.dbm-table th.on{color:var(--l-accent);background:var(--l-accent-bg);}
+.dbm-table th:first-child{border-left:1px solid var(--l-line-2);border-top-left-radius:10px;}
+.dbm-table th:last-child{border-right:1px solid var(--l-line-2);border-top-right-radius:10px;cursor:default;}
+.dbm-table th:hover{color:var(--l-text);}
+.dbm-table th.on{color:var(--l-accent);}
 .dbm-table th.mid{text-align:center;}
 .dbm-table th .ar{font-size:var(--fs-tiny);margin-left:3px;}
-.dbm-table.body td{padding:0;height:30px;border-bottom:1px solid var(--l-line);
-  border-right:1px solid var(--l-line);vertical-align:middle;}
+.dbm-table.body td{padding:0;height:34px;border-bottom:1px solid var(--l-line);vertical-align:middle;}
 .dbm-table.body td:first-child{border-left:1px solid var(--l-line-2);}
 .dbm-table.body td:last-child{border-right:1px solid var(--l-line-2);}
 .dbm-table.body tr:last-child td{border-bottom:1px solid var(--l-line-2);}
-.dbm-table.body tr:nth-child(even) td{background:var(--l-alt);}
-.dbm-table.body tr:hover td{background:#eef4ff;}
-.dbm-table.body tr.dirty td{background:#fff6d9;}
+.dbm-table.body tr:last-child td:first-child{border-bottom-left-radius:10px;}
+.dbm-table.body tr:last-child td:last-child{border-bottom-right-radius:10px;}
+.dbm-table.body tr{background:var(--l-panel);}
+.dbm-table.body tr:hover td{background:#eef3fb;}
+.dbm-table.body tr.dirty td{background:#fdf6e0;}
 .dbm-table td.mid{text-align:center;}
-.dbm-table td.none{color:var(--l-faint);font-size:var(--fs-base);text-align:center;padding:26px 0;background:var(--l-panel);}
-/* 셀 안의 입력칸 — 테두리·배경 없이 셀을 꽉 채우고, 고를 때만 시트처럼 테두리가 선다 */
-.dbm-table .en-in{width:100%;height:29px;font-size:var(--fs-base);padding:0 9px;
-  border:0;border-radius:0;background:transparent;color:var(--l-text);}
-.dbm-table .en-in:focus{outline:none;background:#fff;
-  box-shadow:inset 0 0 0 2px var(--l-focus);position:relative;z-index:2;}
-.dbm-table select.en-in{padding-right:2px;cursor:pointer;}
+.dbm-table td.none{color:var(--l-faint);font-size:var(--fs-base);text-align:center;padding:26px 0;}
+
+/* 글자칸 — 평소엔 테두리 없이 조용히, 고를 때만 둥근 테두리가 선다 */
+.dbm-table .en-in{width:calc(100% - 10px);margin:0 5px;height:26px;font-size:var(--fs-base);
+  padding:0 8px;border:1px solid transparent;border-radius:7px;background:transparent;
+  color:var(--l-text);font-weight:400;}
+.dbm-table .en-in:hover{border-color:var(--l-line);background:#fff;}
+.dbm-table .en-in:focus{outline:none;background:#fff;border-color:var(--l-focus);
+  box-shadow:0 0 0 3px rgba(201,162,39,.18);position:relative;z-index:2;}
 .dbm-table input[type=checkbox]{width:15px;height:15px;accent-color:var(--l-focus);cursor:pointer;}
-/* 고칠 수 없는 값(건수·합계 같은 계산 값) */
-.dbm-ro{display:flex;align-items:center;gap:5px;height:29px;padding:0 9px;overflow:hidden;
+.dbm-ro{display:flex;align-items:center;gap:5px;height:26px;padding:0 11px;overflow:hidden;
   font-size:var(--fs-base);color:var(--l-dim);white-space:nowrap;}
 .dbm-ro.num{justify-content:flex-end;font-family:var(--mono);}
-.dbm-table td.col-meta{background:#f2f4f7;}
-.dbm-table td.col-key .en-in{font-weight:600;}
-.dbm-table tr:hover td.col-meta{background:#e6ecf6;}
+.dbm-table td.col-meta{background:#f3f5f8;}
+.dbm-table tr:hover td.col-meta{background:#e9eef7;}
 
-/* ---- 값에 따라 칠하는 칸 ---- */
-.dbm-table td.t-in{background:#e6f4ea;}   .dbm-table td.t-in .en-in{color:#1a7a45;font-weight:600;}
-.dbm-table td.t-out{background:#fdecea;}  .dbm-table td.t-out .en-in{color:#b3382f;font-weight:600;}
-.dbm-table td.t-tr{background:#e6f1fb;}   .dbm-table td.t-tr .en-in{color:#1a5fa8;font-weight:600;}
-.dbm-table td.t-as{background:#f0ebfa;}   .dbm-table td.t-as .en-in{color:#5b3fa8;font-weight:600;}
-.dbm-table td.t-cash{background:#e9f3ee;} .dbm-table td.t-cash .en-in{color:#26674a;font-weight:600;}
-.dbm-table td.t-inv{background:#fdf0e3;}  .dbm-table td.t-inv .en-in{color:#9a5a12;font-weight:600;}
-.dbm-table td.t-sav{background:#e9eefb;}  .dbm-table td.t-sav .en-in{color:#33499c;font-weight:600;}
-.dbm-table td.t-pen{background:#f3ecf7;}  .dbm-table td.t-pen .en-in{color:#6d3d86;font-weight:600;}
-.dbm-table td.t-us{background:#eaf1fb;}   .dbm-table td.t-us .en-in{color:#1a5fa8;font-weight:600;}
-.dbm-table td.t-kr{background:#fdeef0;}   .dbm-table td.t-kr .en-in{color:#a83246;font-weight:600;}
-.dbm-table tr:hover td[class*="t-"]{filter:brightness(.97);}
+/* ---- 칩으로 고르는 칸 ---- */
+.dbm-cell{display:flex;align-items:center;gap:4px;height:32px;padding:0 7px;overflow:hidden;}
+.dbm-cell .more{font-size:var(--fs-tiny);color:var(--l-faint);flex:0 0 auto;}
+.dbm-chip{display:inline-flex;align-items:center;gap:4px;height:23px;padding:0 10px;border-radius:999px;
+  border:1px solid var(--l-line-2);background:var(--l-panel);color:var(--l-dim);
+  font-family:var(--sans);font-size:var(--fs-xs);font-weight:400;cursor:pointer;
+  max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.dbm-chip:hover{border-color:var(--l-focus);color:var(--l-text);}
+.dbm-chip.none{color:var(--l-faint);border-style:dashed;}
+.dbm-chip.add{width:23px;padding:0;justify-content:center;color:var(--l-accent);border-style:dashed;border-color:var(--l-focus);}
+.dbm-chip .x{color:var(--l-faint);font-size:var(--fs-sm);margin-left:1px;}
+.dbm-chip .x:hover{color:#b3382f;}
+.c-in{background:#e8f5ec;border-color:#bcdcc7;color:#1a7a45;}
+.c-out{background:#fdeeec;border-color:#f0c7c2;color:#b3382f;}
+.c-tr{background:#e8f1fb;border-color:#c2d6ee;color:#1a5fa8;}
+.c-as{background:#f1ecfa;border-color:#d3c8ee;color:#5b3fa8;}
+.c-cash{background:#eaf4ee;border-color:#c2ddcd;color:#26674a;}
+.c-inv{background:#fdf2e6;border-color:#eed6b6;color:#9a5a12;}
+.c-sav{background:#eaeffb;border-color:#c8d3ef;color:#33499c;}
+.c-pen{background:#f5eef8;border-color:#e0cdea;color:#6d3d86;}
+.c-us{background:#ebf2fb;border-color:#c8d9f0;color:#1a5fa8;}
+.c-kr{background:#fdeff1;border-color:#f0cbd2;color:#a83246;}
+.c-tag{background:#f2f0e6;border-color:#ddd7c2;color:#6b6135;}
+
+/* 고를 때 뜨는 칩 목록 */
+.dbm-pop{position:fixed;z-index:220;background:#fff;border:1px solid var(--l-line-2);
+  color:var(--l-text);font-family:var(--sans);
+  border-radius:12px;box-shadow:0 14px 34px rgba(20,28,40,.28);padding:10px;width:330px;}
+.dbm-pop .q{width:100%;height:28px;border:1px solid var(--l-line-2);border-radius:8px;padding:0 9px;
+  font-size:var(--fs-base);color:var(--l-text);background:#fff;margin-bottom:8px;}
+.dbm-pop .q:focus{outline:none;border-color:var(--l-focus);box-shadow:0 0 0 3px rgba(201,162,39,.18);}
+.dbm-pop .opts{display:flex;flex-wrap:wrap;gap:5px;max-height:270px;overflow-y:auto;}
+.dbm-pop .glab{width:100%;font-size:var(--fs-tiny);color:var(--l-faint);margin:5px 0 1px;}
+.dbm-pop .glab:first-child{margin-top:0;}
+.dbm-pop .dbm-chip.on{box-shadow:inset 0 0 0 1px var(--l-focus);border-color:var(--l-focus);}
+.dbm-pop .empty{font-size:var(--fs-xs);color:var(--l-faint);padding:6px 2px;}
 
 .dbm-x{border:none;background:transparent;color:var(--l-faint);cursor:pointer;font-size:var(--fs-md);line-height:1;padding:2px;}
 .dbm-x:hover{color:#b3382f;}
@@ -17464,16 +17489,58 @@ function dbmRender(host) {
   dbmRenderPane();
 }
 
-/* 값에 따라 칸을 칠한다 — 종류·자산분류·시장처럼 눈으로 갈라 봐야 하는 열 */
+/* 값에 따라 칩 색을 고른다 — 종류·자산분류·시장처럼 눈으로 갈라 봐야 하는 것들 */
 const DBM_TINT = {
-  '수입': 't-in', '지출': 't-out', '이체': 't-tr', '자산': 't-as',
-  '현금 자산': 't-cash', '투자 자산': 't-inv', '저축 자산': 't-sav', '연금 자산': 't-pen',
-  'US': 't-us', 'KR': 't-kr'
+  '수입': 'c-in', '지출': 'c-out', '이체': 'c-tr', '자산': 'c-as',
+  '현금 자산': 'c-cash', '투자 자산': 'c-inv', '저축 자산': 'c-sav', '연금 자산': 'c-pen',
+  'US': 'c-us', 'KR': 'c-kr'
 };
-function dbmTintClass(c, r) {
-  if (!c.tint) return '';
-  const v = c.tint === 'cat' ? ((EN.catById[r[c.k]] || {}).kind || '') : String(r[c.k] || '');
-  return DBM_TINT[v] || '';
+function dbmTintOf(v) { return DBM_TINT[String(v || '')] || ''; }
+
+/* 칩 목록 — 네이티브 드롭다운 대신 눌러서 고른다.
+   options: [{v, label, cls, on}], onPick(v) */
+let DBM_POP = null;
+function dbmClosePop() {
+  if (!DBM_POP) return;
+  DBM_POP.el.remove(); DBM_POP = null;
+  document.removeEventListener('mousedown', dbmPopOutside, true);
+  document.removeEventListener('keydown', dbmPopKey, true);
+}
+function dbmPopOutside(e) { if (DBM_POP && !DBM_POP.el.contains(e.target) && e.target !== DBM_POP.anchor) dbmClosePop(); }
+function dbmPopKey(e) { if (e.key === 'Escape') { e.stopPropagation(); dbmClosePop(); } }
+function dbmOpenPop(anchor, opts, onPick, o) {
+  dbmClosePop();
+  const cfg = o || {};
+  const el = document.createElement('div');
+  el.className = 'dbm-pop';
+  const draw = (q) => {
+    const t = (q || '').trim().toLowerCase();
+    const hit = opts.filter(x => !t || (x.label + ' ' + (x.group || '')).toLowerCase().includes(t));
+    let last = null;
+    el.querySelector('.opts').innerHTML = hit.length ? hit.map(x => {
+      const lab = (x.group && x.group !== last) ? `<div class="glab">${enEsc(x.group)}</div>` : '';
+      last = x.group || last;
+      return lab + `<button class="dbm-chip ${x.cls || ''} ${x.on ? 'on' : ''}" data-v="${enEsc(x.v)}">${enEsc(x.label)}</button>`;
+    }).join('') : '<div class="empty">일치하는 값이 없습니다.</div>';
+    el.querySelectorAll('.opts [data-v]').forEach(b => b.addEventListener('click', () => {
+      onPick(b.dataset.v);
+      if (!cfg.multi) dbmClosePop();
+    }));
+  };
+  el.innerHTML = (cfg.search ? '<input class="q" placeholder="검색">' : '') + '<div class="opts"></div>';
+  document.body.appendChild(el);
+  draw('');
+  const r = anchor.getBoundingClientRect();
+  el.style.left = Math.max(8, Math.min(r.left, window.innerWidth - el.offsetWidth - 12)) + 'px';
+  const below = window.innerHeight - r.bottom;
+  el.style.top = (below > el.offsetHeight + 12 ? r.bottom + 5 : Math.max(8, r.top - el.offsetHeight - 5)) + 'px';
+  const q = el.querySelector('.q');
+  if (q) { q.addEventListener('input', () => draw(q.value)); setTimeout(() => q.focus(), 10); }
+  DBM_POP = { el, anchor, draw };
+  setTimeout(() => {
+    document.addEventListener('mousedown', dbmPopOutside, true);
+    document.addEventListener('keydown', dbmPopKey, true);
+  }, 0);
 }
 
 /* 필터 값 읽기 — 켜고 끄는 기준을 한 곳에 모아 둔다 */
@@ -17495,7 +17562,11 @@ async function dbmRenderPane() {
   const host = document.getElementById('dbm-body');
   if (!host) return;
 
-  try { await dbmLoad(DBM.tab, false); }
+  try {
+    await dbmLoad(DBM.tab, false);
+    /* 종목의 테마 칩은 테마 목록에서 고른다 */
+    if (DBM.tab === 'stock') await dbmLoad('theme', false).catch(() => {});
+  }
   catch (e) { host.innerHTML = `<div class="en-empty">불러오지 못했습니다 — ${enEsc(e.message || e)}</div>`; return; }
 
   const tabId = DBM.tab;
@@ -17546,33 +17617,84 @@ async function dbmRenderPane() {
     return enEsc(r[c.k] == null ? '' : r[c.k]);
   };
 
-  const tdCls = (c, r) => {
+  const tdCls = (c) => {
     const out = [];
     if (c.mid) out.push('mid');
     if (c.tone) out.push('col-' + c.tone);
-    const t = dbmTintClass(c, r);
-    if (t) out.push(t);
     return out.length ? ` class="${out.join(' ')}"` : '';
+  };
+  /* 값을 고르는 칸은 칩으로 보여준다 — 사이트 다른 화면과 같은 모양 */
+  const chipHtml = (c, r) => {
+    const v = r[c.k];
+    if (c.t === 'cat') {
+      const cc = EN.catById[v];
+      return `<div class="dbm-cell"><button class="dbm-chip ${cc ? dbmTintOf(cc.kind) : 'none'}" data-pick="${c.k}">${
+        cc ? enEsc(cc.category + ' › ' + cc.subcategory) : '분류 없음'}</button></div>`;
+    }
+    if (c.t === 'sel') {
+      const t = String(v || '');
+      return `<div class="dbm-cell"><button class="dbm-chip ${t ? dbmTintOf(t) : 'none'}" data-pick="${c.k}">${
+        enEsc(t || '—')}</button></div>`;
+    }
+    /* tags — 여러 개, 눌러서 넣고 뺀다 */
+    const list = Array.isArray(v) ? v : dbmTextToTags(v);
+    return `<div class="dbm-cell">${list.slice(0, 3).map(t =>
+      `<span class="dbm-chip c-tag" data-tag="${enEsc(t)}">${enEsc(t)}<i class="x">×</i></span>`).join('')}${
+      list.length > 3 ? `<span class="more">+${list.length - 3}</span>` : ''}
+      <button class="dbm-chip add" data-pick="${c.k}" title="추가">＋</button></div>`;
   };
   const inner = (c, r, id) => {
     const v = r[c.k];
     if (c.t === 'bool') return `<input type="checkbox" id="${id}" data-k="${c.k}" ${v ? 'checked' : ''}>`;
-    if (c.t === 'cat') return `<select class="en-in" id="${id}" data-k="${c.k}">
-      <option value="">분류 없음</option>${catOpts.map(o =>
-        `<option value="${o.id}" ${Number(v) === o.id ? 'selected' : ''}>${enEsc(o.kind)} · ${enEsc(o.category)} › ${enEsc(o.subcategory)}</option>`).join('')}</select>`;
-    if (c.t === 'sel') return `<select class="en-in" id="${id}" data-k="${c.k}">${
-      c.o.map(o => `<option value="${enEsc(o)}" ${String(v || '') === o ? 'selected' : ''}>${enEsc(o || '—')}</option>`).join('')}</select>`;
-    const val = c.t === 'tags' ? dbmTagsToText(v) : (v == null ? '' : v);
+    if (c.t === 'cat' || c.t === 'sel' || c.t === 'tags') return chipHtml(c, r);
     return `<input class="en-in" id="${id}" data-k="${c.k}"
-      ${c.t === 'num' ? 'inputmode="numeric"' : ''} ${c.t === 'tags' ? 'list="dbm-themes"' : ''}
-      ${c.list ? `list="${c.list}"` : ''}
-      value="${enEsc(val)}" placeholder="${enEsc(c.l)}">`;
+      ${c.t === 'num' ? 'inputmode="numeric"' : ''} ${c.list ? `list="${c.list}"` : ''}
+      value="${enEsc(v == null ? '' : v)}" placeholder="${enEsc(c.l)}">`;
   };
   const cell = (c, r, idPrefix) => {
     const id = `${idPrefix}-${c.k}`;
     if (c.t === 'ro') return `<td class="col-meta${c.mid ? ' mid' : ''}"><div class="dbm-ro${c.num ? ' num' : ''}">${roCell(c, r)}</div></td>`;
-    return `<td${tdCls(c, r)}>${inner(c, r, id)}</td>`;
+    return `<td${tdCls(c)}>${inner(c, r, id)}</td>`;
   };
+
+  const optsFor = (c) => {
+    if (c.t === 'cat') return [{ v: '', label: '분류 없음', cls: 'none' }].concat(
+      catOpts.map(o => ({ v: String(o.id), label: o.category + ' › ' + o.subcategory, cls: dbmTintOf(o.kind), group: o.kind })));
+    if (c.t === 'sel') return c.o.map(o => ({ v: o, label: o || '—', cls: dbmTintOf(o) }));
+    return themeList.map(t => ({ v: t, label: t, cls: 'c-tag' }));
+  };
+  function bindChips(scope, c, rec, onSet) {
+    const set = (val) => {
+      rec[c.k] = val;
+      if (onSet) onSet(val);
+      const cellEl = scope.querySelector('.dbm-cell');
+      if (!cellEl) return;
+      cellEl.outerHTML = chipHtml(c, rec);
+      bindChips(scope, c, rec, onSet);
+    };
+    scope.querySelectorAll('[data-pick]').forEach(b => b.addEventListener('click', () => {
+      const cur = rec[c.k];
+      if (c.t === 'tags') {
+        const list = Array.isArray(cur) ? cur.slice() : dbmTextToTags(cur);
+        dbmOpenPop(b, optsFor(c).map(o => ({ ...o, on: list.includes(o.v) })), (v) => {
+          const at = list.indexOf(v);
+          if (at >= 0) list.splice(at, 1); else list.push(v);
+          set(list.slice());
+          if (DBM_POP) DBM_POP.draw('');
+        }, { multi: true, search: true });
+      } else {
+        dbmOpenPop(b, optsFor(c).map(o => ({ ...o, on: String(cur == null ? '' : cur) === o.v })),
+          (v) => set(c.t === 'cat' ? (Number(v) || null) : v),
+          { search: c.t === 'cat' });
+      }
+    }));
+    scope.querySelectorAll('[data-tag] .x').forEach(x => x.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const tag = x.parentElement.dataset.tag;
+      const list = (Array.isArray(rec[c.k]) ? rec[c.k] : dbmTextToTags(rec[c.k])).filter(t => t !== tag);
+      set(list);
+    }));
+  }
   const draft = DBM.draft || { ...DBM_NEW[tabId] };
   const dirtyN = Object.keys(DBM.dirty).length;
   const arrow = (k) => sort && sort.k === k ? `<b class="ar">${sort.dir === 'asc' ? '▲' : '▼'}</b>` : '';
@@ -17583,15 +17705,11 @@ async function dbmRenderPane() {
     const id = 'dbmn-' + c.k;
     const wide = (c.w === 'auto' || parseInt(c.w, 10) >= 150) ? ' wide' : (parseInt(c.w, 10) <= 90 ? ' narrow' : '');
     if (c.t === 'bool') return `<label>${enEsc(c.l)}<input type="checkbox" id="${id}" data-k="${c.k}" ${draft[c.k] ? 'checked' : ''}></label>`;
-    if (c.t === 'cat') return `<label>${enEsc(c.l)}<select class="en-in wide" id="${id}" data-k="${c.k}">
-      <option value="">분류 없음</option>${catOpts.map(o =>
-        `<option value="${o.id}" ${Number(draft[c.k]) === o.id ? 'selected' : ''}>${enEsc(o.kind)} · ${enEsc(o.category)} › ${enEsc(o.subcategory)}</option>`).join('')}</select></label>`;
-    if (c.t === 'sel') return `<label>${enEsc(c.l)}<select class="en-in${wide}" id="${id}" data-k="${c.k}">${
-      c.o.map(o => `<option value="${enEsc(o)}" ${String(draft[c.k] || '') === o ? 'selected' : ''}>${enEsc(o || '—')}</option>`).join('')}</select></label>`;
-    const val = c.t === 'tags' ? dbmTagsToText(draft[c.k]) : (draft[c.k] == null ? '' : draft[c.k]);
+    if (c.t === 'cat' || c.t === 'sel' || c.t === 'tags')
+      return `<label data-add="${c.k}">${enEsc(c.l)}${chipHtml(c, draft)}</label>`;
     return `<label>${enEsc(c.l)}<input class="en-in${wide}" id="${id}" data-k="${c.k}"
-      ${c.t === 'num' ? 'inputmode="numeric"' : ''} ${c.t === 'tags' ? 'list="dbm-themes"' : ''}
-      ${c.list ? `list="${c.list}"` : ''} value="${enEsc(val)}" placeholder="${enEsc(c.l)}"></label>`;
+      ${c.t === 'num' ? 'inputmode="numeric"' : ''} ${c.list ? `list="${c.list}"` : ''}
+      value="${enEsc(draft[c.k] == null ? '' : draft[c.k])}" placeholder="${enEsc(c.l)}"></label>`;
   };
 
   host.innerHTML = `
@@ -17694,35 +17812,41 @@ async function dbmRenderPane() {
   }));
 
   /* 표에서 바로 고친다 — 바뀐 값만 모았다가 '변경 저장'으로 한 번에 반영 */
+  const orig = {};
+  all.forEach(r => { orig[String(r.id)] = r; });
+  const mark = (row, id, c, v) => {
+    const base = orig[id] || {};
+    const same = c.t === 'tags'
+      ? dbmTagsToText(base[c.k]) === dbmTagsToText(v)
+      : String(base[c.k] == null ? '' : base[c.k]) === String(v == null ? '' : v);
+    DBM.dirty[id] = DBM.dirty[id] || {};
+    if (same) { delete DBM.dirty[id][c.k]; if (!Object.keys(DBM.dirty[id]).length) delete DBM.dirty[id]; }
+    else DBM.dirty[id][c.k] = v;
+    row.classList.toggle('dirty', !!DBM.dirty[id]);
+    const sv = document.getElementById('dbm-save');
+    const n = Object.keys(DBM.dirty).length;
+    sv.disabled = !n; sv.textContent = n ? `변경 저장 (${n})` : '변경 저장';
+  };
+
   host.querySelectorAll('tbody tr[data-id]').forEach(row => {
     const id = row.dataset.id;
     const rec = all.find(r => String(r.id) === id);
     if (!rec) return;
-    row.querySelectorAll('[data-k]').forEach(el => {
-      const c = cols.find(x => x.k === el.dataset.k);
+    const live = { ...rec };
+    row.querySelectorAll('td').forEach((td, ci) => {
+      const c = cols[ci];
+      if (!c || c.t === 'ro') return;
+      if (c.t === 'cat' || c.t === 'sel' || c.t === 'tags') {
+        bindChips(td, c, live, (v) => mark(row, id, c, v));
+        return;
+      }
+      const el = td.querySelector('[data-k]');
+      if (!el) return;
       const read = () => c.t === 'bool' ? el.checked
         : c.t === 'num' ? (parseInt(String(el.value).replace(/[^0-9-]/g, ''), 10) || 0)
-        : c.t === 'cat' ? (Number(el.value) || null)
-        : c.t === 'tags' ? dbmTextToTags(el.value)
         : el.value.trim();
-      el.addEventListener('change', () => {
-        const v = read();
-        const same = c.t === 'tags' ? dbmTagsToText(rec[c.k]) === dbmTagsToText(v) : String(rec[c.k] == null ? '' : rec[c.k]) === String(v);
-        DBM.dirty[id] = DBM.dirty[id] || {};
-        if (same) { delete DBM.dirty[id][c.k]; if (!Object.keys(DBM.dirty[id]).length) delete DBM.dirty[id]; }
-        else DBM.dirty[id][c.k] = v;
-        row.classList.toggle('dirty', !!DBM.dirty[id]);
-        if (c.tint) {
-          const td = el.closest('td');
-          Object.values(DBM_TINT).forEach(x => td.classList.remove(x));
-          const nc = dbmTintClass(c, { ...rec, [c.k]: v });
-          if (nc) td.classList.add(nc);
-        }
-        const sv = document.getElementById('dbm-save');
-        const n = Object.keys(DBM.dirty).length;
-        sv.disabled = !n; sv.textContent = n ? `변경 저장 (${n})` : '변경 저장';
-      });
-      el.addEventListener('keydown', (e) => { if (e.key === 'Enter') { el.blur(); dbmSave(); } });
+      el.addEventListener('change', () => mark(row, id, c, read()));
+      el.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) { el.blur(); dbmSave(); } });
     });
   });
 
@@ -17730,6 +17854,10 @@ async function dbmRenderPane() {
   document.getElementById('dbm-save').addEventListener('click', dbmSave);
   document.getElementById('dbm-reload').addEventListener('click', async () => {
     DBM.dirty = {}; await dbmLoad(tabId, true); dbmRender();
+  });
+  host.querySelectorAll('[data-add]').forEach(lab => {
+    const c = cols.find(x => x.k === lab.dataset.add);
+    if (c) bindChips(lab, c, draft, () => { DBM.draft = draft; });
   });
   const addBtn = document.getElementById('dbm-add');
   if (addBtn) addBtn.addEventListener('click', dbmAdd);
@@ -17739,13 +17867,12 @@ async function dbmRenderPane() {
 
 function dbmReadDraft() {
   const cols = DBM_COLS[DBM.tab];
-  const out = {};
+  const out = { ...(DBM.draft || DBM_NEW[DBM.tab]) };
   cols.forEach(c => {
     const el = document.getElementById('dbmn-' + c.k);
-    if (!el) return;
+    if (!el) return;   /* 칩으로 고르는 칸은 DBM.draft 에 이미 들어 있다 */
     out[c.k] = c.t === 'bool' ? el.checked
       : c.t === 'num' ? (parseInt(String(el.value).replace(/[^0-9-]/g, ''), 10) || 0)
-      : c.t === 'tags' ? dbmTextToTags(el.value)
       : el.value.trim();
   });
   return out;
