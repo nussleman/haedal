@@ -2549,46 +2549,62 @@ body{font-variant-numeric:tabular-nums;}
 /* 도구 + 표 머리글은 한 덩어리로 붙어 있는다 (그 사이 여백까지) */
 .dbm-tools{position:sticky;z-index:26;background:var(--bg);padding:18px 0 0;}
 .dbm-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-bottom:12px;}
-.dbm-bar .grow{flex:1 1 200px;height:32px;}
-.dbm-count{font-size:var(--fs-xs);color:var(--text-faint);font-family:var(--mono);}
-.dbm-seg{display:inline-flex;gap:4px;}
+.dbm-bar .grow{flex:0 1 300px;height:32px;}
+.dbm-count{font-size:var(--fs-xs);color:var(--text-faint);font-family:var(--mono);margin-left:auto;}
+.dbm-seg{display:inline-flex;gap:4px;flex-wrap:wrap;}
 .dbm-seg button{height:30px;padding:0 10px;border-radius:var(--r-sm);border:1px solid var(--border);background:transparent;
   color:var(--text-dim);font-size:var(--fs-xs);cursor:pointer;display:inline-flex;align-items:center;gap:4px;}
 .dbm-seg button:hover{border-color:var(--border-strong);color:var(--text);}
 .dbm-seg button.on{border-color:var(--accent-fill);color:var(--accent-text);background:rgba(201,162,39,.08);}
 .dbm-seg button i{font-style:normal;font-family:var(--mono);font-size:var(--fs-micro);opacity:.7;}
 
-/* ---- 표 ---- */
+/* ---- 표 : 스프레드시트처럼 ----
+   칸마다 상자를 그리지 않는다. 격자선은 셀 테두리로만 긋고 입력칸은 셀을 꽉 채워
+   투명하게 깐다. 그래야 마우스를 올렸을 때 줄 전체가 통으로 밝아진다. */
 .dbm-table{width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed;}
 .dbm-table.head{margin:0;}
 .dbm-table th{
   position:sticky;z-index:25;background:var(--bg-2);
-  font-family:var(--sans);font-weight:600;font-size:var(--fs-tiny);color:var(--text-faint);
-  text-align:left;padding:8px 8px;white-space:nowrap;cursor:pointer;user-select:none;
-  border-top:1px solid var(--border);border-bottom:1px solid var(--border-strong);
+  font-family:var(--sans);font-weight:600;font-size:var(--fs-xs);color:var(--text-dim);
+  text-align:left;padding:7px 9px;white-space:nowrap;cursor:pointer;user-select:none;
+  border-top:1px solid var(--border-strong);border-bottom:1px solid var(--border-strong);
+  border-right:1px solid var(--border);
 }
-.dbm-table th:first-child{border-left:1px solid var(--border);border-top-left-radius:var(--r-md);}
-.dbm-table th:last-child{border-right:1px solid var(--border);border-top-right-radius:var(--r-md);cursor:default;}
-.dbm-table th:hover{color:var(--text-dim);}
+.dbm-table th:first-child{border-left:1px solid var(--border-strong);}
+.dbm-table th:last-child{border-right:1px solid var(--border-strong);cursor:default;}
+.dbm-table th:hover{color:var(--text);}
 .dbm-table th.on{color:var(--accent-text);}
 .dbm-table th.mid{text-align:center;}
-.dbm-table th .ar{font-size:var(--fs-micro);margin-left:3px;}
-.dbm-table.body td{padding:4px 8px;border-bottom:1px solid var(--border);vertical-align:middle;}
-.dbm-table.body td:first-child{border-left:1px solid var(--border);}
-.dbm-table.body td:last-child{border-right:1px solid var(--border);}
-.dbm-table.body tr:last-child td{border-bottom:1px solid var(--border);}
-.dbm-table.body tr:last-child td:first-child{border-bottom-left-radius:var(--r-md);}
-.dbm-table.body tr:last-child td:last-child{border-bottom-right-radius:var(--r-md);}
+.dbm-table th .ar{font-size:var(--fs-tiny);margin-left:3px;}
+.dbm-table.body td{padding:0;height:31px;border-bottom:1px solid var(--border);
+  border-right:1px solid var(--border);vertical-align:middle;}
+.dbm-table.body td:first-child{border-left:1px solid var(--border-strong);}
+.dbm-table.body td:last-child{border-right:1px solid var(--border-strong);}
+.dbm-table.body tr:last-child td{border-bottom:1px solid var(--border-strong);}
 .dbm-table.body tr:hover td{background:var(--panel-2);}
-.dbm-table.body tr.dirty td{background:rgba(232,201,106,.07);}
+.dbm-table.body tr.dirty td{background:rgba(232,201,106,.09);}
 .dbm-table td.mid{text-align:center;}
-.dbm-table td.none{color:var(--text-faint);font-size:var(--fs-sm);text-align:center;padding:26px 0;}
-.dbm-table .en-in{width:100%;height:30px;font-size:var(--fs-sm);padding:0 8px;}
+.dbm-table td.none{color:var(--text-faint);font-size:var(--fs-base);text-align:center;padding:26px 0;}
+/* 셀 안의 입력칸 — 테두리·배경 없이 셀을 꽉 채우고, 고를 때만 시트처럼 테두리가 선다 */
+.dbm-table .en-in{width:100%;height:30px;font-size:var(--fs-base);padding:0 9px;
+  border:0;border-radius:0;background:transparent;color:var(--text);}
+.dbm-table .en-in:hover{background:rgba(233,231,223,0.04);}
+.dbm-table .en-in:focus{outline:none;background:var(--panel);
+  box-shadow:inset 0 0 0 2px var(--accent-fill);position:relative;z-index:2;}
 .dbm-table select.en-in{padding-right:2px;}
 .dbm-table input[type=checkbox]{width:15px;height:15px;accent-color:var(--accent-fill);cursor:pointer;}
-.dbm-newrow td{background:rgba(233,231,223,0.03);}
-.dbm-newrow:hover td{background:rgba(233,231,223,0.05);}
-.dbm-newrow .en-in{border-style:dashed;}
+/* 고칠 수 없는 값(건수·합계 같은 계산 값) */
+.dbm-ro{display:flex;align-items:center;gap:5px;height:30px;padding:0 9px;overflow:hidden;
+  font-size:var(--fs-base);color:var(--text-dim);white-space:nowrap;}
+.dbm-ro.num{justify-content:flex-end;font-family:var(--mono);}
+.dbm-ro .dim{color:var(--text-faint);}
+.dbm-ro .tx{overflow:hidden;text-overflow:ellipsis;}
+/* 표 안의 작은 배지·꼬리표는 한 단계 크고 진하게 — 안 보인다는 말이 없도록 */
+.dbm-table .lg-kd{font-size:var(--fs-xs);padding:2px 6px;}
+.dbm-table .lg-mg{font-size:var(--fs-xs);color:var(--text-dim);}
+.dbm-newrow td{background:rgba(233,231,223,0.035);}
+.dbm-newrow:hover td{background:rgba(233,231,223,0.055);}
+.dbm-newrow .en-in::placeholder{color:var(--text-faint);opacity:.9;}
 .dbm-plus{border:1px solid var(--accent-fill);background:transparent;color:var(--accent-text);
   width:24px;height:24px;border-radius:var(--r-sm);cursor:pointer;font-size:var(--fs-md);line-height:1;padding:0;}
 .dbm-plus:hover{background:var(--accent-fill);color:var(--ink-on-accent);}
@@ -17335,6 +17351,15 @@ const DBM_COLS = {
     { k: 'sort_order', l: '순서', t: 'num', w: '76px' },
     { k: 'is_active', l: '사용', t: 'bool', w: '58px', mid: true }
   ],
+  merch: [
+    { k: 'merchant_group', l: '그룹', t: 'txt', w: '150px', list: 'dbm-mgroups' },
+    { k: 'name', l: '사용처', t: 'txt', w: 'auto' },
+    { k: 'is_fixed', l: '고정비', t: 'bool', w: '72px', mid: true },
+    { k: 'category_id', l: '주로 쓰는 분류', t: 'cat', w: '232px' },
+    { k: '_cnt', l: '건수', t: 'ro', num: true, w: '74px' },
+    { k: '_sum', l: '합계', t: 'ro', num: true, w: '112px' },
+    { k: '_last', l: '최근', t: 'ro', num: true, w: '86px' }
+  ],
   acct: [
     { k: 'name', l: '계좌', t: 'txt', w: 'auto' },
     { k: 'asset_class', l: '분류', t: 'sel', o: ['현금 자산', '투자 자산', '저축 자산', '연금 자산'], w: '128px' },
@@ -17357,11 +17382,16 @@ const DBM_COLS = {
   ]
 };
 
-/* 탭마다 하나씩만 두는 빠른 필터 */
+/* 탭마다 두는 빠른 필터 — 화면 생김새는 모두 같고 항목만 다르다.
+   dyn:true 면 지금 목록에 실제로 들어 있는 값에서 항목을 만든다. */
 const DBM_FILTER = {
-  cat: { k: 'kind', l: '종류', opts: ['수입', '지출', '이체', '자산'] },
-  acct: { k: 'asset_class', l: '분류', opts: ['현금 자산', '투자 자산', '저축 자산', '연금 자산'] },
-  stock: { k: 'market', l: '시장', opts: ['US', 'KR'] }
+  cat: [{ k: 'kind', l: '종류', opts: ['수입', '지출', '이체', '자산'] }],
+  merch: [
+    { k: 'merchant_group', l: '그룹', dyn: true },
+    { k: 'is_fixed', l: '고정비', opts: [['1', '📌 고정비'], ['0', '일반']] }
+  ],
+  acct: [{ k: 'asset_class', l: '분류', opts: ['현금 자산', '투자 자산', '저축 자산', '연금 자산'] }],
+  stock: [{ k: 'market', l: '시장', opts: ['US', 'KR'] }]
 };
 
 const DBM_ORDER = {
@@ -17372,10 +17402,13 @@ const DBM_ORDER = {
 };
 const DBM_NEW = {
   cat: { kind: '지출', emoji_kind: '', category: '', emoji_category: '', subcategory: '', sort_order: 0, is_active: true },
+  merch: { merchant_group: '', name: '', is_fixed: false, category_id: null },
   acct: { name: '', asset_class: '현금 자산', sort_order: 0, note: '', is_active: true },
   stock: { name: '', ticker: '', market: '', themes: [], category: '', is_active: true },
   theme: { name: '', note: '', sort_order: 0 }
 };
+/* 기본 정렬 — 사용처는 많이 쓴 순이 제일 쓸모 있다 */
+const DBM_SORT0 = { merch: { k: '_cnt', dir: 'desc' } };
 
 const DBM = { tab: 'cat', rows: {}, q: '', filter: {}, sort: {}, dirty: {}, draft: null, busy: false };
 
@@ -17392,7 +17425,20 @@ function dbmOpen(tab) {
 
 async function dbmLoad(tabId, force) {
   if (DBM.rows[tabId] && !force) return;
-  if (tabId === 'merch') return;
+  /* 사용처는 등록표(merchants)와 실제 기록에서 함께 모은다 — 등록만 해 둔 곳도,
+     기록에만 있는 곳도 한 표에서 다뤄야 하니까. 건수·합계·최근은 계산 값이다. */
+  if (tabId === 'merch') {
+    await enEnsureRefs();
+    if (force) MG.rows = null;
+    const list = await mgLoad();
+    DBM.rows.merch = list.map(r => ({
+      id: r.name, name: r.name, merchant_group: r.group || '',
+      is_fixed: !!r.fixed, category_id: r.catId || null,
+      _cnt: r.cnt, _sum: Math.round(r.sum), _last: r.last || '',
+      _gap: r.fixedGap, _mixedCat: r.mixedCat, _mixedGroup: r.mixedGroup
+    }));
+    return;
+  }
   const t = dbmTab(tabId);
   const sb = await enClient();
   let q = sb.from(t.table).select('*');
@@ -17427,10 +17473,24 @@ function dbmRender(host) {
   dbmRenderPane();
 }
 
+/* 필터 값 읽기 — 켜고 끄는 기준을 한 곳에 모아 둔다 */
+function dbmFilterVal(r, k) {
+  const v = r[k];
+  if (typeof v === 'boolean') return v ? '1' : '0';
+  return String(v == null || v === '' ? '__none' : v);
+}
+function dbmFilterOpts(fl, all) {
+  if (!fl.dyn) return fl.opts.map(o => Array.isArray(o) ? o : [o, o]);
+  const cnt = {};
+  all.forEach(r => { const v = dbmFilterVal(r, fl.k); cnt[v] = (cnt[v] || 0) + 1; });
+  return Object.keys(cnt)
+    .sort((a, b) => cnt[b] - cnt[a] || a.localeCompare(b, 'ko'))
+    .map(v => [v, v === '__none' ? '(없음)' : v]);
+}
+
 async function dbmRenderPane() {
   const host = document.getElementById('dbm-body');
   if (!host) return;
-  if (DBM.tab === 'merch') { renderMerchantPage(host); return; }
 
   try { await dbmLoad(DBM.tab, false); }
   catch (e) { host.innerHTML = `<div class="en-empty">불러오지 못했습니다 — ${enEsc(e.message || e)}</div>`; return; }
@@ -17438,23 +17498,32 @@ async function dbmRenderPane() {
   const tabId = DBM.tab;
   const cols = DBM_COLS[tabId];
   const all = DBM.rows[tabId] || [];
-  const fl = DBM_FILTER[tabId];
-  const fv = DBM.filter[tabId] || 'all';
+  const fls = DBM_FILTER[tabId] || [];
+  const fvs = DBM.filter[tabId] || (DBM.filter[tabId] = {});
   const q = DBM.q.trim().toLowerCase();
 
+  const catText = (id) => { const c = EN.catById[id]; return c ? c.category + ' › ' + c.subcategory : ''; };
+
   let rows = all.filter(r => {
-    if (fl && fv !== 'all' && String(r[fl.k] || '') !== fv) return false;
+    for (const fl of fls) {
+      const cur = fvs[fl.k] || 'all';
+      if (cur !== 'all' && dbmFilterVal(r, fl.k) !== cur) return false;
+    }
     if (!q) return true;
-    return cols.some(c => String(c.t === 'tags' ? dbmTagsToText(r[c.k]) : (r[c.k] == null ? '' : r[c.k])).toLowerCase().includes(q));
+    return cols.some(c => String(
+      c.t === 'tags' ? dbmTagsToText(r[c.k])
+      : c.t === 'cat' ? catText(r[c.k])
+      : (r[c.k] == null ? '' : r[c.k])).toLowerCase().includes(q));
   });
 
   /* 정렬 — 머리글을 눌러 바꾼다. 기본은 탭마다 정해둔 순서. */
-  const sort = DBM.sort[tabId];
+  const sort = DBM.sort[tabId] || DBM_SORT0[tabId];
   if (sort) {
     const c = cols.find(x => x.k === sort.k) || {};
     const val = (r) => c.t === 'tags' ? dbmTagsToText(r[sort.k])
       : c.t === 'bool' ? (r[sort.k] ? 1 : 0)
-      : c.t === 'num' ? (Number(r[sort.k]) || 0)
+      : c.t === 'cat' ? catText(r[sort.k])
+      : (c.t === 'num' || c.num) ? (typeof r[sort.k] === 'string' ? r[sort.k] : (Number(r[sort.k]) || 0))
       : String(r[sort.k] == null ? '' : r[sort.k]);
     rows = rows.slice().sort((a, b) => {
       const x = val(a), y = val(b);
@@ -17464,16 +17533,31 @@ async function dbmRenderPane() {
   }
 
   const themeList = (DBM.rows.theme || []).map(x => x.name);
-  const cell = (c, r, idPrefix) => {
+  const mGroups = [...new Set((DBM.rows.merch || []).map(x => x.merchant_group).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'ko'));
+  const catOpts = [...EN.cats].sort((a, b) =>
+    ({ '지출': 0, '수입': 1, '이체': 2 }[a.kind] ?? 9) - ({ '지출': 0, '수입': 1, '이체': 2 }[b.kind] ?? 9) || a.sort_order - b.sort_order);
+
+  const roCell = (c, r) => {
+    if (c.k === '_last') return r._last ? String(r._last).slice(2).replace(/-/g, '.') : '—';
+    if (c.k === '_cnt' || c.k === '_sum') return enComma(Number(r[c.k]) || 0);
+    return enEsc(r[c.k] == null ? '' : r[c.k]);
+  };
+
+  const cell = (c, r, idPrefix, isNew) => {
     const id = `${idPrefix}-${c.k}`;
     const v = r[c.k];
     const cls = c.mid ? ' class="mid"' : '';
+    if (c.t === 'ro') return `<td${cls}><div class="dbm-ro${c.num ? ' num' : ''}">${isNew ? '' : roCell(c, r)}</div></td>`;
     if (c.t === 'bool') return `<td${cls}><input type="checkbox" id="${id}" data-k="${c.k}" ${v ? 'checked' : ''}></td>`;
+    if (c.t === 'cat') return `<td${cls}><select class="en-in" id="${id}" data-k="${c.k}">
+      <option value="">분류 없음</option>${catOpts.map(o =>
+        `<option value="${o.id}" ${Number(v) === o.id ? 'selected' : ''}>${enEsc(o.kind)} · ${enEsc(o.category)} › ${enEsc(o.subcategory)}</option>`).join('')}</select></td>`;
     if (c.t === 'sel') return `<td${cls}><select class="en-in" id="${id}" data-k="${c.k}">${
       c.o.map(o => `<option value="${enEsc(o)}" ${String(v || '') === o ? 'selected' : ''}>${enEsc(o || '—')}</option>`).join('')}</select></td>`;
     const val = c.t === 'tags' ? dbmTagsToText(v) : (v == null ? '' : v);
     return `<td${cls}><input class="en-in" id="${id}" data-k="${c.k}"
       ${c.t === 'num' ? 'inputmode="numeric"' : ''} ${c.t === 'tags' ? 'list="dbm-themes"' : ''}
+      ${c.list ? `list="${c.list}"` : ''}
       value="${enEsc(val)}" placeholder="${enEsc(c.l)}"></td>`;
   };
   const draft = DBM.draft || { ...DBM_NEW[tabId] };
@@ -17482,14 +17566,19 @@ async function dbmRenderPane() {
 
   host.innerHTML = `
     <datalist id="dbm-themes">${themeList.map(x => `<option value="${enEsc(x)}">`).join('')}</datalist>
+    <datalist id="dbm-mgroups">${mGroups.map(x => `<option value="${enEsc(x)}">`).join('')}</datalist>
 
     <div class="dbm-tools" id="dbm-tools">
       <div class="dbm-bar">
         <input class="en-in grow" id="dbm-q" placeholder="검색" value="${enEsc(DBM.q)}">
-        ${fl ? `<div class="dbm-seg" id="dbm-fl">${
-          [['all', '전체']].concat(fl.opts.map(o => [o, o])).map(([v, l]) =>
-            `<button data-f="${enEsc(v)}" class="${fv === v ? 'on' : ''}">${enEsc(l)}<i>${
-              v === 'all' ? all.length : all.filter(r => String(r[fl.k] || '') === v).length}</i></button>`).join('')}</div>` : ''}
+        ${fls.map((fl, fi) => {
+          const cur = fvs[fl.k] || 'all';
+          const opts = dbmFilterOpts(fl, all);
+          return `<div class="dbm-seg" data-fk="${enEsc(fl.k)}">${
+            [['all', fl.l + ' 전체']].concat(opts).map(([v, l]) =>
+              `<button data-f="${enEsc(v)}" class="${cur === v ? 'on' : ''}">${enEsc(l)}<i>${
+                v === 'all' ? all.length : all.filter(r => dbmFilterVal(r, fl.k) === v).length}</i></button>`).join('')}</div>`;
+        }).join('')}
         <span class="dbm-count">${rows.length}개</span>
         <button class="lg-reset" id="dbm-reload">다시 읽기</button>
         <button class="bk-add" id="dbm-save" ${dirtyN ? '' : 'disabled'}>변경 저장${dirtyN ? ` (${dirtyN})` : ''}</button>
@@ -17507,12 +17596,12 @@ async function dbmRenderPane() {
       <colgroup>${cols.map(c => `<col style="width:${c.w}">`).join('')}<col style="width:38px"></colgroup>
       <tbody>
         <tr class="dbm-newrow">
-          ${cols.map(c => cell(c, draft, 'dbmn')).join('')}
+          ${cols.map(c => cell(c, draft, 'dbmn', true)).join('')}
           <td class="mid"><button class="dbm-plus" id="dbm-add" title="새 항목 추가">＋</button></td>
         </tr>
-        ${rows.length ? rows.map(r => `<tr data-id="${r.id}" class="${DBM.dirty[r.id] ? 'dirty' : ''}">
-          ${cols.map(c => cell(c, r, 'dbm' + r.id)).join('')}
-          <td class="mid"><button class="dbm-x" data-del="${r.id}" title="삭제">×</button></td>
+        ${rows.length ? rows.map((r, i) => `<tr data-id="${enEsc(r.id)}" class="${DBM.dirty[r.id] ? 'dirty' : ''}">
+          ${cols.map(c => cell(c, r, 'dbm' + i)).join('')}
+          <td class="mid"><button class="dbm-x" data-del="${enEsc(r.id)}" title="삭제">×</button></td>
         </tr>`).join('')
         : `<tr><td class="none" colspan="${cols.length + 1}">항목이 없습니다.</td></tr>`}
       </tbody>
@@ -17537,28 +17626,44 @@ async function dbmRenderPane() {
     window.addEventListener('resize', () => { if (document.getElementById('dbm-tools')) setTop(); });
   }
 
+  /* 검색칸은 다시 그리지 않는다 — 한글 조합이 끊기지 않게 */
   const qEl = document.getElementById('dbm-q');
-  qEl.addEventListener('input', () => { DBM.q = qEl.value; dbmRenderPane(); });
-  const flEl = document.getElementById('dbm-fl');
-  if (flEl) flEl.addEventListener('click', (e) => {
+  let qt = null;
+  const qSync = () => {
+    clearTimeout(qt);
+    qt = setTimeout(() => {
+      DBM.q = qEl.value;
+      dbmRenderPane().then(() => {
+        const el = document.getElementById('dbm-q');
+        if (el && document.activeElement !== el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
+      });
+    }, 220);
+  };
+  qEl.addEventListener('input', qSync);
+  host.querySelectorAll('.dbm-seg[data-fk]').forEach(seg => seg.addEventListener('click', (e) => {
     const b = e.target.closest('button[data-f]'); if (!b) return;
-    DBM.filter[tabId] = b.dataset.f; dbmRenderPane();
-  });
+    DBM.filter[tabId][seg.dataset.fk] = b.dataset.f;
+    dbmRenderPane();
+  }));
   host.querySelectorAll('th[data-s]').forEach(th => th.addEventListener('click', () => {
     const k = th.dataset.s;
-    const cur = DBM.sort[tabId];
-    DBM.sort[tabId] = (cur && cur.k === k) ? (cur.dir === 'asc' ? { k, dir: 'desc' } : null) : { k, dir: 'asc' };
+    const cur = DBM.sort[tabId] || DBM_SORT0[tabId];
+    DBM.sort[tabId] = (cur && cur.k === k)
+      ? (cur.dir === 'asc' ? { k, dir: 'desc' } : { k, dir: 'asc' })
+      : { k, dir: (cols.find(x => x.k === k) || {}).num ? 'desc' : 'asc' };
     dbmRenderPane();
   }));
 
   /* 표에서 바로 고친다 — 바뀐 값만 모았다가 '변경 저장'으로 한 번에 반영 */
   host.querySelectorAll('tbody tr[data-id]').forEach(row => {
-    const id = Number(row.dataset.id);
-    const rec = all.find(r => r.id === id);
+    const id = row.dataset.id;
+    const rec = all.find(r => String(r.id) === id);
+    if (!rec) return;
     row.querySelectorAll('[data-k]').forEach(el => {
       const c = cols.find(x => x.k === el.dataset.k);
       const read = () => c.t === 'bool' ? el.checked
         : c.t === 'num' ? (parseInt(String(el.value).replace(/[^0-9-]/g, ''), 10) || 0)
+        : c.t === 'cat' ? (Number(el.value) || null)
         : c.t === 'tags' ? dbmTextToTags(el.value)
         : el.value.trim();
       el.addEventListener('change', () => {
@@ -17576,7 +17681,7 @@ async function dbmRenderPane() {
     });
   });
 
-  host.querySelectorAll('.dbm-x').forEach(b => b.addEventListener('click', () => dbmDelete(Number(b.dataset.del))));
+  host.querySelectorAll('.dbm-x').forEach(b => b.addEventListener('click', () => dbmDelete(b.dataset.del)));
   document.getElementById('dbm-save').addEventListener('click', dbmSave);
   document.getElementById('dbm-add').addEventListener('click', dbmAdd);
   document.getElementById('dbm-reload').addEventListener('click', async () => {
@@ -17604,6 +17709,24 @@ async function dbmAdd() {
   if (DBM.busy) return;
   const tabId = DBM.tab, t = dbmTab(tabId);
   const rec = dbmReadDraft();
+  if (tabId === 'merch') {
+    const nm = String(rec.name || '').trim();
+    if (!nm) { enToast('사용처 이름을 입력하세요'); return; }
+    DBM.busy = true;
+    try {
+      const sb = await enClient();
+      const { error } = await sb.from('merchants').upsert(
+        { name: nm, merchant_group: String(rec.merchant_group || '').trim() || null, is_fixed: !!rec.is_fixed },
+        { onConflict: 'owner_id,name' });
+      if (error) throw new Error(error.message);
+      DBM.draft = null;
+      await dbmLoad('merch', true);
+      enToast(`'${nm}' 등록했습니다`);
+      await dbmAfterChange('merch');
+    } catch (e) { enToast('추가하지 못했습니다 — ' + (e.message || e)); }
+    finally { DBM.busy = false; }
+    return;
+  }
   const keyCol = tabId === 'cat' ? 'category' : 'name';
   if (!String(rec[keyCol] || '').trim()) { enToast(`${tabId === 'cat' ? '분류' : '이름'}를 입력하세요`); return; }
   DBM.busy = true;
@@ -17619,6 +17742,55 @@ async function dbmAdd() {
   finally { DBM.busy = false; }
 }
 
+/* 사용처 저장은 다른 표와 다르다 — 이름·그룹·분류를 바꾸면 지난 기록까지 따라 바뀐다.
+   그래서 무엇이 얼마나 바뀌는지 먼저 보여주고 묻는다. */
+async function dbmSaveMerch() {
+  const rows = DBM.rows.merch || [];
+  const plan = Object.keys(DBM.dirty).map(k => ({
+    rec: rows.find(r => String(r.id) === k), patch: DBM.dirty[k]
+  })).filter(x => x.rec);
+  if (!plan.length) return;
+
+  const lines = plan.map(({ rec, patch }) => {
+    const bits = [];
+    if ('name' in patch) bits.push(`이름 → ${patch.name}`);
+    if ('merchant_group' in patch) bits.push(`그룹 → ${patch.merchant_group || '없음'}`);
+    if ('category_id' in patch) {
+      const c = EN.catById[patch.category_id];
+      bits.push(`분류 → ${c ? c.category + ' › ' + c.subcategory : '없음'}`);
+    }
+    if ('is_fixed' in patch) bits.push(patch.is_fixed ? '고정비로 지정' : '고정비 해제');
+    return `· ${rec.name} (기록 ${enComma(rec._cnt)}건) — ${bits.join(', ')}`;
+  });
+  if (!confirm(`아래대로 바꿉니다. 지난 기록도 함께 바뀝니다.\n\n${lines.join('\n')}\n\n계속할까요?`)) return;
+
+  const sb = await enClient();
+  for (const { rec, patch } of plan) {
+    const tx = {};
+    if ('name' in patch && patch.name) tx.merchant = patch.name;
+    if ('merchant_group' in patch) tx.merchant_group = patch.merchant_group || null;
+    if ('category_id' in patch) tx.category_id = patch.category_id || null;
+    if ('is_fixed' in patch) tx.is_fixed = !!patch.is_fixed;
+    if (Object.keys(tx).length) {
+      const { error } = await sb.from('transactions').update(tx).eq('merchant', rec.name);
+      if (error) throw new Error(error.message);
+    }
+    /* 등록표에도 같은 값을 남긴다 — 기록이 없는 사용처도 자동완성에 계속 뜨도록 */
+    const reg = {
+      name: ('name' in patch && patch.name) ? patch.name : rec.name,
+      merchant_group: ('merchant_group' in patch ? patch.merchant_group : rec.merchant_group) || null,
+      is_fixed: 'is_fixed' in patch ? !!patch.is_fixed : !!rec.is_fixed
+    };
+    const { error: e2 } = await sb.from('merchants').upsert(reg, { onConflict: 'owner_id,name' });
+    if (e2) throw new Error(e2.message);
+    if ('name' in patch && patch.name && patch.name !== rec.name) {
+      await sb.from('merchants').delete().eq('name', rec.name);
+    }
+  }
+  EN.loaded = false;
+  await enEnsureRefs().catch(() => {});
+}
+
 async function dbmSave() {
   if (DBM.busy) return;
   const tabId = DBM.tab, t = dbmTab(tabId);
@@ -17629,7 +17801,8 @@ async function dbmSave() {
   if (btn) { btn.disabled = true; btn.textContent = '저장 중…'; }
   try {
     const sb = await enClient();
-    for (const id of ids) {
+    if (tabId === 'merch') await dbmSaveMerch();
+    else for (const id of ids) {
       const { error } = await sb.from(t.table).update(DBM.dirty[id]).eq('id', Number(id));
       if (error) throw new Error(error.message);
     }
@@ -17645,12 +17818,28 @@ async function dbmSave() {
 
 async function dbmDelete(id) {
   const tabId = DBM.tab, t = dbmTab(tabId);
-  const rec = (DBM.rows[tabId] || []).find(r => r.id === id);
+  const rec = (DBM.rows[tabId] || []).find(r => String(r.id) === String(id));
   const nm = rec ? (rec.name || `${rec.category || ''} ${rec.subcategory || ''}`.trim()) : '';
+  if (tabId === 'merch') {
+    if (!rec) return;
+    if (rec._cnt) { enToast(`'${nm}' 은(는) 기록 ${enComma(rec._cnt)}건에 쓰이고 있어 지울 수 없어요`); return; }
+    if (!confirm(`'${nm}' 을(를) 사용처 목록에서 지울까요?`)) return;
+    try {
+      const sb = await enClient();
+      const { error } = await sb.from('merchants').delete().eq('name', rec.name);
+      if (error) throw new Error(error.message);
+      delete DBM.dirty[id];
+      EN.loaded = false;
+      await dbmLoad('merch', true);
+      enToast('삭제했습니다');
+      await dbmAfterChange('merch');
+    } catch (e) { enToast('삭제하지 못했습니다 — ' + (e.message || e)); }
+    return;
+  }
   if (!confirm(`'${nm}' 을(를) 삭제할까요? 되돌릴 수 없습니다.`)) return;
   try {
     const sb = await enClient();
-    const { error } = await sb.from(t.table).delete().eq('id', id);
+    const { error } = await sb.from(t.table).delete().eq('id', Number(id));
     if (error) throw new Error(error.message);
     delete DBM.dirty[id];
     await dbmLoad(tabId, true);
