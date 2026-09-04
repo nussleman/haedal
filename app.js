@@ -1065,7 +1065,7 @@ const SECTION_SUBS = {
   ],
   todo: [
     ['goals', '목표'],
-    ['fixed', '고정비 점검'],
+    ['fixed', '고정비'],
     ['structure', '시뮬레이션']
   ],
   data: [
@@ -2245,7 +2245,6 @@ const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
 const EN = {
   sb: null, cats: [], catById: {}, freq: {}, merchants: [], merchCat: {}, merchFixed: {},
   catId: null, neg: false, loaded: false,
-  repeat: [],              // 이번 달 미기록 고정비 후보
   lg: { q: '', kind: 'all', cat: 'all', from: '', to: '', quick: '3m', sort: 'date_desc', page: 1, size: 60 },
   draft: []
 };
@@ -2477,14 +2476,6 @@ function enRenderEntry() {
       </div>
       <div class="en-two">
         <div>
-          <div class="en-fld" id="en-repwrap" hidden>
-            <div style="display:flex;align-items:baseline;justify-content:space-between;margin:0 2px 5px;">
-              <span class="en-lab" style="margin:0;">이번 달 아직 안 넣은 고정비</span>
-              <span class="en-sub" style="margin:0;" id="en-repcount"></span>
-            </div>
-            <div class="en-rep" id="en-repeat"></div>
-          </div>
-
           <div class="en-fld">
             <label class="en-lab" for="en-merch">사용처</label>
             <input class="en-in" id="en-merch" autocomplete="off" placeholder="예: 매머드커피"
@@ -2549,7 +2540,6 @@ function enRenderEntry() {
 
   enSetupMerchant();
   enSetupCatSearch();
-  enLoadRepeat();
 
   /* 금액 : 키보드 − 허용 */
   const amt = enQS('#en-amt');
@@ -2716,101 +2706,6 @@ function enSyncCat() {
   badge.textContent = c ? c.kind + ' · ' + c.subcategory : '분류 미선택';
 }
 
-/* ---------------- 반복(고정비) 칩 ----------------
-   📌 고정비로 찍힌 과거 거래에서 사용처별 최신 1건을 뽑아,
-   이번 달에 아직 같은 사용처 기록이 없는 것만 후보로 남긴다.
-   한 번 누르면 사용처·금액·분류·날짜가 한꺼번에 채워진다. */
-function enDayShift(days) {
-  const d = new Date();
-  d.setDate(d.getDate() + days);
-  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-  return d.toISOString().slice(0, 10);
-}
-
-async function enLoadRepeat() {
-  const wrap = enQS('#en-repwrap');
-  if (!wrap) return;
-  let rows = [];
-  try {
-    const { data } = await (await enClient()).from('transactions')
-      .select('date,amount,category_id,merchant,merchant_group,note,company_paid')
-      .eq('is_fixed', true)
-      .gte('date', enDayShift(-120))
-      .order('date', { ascending: false })
-      .limit(1000);
-    rows = data || [];
-  } catch (e) { rows = []; }
-
-  const today = enToday();
-  const monthStart = today.slice(0, 8) + '01';
-  const cutoff = enDayShift(-70);   // 70일 넘게 안 나온 건 끊긴 것으로 본다
-
-  const doneThisMonth = {};
-  const latest = {};
-  rows.forEach(r => {
-    const m = String(r.merchant || '').trim();
-    if (!m) return;
-    if (r.date >= monthStart) { doneThisMonth[m] = true; return; }
-    if (!latest[m]) latest[m] = r;      // 이미 날짜 내림차순이라 첫 건이 최신
-  });
-
-  EN.repeat = Object.keys(latest)
-    .filter(m => !doneThisMonth[m] && latest[m].date >= cutoff)
-    .map(m => {
-      const r = latest[m];
-      const day = Number(r.date.slice(8, 10));
-      /* 지난달과 같은 일자로 이번 달 날짜를 만든다. 미래면 오늘로 당긴다. */
-      let date = today.slice(0, 8) + String(day).padStart(2, '0');
-      if (date > today) date = today;
-      return {
-        merchant: m, group: r.merchant_group || null,
-        amount: Number(r.amount) || 0, catId: r.category_id,
-        note: r.note || '', co: !!r.company_paid, day, date
-      };
-    })
-    .sort((a, b) => a.day - b.day);
-
-  enRenderRepeat();
-}
-
-function enRenderRepeat() {
-  const wrap = enQS('#en-repwrap');
-  const box = enQS('#en-repeat');
-  if (!wrap || !box) return;
-  if (!EN.repeat.length) { wrap.hidden = true; box.innerHTML = ''; return; }
-  wrap.hidden = false;
-  enQS('#en-repcount').textContent = EN.repeat.length + '건 남음';
-  box.innerHTML = EN.repeat.map((r, i) => {
-    const abs = Math.abs(r.amount);
-    return `<button class="en-repchip" data-i="${i}" title="${enEsc(r.merchant)} — 눌러서 채우기">
-      <span class="m">${enEsc(r.merchant)}</span>
-      <span class="v">${enComma(abs)}원</span>
-      <span class="d">${r.day}일</span>
-    </button>`;
-  }).join('');
-  box.querySelectorAll('.en-repchip').forEach(el =>
-    el.addEventListener('click', () => enApplyRepeat(EN.repeat[Number(el.dataset.i)])));
-}
-
-function enApplyRepeat(r) {
-  if (!r) return;
-  enQS('#en-merch').value = r.group ? (r.group + ' › ' + r.merchant) : r.merchant;
-  const abs = Math.abs(r.amount);
-  EN.neg = r.amount < 0;
-  const amt = enQS('#en-amt');
-  amt.value = (EN.neg ? '−' : '') + enComma(abs);
-  amt.classList.toggle('neg', EN.neg);
-  enQS('#en-date').value = r.date;
-  enQS('#en-note').value = r.note || '';
-  EN.catId = r.catId;
-  enSyncCat();
-  enQS('#en-fx').setAttribute('aria-pressed', 'true');       // 고정비니까 켜둔다
-  enQS('#en-co').setAttribute('aria-pressed', String(!!r.co));
-  enQS('#en-serr').textContent = '';
-  amt.focus();
-  amt.select();
-}
-
 async function enSave() {
   const amt = enQS('#en-amt');
   if (!amt) return;
@@ -2867,7 +2762,6 @@ ${dupRow.date} ${enComma(n)}원 ${dupRow.merchant || ''}
   enSyncCat();
   enQS('#en-merch').focus();
   enLoadRecent();
-  enLoadRepeat();     // 방금 넣은 항목은 목록에서 빠진다
 }
 
 async function enLoadRecent() {
@@ -12797,8 +12691,7 @@ async function saveBudgets() {
    달마다 계좌 잔액을 한 번 적어 두는 자리. Supabase asset_snapshots 가 유일한 원본이고,
    여기서 저장하면 자산·흐름·목표 화면이 같은 값을 그대로 쓴다. (시트는 더 이상 쓰지 않는다) */
 
-const SNAP = { rows: [], accounts: [], accountsLoaded: false, month: null, uid: null, loaded: false, saving: false, extra: [], err: null,
-  skip: {} };   // × 로 지운 계좌는 다시 제안하지 않는다 (그 달 안에서만)
+const SNAP = { rows: [], accounts: [], accountsLoaded: false, month: null, uid: null, loaded: false, saving: false, extra: [], err: null };
 
 /* 계좌 목록은 accounts 테이블이 원본이다 (목록 관리 › 계좌에서 고친다).
    과거 스냅샷에만 있고 목록에는 없는 계좌도 빠뜨리지 않고 함께 보여준다. */
@@ -12892,12 +12785,25 @@ function snapPushToDashboard() {
   applySuggestedGoals(state.data);
 }
 
-/* ================= 할 일 › 고정비 점검 =================
-   📌 로 찍힌 거래를 사용처별로 묶어 '월 얼마 · 연 얼마'로 환산하고,
-   유지 / 점검 / 해지 중 하나를 고르게 한다. 관심 종목의 L1·L2·L3 와 같은 문법이다.
-   판정은 브라우저에 저장된다(기기 간 동기화 안 됨). */
+/* ================= 할 일 › 고정비 =================
+   📌 로 찍은 '지출' 거래를 사용처별로 묶어 월·연 얼마인지 환산한다.
+
+   금액 계산에서 주의한 것 두 가지.
+   ① 진행 중인 달은 아직 결제가 다 안 들어왔으므로 계산에서 제외한다.
+      (이걸 넣으면 월초에 볼 때마다 금액이 실제보다 작게 나온다)
+   ② 월 금액은 '최근 한 달'이 아니라 관측 구간 전체의 평균이다.
+      연 1회 결제(연회비 등)도 12로 나눠 월 환산이 되게 하기 위해서다. */
 const FX_KEY = 'fixedreview';
-const FX = { rows: [], verdict: {}, loaded: false, err: null };
+const FX = { rows: [], verdict: {}, err: null };
+
+const FX_LABEL = { keep: '그대로', watch: '줄일 후보', cancel: '끊기' };
+
+function fxMonthKey(d) { return String(d).slice(0, 7); }
+function fxMonthNo(k) { return Number(k.slice(0, 4)) * 12 + Number(k.slice(5, 7)); }
+function fxShiftMonth(k, n) {
+  const t = fxMonthNo(k) + n - 1;
+  return String(Math.floor(t / 12)).padStart(4, '0') + '-' + String(t % 12 + 1).padStart(2, '0');
+}
 
 async function fxLoadVerdict() {
   try {
@@ -12909,17 +12815,20 @@ async function fxSaveVerdict() {
   try { await window.storage.set(FX_KEY, JSON.stringify(FX.verdict), false); } catch (e) {}
 }
 
-/* 최근 12개월치 고정비를 사용처별로 묶는다 */
 async function fxLoad() {
   FX.err = null;
+  const nowM = fxMonthKey(enToday());
+  const lastComplete = fxShiftMonth(nowM, -1);      // 계산에 쓰는 마지막 달
+  const since = fxShiftMonth(nowM, -13) + '-01';    // 넉넉히 13개월치를 읽는다
+
   let rows = [];
   try {
-    const { data, error } = await (await enClient()).from('transactions')
-      .select('date,amount,merchant,merchant_group,note')
+    const { data, error } = await (await enClient()).from('v_transactions')
+      .select('date,kind,amount,merchant,note,is_fixed')
       .eq('is_fixed', true)
-      .gte('date', enDayShift(-365))
+      .gte('date', since)
       .order('date', { ascending: false })
-      .limit(2000);
+      .limit(3000);
     if (error) throw error;
     rows = data || [];
   } catch (e) {
@@ -12930,32 +12839,52 @@ async function fxLoad() {
 
   const by = {};
   rows.forEach(r => {
+    if (String(r.kind || '') !== '지출') return;    // 이체·수입에 붙은 📌 는 고정비가 아니다
     const m = String(r.merchant || '').trim();
     if (!m) return;
-    const mk = String(r.date).slice(0, 7);
-    if (!by[m]) by[m] = { merchant: m, group: r.merchant_group || null, byMonth: {}, last: r.date, note: r.note || '' };
+    const mk = fxMonthKey(r.date);
+    if (!by[m]) by[m] = { merchant: m, byMonth: {}, last: r.date, lastAmt: Math.abs(Number(r.amount) || 0) };
     by[m].byMonth[mk] = (by[m].byMonth[mk] || 0) + Math.abs(Number(r.amount) || 0);
-    if (r.date > by[m].last) by[m].last = r.date;
+    if (r.date > by[m].last) { by[m].last = r.date; by[m].lastAmt = Math.abs(Number(r.amount) || 0); }
   });
 
   const today = enToday();
-  const daysBetween = (a, b) => Math.round((new Date(b) - new Date(a)) / 86400000);
+  const dayGap = (a, b) => Math.round((new Date(b) - new Date(a)) / 86400000);
 
   FX.rows = Object.values(by).map(o => {
-    const keys = Object.keys(o.byMonth).sort();
-    const vals = keys.map(k => o.byMonth[k]);
-    const months = keys.length;
-    const latest = vals[vals.length - 1];
-    const avg = vals.reduce((a, b) => a + b, 0) / months;
-    /* 인상 감지 — 최근 3개월 평균과 그 이전 구간 평균을 견준다 */
-    const recent = vals.slice(-3), older = vals.slice(0, -3);
-    const rAvg = recent.reduce((a, b) => a + b, 0) / recent.length;
-    const oAvg = older.length ? older.reduce((a, b) => a + b, 0) / older.length : null;
-    const upPct = (oAvg && oAvg > 0) ? ((rAvg - oAvg) / oAvg) * 100 : null;
-    const gapDays = daysBetween(o.last, today);
+    /* 진행 중인 달은 뺀다 */
+    const keys = Object.keys(o.byMonth).filter(k => k <= lastComplete).sort();
+    if (!keys.length) {
+      return { ...o, monthly: 0, annual: 0, span: 0, hit: 0, upPct: null,
+               gapDays: dayGap(o.last, today), recent: [], partialOnly: true };
+    }
+    /* 관측 구간 = 첫 기록이 있는 달부터 지난달까지 (최대 12개월) */
+    const span = Math.min(12, fxMonthNo(lastComplete) - fxMonthNo(keys[0]) + 1);
+    const useFrom = fxShiftMonth(lastComplete, -(span - 1));
+    const used = keys.filter(k => k >= useFrom);
+    const sum = used.reduce((a, k) => a + o.byMonth[k], 0);
+
+    /* 매달 나가는 것과 가끔 나가는 것(연회비 등)을 나눠서 환산한다.
+       관측 구간의 60% 이상 달에 등장하면 '매달형'으로 보고 구간 평균을 쓰고,
+       그보다 드물면 1년 주기로 보고 12로 나눈다.
+       (그냥 구간으로 나누면 6개월 전 한 번 낸 연회비가 월 2만원으로 잡힌다) */
+    const isMonthly = used.length >= Math.max(2, Math.ceil(span * 0.6));
+    const monthly = isMonthly ? (sum / span) : (sum / 12);
+
+    /* 인상 감지 — 최근 3개월 평균과 그 앞 구간 평균 (둘 다 값이 있을 때만) */
+    let upPct = null;
+    if (used.length >= 6) {
+      const tail = used.slice(-3), head = used.slice(0, -3);
+      const tAvg = tail.reduce((a, k) => a + o.byMonth[k], 0) / tail.length;
+      const hAvg = head.reduce((a, k) => a + o.byMonth[k], 0) / head.length;
+      if (hAvg > 0) upPct = ((tAvg - hAvg) / hAvg) * 100;
+    }
+
     return {
-      ...o, months, latest, avg, upPct, gapDays,
-      monthly: latest, annual: latest * 12
+      ...o, monthly, annual: monthly * 12, span, hit: used.length, upPct, isMonthly,
+      gapDays: dayGap(o.last, today),
+      recent: used.slice(-3).map(k => ({ k, v: o.byMonth[k] })),
+      partialOnly: false
     };
   }).sort((a, b) => b.annual - a.annual);
 }
@@ -12973,45 +12902,42 @@ function fxPaint(body) {
     return;
   }
   if (!FX.rows.length) {
-    body.innerHTML = `<div class="lg-wrap"><div class="en-empty">📌 고정비로 표시된 거래가 없어요.<br>
+    body.innerHTML = `<div class="lg-wrap"><div class="en-empty">📌 고정비로 표시된 지출이 없어요.<br>
       기록할 때 📌 고정비를 켜두면 여기 모입니다.</div></div>`;
     return;
   }
 
   const vOf = (m) => (FX.verdict[m] && FX.verdict[m].v) || null;
   const alive = FX.rows.filter(r => vOf(r.merchant) !== 'cancel');
-  const cancelled = FX.rows.filter(r => vOf(r.merchant) === 'cancel');
-  const unjudged = FX.rows.filter(r => !vOf(r.merchant));
+  const cut = FX.rows.filter(r => vOf(r.merchant) === 'cancel');
+  const todo = FX.rows.filter(r => !vOf(r.merchant));
 
   const moTotal = alive.reduce((a, r) => a + r.monthly, 0);
-  const saveYear = cancelled.reduce((a, r) => a + r.annual, 0);
-
-  /* 미판정 → 연 환산 큰 순. 해지한 것은 맨 아래로. */
-  const order = [
-    ...unjudged,
-    ...alive.filter(r => vOf(r.merchant)),
-    ...cancelled
-  ];
+  const cutYear = cut.reduce((a, r) => a + r.annual, 0);
+  const order = [...todo, ...alive.filter(r => vOf(r.merchant)), ...cut];
 
   const rowHtml = (r) => {
     const v = vOf(r.merchant);
     const flags = [];
-    if (r.upPct !== null && r.upPct >= 5) flags.push(`<span class="fx-flag up">↑ ${r.upPct.toFixed(0)}% 인상</span>`);
+    if (r.upPct !== null && r.upPct >= 5) flags.push(`<span class="fx-flag up">↑ ${r.upPct.toFixed(0)}%</span>`);
     if (r.gapDays > 45) flags.push(`<span class="fx-flag gap">${r.gapDays}일째 결제 없음</span>`);
-    if (r.months <= 2) flags.push(`<span class="fx-flag">${r.months}개월치만 있음</span>`);
-    const btn = (val, label) =>
-      `<button data-m="${enEsc(r.merchant)}" data-v="${val}" class="${v === val ? 'on' : ''}">${label}</button>`;
-    return `<div class="fx-row${v === 'cancel' ? ' done' : ''}">
+    if (r.span > 0 && !r.isMonthly) flags.push(`<span class="fx-flag">가끔 결제 · ${r.span}개월 중 ${r.hit}번</span>`);
+    else if (r.span > 0 && r.hit < r.span) flags.push(`<span class="fx-flag">${r.span}개월 중 ${r.hit}번</span>`);
+    const btn = (val) =>
+      `<button data-m="${enEsc(r.merchant)}" data-v="${val}" class="${v === val ? 'on' : ''}">${FX_LABEL[val]}</button>`;
+    const recent = r.recent.length
+      ? r.recent.map(x => `${x.k.slice(5)}월 ${wonComma(x.v)}`).join(' · ')
+      : '지난달까지 기록 없음';
+    return `<div class="fx-row${v === 'cancel' ? ' off' : ''}">
       <span class="fx-name">
         <b>${enEsc(r.merchant)}</b>
-        <span>${r.months}개월 기록 · 최근 ${r.last}</span>
+        <span class="fx-meta">${flags.join('')}<span>${recent}</span></span>
       </span>
-      <span class="fx-flags">${flags.join('')}</span>
       <span class="fx-num">
-        <span class="mo">${wonComma(r.monthly)}원</span>
+        <span class="mo">${wonComma(Math.round(r.monthly))}원</span>
         <span class="yr">연 ${formatCompactWon(r.annual)}원</span>
       </span>
-      <span class="fx-acts">${btn('keep', '유지')}${btn('watch', '점검')}${btn('cancel', '해지')}</span>
+      <span class="fx-acts">${btn('keep')}${btn('watch')}${btn('cancel')}</span>
     </div>`;
   };
 
@@ -13021,7 +12947,7 @@ function fxPaint(body) {
         <div class="stat-card">
           <div class="label">월 고정비</div>
           <div class="value">${formatKrw(moTotal)}</div>
-          <div class="sub">해지 표시분 제외</div>
+          <div class="sub">'끊기' 표시분 제외</div>
         </div>
         <div class="stat-card">
           <div class="label">연 환산</div>
@@ -13031,26 +12957,28 @@ function fxPaint(body) {
         <div class="stat-card">
           <div class="label">항목</div>
           <div class="value">${alive.length}개</div>
-          <div class="sub">미점검 ${unjudged.length}개</div>
+          <div class="sub">아직 안 본 것 ${todo.length}개</div>
         </div>
         <div class="stat-card">
-          <div class="label">해지 시 절감</div>
-          <div class="value" style="color:var(--income-text)">${saveYear ? '+' + formatKrw(saveYear) : '—'}</div>
-          <div class="sub">연 기준 · ${cancelled.length}건</div>
+          <div class="label">끊으면 아끼는 돈</div>
+          <div class="value" style="color:var(--income-text)">${cutYear ? '+' + formatKrw(cutYear) : '—'}</div>
+          <div class="sub">연 기준 · ${cut.length}건</div>
         </div>
       </div>
 
-      <div class="today-verdict ${unjudged.length ? 'warn' : 'good'}" style="margin:10px 0 14px;">
-        ${unjudged.length
-          ? `아직 판정하지 않은 고정비가 ${unjudged.length}건 있어요. 위에서부터 큰 것을 먼저 보세요.`
-          : `${alive.length}건 모두 판정했어요. 월 ${formatKrw(moTotal)}이 매달 자동으로 나갑니다.`}
-      </div>
-
-      <div class="panel">
+      <div class="panel" style="margin-top:12px;">
         <div class="panel-title"><div>고정비 목록</div><span class="ptag">연 환산 큰 순</span></div>
+        <div class="settings-note" style="margin:0 0 8px;">
+          오른쪽 세 버튼은 <b>내가 이걸 어떻게 하기로 했는지</b> 적어두는 표시예요.
+          <b>그대로</b>는 손대지 않기로 한 것, <b>줄일 후보</b>는 나중에 다시 볼 것,
+          <b>끊기</b>는 해지하기로 한 것. '끊기'로 두면 위 <b>끊으면 아끼는 돈</b>에 연 금액이 쌓입니다.
+          같은 버튼을 다시 누르면 표시가 풀려요.
+        </div>
         <div id="fx-list">${order.map(rowHtml).join('')}</div>
         <div class="settings-note" style="margin-top:10px;">
-          📌 고정비로 기록한 거래를 사용처별로 묶었어요. 월 금액은 가장 최근 결제액 기준입니다.
+          월 금액은 <b>최근 ${Math.max(...FX.rows.map(r => r.span), 0)}개월까지의 평균</b>이에요.
+          <b>가끔 결제</b>로 표시된 항목은 1년에 몇 번 나가는 것으로 보고 12로 나눠 월 환산합니다. <b>이번 달은 아직 결제가 다 안 들어와서 계산에서 뺐어요.</b>
+          이름 아래 숫자는 최근 3개월 실제 결제액이라 눈으로 맞춰볼 수 있습니다.
           판정은 이 브라우저에만 저장돼요.
         </div>
       </div>
@@ -13058,7 +12986,7 @@ function fxPaint(body) {
 
   body.querySelectorAll('.fx-acts button').forEach(b => b.addEventListener('click', () => {
     const m = b.dataset.m, v = b.dataset.v;
-    if (FX.verdict[m] && FX.verdict[m].v === v) delete FX.verdict[m];   // 다시 누르면 해제
+    if (FX.verdict[m] && FX.verdict[m].v === v) delete FX.verdict[m];
     else FX.verdict[m] = { v, at: enToday() };
     fxSaveVerdict();
     fxPaint(body);
@@ -13082,52 +13010,21 @@ async function renderSnapshotPage(body) {
   const accounts = snapAccounts();
   const months = snapMonthList();
   const filled = Object.keys(cur).length;
-  const prevTotal = snapMonthTotal(prevKey);
+  const total = snapMonthTotal(mk), prevTotal = snapMonthTotal(prevKey);
+  const diff = filled && prevTotal ? total - prevTotal : null;
 
   const byCls = {};
   accounts.forEach(a => { (byCls[a.cls] = byCls[a.cls] || []).push(a); });
   const clsOrder = [...CAT_ORDER.filter(c => byCls[c]), ...Object.keys(byCls).filter(c => !CAT_ORDER.includes(c))];
 
-  /* ── 빈 칸 자동 채우기 ──
-     스냅샷은 매달 대부분의 값이 그대로다. 그래서 빈 칸을 처음부터 채우는 대신
-     지난달 값(또는 토스 실시간 잔액)을 미리 깔아두고 바뀐 것만 고치게 한다.
-     제안값은 점선 테두리로 표시되고, 손대는 순간 확정값이 된다. */
-  const tossTotal = (() => {
-    const t = state.data && state.data.toss && state.data.toss.summary;
-    return t && t.total > 0 ? Math.round(t.total) : null;
-  })();
-  const isTossAcct = (name) => /토스/.test(String(name || '').replace(/\s/g, ''));
-  const isThisMonth = mk === snapNowMonth();
-
-  const suggestFor = (a) => {
-    if (cur[a.account]) return null;                 // 이미 저장된 값이 있으면 건드리지 않는다
-    if (SNAP.skip[a.account]) return null;           // × 로 지운 것은 다시 올리지 않는다
-    if (isThisMonth && tossTotal && isTossAcct(a.account)) return { v: tossTotal, src: 'toss' };
-    const p = prev[a.account];
-    return p ? { v: p.amount, src: 'prev' } : null;
-  };
-
-  let sugCount = 0, shownTotal = 0;
-  accounts.forEach(a => {
-    const c = cur[a.account];
-    if (c) { shownTotal += c.amount; return; }
-    const sg = suggestFor(a);
-    if (sg) { shownTotal += sg.v; sugCount++; }
-  });
-  const total = shownTotal;
-  const diff = (filled || sugCount) && prevTotal ? total - prevTotal : null;
-
   const rowHtml = (a) => {
     const c = cur[a.account], p = prev[a.account];
-    const sg = suggestFor(a);
-    const val = c ? c.amount : (sg ? sg.v : null);
-    const dv = (val !== null && p) ? val - p.amount : null;
+    const dv = c && p ? c.amount - p.amount : null;
     return `<div class="sn-row">
-      <span class="ac">${enEsc(a.account)}${sg
-        ? `<em class="sn-tag ${sg.src}">${sg.src === 'toss' ? '토스 실시간' : '전월값'}</em>` : ''}</span>
+      <span class="ac">${enEsc(a.account)}</span>
       <span class="pv">${p ? wonComma(p.amount) : '—'}</span>
-      <input class="en-in sn-in${sg ? ' sug' : ''}" inputmode="numeric" data-acct="${enEsc(a.account)}" data-cls="${enEsc(a.cls)}"
-             value="${val === null ? '' : wonComma(val)}" placeholder="미입력">
+      <input class="en-in sn-in" inputmode="numeric" data-acct="${enEsc(a.account)}" data-cls="${enEsc(a.cls)}"
+             value="${c ? wonComma(c.amount) : ''}" placeholder="미입력">
       <span class="dl ${dv > 0 ? 'up' : dv < 0 ? 'down' : ''}">${dv === null ? '' : (dv > 0 ? '+' : '') + wonComma(dv)}</span>
       <button class="sn-x" data-acct="${enEsc(a.account)}" title="이 달 값 비우기">×</button>
     </div>`;
@@ -13143,16 +13040,15 @@ async function renderSnapshotPage(body) {
           </select>
           <button class="sn-nav" id="sn-next" aria-label="다음 달">›</button>
           <span class="sn-badge ${filled ? 'ok' : 'new'}">${filled ? `${filled}개 계좌 기록됨` : '미입력'}</span>
-          ${sugCount ? `<span class="sn-badge new">제안 ${sugCount}건 — 확인 후 저장</span>` : ''}
         </div>
         <div class="sn-acts">
-          <button class="lg-reset" id="sn-fill">${sugCount ? '제안 지우기' : '전월 값 채우기'}</button>
+          <button class="lg-reset" id="sn-fill">전월 값 채우기</button>
           <button class="bk-add" id="sn-save">저장</button>
         </div>
       </div>
 
       <div class="sn-sum">
-        <div><span class="k">${snapMonthLabel(mk)} 합계${sugCount ? ' · 제안 포함' : ''}</span><b>${(filled || sugCount) ? formatKrw(total) : '—'}</b></div>
+        <div><span class="k">${snapMonthLabel(mk)} 합계</span><b>${filled ? formatKrw(total) : '—'}</b></div>
         <div><span class="k">전월(${snapMonthLabel(prevKey)})</span><b>${prevTotal ? formatKrw(prevTotal) : '—'}</b></div>
         <div><span class="k">증감</span><b class="${diff > 0 ? 'up' : diff < 0 ? 'down' : ''}">${diff === null ? '—' : (diff > 0 ? '+' : '') + formatKrw(diff)}</b></div>
       </div>
@@ -13190,23 +13086,13 @@ async function renderSnapshotPage(body) {
       </div>
     </div>`;
 
-  const go = (m) => { SNAP.month = m; SNAP.extra = []; SNAP.skip = {}; renderSnapshotPage(body); };
+  const go = (m) => { SNAP.month = m; SNAP.extra = []; renderSnapshotPage(body); };
   document.getElementById('sn-prev').addEventListener('click', () => go(snapMonthShift(mk, -1)));
   document.getElementById('sn-next').addEventListener('click', () => go(snapMonthShift(mk, 1)));
   document.getElementById('sn-msel').addEventListener('change', (e) => go(e.target.value));
   body.querySelectorAll('.sn-hrow').forEach(tr => tr.addEventListener('click', () => go(tr.dataset.m)));
 
-  /* 제안값에 손대면 그 줄은 확정으로 바꾼다 (점선·배지 제거) */
-  const snConfirm = (el) => {
-    if (!el.classList.contains('sug')) return;
-    el.classList.remove('sug');
-    const row = el.closest('.sn-row');
-    const tag = row && row.querySelector('.sn-tag');
-    if (tag) tag.remove();
-  };
-
   body.querySelectorAll('.sn-in').forEach(el => {
-    el.addEventListener('input', () => snConfirm(el));
     el.addEventListener('blur', () => {
       const n = snapNum(el.value);
       el.value = n === null ? '' : wonComma(n);
@@ -13215,27 +13101,16 @@ async function renderSnapshotPage(body) {
   });
   body.querySelectorAll('.sn-x').forEach(b => b.addEventListener('click', () => {
     const el = body.querySelector(`.sn-in[data-acct="${CSS.escape(b.dataset.acct)}"]`);
-    if (!el) return;
-    SNAP.skip[b.dataset.acct] = true;    // 저장·재렌더 후에도 다시 제안하지 않게
-    snConfirm(el);
-    el.value = '';
-    el.focus();
+    if (el) { el.value = ''; el.focus(); }
   }));
 
   document.getElementById('sn-fill').addEventListener('click', () => {
-    if (sugCount) {
-      /* 제안 지우기 — 손 안 댄 제안값만 비운다 */
-      body.querySelectorAll('.sn-in.sug').forEach(el => {
-        SNAP.skip[el.dataset.acct] = true;
-        el.value = '';
-        snConfirm(el);
-      });
-      enToast('제안값을 지웠어요. 직접 입력하고 저장하세요.');
-    } else {
-      SNAP.skip = {};
-      renderSnapshotPage(body);
-      enToast('전월 값을 빈 칸에 다시 채웠어요. 확인하고 저장하세요.');
-    }
+    body.querySelectorAll('.sn-in').forEach(el => {
+      if (snapNum(el.value) !== null) return;
+      const p = prev[el.dataset.acct];
+      if (p) el.value = wonComma(p.amount);
+    });
+    enToast('전월 값을 비어 있던 칸에만 채웠어요. 확인하고 저장하세요.');
   });
 
   const addAcct = () => {

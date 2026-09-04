@@ -694,20 +694,6 @@ body{
 .en-ac-item mark{background:none;color:var(--accent-text);font-weight:700;}
 
 /* ---------- 분류 칩 ---------- */
-/* ＋기록 — 이번 달 아직 안 넣은 고정비 칩.
-   자동이체처럼 매달 같은 값이 반복되는 것을 한 번 눌러 채우게 한다.
-   다 넣으면 줄 자체가 사라지므로 평소에는 화면을 차지하지 않는다. */
-.en-rep{display:flex;flex-wrap:wrap;gap:5px;}
-.en-repchip{display:flex;align-items:center;gap:7px;
-  border:1px solid var(--border-strong);border-radius:var(--r-pill);
-  background:var(--bg-2);color:var(--text-dim);
-  padding:6px 11px;font-size:var(--fs-xs);line-height:1.2;cursor:pointer;
-  transition:border-color .15s,color .15s,background .15s;}
-.en-repchip:hover{border-color:var(--accent-fill);color:var(--text);background:var(--panel-2);}
-.en-repchip:active{transform:scale(.97);}
-.en-repchip .m{font-weight:700;color:var(--text);}
-.en-repchip .v{font-family:var(--mono);}
-.en-repchip .d{color:var(--text-faint);font-size:var(--fs-tiny);}
 .en-chips{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;}
 .en-chip{min-height:48px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg-2);
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
@@ -2493,38 +2479,37 @@ body{font-variant-numeric:tabular-nums;}
 .sn-row .ac{font-size:var(--fs-base);color:var(--text);}
 .sn-row .dl.up{color:var(--income-text);} .sn-row .dl.down{color:var(--expense-text);}
 .sn-in{flex:0 0 150px;text-align:right;font-family:var(--mono);height:28px;padding:0 8px;}
-/* 아직 저장 안 된 '제안' 값. 손대는 순간 확정값으로 바뀐다. */
-.sn-in.sug{color:var(--text-dim);border-style:dashed;}
 
-/* ---------- 할 일 › 고정비 점검 ---------- */
-.fx-row{display:flex;align-items:center;gap:10px;padding:11px 12px;
-  border-bottom:1px solid var(--border);flex-wrap:wrap;}
+/* ---------- 할 일 › 고정비 ----------
+   칸을 격자로 고정해 이름·금액·버튼이 줄마다 같은 자리에 오게 한다. */
+.fx-row{display:grid;grid-template-columns:minmax(0,1fr) 130px 222px;
+  gap:12px;align-items:center;padding:12px;border-bottom:1px solid var(--border);}
 .fx-row:last-child{border-bottom:0;}
-.fx-row.done{opacity:.5;}
-.fx-name{flex:1 1 180px;min-width:0;}
+.fx-row.off{opacity:.45;}
 .fx-name b{display:block;font-size:var(--fs-base);color:var(--text);
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.fx-name span{font-size:var(--fs-xs);color:var(--text-faint);}
-.fx-num{flex:0 0 auto;text-align:right;font-family:var(--mono);}
-.fx-num .mo{display:block;font-size:var(--fs-base);color:var(--text);}
-.fx-num .yr{font-size:var(--fs-xs);color:var(--text-faint);}
-.fx-flags{flex:0 0 auto;display:flex;gap:4px;flex-wrap:wrap;}
-.fx-flag{font-size:var(--fs-tiny);padding:2px 7px;border-radius:var(--r-pill);
+.fx-meta{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:3px;
+  font-size:var(--fs-xs);color:var(--text-faint);}
+.fx-flag{font-size:var(--fs-tiny);padding:1px 7px;border-radius:var(--r-pill);
   border:1px solid var(--border-strong);color:var(--text-faint);white-space:nowrap;}
 .fx-flag.up{color:var(--expense-text);border-color:var(--expense-fill);}
 .fx-flag.gap{color:var(--accent-text);border-color:var(--accent-fill);}
-.fx-acts{flex:0 0 auto;display:flex;gap:3px;}
-.fx-acts button{border:1px solid var(--border);background:var(--bg-2);color:var(--text-faint);
-  border-radius:var(--r-sm);padding:5px 10px;font-size:var(--fs-xs);cursor:pointer;white-space:nowrap;}
+.fx-num{text-align:right;font-family:var(--mono);}
+.fx-num .mo{display:block;font-size:var(--fs-base);color:var(--text);}
+.fx-num .yr{font-size:var(--fs-xs);color:var(--text-faint);}
+.fx-acts{display:flex;gap:4px;}
+.fx-acts button{flex:1 1 0;min-width:0;border:1px solid var(--border);background:var(--bg-2);
+  color:var(--text-faint);border-radius:var(--r-sm);padding:6px 4px;
+  font-size:var(--fs-xs);cursor:pointer;white-space:nowrap;}
 .fx-acts button:hover{color:var(--text);border-color:var(--border-strong);}
 .fx-acts button.on{font-weight:700;}
 .fx-acts button.on[data-v="keep"]{color:var(--income-text);border-color:var(--income-fill);background:var(--income-bg);}
 .fx-acts button.on[data-v="watch"]{color:var(--accent-text);border-color:var(--accent-fill);background:rgba(201,162,39,.12);}
 .fx-acts button.on[data-v="cancel"]{color:var(--expense-text);border-color:var(--expense-fill);background:var(--expense-bg);}
-.sn-tag{font-style:normal;margin-left:6px;padding:1px 6px;border-radius:var(--r-pill);
-  font-size:var(--fs-tiny);border:1px solid var(--border-strong);color:var(--text-faint);
-  white-space:nowrap;vertical-align:middle;}
-.sn-tag.toss{color:var(--accent-text);border-color:var(--accent-fill);}
+@media (max-width:860px){
+  .fx-row{grid-template-columns:minmax(0,1fr) 120px;}
+  .fx-acts{grid-column:1 / -1;}
+}
 .sn-x{border:none;background:transparent;color:var(--text-faint);cursor:pointer;font-size:var(--fs-md);line-height:1;padding:2px;}
 .sn-x:hover{color:var(--expense-text);}
 .sn-cls{display:flex;align-items:center;gap:7px;padding:9px 14px 6px;font-size:var(--fs-xs);color:var(--text-dim);
