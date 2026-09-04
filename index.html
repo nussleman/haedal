@@ -2828,7 +2828,7 @@ const state = {
   incomePieRange: 12,
   savTrendRange: 12,
   savContribRange: 12,
-  flowSub: 'today',        // 흐름 하위 탭: today | now | year | calendar
+  flowSub: 'today',        // 흐름 하위 탭: today | now | year | calendar | flowmap
   expSub: 'summary',       // 지출 하위: summary | fixed | budget
   nowSub: 'summary',       // 이번달 하위: summary | income | expense
   nowExpFilter: 'all',     // 이번달>지출 내역 필터: all | fixed | var | good | regret
@@ -2843,8 +2843,8 @@ const state = {
   yearOpts: { budget: true, prevYear: true },
   yearSeries: { expense: true, budget: true, prevExpense: true, income: false, net: false },
   assetSub: 'overview',    // 자산 하위 탭: overview | investment | savings
-  systemSub: 'dbm',        // 시스템 하위 탭: dbm(목록)
-  homeSub: 'goals',        // 현황 하위 탭: goals | structure
+  todoSub: 'goals',        // 할 일 하위 탭: goals | structure
+  dataSub: 'ledger',       // 데이터 하위 탭: ledger | snapshot | dbm
   goalMoves: {},           // 드래그로 옮긴 목표 시기 (시트 반영 전 로컬 오버라이드)
   goalMetric: {},          // 목표 행별 수동 연동 지표 key
   goalTarget: {},          // 목표 행별 수동 목표값 (문구 대신 이 값을 씀)
@@ -3785,8 +3785,8 @@ const NAV_ITEMS = [
   { id: 'home', label: '홈', solo: true },
   { id: 'flow', label: '흐름' },
   { id: 'assets', label: '자산' },
-  { id: 'status', label: '현황' },
-  { id: 'system', label: '시스템' }
+  { id: 'todo', label: '할 일' },
+  { id: 'data', label: '데이터' }
 ];
 
 const SECTION_SUBS = {
@@ -3797,7 +3797,8 @@ const SECTION_SUBS = {
     ['today', '오늘'],
     ['now', '이번달'],
     ['year', '올해'],
-    ['calendar', '캘린더']
+    ['calendar', '캘린더'],
+    ['flowmap', '흐름표']
   ],
   assets: [
     ['overview', '전체'],
@@ -3805,19 +3806,18 @@ const SECTION_SUBS = {
     ['savings', '저축'],
     ['pension', '연금']
   ],
-  status: [
+  todo: [
     ['goals', '목표'],
-    ['structure', '시뮬레이션'],
-    ['flowmap', '흐름표'],
-    ['ledger', '입출금'],
-    ['snapshot', '자산 스냅샷']
+    ['structure', '시뮬레이션']
   ],
-  system: [
+  data: [
+    ['ledger', '입출금'],
+    ['snapshot', '자산 스냅샷'],
     ['dbm', '목록']
   ]
 };
 
-const SECTION_STATE_KEY = { home: 'homeMainSub', flow: 'flowSub', assets: 'assetSub', status: 'homeSub', system: 'systemSub' };
+const SECTION_STATE_KEY = { home: 'homeMainSub', flow: 'flowSub', assets: 'assetSub', todo: 'todoSub', data: 'dataSub' };
 
 function currentSub(section) {
   const subs = SECTION_SUBS[section] || [];
@@ -3844,11 +3844,25 @@ function routeWrite(section, sub) {
   catch (e) { location.hash = h; }
   setTimeout(() => { ROUTE_SILENT = false; }, 0);
 }
+/* 메뉴 개편(현황·시스템 해체) 전에 만들어진 주소를 새 위치로 넘긴다.
+   기존 북마크·뒤로가기 이력이 깨지지 않게 하기 위한 것. */
+const LEGACY_ROUTE = {
+  'status': 'todo/goals',
+  'status/goals': 'todo/goals',
+  'status/structure': 'todo/structure',
+  'status/flowmap': 'flow/flowmap',
+  'status/ledger': 'data/ledger',
+  'status/snapshot': 'data/snapshot',
+  'system': 'data/dbm',
+  'system/dbm': 'data/dbm'
+};
+
 function routeRead() {
   let raw = String(location.hash || '').replace(/^#/, '');
   try { raw = decodeURIComponent(raw); } catch (e) {}
   raw = raw.trim();
   if (!raw) return null;
+  if (LEGACY_ROUTE[raw]) raw = LEGACY_ROUTE[raw];
   const [sec, sub] = raw.split('/');
   if (!NAV_ITEMS.some(n => n.id === sec)) return null;
   const subs = SECTION_SUBS[sec] || [];
@@ -4899,7 +4913,7 @@ function snapNeedsInput() {
   return !rows.some(r => assetMonthKey(r.date) === k);
 }
 function navNeedsDot(section, sub) {
-  return section === 'status' && sub === 'snapshot' && snapNeedsInput();
+  return section === 'data' && sub === 'snapshot' && snapNeedsInput();
 }
 
 /* 상·하위 탭을 한 줄에 모두 노출한다. 그룹 라벨 + 알약 버튼 + 구분자. */
@@ -4947,20 +4961,20 @@ function renderPage() {
     if (SUB === 'now') renderNowPage(body, data, d);
     else if (SUB === 'year') renderYearPage(body, data, d);
     else if (SUB === 'calendar') renderCalendarPage(body, data, d);
+    else if (SUB === 'flowmap') renderFlowMapPage(body, data, d);
     else renderTodayPage(body, data, d);
-  } else if (section === 'system') {
-    dbmRender(body);
   } else if (section === 'assets') {
     if (SUB === 'overview') renderAssetsPage(body, data, d);
     else if (SUB === 'investment') renderInvestmentPage(body, data, d);
     else if (SUB === 'pension') renderSavingsPage(body, data, d, 'pension');
     else renderSavingsPage(body, data, d, 'saving');
+  } else if (section === 'todo') {
+    if (SUB === 'structure') renderStructurePage(body, data, d);
+    else { body.innerHTML = '<div id="home-goals"></div>'; renderGoalBoard(data, d); }
   } else {
-    if (SUB === 'goals') { body.innerHTML = '<div id="home-goals"></div>'; renderGoalBoard(data, d); }
-    else if (SUB === 'ledger') renderLedgerShell(body);
-    else if (SUB === 'snapshot') renderSnapshotPage(body);
-    else if (SUB === 'flowmap') renderFlowMapPage(body, data, d);
-    else renderStructurePage(body, data, d);
+    if (SUB === 'snapshot') renderSnapshotPage(body);
+    else if (SUB === 'dbm') dbmRender(body);
+    else renderLedgerShell(body);
   }
 }
 
@@ -7392,7 +7406,7 @@ document.addEventListener('keydown', (e) => {
   const t = e.target;
   if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
   if (e.key === 'n' || e.key === 'N' || e.key === 'ㅜ') { e.preventDefault(); open ? enClose() : enOpen(); }
-  else if (e.key === 'l' || e.key === 'L' || e.key === 'ㅣ') { e.preventDefault(); if (open) enClose(); goTo('status', 'ledger'); }
+  else if (e.key === 'l' || e.key === 'L' || e.key === 'ㅣ') { e.preventDefault(); if (open) enClose(); goTo('data', 'ledger'); }
   else if (e.key === 'm' || e.key === 'M' || e.key === 'ㅡ') { e.preventDefault(); if (open) enClose(); dbmOpen(); }
 });
 
@@ -15901,7 +15915,7 @@ const dbmTextToTags = (s) => String(s || '').split(',').map(x => x.trim()).filte
 function dbmOpen(tab) {
   if (tab) DBM.tab = tab;
   window.scrollTo({ top: 0 });
-  goTo('system', 'dbm');
+  goTo('data', 'dbm');
 }
 
 async function dbmLoad(tabId, force) {
