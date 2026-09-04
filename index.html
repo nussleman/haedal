@@ -2797,7 +2797,8 @@ const state = {
   lastError: null,
   goals: { savingsRateTarget: 40, emergencyFundTarget: 5000000 },
   range: 12,
-  page: 'flow',
+  page: 'home',
+  homeMainSub: 'main',    // 홈 하위 탭: main 하나뿐
   ledgerFilter: { q: '', major: 'all', page: 1, pageSize: 50 },
   charts: {},
   budgets: {},          // 카테고리별 사용자 지정 예산 (window.storage에 저장)
@@ -4113,6 +4114,7 @@ function setSyncState(status) {
 /* 최상단 4탭 = 사용 빈도순 (매일 → 주/월 → 월 → 분기)
    각 탭의 하위는 SECTION_SUBS 에서 정의하고, 실제 렌더 함수로 매핑한다. */
 const NAV_ITEMS = [
+  { id: 'home', label: '홈', solo: true },
   { id: 'flow', label: '흐름' },
   { id: 'assets', label: '자산' },
   { id: 'status', label: '현황' },
@@ -4120,6 +4122,9 @@ const NAV_ITEMS = [
 ];
 
 const SECTION_SUBS = {
+  home: [
+    ['main', '홈']
+  ],
   flow: [
     ['today', '오늘'],
     ['now', '이번달'],
@@ -4144,7 +4149,7 @@ const SECTION_SUBS = {
   ]
 };
 
-const SECTION_STATE_KEY = { flow: 'flowSub', assets: 'assetSub', status: 'homeSub', system: 'systemSub' };
+const SECTION_STATE_KEY = { home: 'homeMainSub', flow: 'flowSub', assets: 'assetSub', status: 'homeSub', system: 'systemSub' };
 
 function currentSub(section) {
   const subs = SECTION_SUBS[section] || [];
@@ -5497,6 +5502,13 @@ function renderNav() {
   bar.innerHTML = NAV_ITEMS.map(n => {
     const on = n.id === state.page;
     const cur = currentSub(n.id);
+    /* solo 그룹은 분류 라벨 없이 버튼 하나로만 그린다 (예: 홈) */
+    if (n.solo) {
+      const v = ((SECTION_SUBS[n.id] || [])[0] || ['main'])[0];
+      return `<div class="nav-group${on ? ' on' : ''}">`
+        + `<button class="nav-btn${on ? ' active' : ''}" data-page="${n.id}" data-sub="${v}">${n.label}</button>`
+        + `</div>`;
+    }
     return `<div class="nav-group${on ? ' on' : ''}">
       <span class="nav-group-label">${n.label}</span>
       ${(SECTION_SUBS[n.id] || []).map(([v, l]) =>
@@ -5515,14 +5527,16 @@ function renderPage() {
   const d = computeDerived(data);
   destroyPageCharts();
   const body = document.getElementById('page-content');
-  const section = NAV_ITEMS.some(n => n.id === state.page) ? state.page : 'flow';
+  const section = NAV_ITEMS.some(n => n.id === state.page) ? state.page : 'home';
   state.page = section;
   const SUB = currentSub(section);
   routeWrite(section, SUB);
   renderNav();
   body.innerHTML = '';
 
-  if (section === 'flow') {
+  if (section === 'home') {
+    renderHomePage(body, data, d);
+  } else if (section === 'flow') {
     if (SUB === 'now') renderNowPage(body, data, d);
     else if (SUB === 'year') renderYearPage(body, data, d);
     else if (SUB === 'calendar') renderCalendarPage(body, data, d);
@@ -12879,6 +12893,19 @@ function renderStructurePage(container, data, d) {
 /* 흐름 › 순저축 — 자산 증감이 저축 때문인지 시장 때문인지.
    기간(6/12/24/전체)과 월·연 토글이 위 지표와 차트를 함께 움직인다. */
 const SAVE_RANGES = [[6, '6개월'], [12, '12개월'], [24, '24개월'], ['all', '전체']];
+
+/* 홈 — 두 축(현금흐름·자산)이 만나는 단 하나의 화면.
+   "이번 달 자산이 얼마 늘었고, 그게 아껴서인지 굴려서인지"를 먼저 보여준다.
+   본체는 아래 renderSavingFlowPage 를 그대로 쓴다. */
+function renderHomePage(container, data, d) {
+  container.innerHTML = `
+    <div class="panel-title" style="margin:2px 0 14px;">
+      <div>이번 달, 얼마나 늘었나</div>
+      <span class="ptag">저축 · 시장 분해</span>
+    </div>
+    <div id="home-save"></div>`;
+  renderSavingFlowPage(document.getElementById('home-save'), data, d);
+}
 
 function renderSavingFlowPage(container, data, d) {
   if (!state.saveRange) state.saveRange = 12;
