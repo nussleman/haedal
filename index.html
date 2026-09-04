@@ -2512,6 +2512,32 @@ body{font-variant-numeric:tabular-nums;}
 .sn-in{flex:0 0 150px;text-align:right;font-family:var(--mono);height:28px;padding:0 8px;}
 /* 아직 저장 안 된 '제안' 값. 손대는 순간 확정값으로 바뀐다. */
 .sn-in.sug{color:var(--text-dim);border-style:dashed;}
+
+/* ---------- 할 일 › 고정비 점검 ---------- */
+.fx-row{display:flex;align-items:center;gap:10px;padding:11px 12px;
+  border-bottom:1px solid var(--border);flex-wrap:wrap;}
+.fx-row:last-child{border-bottom:0;}
+.fx-row.done{opacity:.5;}
+.fx-name{flex:1 1 180px;min-width:0;}
+.fx-name b{display:block;font-size:var(--fs-base);color:var(--text);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.fx-name span{font-size:var(--fs-xs);color:var(--text-faint);}
+.fx-num{flex:0 0 auto;text-align:right;font-family:var(--mono);}
+.fx-num .mo{display:block;font-size:var(--fs-base);color:var(--text);}
+.fx-num .yr{font-size:var(--fs-xs);color:var(--text-faint);}
+.fx-flags{flex:0 0 auto;display:flex;gap:4px;flex-wrap:wrap;}
+.fx-flag{font-size:var(--fs-tiny);padding:2px 7px;border-radius:var(--r-pill);
+  border:1px solid var(--border-strong);color:var(--text-faint);white-space:nowrap;}
+.fx-flag.up{color:var(--expense-text);border-color:var(--expense-fill);}
+.fx-flag.gap{color:var(--accent-text);border-color:var(--accent-fill);}
+.fx-acts{flex:0 0 auto;display:flex;gap:3px;}
+.fx-acts button{border:1px solid var(--border);background:var(--bg-2);color:var(--text-faint);
+  border-radius:var(--r-sm);padding:5px 10px;font-size:var(--fs-xs);cursor:pointer;white-space:nowrap;}
+.fx-acts button:hover{color:var(--text);border-color:var(--border-strong);}
+.fx-acts button.on{font-weight:700;}
+.fx-acts button.on[data-v="keep"]{color:var(--income-text);border-color:var(--income-fill);background:var(--income-bg);}
+.fx-acts button.on[data-v="watch"]{color:var(--accent-text);border-color:var(--accent-fill);background:rgba(201,162,39,.12);}
+.fx-acts button.on[data-v="cancel"]{color:var(--expense-text);border-color:var(--expense-fill);background:var(--expense-bg);}
 .sn-tag{font-style:normal;margin-left:6px;padding:1px 6px;border-radius:var(--r-pill);
   font-size:var(--fs-tiny);border:1px solid var(--border-strong);color:var(--text-faint);
   white-space:nowrap;vertical-align:middle;}
@@ -3828,6 +3854,7 @@ const SECTION_SUBS = {
   ],
   todo: [
     ['goals', '목표'],
+    ['fixed', '고정비 점검'],
     ['structure', '시뮬레이션']
   ],
   data: [
@@ -4990,6 +5017,7 @@ function renderPage() {
     else renderSavingsPage(body, data, d, 'saving');
   } else if (section === 'todo') {
     if (SUB === 'structure') renderStructurePage(body, data, d);
+    else if (SUB === 'fixed') renderFixedPage(body);
     else { body.innerHTML = '<div id="home-goals"></div>'; renderGoalBoard(data, d); }
   } else {
     if (SUB === 'snapshot') renderSnapshotPage(body);
@@ -15651,6 +15679,179 @@ function snapPushToDashboard() {
     month: r.mk + '-01', asset_class: r.cls, account: r.account, amount: r.amount
   })), assetSource: 'db' };
   applySuggestedGoals(state.data);
+}
+
+/* ================= 할 일 › 고정비 점검 =================
+   📌 로 찍힌 거래를 사용처별로 묶어 '월 얼마 · 연 얼마'로 환산하고,
+   유지 / 점검 / 해지 중 하나를 고르게 한다. 관심 종목의 L1·L2·L3 와 같은 문법이다.
+   판정은 브라우저에 저장된다(기기 간 동기화 안 됨). */
+const FX_KEY = 'fixedreview';
+const FX = { rows: [], verdict: {}, loaded: false, err: null };
+
+async function fxLoadVerdict() {
+  try {
+    const r = await window.storage.get(FX_KEY, false);
+    FX.verdict = r && r.value ? JSON.parse(r.value) : {};
+  } catch (e) { FX.verdict = {}; }
+}
+async function fxSaveVerdict() {
+  try { await window.storage.set(FX_KEY, JSON.stringify(FX.verdict), false); } catch (e) {}
+}
+
+/* 최근 12개월치 고정비를 사용처별로 묶는다 */
+async function fxLoad() {
+  FX.err = null;
+  let rows = [];
+  try {
+    const { data, error } = await (await enClient()).from('transactions')
+      .select('date,amount,merchant,merchant_group,note')
+      .eq('is_fixed', true)
+      .gte('date', enDayShift(-365))
+      .order('date', { ascending: false })
+      .limit(2000);
+    if (error) throw error;
+    rows = data || [];
+  } catch (e) {
+    FX.err = e.message || String(e);
+    FX.rows = [];
+    return;
+  }
+
+  const by = {};
+  rows.forEach(r => {
+    const m = String(r.merchant || '').trim();
+    if (!m) return;
+    const mk = String(r.date).slice(0, 7);
+    if (!by[m]) by[m] = { merchant: m, group: r.merchant_group || null, byMonth: {}, last: r.date, note: r.note || '' };
+    by[m].byMonth[mk] = (by[m].byMonth[mk] || 0) + Math.abs(Number(r.amount) || 0);
+    if (r.date > by[m].last) by[m].last = r.date;
+  });
+
+  const today = enToday();
+  const daysBetween = (a, b) => Math.round((new Date(b) - new Date(a)) / 86400000);
+
+  FX.rows = Object.values(by).map(o => {
+    const keys = Object.keys(o.byMonth).sort();
+    const vals = keys.map(k => o.byMonth[k]);
+    const months = keys.length;
+    const latest = vals[vals.length - 1];
+    const avg = vals.reduce((a, b) => a + b, 0) / months;
+    /* 인상 감지 — 최근 3개월 평균과 그 이전 구간 평균을 견준다 */
+    const recent = vals.slice(-3), older = vals.slice(0, -3);
+    const rAvg = recent.reduce((a, b) => a + b, 0) / recent.length;
+    const oAvg = older.length ? older.reduce((a, b) => a + b, 0) / older.length : null;
+    const upPct = (oAvg && oAvg > 0) ? ((rAvg - oAvg) / oAvg) * 100 : null;
+    const gapDays = daysBetween(o.last, today);
+    return {
+      ...o, months, latest, avg, upPct, gapDays,
+      monthly: latest, annual: latest * 12
+    };
+  }).sort((a, b) => b.annual - a.annual);
+}
+
+async function renderFixedPage(body) {
+  body.innerHTML = '<div class="lg-wrap"><div class="en-empty">고정비를 불러오는 중…</div></div>';
+  await fxLoadVerdict();
+  await fxLoad();
+  fxPaint(body);
+}
+
+function fxPaint(body) {
+  if (FX.err) {
+    body.innerHTML = `<div class="lg-wrap"><div class="en-empty">고정비를 불러오지 못했습니다 — ${enEsc(FX.err)}</div></div>`;
+    return;
+  }
+  if (!FX.rows.length) {
+    body.innerHTML = `<div class="lg-wrap"><div class="en-empty">📌 고정비로 표시된 거래가 없어요.<br>
+      기록할 때 📌 고정비를 켜두면 여기 모입니다.</div></div>`;
+    return;
+  }
+
+  const vOf = (m) => (FX.verdict[m] && FX.verdict[m].v) || null;
+  const alive = FX.rows.filter(r => vOf(r.merchant) !== 'cancel');
+  const cancelled = FX.rows.filter(r => vOf(r.merchant) === 'cancel');
+  const unjudged = FX.rows.filter(r => !vOf(r.merchant));
+
+  const moTotal = alive.reduce((a, r) => a + r.monthly, 0);
+  const saveYear = cancelled.reduce((a, r) => a + r.annual, 0);
+
+  /* 미판정 → 연 환산 큰 순. 해지한 것은 맨 아래로. */
+  const order = [
+    ...unjudged,
+    ...alive.filter(r => vOf(r.merchant)),
+    ...cancelled
+  ];
+
+  const rowHtml = (r) => {
+    const v = vOf(r.merchant);
+    const flags = [];
+    if (r.upPct !== null && r.upPct >= 5) flags.push(`<span class="fx-flag up">↑ ${r.upPct.toFixed(0)}% 인상</span>`);
+    if (r.gapDays > 45) flags.push(`<span class="fx-flag gap">${r.gapDays}일째 결제 없음</span>`);
+    if (r.months <= 2) flags.push(`<span class="fx-flag">${r.months}개월치만 있음</span>`);
+    const btn = (val, label) =>
+      `<button data-m="${enEsc(r.merchant)}" data-v="${val}" class="${v === val ? 'on' : ''}">${label}</button>`;
+    return `<div class="fx-row${v === 'cancel' ? ' done' : ''}">
+      <span class="fx-name">
+        <b>${enEsc(r.merchant)}</b>
+        <span>${r.months}개월 기록 · 최근 ${r.last}</span>
+      </span>
+      <span class="fx-flags">${flags.join('')}</span>
+      <span class="fx-num">
+        <span class="mo">${wonComma(r.monthly)}원</span>
+        <span class="yr">연 ${formatCompactWon(r.annual)}원</span>
+      </span>
+      <span class="fx-acts">${btn('keep', '유지')}${btn('watch', '점검')}${btn('cancel', '해지')}</span>
+    </div>`;
+  };
+
+  body.innerHTML = `
+    <div class="lg-wrap">
+      <div class="stat-grid" style="grid-template-columns:repeat(4,1fr);gap:8px;">
+        <div class="stat-card">
+          <div class="label">월 고정비</div>
+          <div class="value">${formatKrw(moTotal)}</div>
+          <div class="sub">해지 표시분 제외</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">연 환산</div>
+          <div class="value">${formatKrw(moTotal * 12)}</div>
+          <div class="sub">지금 이대로 1년</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">항목</div>
+          <div class="value">${alive.length}개</div>
+          <div class="sub">미점검 ${unjudged.length}개</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">해지 시 절감</div>
+          <div class="value" style="color:var(--income-text)">${saveYear ? '+' + formatKrw(saveYear) : '—'}</div>
+          <div class="sub">연 기준 · ${cancelled.length}건</div>
+        </div>
+      </div>
+
+      <div class="today-verdict ${unjudged.length ? 'warn' : 'good'}" style="margin:10px 0 14px;">
+        ${unjudged.length
+          ? `아직 판정하지 않은 고정비가 ${unjudged.length}건 있어요. 위에서부터 큰 것을 먼저 보세요.`
+          : `${alive.length}건 모두 판정했어요. 월 ${formatKrw(moTotal)}이 매달 자동으로 나갑니다.`}
+      </div>
+
+      <div class="panel">
+        <div class="panel-title"><div>고정비 목록</div><span class="ptag">연 환산 큰 순</span></div>
+        <div id="fx-list">${order.map(rowHtml).join('')}</div>
+        <div class="settings-note" style="margin-top:10px;">
+          📌 고정비로 기록한 거래를 사용처별로 묶었어요. 월 금액은 가장 최근 결제액 기준입니다.
+          판정은 이 브라우저에만 저장돼요.
+        </div>
+      </div>
+    </div>`;
+
+  body.querySelectorAll('.fx-acts button').forEach(b => b.addEventListener('click', () => {
+    const m = b.dataset.m, v = b.dataset.v;
+    if (FX.verdict[m] && FX.verdict[m].v === v) delete FX.verdict[m];   // 다시 누르면 해제
+    else FX.verdict[m] = { v, at: enToday() };
+    fxSaveVerdict();
+    fxPaint(body);
+  }));
 }
 
 async function renderSnapshotPage(body) {
