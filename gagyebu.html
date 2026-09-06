@@ -129,6 +129,37 @@ body.kb .tabbar{display:none;}
 .amt.neg b{color:var(--expense-text);}
 .amt.sv b{color:var(--save-text);}
 .amt span{font-size:15px;color:var(--text-faint);}
+/* ---------- 기록: 한 번에 한 칸 ----------
+   위쪽은 지금까지 넣은 것이 줄로 쌓이기만 하고, 손은 아래 도크에서만 움직인다. */
+.stack{padding:4px 0 8px;}
+.srow{display:flex;align-items:baseline;gap:14px;width:100%;
+  background:none;border:0;border-bottom:1px solid var(--border);
+  padding:15px 2px;text-align:left;color:var(--text);font-family:var(--sans);}
+.srow:last-child{border-bottom:0;}
+.srow .sk{flex:0 0 46px;font-size:12px;color:var(--text-faint);}
+.srow .sv{flex:1;min-width:0;font-size:17px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.srow .sv.num{font-family:var(--mono);}
+.srow .sv.ph{color:var(--text-faint);}
+.srow.cur .sv{color:var(--accent-text);}
+.srow.cur .sk{color:var(--accent-text);}
+
+/* 도크 안 후보 줄 — 가로로 흘려서 자리를 아낀다 */
+.sugs{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;scrollbar-width:none;}
+.sugs::-webkit-scrollbar{display:none;}
+.sugs button{flex:0 0 auto;height:36px;padding:0 14px;border-radius:var(--r-pill);
+  border:1px solid var(--border);background:transparent;color:var(--text-dim);
+  font-size:14px;white-space:nowrap;font-family:var(--sans);}
+.sugs button.on{border-color:var(--accent);color:var(--accent-text);}
+.sugs button.mut{color:var(--text-faint);}
+.sugs.v{flex-direction:column;overflow:visible;gap:0;padding-bottom:6px;}
+.sugs.v button{height:44px;border:0;border-bottom:1px solid var(--border);
+  border-radius:0;text-align:left;padding:0 2px;display:flex;align-items:center;gap:10px;}
+.sugs.v button .ct{margin-left:auto;font-size:12px;color:var(--text-faint);}
+.drow{display:flex;gap:6px;}
+.drow .in{flex:1;}
+.drow .go{flex:0 0 66px;height:44px;border:0;border-radius:var(--r-md);
+  background:var(--accent);color:var(--ink-on-accent);font-weight:700;font-size:15px;}
+.drow .go:disabled{background:var(--panel-2);color:var(--text-faint);}
 .pad{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
 .pad button{height:46px;border-radius:var(--r-md);border:1px solid var(--border);background:var(--panel-2);
   font-family:var(--mono);font-size:20px;font-weight:600;color:var(--text);}
@@ -356,11 +387,15 @@ const S = {
   edit: null,               /* 기록 수정 */
   mg: { q: '', catKind: '지출', edit: null, busy: false }
 };
+/* step 1 사용처 → 2 분류 → 3 금액 → 4 날짜·기록.
+   kind(지출·수입·이체)는 분류 안에 들어있으므로 따로 고르지 않는다.
+   계좌는 저장하지 않으므로 화면에서도 뺐다. */
 function freshDraft() {
-  return { step: 1, kind: '지출', amount: '', neg: false, catId: null, cat: null, catOpen: false,
-           moreOpen: false, merchant: '', note: '', date: todayKey(),
-           good: null, fixed: false, co: false };
+  return { step: 1, reach: 1, kind: '지출', amount: '', neg: false, catId: null, cat: null,
+           merchant: '', noMerch: false, note: '', noteOpen: false, date: todayKey(),
+           good: null, fixed: false, co: false, focusMerch: false };
 }
+const STEP_KEYS = ['사용처', '분류', '금액', '날짜'];
 S.d = freshDraft();
 
 /* ---------------- 기준 데이터 ---------------- */
@@ -507,115 +542,17 @@ function paintAmtBox(sel, v, neg, cls) {
   box.className = 'amt' + (v ? '' : ' zero') + (neg ? ' neg' : '') + (cls ? ' ' + cls : '');
   box.innerHTML = `<b>${neg && v ? '−' : ''}${v ? Number(v).toLocaleString('ko-KR') : '0'}</b><span>원</span>`;
 }
-function paintAddAmount() {
-  const d = S.d;
-  paintAmtBox('#main .amt', d.amount, d.neg, '');
-  const btn = $('#f-save');
-  if (btn) {
-    btn.disabled = !d.amount;
-    btn.textContent = (d.amount ? Number(d.amount).toLocaleString('ko-KR') + '원 ' : '') + '기록하기';
-  }
-}
-
-/* ---------------- 기록 ----------------
-   ① 사용처를 고르면 지난번 분류(=지출·수입·이체)가 자동으로 따라오고
-   ② 바로 금액 칸으로 넘어간다. 검색창·키패드·저장은 늘 화면 맨 아래에 붙어 있어서
-   손가락이 위아래로 왔다갔다 하지 않는다. */
-function renderAdd(m, dock) {
-  const d = S.d;
-  if (d.step === 2) return renderAddAmount(m, dock);
-  const t = todayStat();
-
-  m.innerHTML = `
-    <div class="seg">
-      ${['지출', '수입', '이체'].map(k =>
-        `<button data-k="${k}" class="${d.kind === k ? 'on' : ''}">${k}</button>`).join('')}
-    </div>
-
-    <div class="steplab"><b>1</b> 어디에 썼나요?</div>
-
-    <div class="mlist" id="f-mlist"></div>
-
-    <button class="skip" id="f-nomerch">사용처 없이 기록 →</button>
-
-    ${t.n ? `<div class="card" id="f-today" style="margin-top:12px;display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--text-dim);">
-      <span>오늘 ${t.n}건</span><b class="mono" style="color:var(--expense-text)">${comma(t.exp)}원</b></div>` : ''}`;
-
-  dock.innerHTML = `<div class="inner">
-    <div id="f-newwrap"></div>
-    <input class="in" id="f-merch" placeholder="사용처 검색 · 입력"
-           autocomplete="off" autocapitalize="off" enterkeyhint="next" value="${esc(d.merchant)}">
-  </div>`;
-
-  paintMerchList();
-
-  $$('.seg button', m).forEach(b => b.addEventListener('click', () => {
-    d.kind = b.dataset.k; d.catId = null; d.cat = null; renderTab();
-  }));
-
-  /* 한글은 여러 번의 input 이벤트로 한 글자가 조합된다.
-     그래서 타이핑 중에는 입력칸을 절대 다시 그리지 않고 아래 목록만 갈아 끼운다. */
-  const mi = $('#f-merch');
-  const sync = () => { d.merchant = mi.value; paintMerchList(); };
-  mi.addEventListener('input', sync);
-  mi.addEventListener('compositionupdate', sync);
-  mi.addEventListener('compositionend', sync);
-  mi.addEventListener('keydown', (e) => {
-    if (e.key !== 'Enter' || e.isComposing || e.keyCode === 229) return;
-    e.preventDefault();
-    const name = mi.value.trim();
-    if (name) { d.merchant = name; pickMerch(name); }
-  });
-  if (d.focusMerch) { d.focusMerch = false; setTimeout(() => { const e2 = $('#f-merch'); if (e2) e2.focus(); }, 30); }
-
-  $('#f-nomerch').addEventListener('click', () => { d.merchant = ''; goAmount(); });
-  const tb = $('#f-today');
-  if (tb) tb.addEventListener('click', () => { S.tab = 'today'; render(); });
-}
-
-/* 목록·'새로 쓰기' 버튼만 다시 그린다 (입력칸은 건드리지 않는다) */
-function paintMerchList() {
-  const host = $('#f-mlist');
-  if (!host) return;
-  const d = S.d;
-  const q = d.merchant.trim().toLowerCase();
-  let list = Object.values(S.merchStats);
-  if (q) list = list.filter(x => x.name.toLowerCase().includes(q));
-  list = list.sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'ko')).slice(0, 40);
-  const exact = q && list.some(x => x.name.toLowerCase() === q);
-
-  const mark = (name) => {
-    if (!q) return esc(name);
-    const at = name.toLowerCase().indexOf(q);
-    if (at < 0) return esc(name);
-    return esc(name.slice(0, at)) + '<mark>' + esc(name.slice(at, at + q.length)) + '</mark>' + esc(name.slice(at + q.length));
-  };
-
-  host.innerHTML = list.map(x => `<button class="mrow" data-m="${esc(x.name)}">
-      <span class="nm">${mark(x.name)}</span>
-      ${x.catId ? `<span class="ct">${esc(catLabel(x.catId))}</span>` : ''}
-      ${x.count ? `<span class="n">${x.count}</span>` : ''}
-    </button>`).join('') || '<div class="empty">아래 칸에 직접 입력하세요.</div>';
-  $$('[data-m]', host).forEach(b => b.addEventListener('click', () => pickMerch(b.dataset.m)));
-
-  const wrap = $('#f-newwrap');
-  if (!wrap) return;
-  wrap.innerHTML = (q && !exact)
-    ? `<button class="newmerch" id="f-newmerch" style="margin-bottom:7px;">＋ '${esc(d.merchant.trim())}' 새로 쓰기</button>` : '';
-  const nm = $('#f-newmerch');
-  if (nm) nm.addEventListener('click', () => pickMerch(d.merchant.trim()));
-}
-
 function todayStat() {
   const k = todayKey();
   const rows = S.tx.filter(r => r.date === k);
   return { n: rows.length, exp: rows.reduce((a, r) => a + (kindOf(r.category_id) === '지출' ? Number(r.amount) : 0), 0) };
 }
 
-/* 사용처를 고르면 지난번 분류를 그대로 데려온다 — 종류(지출·수입·이체)도 같이 바뀐다 */
+/* 사용처를 고르면 지난번 분류를 그대로 데려온다 — 분류가 정해지면 종류도 같이 정해진다 */
 function pickMerch(name) {
   const d = S.d;
   d.merchant = name;
+  d.noMerch = !name;
   const st = S.merchStats[name];
   if (st && st.catId && catById(st.catId)) {
     const c = catById(st.catId);
@@ -623,106 +560,197 @@ function pickMerch(name) {
   }
   const mm = merchOf(name);
   if (mm && mm.is_fixed) d.fixed = true;
-  goAmount();
-}
-function goAmount() {
-  S.d.step = 2;
-  S.d.catOpen = !S.d.catId;   /* 분류가 안 잡혔으면 바로 고를 수 있게 펼쳐 둔다 */
-  scrollTop();
+  d.step = d.catId ? 3 : 2;     // 분류가 이미 잡혔으면 건너뛴다
   renderTab();
 }
 
-function renderAddAmount(m, dock) {
+function goStep(n) { S.d.step = n; S.d.focusMerch = (n === 1); renderTab(); }
+
+/* 그 사용처에서 자주 찍었던 금액 */
+function oftenAmounts() {
+  const st = S.merchStats[S.d.merchant.trim()];
+  if (!st || !st.amounts.length) return [];
+  const cnt = {};
+  st.amounts.forEach(a => { cnt[a] = (cnt[a] || 0) + 1; });
+  return Object.entries(cnt).sort((a, b) => b[1] - a[1] || b[0] - a[0]).slice(0, 4).map(x => Number(x[0]));
+}
+
+function dateLabel(k) {
+  const t = todayKey();
+  if (k === t) return '오늘';
+  const d0 = new Date(t + 'T00:00:00'), d1 = new Date(k + 'T00:00:00');
+  const g = Math.round((d0 - d1) / 86400000);
+  if (g === 1) return '어제';
+  if (g === 2) return '그저께';
+  return dayLabel(k);
+}
+function shiftDay(n) {
+  const dt = new Date();
+  dt.setDate(dt.getDate() + n);
+  dt.setMinutes(dt.getMinutes() - dt.getTimezoneOffset());
+  return dt.toISOString().slice(0, 10);
+}
+
+/* ---------------- 기록 ---------------- */
+function renderAdd(m, dock) {
   const d = S.d;
-  const st = S.merchStats[d.merchant.trim()];
-  /* 그 사용처에서 자주 찍었던 금액 — 한 번 눌러 끝낸다 */
-  const often = (() => {
-    if (!st || !st.amounts.length) return [];
-    const cnt = {};
-    st.amounts.forEach(a => { cnt[a] = (cnt[a] || 0) + 1; });
-    return Object.entries(cnt).sort((a, b) => b[1] - a[1] || b[0] - a[0]).slice(0, 3).map(x => Number(x[0]));
-  })();
+  /* 되돌아가도 이미 넣은 뒷줄은 그대로 보이게 — 도달한 최대 단계까지 그린다 */
+  d.reach = Math.max(d.reach || 1, d.step);
+  const val = [
+    d.noMerch ? '사용처 없음' : d.merchant.trim(),
+    d.catId ? catLabel(d.catId) : '',
+    d.amount ? comma(d.neg ? -Number(d.amount) : Number(d.amount)) + '원' : '',
+    dateLabel(d.date)
+  ];
+  const tags = [d.neg ? '환불' : '', d.fixed ? '고정비' : '', d.co ? '회사' : '',
+                d.good === 'Good' ? '좋은 지출' : d.good === 'Bad' ? '아쉬운 지출' : '',
+                d.note.trim()].filter(Boolean);
 
-  const cats = S.cats.filter(c => c.kind === d.kind);
-  const groups = [...new Set(cats.map(c => c.category))];
+  m.innerHTML = `<div class="stack">
+    ${STEP_KEYS.map((k, i) => {
+      const n = i + 1;
+      if (n > d.reach) return '';
+      const filled = !!val[i];
+      return `<button class="srow${n === d.step ? ' cur' : ''}" data-s="${n}">
+        <span class="sk">${k}</span>
+        <span class="sv${i >= 2 ? ' num' : ''}${filled ? '' : ' ph'}">${esc(filled ? val[i] : '…')}</span>
+      </button>`;
+    }).join('')}
+    ${d.reach === 4 && tags.length
+      ? `<button class="srow" data-s="4"><span class="sk">표시</span>
+           <span class="sv">${esc(tags.join(' · '))}</span></button>` : ''}
+  </div>
+  <p class="err" id="f-err"></p>`;
+
+  m.querySelectorAll('[data-s]').forEach(b =>
+    b.addEventListener('click', () => goStep(Number(b.dataset.s))));
+
+  if (d.step === 1) return dockMerch(dock);
+  if (d.step === 2) return dockCat(dock);
+  if (d.step === 3) return dockAmount(dock);
+  return dockDate(dock);
+}
+
+/* --- 1. 사용처 --- */
+function dockMerch(dock) {
+  const d = S.d;
+  dock.innerHTML = `<div class="inner">
+    <div class="sugs v" id="f-sugs"></div>
+    <div class="drow">
+      <input class="in" id="f-merch" placeholder="사용처" autocomplete="off"
+             autocapitalize="off" enterkeyhint="next" value="${esc(d.merchant)}">
+      <button class="go" id="f-mgo">다음</button>
+    </div>
+  </div>`;
+  paintMerchSugs();
+
+  const mi = $('#f-merch');
+  /* 한글은 여러 input 이벤트로 한 글자가 조합된다 — 입력칸은 다시 그리지 않고 목록만 간다 */
+  const sync = () => { d.merchant = mi.value; paintMerchSugs(); };
+  mi.addEventListener('input', sync);
+  mi.addEventListener('compositionupdate', sync);
+  mi.addEventListener('compositionend', sync);
+  mi.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' || e.isComposing || e.keyCode === 229) return;
+    e.preventDefault();
+    pickMerch(mi.value.trim());
+  });
+  $('#f-mgo').addEventListener('click', () => pickMerch($('#f-merch').value.trim()));
+  if (d.focusMerch) { d.focusMerch = false; setTimeout(() => { const e2 = $('#f-merch'); if (e2) e2.focus(); }, 30); }
+}
+
+function paintMerchSugs() {
+  const host = $('#f-sugs');
+  if (!host) return;
+  const q = S.d.merchant.trim().toLowerCase();
+  let list = Object.values(S.merchStats);
+  if (q) list = list.filter(x => x.name.toLowerCase().includes(q));
+  list = list.sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'ko')).slice(0, 5);
+  const exact = q && list.some(x => x.name.toLowerCase() === q);
+
+  host.innerHTML =
+    list.map(x => `<button data-m="${esc(x.name)}">${esc(x.name)}
+        ${x.catId ? `<span class="ct">${esc(catLabel(x.catId))}</span>` : ''}</button>`).join('')
+    + (q && !exact ? `<button data-m="${esc(S.d.merchant.trim())}">'${esc(S.d.merchant.trim())}' 새로</button>` : '')
+    + `<button data-m="" class="mut">사용처 없이</button>`;
+  host.querySelectorAll('[data-m]').forEach(b =>
+    b.addEventListener('click', () => pickMerch(b.dataset.m)));
+}
+
+/* --- 2. 분류 --- */
+function dockCat(dock) {
+  const d = S.d;
   const cur = d.catId ? catById(d.catId) : null;
+  const groups = [...new Set(S.cats.map(c => c.category))];
   const openGroup = d.cat || (cur ? cur.category : groups[0]);
-  const subs = cats.filter(c => c.category === openGroup);
-
-  m.innerHTML = `
-    <div class="stepbar">
-      <button class="backchip" id="f-back">‹ ${esc(d.merchant.trim() || '사용처 없음')}</button>
-      <span class="kindpill ${kindCls(d.kind)}">${d.kind}</span>
-    </div>
-
-    <div class="steplab"><b>2</b> 얼마인가요?</div>
-    ${amtHtml(d.amount, d.neg, '')}
-    ${often.length ? `<div class="chips ochips">${often.map(a =>
-      `<button class="chip" data-a="${a}">${comma(a)}</button>`).join('')}</div>` : ''}
-
-    <div style="margin-top:13px;">
-      <button class="catpick ${d.catId ? 'on' : ''}" id="f-catpick">
-        ${d.catId ? `${catEmoji(d.catId)} ${esc(catLabel(d.catId))}` : '분류 선택'}
-        <i>${d.catOpen ? '▲' : '▼'}</i>
-      </button>
-    </div>
-    ${d.catOpen ? `
-      <div class="chips" style="margin-top:8px;">${groups.map(g =>
-        `<button class="chip sm" data-g="${esc(g)}" ${g === openGroup ? 'style="border-color:var(--accent);color:var(--accent-text);"' : ''}>${esc(g)}</button>`).join('')}</div>
-      <div class="chips" style="margin-top:7px;">${subs.map(c =>
-        `<button class="chip ${d.catId === c.id ? 'on' : ''}" data-c="${c.id}">${c.emoji_category || ''} ${esc(c.subcategory)}</button>`).join('')}</div>` : ''}
-
-    <details class="more" ${d.moreOpen ? 'open' : ''}>
-      <summary>날짜 · 메모 · 표시</summary>
-      <div class="row" style="margin-top:10px;">
-        <button class="chip sm" data-d="0">오늘</button>
-        <button class="chip sm" data-d="-1">어제</button>
-        <input class="in" type="date" id="f-date" value="${d.date}" style="flex:1;">
-      </div>
-      <input class="in" id="f-note" placeholder="메모" value="${esc(d.note)}" style="margin-top:8px;">
-      <div class="row" style="margin-top:8px;flex-wrap:wrap;gap:6px;">
-        <button class="tog" id="t-neg" aria-pressed="${d.neg}">− 환불</button>
-        <button class="tog" id="t-fx" aria-pressed="${d.fixed}">📌 고정비</button>
-        <button class="tog" id="t-co" aria-pressed="${d.co}">🏢 회사</button>
-        <button class="tog g" id="t-good" aria-pressed="${d.good === 'Good'}">👍</button>
-        <button class="tog b" id="t-bad" aria-pressed="${d.good === 'Bad'}">👎</button>
-      </div>
-    </details>
-
-    <p class="err" id="f-err"></p>`;
+  const subs = S.cats.filter(c => c.category === openGroup);
 
   dock.innerHTML = `<div class="inner">
-    ${padHtml('pad1')}
-    <button class="save" id="f-save" ${d.amount ? '' : 'disabled'}>${
-      d.amount ? Number(d.amount).toLocaleString('ko-KR') + '원 ' : ''}기록하기</button>
+    <div class="sugs" id="f-groups">${groups.map(g =>
+      `<button data-g="${esc(g)}" class="${g === openGroup ? 'on' : ''}">${esc(g)}</button>`).join('')}</div>
+    <div class="sugs" id="f-subs">${subs.map(c =>
+      `<button data-c="${c.id}" class="${d.catId === c.id ? 'on' : ''}">${esc(c.subcategory)}</button>`).join('')}</div>
   </div>`;
 
-  bindPad('pad1', () => d.amount, (v) => { d.amount = v; }, paintAddAmount);
-  $('#f-back').addEventListener('click', () => { d.step = 1; d.focusMerch = true; renderTab(); });
-  $$('[data-a]', m).forEach(b => b.addEventListener('click', () => { d.amount = b.dataset.a; paintAddAmount(); }));
-  const cp = $('#f-catpick');
-  if (cp) cp.addEventListener('click', () => { d.catOpen = !d.catOpen; renderTab(); });
-  $$('[data-g]', m).forEach(b => b.addEventListener('click', () => { d.cat = b.dataset.g; renderTab(); }));
-  $$('[data-c]', m).forEach(b => b.addEventListener('click', () => {
+  $$('[data-g]', dock).forEach(b => b.addEventListener('click', () => { d.cat = b.dataset.g; renderTab(); }));
+  $$('[data-c]', dock).forEach(b => b.addEventListener('click', () => {
     d.catId = Number(b.dataset.c);
-    const c = catById(d.catId); if (c) d.kind = c.kind;
-    d.catOpen = false; renderTab();
+    const c = catById(d.catId);
+    if (c) { d.kind = c.kind; d.cat = c.category; }
+    d.step = 3; renderTab();
   }));
-  $$('[data-d]', m).forEach(b => b.addEventListener('click', () => {
-    const dt = new Date(); dt.setDate(dt.getDate() + Number(b.dataset.d));
-    dt.setMinutes(dt.getMinutes() - dt.getTimezoneOffset());
-    d.date = dt.toISOString().slice(0, 10); d.moreOpen = true; renderTab();
+}
+
+/* --- 3. 금액 --- */
+function dockAmount(dock) {
+  const d = S.d;
+  const often = oftenAmounts();
+  dock.innerHTML = `<div class="inner">
+    ${often.length ? `<div class="sugs">${often.map(a =>
+      `<button data-a="${a}">${comma(a)}</button>`).join('')}</div>` : ''}
+    ${padHtml('pad1')}
+    <button class="save" id="f-next" ${d.amount ? '' : 'disabled'}>다음</button>
+  </div>`;
+  bindPad('pad1', () => d.amount, (v) => { d.amount = v; }, () => renderTab());
+  $$('[data-a]', dock).forEach(b => b.addEventListener('click', () => {
+    d.amount = b.dataset.a; d.step = 4; renderTab();
   }));
-  const det = m.querySelector('details.more');
-  det.addEventListener('toggle', () => { d.moreOpen = det.open; });
-  $('#f-date').addEventListener('change', (e) => { d.date = e.target.value; });
-  $('#f-note').addEventListener('input', (e) => { d.note = e.target.value; });
-  const on = (id, fn) => { const el = $(id); if (el) el.addEventListener('click', fn); };
-  on('#t-neg', () => { d.neg = !d.neg; d.moreOpen = true; renderTab(); });
-  on('#t-fx', () => { d.fixed = !d.fixed; d.moreOpen = true; renderTab(); });
-  on('#t-co', () => { d.co = !d.co; d.moreOpen = true; renderTab(); });
-  on('#t-good', () => { d.good = d.good === 'Good' ? null : 'Good'; d.moreOpen = true; renderTab(); });
-  on('#t-bad', () => { d.good = d.good === 'Bad' ? null : 'Bad'; d.moreOpen = true; renderTab(); });
+  $('#f-next').addEventListener('click', () => { if (d.amount) { d.step = 4; renderTab(); } });
+}
+
+/* --- 4. 날짜 · 기록 --- */
+function dockDate(dock) {
+  const d = S.d;
+  const days = [[0, '오늘'], [-1, '어제'], [-2, '그저께']];
+  dock.innerHTML = `<div class="inner">
+    <div class="sugs">
+      ${days.map(([n, l]) => `<button data-d="${n}" class="${d.date === shiftDay(n) ? 'on' : ''}">${l}</button>`).join('')}
+      <button data-t="neg" class="${d.neg ? 'on' : 'mut'}">환불</button>
+      <button data-t="fixed" class="${d.fixed ? 'on' : 'mut'}">고정비</button>
+      <button data-t="co" class="${d.co ? 'on' : 'mut'}">회사</button>
+      <button data-t="good" class="${d.good === 'Good' ? 'on' : 'mut'}">좋은</button>
+      <button data-t="bad" class="${d.good === 'Bad' ? 'on' : 'mut'}">아쉬운</button>
+      <button data-t="note" class="${d.noteOpen || d.note ? 'on' : 'mut'}">메모</button>
+    </div>
+    ${d.noteOpen ? `<input class="in" id="f-note" placeholder="메모" value="${esc(d.note)}" style="margin-bottom:8px;">` : ''}
+    <button class="save" id="f-save">기록하기</button>
+  </div>`;
+
+  $$('[data-d]', dock).forEach(b => b.addEventListener('click', () => {
+    d.date = shiftDay(Number(b.dataset.d)); renderTab();
+  }));
+  $$('[data-t]', dock).forEach(b => b.addEventListener('click', () => {
+    const t = b.dataset.t;
+    if (t === 'neg') d.neg = !d.neg;
+    else if (t === 'fixed') d.fixed = !d.fixed;
+    else if (t === 'co') d.co = !d.co;
+    else if (t === 'good') d.good = d.good === 'Good' ? null : 'Good';
+    else if (t === 'bad') d.good = d.good === 'Bad' ? null : 'Bad';
+    else if (t === 'note') d.noteOpen = !d.noteOpen;
+    renderTab();
+  }));
+  const nt = $('#f-note');
+  if (nt) { nt.addEventListener('input', (e) => { d.note = e.target.value; }); nt.focus(); }
   $('#f-save').addEventListener('click', saveDraft);
 }
 
@@ -730,8 +758,8 @@ async function saveDraft() {
   const d = S.d;
   const n = Number(d.amount || 0);
   const err = $('#f-err');
-  if (!n) { err.textContent = '금액을 입력하세요.'; return; }
-  if (!d.catId) { err.textContent = '분류를 선택하세요.'; d.catOpen = true; renderTab(); return; }
+  if (!n) { err.textContent = '금액을 넣으세요.'; d.step = 3; renderTab(); return; }
+  if (!d.catId) { err.textContent = '분류를 고르세요.'; d.step = 2; renderTab(); return; }
   err.textContent = '';
   const btn = $('#f-save'); btn.disabled = true; btn.textContent = '저장 중…';
   try {
@@ -758,7 +786,7 @@ async function saveDraft() {
     toast(comma(n) + '원 기록했습니다');
     const keep = { date: d.date, kind: d.kind };
     S.d = freshDraft();
-    S.d.date = keep.date; S.d.kind = keep.kind; S.d.focusMerch = true;
+    S.d.date = keep.date; S.d.kind = keep.kind; S.d.focusMerch = true;   // 사용처 칸으로 되돌아간다
     if (monthOf(keep.date) !== S.month) S.month = monthOf(keep.date);
     await loadMonth();
     renderTab();
