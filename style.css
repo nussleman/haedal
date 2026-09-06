@@ -805,11 +805,37 @@ body{
   border-radius:var(--r-xl);padding:5px 10px;cursor:pointer;font-family:var(--sans);font-size:var(--fs-xs);}
 .lg-quick button:hover{color:var(--text);}
 .lg-quick button.on{background:var(--accent-fill);color:var(--ink-on-accent);font-weight:700;}
-.lg-sum{display:flex;gap:22px;align-items:baseline;margin:14px 2px 0;flex-wrap:wrap;}
+.lg-sum{display:flex;gap:18px;align-items:baseline;margin:0 0 0 auto;flex-wrap:wrap;}
 .lg-sum span.k{font-size:var(--fs-tiny);color:var(--text-faint);margin-right:6px;}
 .lg-sum span.v{font-family:var(--mono);font-size:var(--fs-md);font-weight:600;font-variant-numeric:tabular-nums;}
 
 /* 열 머리글 */
+/* ---------- 내역 머리줄에 녹인 필터 ----------
+   필터를 따로 쌓지 않고, 걸러지는 칸의 머리글 자체를 눌러 고른다.
+   패널은 미리 만들어 숨겨두고 열 때 팝오버로 옮긴다 — 그래야 기존 이벤트가 그대로 산다. */
+.lg-hd{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:0 2px;}
+.lg-hd .grow{flex:1 1 200px;min-width:150px;}
+.lg-fbtn{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;
+  border:1px solid var(--border);border-radius:var(--r-pill);background:var(--bg-2);
+  color:var(--text-dim);font-size:var(--fs-sm);cursor:pointer;white-space:nowrap;}
+.lg-fbtn:hover{color:var(--text);border-color:var(--border-strong);}
+.lg-fbtn.act{color:var(--accent-text);border-color:var(--accent-fill);}
+.lg-fbtn.add{border-style:dashed;}
+.lg-fbtn.save{background:var(--accent-fill);color:var(--ink-on-accent);border-color:var(--accent-fill);font-weight:700;}
+.lg-fbtn i{font-style:normal;font-size:9px;opacity:.65;}
+.lg-fbtn kbd{font-family:var(--mono);font-size:var(--fs-micro);opacity:.6;}
+.lg-popwrap{position:relative;}
+.lg-pop{position:absolute;top:2px;z-index:60;background:var(--panel);
+  border:1px solid var(--border-strong);border-radius:var(--r-md);padding:11px;
+  box-shadow:0 12px 34px rgba(0,0,0,.55);min-width:230px;max-width:min(420px,92vw);}
+.lg-pop .lg-glab{display:block;margin:0 0 5px;}
+.lg-pop .pgrp + .pgrp{margin-top:10px;}
+.lg-pop .en-in{height:28px;font-size:var(--fs-sm);}
+.lg-cols .hcell{background:none;border:0;padding:0;margin:0;font:inherit;color:inherit;
+  letter-spacing:inherit;cursor:pointer;display:flex;align-items:center;gap:4px;}
+.lg-cols .hcell:hover{color:var(--text);}
+.lg-cols .hcell.act{color:var(--accent-text);}
+.lg-cols .hcell i{font-style:normal;font-size:9px;opacity:.6;}
 .lg-cols{display:flex;align-items:center;gap:9px;height:28px;padding:0 12px;
   margin-top:12px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);
   font-family:var(--mono);font-size:var(--fs-tiny);color:var(--text-faint);letter-spacing:.06em;}

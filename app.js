@@ -2818,25 +2818,51 @@ async function renderLedgerPage(body) {
 
   body.innerHTML = `
     <div class="lg-wrap">
-      <div class="lg-stick">
-        <div class="lg-bar">
-          <div class="lg-grp">
-            <span class="lg-glab">기간</span>
-            <div class="lg-gin">
+      <div class="lg-stick lg-popwrap">
+        <div class="lg-hd">
+          <button class="lg-fbtn" data-pop="period" id="lg-hd-period">기간<i>▾</i></button>
+          <input class="en-in grow" id="lg-q" placeholder="사용처 · 메모 검색" value="${enEsc(g.q)}">
+          <button class="lg-fbtn add" id="lg-addnew">＋ 새 행<kbd>A</kbd></button>
+          <button class="lg-fbtn save" id="lg-savetop" hidden>모두 저장<kbd>⌘⏎</kbd></button>
+          <button class="lg-reset" id="lg-reset">초기화</button>
+          <div class="lg-sum" id="lg-sum"></div>
+        </div>
+        <div class="lg-cols">
+          <button class="k hcell" data-pop="kind">종류<i>▾</i></button>
+          <span class="e"></span>
+          <button class="c hcell" data-pop="cat">분류<i>▾</i></button>
+          <span class="n">사용처</span>
+          <span class="mm">메모</span><span class="f">회사·고정</span><span class="g">GOOD/BAD</span>
+          <button class="v hcell" data-pop="amt">금액<i>▾</i></button>
+          <span class="x"></span>
+        </div>
+        <div class="lg-pop" id="lg-pop" hidden></div>
+
+        <div id="lg-pop-store" hidden>
+          <div data-panel="period">
+            <div class="pgrp">
+              <span class="lg-glab">기간</span>
               <div class="lg-quick" id="lg-quick">
                 <button data-q="tm">이번달</button><button data-q="lm">지난달</button>
                 <button data-q="3m">최근 3개월</button><button data-q="ty">올해</button><button data-q="all">전체</button>
               </div>
             </div>
-          </div>
-          <div class="lg-grp">
-            <span class="lg-glab">연도 · 월</span>
-            <div class="lg-gin">
-              <select class="en-in" id="lg-y"><option value="">연도</option>${years.map(y => `<option value="${y}">${y}년</option>`).join('')}</select>
-              <select class="en-in" id="lg-m"><option value="">월</option>${Array.from({ length: 12 }, (_, i) => `<option value="${i + 1}">${i + 1}월</option>`).join('')}</select>
+            <div class="pgrp">
+              <span class="lg-glab">연도 · 월</span>
+              <div class="lg-gin">
+                <select class="en-in" id="lg-y"><option value="">연도</option>${years.map(y => `<option value="${y}">${y}년</option>`).join('')}</select>
+                <select class="en-in" id="lg-m"><option value="">월</option>${Array.from({ length: 12 }, (_, i) => `<option value="${i + 1}">${i + 1}월</option>`).join('')}</select>
+              </div>
+            </div>
+            <div class="pgrp">
+              <span class="lg-glab">정렬</span>
+              <select class="en-in" id="lg-sort" style="width:100%;">
+                <option value="date_desc">최신순</option><option value="date_asc">오래된순</option>
+                <option value="amt_desc">금액 큰 순</option><option value="amt_asc">금액 작은 순</option>
+                <option value="created_desc">입력한 순서</option></select>
             </div>
           </div>
-          <div class="lg-grp">
+          <div data-panel="kind">
             <span class="lg-glab">종류</span>
             <div class="lg-gin lg-kinds" id="lg-kinds">
               <button data-k="all">전체</button>
@@ -2845,38 +2871,23 @@ async function renderLedgerPage(body) {
               <button data-k="이체" class="kd 이체">이체</button>
             </div>
           </div>
-          <div class="lg-grp cat">
+          <div data-panel="cat">
             <span class="lg-glab">분류</span>
             <div class="lg-gin lg-catpick">
-              <input class="en-in grow" id="lg-catq" placeholder="분류 전체 — 입력해서 찾기" autocomplete="off"
+              <input class="en-in grow" id="lg-catq" placeholder="입력해서 찾기" autocomplete="off"
                      role="combobox" aria-expanded="false" aria-controls="lg-catdrop">
               <button class="lg-catx" id="lg-catx" aria-label="분류 해제" hidden>×</button>
               <div class="lg-catdrop" id="lg-catdrop" role="listbox" hidden></div>
             </div>
           </div>
-          <div class="lg-grp grow">
-            <span class="lg-glab">검색</span>
-            <div class="lg-gin"><input class="en-in grow" id="lg-q" placeholder="사용처 · 메모" value="${enEsc(g.q)}"></div>
-          </div>
-          <div class="lg-grp">
-            <span class="lg-glab">정렬</span>
-            <div class="lg-gin">
-              <select class="en-in" id="lg-sort">
-                <option value="date_desc">최신순</option><option value="date_asc">오래된순</option>
-                <option value="amt_desc">금액 큰 순</option><option value="amt_asc">금액 작은 순</option>
-                <option value="created_desc">입력한 순서</option></select>
+          <div data-panel="amt">
+            <span class="lg-glab">금액 정렬</span>
+            <div class="lg-gin lg-kinds">
+              <button data-sortas="amt_desc">큰 순</button>
+              <button data-sortas="amt_asc">작은 순</button>
+              <button data-sortas="date_desc">해제(최신순)</button>
             </div>
           </div>
-          <div class="lg-grp">
-            <span class="lg-glab">&nbsp;</span>
-            <button class="lg-reset" id="lg-reset">초기화</button>
-          </div>
-        </div>
-        <div class="lg-sum" id="lg-sum"></div>
-        <div class="lg-cols">
-          <span class="k">종류</span><span class="e"></span><span class="c">분류</span><span class="n">사용처</span>
-          <span class="mm">메모</span><span class="f">회사·고정</span><span class="g">GOOD/BAD</span>
-          <span class="v">금액</span><span class="x"></span>
         </div>
       </div>
       <div class="lg-add" id="lg-add"></div>
@@ -2888,6 +2899,9 @@ async function renderLedgerPage(body) {
         <span><kbd>Tab</kbd> 오른쪽 칸</span>
         <span><kbd>⌘</kbd>+<kbd>C</kbd> 복사</span>
         <span><kbd>Esc</kbd> 해제</span>
+        <span><kbd>/</kbd> 검색</span>
+        <span><kbd>A</kbd> 새 행</span>
+        <span><kbd>F</kbd> 기간 · <kbd>K</kbd> 종류 · <kbd>C</kbd> 분류</span>
       </div>
       <div id="lg-list"><div class="en-empty">불러오는 중…</div></div>
       <div class="lg-meta">
@@ -2942,8 +2956,124 @@ async function renderLedgerPage(body) {
   });
   enQS('#lg-prev').addEventListener('click', () => { if (g.page > 1) { g.page--; enLoadLedger(); } });
   enQS('#lg-next').addEventListener('click', () => { g.page++; enLoadLedger(); });
+
+  /* 금액 머리글에서 바로 정렬 — 정렬 select 를 대신 눌러준다 */
+  document.querySelectorAll('[data-sortas]').forEach(b => b.addEventListener('click', () => {
+    const sel = enQS('#lg-sort');
+    sel.value = b.dataset.sortas;
+    sel.dispatchEvent(new Event('change'));
+    lgPopClose();
+  }));
+
+  enQS('#lg-addnew').addEventListener('click', () => lgDraftAdd());
+  enQS('#lg-savetop').addEventListener('click', () => lgDraftSave());
+
+  lgPopInit();
+  lgSyncHead();
+  lgBindKeys();
   enSyncHeaderOffset();
   enLoadLedger();
+}
+
+/* ---------------- 머리줄 팝오버 ----------------
+   패널은 #lg-pop-store 에 숨겨둔 채 이벤트를 걸어두고, 열 때 팝오버로 '옮긴다'.
+   새로 그리지 않으므로 기존 바인딩이 그대로 살아 있다. */
+const LGPOP = { open: null };
+
+function lgPopClose() {
+  const pop = document.getElementById('lg-pop');
+  const store = document.getElementById('lg-pop-store');
+  if (!pop || !store) return;
+  while (pop.firstChild) store.appendChild(pop.firstChild);
+  pop.hidden = true;
+  document.querySelectorAll('[data-pop]').forEach(b => b.setAttribute('aria-expanded', 'false'));
+  LGPOP.open = null;
+}
+
+function lgPopOpen(name) {
+  const pop = document.getElementById('lg-pop');
+  const store = document.getElementById('lg-pop-store');
+  const btn = document.querySelector(`[data-pop="${name}"]`);
+  if (!pop || !btn || !store) return;
+  /* 같은 것을 다시 누르면 닫는다. 패널은 이미 팝오버로 옮겨져 있으므로
+     창고에서 찾기 전에 먼저 판단해야 한다. */
+  if (LGPOP.open === name) { lgPopClose(); return; }
+  lgPopClose();
+  const panel = store.querySelector(`[data-panel="${name}"]`);
+  if (!panel) return;
+  pop.appendChild(panel);
+  pop.hidden = false;
+  /* 버튼 아래에 붙이되 오른쪽으로 넘치지 않게 */
+  const wrap = pop.parentElement.getBoundingClientRect();
+  const r = btn.getBoundingClientRect();
+  const w = pop.offsetWidth;
+  let left = r.left - wrap.left;
+  if (left + w > wrap.width) left = Math.max(0, wrap.width - w);
+  pop.style.left = left + 'px';
+  pop.style.top = (r.bottom - wrap.top + 4) + 'px';
+  btn.setAttribute('aria-expanded', 'true');
+  LGPOP.open = name;
+  const first = panel.querySelector('input,select,button');
+  if (first) setTimeout(() => first.focus(), 20);
+}
+
+function lgPopInit() {
+  document.querySelectorAll('[data-pop]').forEach(b => {
+    b.setAttribute('aria-expanded', 'false');
+    b.addEventListener('click', (e) => { e.stopPropagation(); lgPopOpen(b.dataset.pop); });
+  });
+  const pop = document.getElementById('lg-pop');
+  if (pop) pop.addEventListener('click', e => e.stopPropagation());
+  if (!document.__lgPopDoc) {
+    document.__lgPopDoc = true;
+    /* 바깥을 누르면 닫는다. 전파 차단에 기대지 않고 대상으로 판단한다. */
+    document.addEventListener('click', (e) => {
+      const t = e.target;
+      if (t && t.closest && (t.closest('[data-pop]') || t.closest('#lg-pop'))) return;
+      lgPopClose();
+    });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') lgPopClose(); });
+  }
+}
+
+/* 지금 무엇이 걸려 있는지 머리글에 표시한다 */
+function lgSyncHead() {
+  const g = EN.lg;
+  const setB = (sel, on, label) => {
+    const b = document.querySelector(sel);
+    if (!b) return;
+    b.classList.toggle('act', !!on);
+    b.innerHTML = enEsc(label) + '<i>▾</i>';
+  };
+  const QL = { tm: '이번달', lm: '지난달', '3m': '최근 3개월', ty: '올해', all: '전체' };
+  const period = g.quick ? QL[g.quick]
+    : (g.from ? `${g.from.slice(0, 7)} ~ ${g.to.slice(0, 7)}` : '기간');
+  setB('#lg-hd-period', g.quick !== '3m', period);
+  setB('[data-pop="kind"]', g.kind !== 'all', g.kind === 'all' ? '종류' : g.kind);
+  const c = g.cat !== 'all' ? EN.catById[Number(g.cat)] : null;
+  setB('[data-pop="cat"]', g.cat !== 'all', c ? c.subcategory : '분류');
+  setB('[data-pop="amt"]', /^amt_/.test(g.sort), g.sort === 'amt_desc' ? '금액 ↓'
+    : g.sort === 'amt_asc' ? '금액 ↑' : '금액');
+}
+
+/* 목록·초안 밖에서 쓰는 화면 단축키 */
+function lgBindKeys() {
+  if (document.__lgKeys) document.removeEventListener('keydown', document.__lgKeys);
+  const h = (e) => {
+    if (!document.getElementById('lg-list')) return;      // 내역 화면이 아닐 때는 무시
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    const t = e.target;
+    const typing = t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
+    if (typing) return;
+    const k = e.key.toLowerCase();
+    if (e.key === '/') { e.preventDefault(); const q = enQS('#lg-q'); if (q) { q.focus(); q.select(); } return; }
+    if (k === 'a') { e.preventDefault(); lgDraftAdd(); return; }
+    if (k === 'f') { e.preventDefault(); lgPopOpen('period'); return; }
+    if (k === 'k') { e.preventDefault(); lgPopOpen('kind'); return; }
+    if (k === 'c') { e.preventDefault(); lgPopOpen('cat'); return; }
+  };
+  document.__lgKeys = h;
+  document.addEventListener('keydown', h);
 }
 
 /* 종류는 칩으로, 분류는 검색으로 — 고르는 순서가 생각의 순서와 같도록.
@@ -3069,6 +3199,7 @@ function enLedgerQuery(sb, mode) {
 async function enLoadLedger() {
   /* 전체 내역 화면이 떠 있을 때만 의미가 있다. 다른 탭에서 수정한 경우 헛돌지 않게 먼저 끊는다. */
   if (!enQS('#lg-list')) return;
+  if (typeof lgSyncHead === 'function') lgSyncHead();   // 머리글에 지금 걸린 필터를 비춘다
   const sb = await enClient();
   const g = EN.lg;
   const sorts = {
@@ -3945,15 +4076,22 @@ function lgDraftRowHTML(i, seed) {
   </div>`;
 }
 
+/* 상단 고정줄의 '＋ 새 행' · '모두 저장' 상태를 초안 개수에 맞춘다 */
+function lgSyncAddBtns() {
+  const add = document.getElementById('lg-addnew');
+  const save = document.getElementById('lg-savetop');
+  const n = (EN.draft || []).length;
+  if (add) add.innerHTML = `＋ 새 행${n ? ` <b>${n}</b>` : ''}<kbd>A</kbd>`;
+  if (save) save.hidden = !n;
+}
+
 function lgRenderAdd(focusIdx) {
   const host = document.getElementById('lg-add');
   if (!host) return;
   if (!EN.draft) EN.draft = [];
-  if (!EN.draft.length) {
-    host.innerHTML = `<button class="lg-addbtn" id="lg-addnew">+ 새 기록 추가</button>`;
-    host.querySelector('#lg-addnew').addEventListener('click', () => lgDraftAdd());
-    return;
-  }
+  /* '＋ 새 행' 은 스크롤해도 안 사라지게 상단 고정줄로 옮겼다 */
+  lgSyncAddBtns();
+  if (!EN.draft.length) { host.innerHTML = ''; return; }
   host.innerHTML = `
     <div class="lg-addbar">
       <span class="t">새 기록 <b>${EN.draft.length}</b>건</span>
