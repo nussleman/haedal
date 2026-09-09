@@ -2836,6 +2836,7 @@ async function renderLedgerPage(body) {
           <button class="v hcell" data-pop="amt">금액<i>▾</i></button>
           <span class="x"></span>
         </div>
+        <div class="lg-add" id="lg-add"></div>
         <div class="lg-pop" id="lg-pop" hidden></div>
 
         <div id="lg-pop-store" hidden>
@@ -2890,7 +2891,6 @@ async function renderLedgerPage(body) {
           </div>
         </div>
       </div>
-      <div class="lg-add" id="lg-add"></div>
       <div class="lg-keys">
         <span><kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> 칸 이동</span>
         <span><kbd>Shift</kbd>+이동·클릭 여러 칸 묶기</span>
@@ -3176,6 +3176,15 @@ function enSyncHeaderOffset() {
   set();
   requestAnimationFrame(set);
   setTimeout(set, 250);
+  /* 배너가 떴다 사라지거나 글꼴이 늦게 붙어 머리줄 높이가 바뀌면 그때그때 다시 잰다.
+     예전엔 처음 잰 값이 그대로 남아, 실제보다 큰 값이면 내역 고정줄이 그만큼 아래로
+     밀려 내려와 '＋ 새 행' 초안 줄을 덮어버렸다. */
+  const hdrEl = document.querySelector('.site-header');
+  if (hdrEl && window.ResizeObserver) {
+    if (!enSyncHeaderOffset._ro) enSyncHeaderOffset._ro = new ResizeObserver(set);
+    enSyncHeaderOffset._ro.disconnect();
+    enSyncHeaderOffset._ro.observe(hdrEl);
+  }
   if (!enSyncHeaderOffset._bound) {
     enSyncHeaderOffset._bound = true;
     window.addEventListener('resize', set);
