@@ -745,7 +745,7 @@ body{
 /* ---------- 전체 내역 ---------- */
 .lg-wrap{max-width:1100px;margin:0 auto;}
 .lg-stick{position:sticky;top:var(--hdr-h,0px);z-index:30;background:var(--bg);
-  padding:30px 0 0;margin-bottom:2px;}
+  padding:6px 0 0;margin-bottom:2px;}
 .lg-bar{display:flex;flex-wrap:wrap;gap:10px 12px;align-items:flex-end;}
 .lg-grp{display:flex;flex-direction:column;gap:5px;flex:0 0 auto;}
 .lg-grp.grow{flex:1 1 190px;min-width:150px;}
@@ -837,7 +837,7 @@ body{
 .lg-cols .hcell.act{color:var(--accent-text);}
 .lg-cols .hcell i{font-style:normal;font-size:9px;opacity:.6;}
 .lg-cols{display:flex;align-items:center;gap:9px;height:28px;padding:0 12px;
-  margin-top:12px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);
+  margin-top:8px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);
   font-family:var(--mono);font-size:var(--fs-tiny);color:var(--text-faint);letter-spacing:.06em;}
 /* 머리글도 행과 똑같이 flex 중앙정렬 — 텍스트 폭과 버튼 폭이 달라도 세로줄이 어긋나지 않는다 */
 .lg-cols .f,.lg-cols .g,.lg-line .f,.lg-line .g{
@@ -1026,7 +1026,8 @@ body{
 }
 
 /* 새 기록 : 표 위에 행을 쌓아 한 번에 넣는다 */
-.lg-add{margin-top:10px;}
+.lg-add{margin-top:8px;padding-bottom:8px;background:var(--bg);}
+.lg-add:empty{display:none;}
 .lg-addbtn{width:100%;background:transparent;border:1px dashed var(--border-strong);
   border-radius:var(--r-lg);color:var(--text-faint);font-family:var(--sans);font-size:var(--fs-sm);
   padding:9px 0;cursor:pointer;transition:.15s;}
@@ -2771,4 +2772,4 @@ body{font-variant-numeric:tabular-nums;}
   .hdr-btn kbd{display:none;}
   #dbm-btn span:last-child,#signout-btn{font-size:var(--fs-xs);}
 }
-.lg-nosub{padding-top:26px;}
+.lg-nosub{padding-top:0;}
