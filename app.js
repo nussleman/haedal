@@ -2755,6 +2755,8 @@ ${dupRow.date} ${enComma(n)}원 ${dupRow.merchant || ''}
   if (merchant) EN.merchCat[merchant] = EN.catId;
   enToast(enComma(n) + '원 기록했습니다');
   lgTouched();
+  /* 전체 내역 화면이 열려 있으면 새로고침 없이 방금 넣은 기록이 바로 보이게 다시 읽는다 */
+  enLoadLedger();
   amt.value = ''; enQS('#en-merch').value = ''; enQS('#en-note').value = '';
   EN.neg = false; EN.catId = null;
   amt.classList.remove('neg');
@@ -2799,6 +2801,33 @@ function enQuickRange(key) {
   if (key === '3m') return [p(new Date(y, m - 2, 1)), p(new Date(y, m + 1, 0))];
   if (key === 'ty') return [p(new Date(y, 0, 1)), p(new Date(y, 11, 31))];
   return ['', ''];
+}
+
+/* 내역 고정줄(필터 + 열 머리줄)을 머리줄 실제 아래끝에 정확히 붙인다.
+   --hdr-h 는 한 번 잰 값이 굳는 구조라, 실제보다 크면 고정줄이 아래로 밀려 첫 행을 덮고
+   값이 비어 있으면 top:0 이 되어 머리줄 뒤로 숨어버린다. 매번 직접 재서 둘 다 없앤다. */
+function lgSyncStickTop() {
+  const stick = document.querySelector('.lg-wrap .lg-stick');
+  const hdr = document.querySelector('.site-header');
+  if (!stick || !hdr) return;
+  const h = Math.max(0, Math.round(hdr.getBoundingClientRect().bottom));
+  if (stick.dataset.top !== String(h)) {
+    stick.dataset.top = String(h);
+    stick.style.top = h + 'px';
+    document.documentElement.style.setProperty('--hdr-h', h + 'px');
+  }
+}
+function lgBindStickTop() {
+  lgSyncStickTop();
+  requestAnimationFrame(lgSyncStickTop);
+  setTimeout(lgSyncStickTop, 300);
+  if (lgBindStickTop._bound) return;
+  lgBindStickTop._bound = true;
+  const tick = () => requestAnimationFrame(lgSyncStickTop);
+  window.addEventListener('scroll', tick, { passive: true });
+  window.addEventListener('resize', tick);
+  const hdr = document.querySelector('.site-header');
+  if (hdr && window.ResizeObserver) new ResizeObserver(tick).observe(hdr);
 }
 
 /* 사용처 관리는 상단 '목록' 버튼(목록 관리 › 사용처)으로 옮겼다. 여기는 내역만 본다. */
@@ -2917,6 +2946,7 @@ async function renderLedgerPage(body) {
     b.classList.toggle('on', b.dataset.q === g.quick));
   lgSetupKindCat(g, cats);
   lgRenderAdd();
+  lgBindStickTop();
 
   document.querySelectorAll('#lg-quick button').forEach(b => b.addEventListener('click', () => {
     g.quick = b.dataset.q;
@@ -3208,6 +3238,7 @@ function enLedgerQuery(sb, mode) {
 async function enLoadLedger() {
   /* 전체 내역 화면이 떠 있을 때만 의미가 있다. 다른 탭에서 수정한 경우 헛돌지 않게 먼저 끊는다. */
   if (!enQS('#lg-list')) return;
+  lgSyncStickTop();
   if (typeof lgSyncHead === 'function') lgSyncHead();   // 머리글에 지금 걸린 필터를 비춘다
   const sb = await enClient();
   const g = EN.lg;
@@ -4838,6 +4869,9 @@ function lgTouched() {
       /* 흐름(오늘·이번달·올해) 화면은 원장을 그대로 그리므로, 고친 값이 바로 보이게 다시 그린다.
          전체 내역·자산 화면은 각자 다시 읽으므로 여기서 건드리지 않는다. */
       if (state.page === 'flow' && !document.querySelector('.lg-ed')) renderPage();
+      /* 전체 내역도 열려 있으면 같이 맞춘다 — 단, 그 안에서 뭔가 입력 중이면 건드리지 않는다 */
+      const lgList = document.getElementById('lg-list');
+      if (lgList && !lgList.contains(document.activeElement)) enLoadLedger();
     } catch (e) { /* 다음 새로고침에서 다시 맞춰진다 */ }
   }, 900);
 }

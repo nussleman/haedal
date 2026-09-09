@@ -744,8 +744,10 @@ body{
 
 /* ---------- 전체 내역 ---------- */
 .lg-wrap{max-width:1100px;margin:0 auto;}
-.lg-stick{position:sticky;top:var(--hdr-h,0px);z-index:30;background:var(--bg);
-  padding:6px 0 0;margin-bottom:2px;}
+.lg-stick{position:sticky;top:var(--hdr-h,0px);z-index:90;background:var(--bg);
+  padding:4px 0 0;margin-bottom:2px;}
+/* 고정줄 아래 경계 — 행이 그 밑으로 지나갈 때 잘린 티가 나게 */
+.lg-stick:after{content:'';display:block;height:0;box-shadow:0 6px 10px -8px rgba(0,0,0,.75);}
 .lg-bar{display:flex;flex-wrap:wrap;gap:10px 12px;align-items:flex-end;}
 .lg-grp{display:flex;flex-direction:column;gap:5px;flex:0 0 auto;}
 .lg-grp.grow{flex:1 1 190px;min-width:150px;}
