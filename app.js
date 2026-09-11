@@ -2806,21 +2806,54 @@ function enQuickRange(key) {
 /* 내역 고정줄(필터 + 열 머리줄)을 머리줄 실제 아래끝에 정확히 붙인다.
    --hdr-h 는 한 번 잰 값이 굳는 구조라, 실제보다 크면 고정줄이 아래로 밀려 첫 행을 덮고
    값이 비어 있으면 top:0 이 되어 머리줄 뒤로 숨어버린다. 매번 직접 재서 둘 다 없앤다. */
+/* 고정줄의 '제자리'(문서 좌표) — 절대 붙지 않는 top 값을 잠깐 주고 재는다.
+   sticky 는 top 이 제자리보다 크면 요소를 아래로 '밀어내린다'. 그러면 위엔 빈 칸이 남고
+   밀려내려간 고정줄이 목록 맨 위 행을 덮는다 — 바로 그 증상을 막기 위한 기준값이다. */
+function lgStickNatural(stick) {
+  if (stick.dataset.nat) return Number(stick.dataset.nat);
+  const prev = stick.style.top;
+  stick.style.top = '-99999px';
+  const nat = Math.max(0, Math.round(stick.getBoundingClientRect().top + window.scrollY));
+  stick.style.top = prev;
+  stick.dataset.nat = String(nat);
+  return nat;
+}
+
 function lgSyncStickTop() {
   const stick = document.querySelector('.lg-wrap .lg-stick');
   const hdr = document.querySelector('.site-header');
   if (!stick || !hdr) return;
-  /* 머리줄은 top:0 에 붙어 있으므로 '높이'가 곧 고정줄이 붙을 자리다.
-     예전엔 bottom 을 썼는데, 스크롤 복원·배너 등장 순간에 쟰 큰 값이 그대로 굳어
-     고정줄이 제 자리보다 아래로 밀려내려갔다 — 위쪽에 빈 칸이 생기고 최신 행을 덮었다. */
-  const h = Math.max(0, Math.round(hdr.getBoundingClientRect().height));
-  if (stick.dataset.top !== String(h)) {
-    stick.dataset.top = String(h);
-    stick.style.top = h + 'px';
-    document.documentElement.style.setProperty('--hdr-h', h + 'px');
+  let h = Math.round(hdr.getBoundingClientRect().height);
+  const nat = lgStickNatural(stick);
+  if (!(h > 0 && h < 500)) h = nat;               // 배너·로딩 중간에 재진 엉뚱한 값은 버린다
+  const top = Math.min(h, nat);                   // 제자리보다 아래는 절대 안 된다
+  if (stick.dataset.top !== String(top)) {
+    stick.dataset.top = String(top);
+    stick.style.top = top + 'px';
+  }
+  document.documentElement.style.setProperty('--hdr-h', h + 'px');
+
+  /* 한 번 더 확인 — 맨 위에 있을 때 고정줄은 제자리에 그대로 있어야 한다.
+     그래도 내려가 있으면 밀린 만큼 깎고, 그래도 이상하면 머리줄 바로 아래로 끌어올린다. */
+  if (window.scrollY <= 2) {
+    let now = Math.round(stick.getBoundingClientRect().top + window.scrollY);
+    if (now > nat + 1) {
+      stick.style.top = Math.max(0, Number(stick.dataset.top) - (now - nat)) + 'px';
+      stick.dataset.top = stick.style.top.replace('px', '');
+      now = Math.round(stick.getBoundingClientRect().top + window.scrollY);
+      if (now > nat + 1) {
+        stick.style.top = '0px'; stick.dataset.top = '0';
+        if (!lgSyncStickTop._warned) {
+          lgSyncStickTop._warned = true;
+          console.warn('[해달] 고정줄이 제자리보다 아래에 있습니다', { nat, headerH: h, now });
+        }
+      }
+    }
   }
 }
 function lgBindStickTop() {
+  const st = document.querySelector('.lg-wrap .lg-stick');
+  if (st) delete st.dataset.nat;                  // 화면을 다시 그렸으니 제자리도 다시 잰다
   lgSyncStickTop();
   requestAnimationFrame(lgSyncStickTop);
   setTimeout(lgSyncStickTop, 300);
