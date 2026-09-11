@@ -2803,57 +2803,56 @@ function enQuickRange(key) {
   return ['', ''];
 }
 
-/* 내역 고정줄(필터 + 열 머리줄)을 머리줄 실제 아래끝에 정확히 붙인다.
-   --hdr-h 는 한 번 잰 값이 굳는 구조라, 실제보다 크면 고정줄이 아래로 밀려 첫 행을 덮고
-   값이 비어 있으면 top:0 이 되어 머리줄 뒤로 숨어버린다. 매번 직접 재서 둘 다 없앤다. */
-/* 고정줄의 '제자리'(문서 좌표) — 절대 붙지 않는 top 값을 잠깐 주고 재는다.
-   sticky 는 top 이 제자리보다 크면 요소를 아래로 '밀어내린다'. 그러면 위엔 빈 칸이 남고
-   밀려내려간 고정줄이 목록 맨 위 행을 덮는다 — 바로 그 증상을 막기 위한 기준값이다. */
-function lgStickNatural(stick) {
-  if (stick.dataset.nat) return Number(stick.dataset.nat);
-  const prev = stick.style.top;
-  stick.style.top = '-99999px';
-  const nat = Math.max(0, Math.round(stick.getBoundingClientRect().top + window.scrollY));
-  stick.style.top = prev;
-  stick.dataset.nat = String(nat);
-  return nat;
-}
-
+/* ---------------- 내역 고정줄 ----------------
+   position:sticky 로는 이 화면에서 두 가지가 계속 말썽이었다.
+   (1) top 값이 제자리보다 크면 요소가 아래로 밀려 위에 빈 칸이 생기고 맨 위 행을 덮었다.
+   (2) 스크롤을 내려도 붙지 않고 그대로 올라가 버렸다.
+   그래서 sticky 를 쓰지 않고 직접 계산해 고정한다 — 제자리가 머리줄 밑으로 파고드는 순간
+   position:fixed 로 바꿔 머리줄 바로 아래에 붙이고, 빠진 자리는 같은 높이의 빈 칸으로 메운다.
+   '제자리'는 언제나 그 빈 칸이 알려주므로 값이 어긋날 여지가 없다. */
 function lgSyncStickTop() {
   const stick = document.querySelector('.lg-wrap .lg-stick');
+  if (!stick || stick.classList.contains('mg-stick')) return;   // 사용처 관리 화면은 건드리지 않는다
+  const wrap = stick.closest('.lg-wrap');
   const hdr = document.querySelector('.site-header');
-  if (!stick || !hdr) return;
+  if (!wrap || !hdr) return;
+
   let h = Math.round(hdr.getBoundingClientRect().height);
-  const nat = lgStickNatural(stick);
-  if (!(h > 0 && h < 500)) h = nat;               // 배너·로딩 중간에 재진 엉뚱한 값은 버린다
-  const top = Math.min(h, nat);                   // 제자리보다 아래는 절대 안 된다
-  if (stick.dataset.top !== String(top)) {
-    stick.dataset.top = String(top);
-    stick.style.top = top + 'px';
-  }
+  if (!(h > 0 && h < 500)) h = 0;
   document.documentElement.style.setProperty('--hdr-h', h + 'px');
 
-  /* 한 번 더 확인 — 맨 위에 있을 때 고정줄은 제자리에 그대로 있어야 한다.
-     그래도 내려가 있으면 밀린 만큼 깎고, 그래도 이상하면 머리줄 바로 아래로 끌어올린다. */
-  if (window.scrollY <= 2) {
-    let now = Math.round(stick.getBoundingClientRect().top + window.scrollY);
-    if (now > nat + 1) {
-      stick.style.top = Math.max(0, Number(stick.dataset.top) - (now - nat)) + 'px';
-      stick.dataset.top = stick.style.top.replace('px', '');
-      now = Math.round(stick.getBoundingClientRect().top + window.scrollY);
-      if (now > nat + 1) {
-        stick.style.top = '0px'; stick.dataset.top = '0';
-        if (!lgSyncStickTop._warned) {
-          lgSyncStickTop._warned = true;
-          console.warn('[해달] 고정줄이 제자리보다 아래에 있습니다', { nat, headerH: h, now });
-        }
-      }
-    }
+  let sp = wrap.querySelector('.lg-stick-hole');
+  if (!sp) {
+    sp = document.createElement('div');
+    sp.className = 'lg-stick-hole';
+    sp.style.display = 'none';
+    wrap.insertBefore(sp, stick);
+  }
+
+  const on = stick.classList.contains('lg-fixed');
+  const home = (on ? sp : stick).getBoundingClientRect().top;   // 고정 안 했을 때의 자리
+  const box = wrap.getBoundingClientRect();
+
+  if (home <= h && box.bottom > h + 60) {
+    const hgt = Math.round(stick.getBoundingClientRect().height);
+    if (sp.style.display === 'none') sp.style.display = 'block';
+    if (sp.dataset.h !== String(hgt)) { sp.dataset.h = String(hgt); sp.style.height = hgt + 'px'; }
+    stick.classList.add('lg-fixed');
+    stick.style.position = 'fixed';
+    stick.style.top = h + 'px';
+    stick.style.left = Math.round(box.left) + 'px';
+    stick.style.width = Math.round(box.width) + 'px';
+  } else if (on) {
+    stick.classList.remove('lg-fixed');
+    stick.style.position = '';
+    stick.style.top = '';
+    stick.style.left = '';
+    stick.style.width = '';
+    sp.style.display = 'none';
+    sp.dataset.h = '';
   }
 }
 function lgBindStickTop() {
-  const st = document.querySelector('.lg-wrap .lg-stick');
-  if (st) delete st.dataset.nat;                  // 화면을 다시 그렸으니 제자리도 다시 잰다
   lgSyncStickTop();
   requestAnimationFrame(lgSyncStickTop);
   setTimeout(lgSyncStickTop, 300);
@@ -2861,10 +2860,12 @@ function lgBindStickTop() {
   const tick = () => requestAnimationFrame(lgSyncStickTop);
   /* 머리줄 element 가 다시 그려졌을 수 있으니 감시자는 매번 다시 건다. */
   const hdr = document.querySelector('.site-header');
-  if (hdr && window.ResizeObserver) {
+  const stick = document.querySelector('.lg-wrap .lg-stick');
+  if (window.ResizeObserver) {
     if (!lgBindStickTop._ro) lgBindStickTop._ro = new ResizeObserver(tick);
     lgBindStickTop._ro.disconnect();
-    lgBindStickTop._ro.observe(hdr);
+    if (hdr) lgBindStickTop._ro.observe(hdr);
+    if (stick) lgBindStickTop._ro.observe(stick);   // 초안 행이 붙어 높이가 바뀌어도 빈 칸을 맞춘다
   }
   if (lgBindStickTop._bound) return;
   lgBindStickTop._bound = true;
