@@ -2393,7 +2393,7 @@ async function enEnsureRefs() {
   if (EN.loaded) return;
   const sb = await enClient();
   const since = new Date(Date.now() - 180 * 864e5).toISOString().slice(0, 10);
-  const [catRes, recentRes, fixRes] = await Promise.all([
+  const [catRes, recentRes, fixRes, grpRes] = await Promise.all([
     sb.from('categories').select('id,kind,category,subcategory,emoji_category,sort_order')
       .neq('kind', '자산').eq('is_active', true).order('sort_order'),
     /* 여기서는 '자주 쓰는 분류' 계산용이라 최근 1000건이면 충분하다.
@@ -2401,7 +2401,9 @@ async function enEnsureRefs() {
     sb.from('transactions').select('category_id,merchant,merchant_group').gte('date', since)
       .order('date', { ascending: false }).limit(1000),
     /* 고정비로 지정된 사용처는 많지 않다. 첫 그림부터 맞게 그리려면 여기서 같이 받아야 한다. */
-    sb.from('merchants').select('name').eq('is_fixed', true)
+    sb.from('merchants').select('name').eq('is_fixed', true),
+    /* 사용처 그룹에 붙인 그림 — 직접 지정한 값이 기본 그림보다 앞선다 */
+    sb.from('merchant_groups').select('name,emoji')
   ]);
   EN.cats = catRes.data || [];
   EN.catById = {};
@@ -2423,6 +2425,12 @@ async function enEnsureRefs() {
     const m = String(r.name || '').trim();
     if (m) EN.merchFixed[m] = true;
   });
+  EN.groupEmoji = {};
+  ((grpRes && grpRes.data) || []).forEach(r => {
+    const n = String(r.name || '').trim();
+    if (n) EN.groupEmoji[n] = String(r.emoji == null ? '' : r.emoji);
+  });
+
   EN.merchants = Object.keys(mc);
   /* PostgREST 는 한 번에 1000행까지만 준다. limit 을 크게 줘도 소용없어서
      range 로 끝까지 넘겨 읽어야 오래된 사용처까지 자동완성에 나온다. */
@@ -3412,7 +3420,7 @@ async function enLoadLedger() {
           <span class="k"><i class="lg-kd ${r.kind}">${r.kind}</i></span>
           <span class="e" aria-hidden="true">${r.emoji_category || ''}</span>
           <span class="c" data-ed="cat" title="더블클릭해서 분류 변경"><span class="ct">${enEsc(r.category)} › ${enEsc(r.subcategory)}</span></span>
-          <span class="n" data-ed="merchant" title="더블클릭해서 수정">${r.merchant_group ? `<i class="lg-mg">${enEsc(r.merchant_group)}</i>` : ''}${enEsc(r.merchant || r.subcategory)}</span>
+          <span class="n" data-ed="merchant" title="더블클릭해서 수정">${r.merchant_group ? `<i class="lg-mg">${enEsc((mgEmojiSet(r.merchant_group) ? mgEmojiSet(r.merchant_group) + ' ' : '') + r.merchant_group)}</i>` : ''}${enEsc(r.merchant || r.subcategory)}</span>
           <span class="mm" data-ed="note" title="더블클릭해서 메모 수정">${r.note ? enEsc(r.note) : '<i class="lg-ph">메모</i>'}</span>
           <span class="f">
             <button class="lg-tg ${r.company_paid ? 'on' : ''}" data-tg="company_paid" title="회사 환급" tabindex="-1">🏢</button>
@@ -4567,8 +4575,19 @@ function mgSplitGroups(raw) {
     .map(t => t.replace(/^[^\p{L}\p{N}]+/u, '').trim())
     .filter(Boolean);
 }
+/* 직접 지정한 그림만 돌려준다 (없으면 빈 값). 기록 목록처럼 기본 그림을 강제로
+   붙이면 안 되는 곳에서 쓴다. 지정표에 '' 로 적혀 있으면 '그림 없음'이 뜻이다. */
+function mgEmojiSet(g) {
+  const k = String(g || '').trim();
+  if (!k || k === 'all') return '';
+  if (EN.groupEmoji && Object.prototype.hasOwnProperty.call(EN.groupEmoji, k)) return EN.groupEmoji[k];
+  return MG_EMOJI[k] || '';
+}
+
 function mgEmoji(g) {
   if (!g || g === 'all') return '';
+  if (EN.groupEmoji && Object.prototype.hasOwnProperty.call(EN.groupEmoji, String(g).trim()))
+    return EN.groupEmoji[String(g).trim()];
   if (MG_EMOJI[g]) return MG_EMOJI[g];
   /* '소프트웨어, 🔁구독' 처럼 합쳐진 이름은 앞부분으로 한 번 더 찾는다 */
   const head = String(g).split(/[,·/]/)[0].trim();
@@ -13626,6 +13645,7 @@ const DBM_AGG = {
   'merch:group': {
     base: 'merch', noAdd: true, noDel: true,
     cols: [
+      { k: 'emoji', l: '이모지', t: 'txt', w: '84px', mid: true },
       { k: 'merchant_group', l: '그룹', t: 'txt', w: '220px' },
       { k: '_n', l: '사용처', t: 'ro', num: true, w: '90px' },
       { k: '_cnt', l: '기록', t: 'ro', num: true, w: '90px' },
@@ -13635,12 +13655,17 @@ const DBM_AGG = {
       const map = {};
       all.forEach(r => {
         const g = r.merchant_group || '';
-        const m = map[g] || (map[g] = { id: g || '__none', merchant_group: g, _raw: g, _n: 0, _cnt: 0, _sum: 0 });
+        const m = map[g] || (map[g] = {
+          id: g || '__none', merchant_group: g, emoji: g ? mgEmojiSet(g) : '',
+          _raw: g, _n: 0, _cnt: 0, _sum: 0
+        });
         m._n++; m._cnt += (r._cnt || 0); m._sum += (r._sum || 0);
       });
       return Object.values(map).sort((a, b) => b._n - a._n || String(a._raw).localeCompare(String(b._raw), 'ko'));
     },
-    line: (rec, patch) => `· ${rec._raw || '(그룹 없음)'} (사용처 ${enComma(rec._n)}곳 · 기록 ${enComma(rec._cnt)}건) — 그룹 → ${patch.merchant_group || '없음'}`,
+    line: (rec, patch) => `· ${rec._raw || '(그룹 없음)'} (사용처 ${enComma(rec._n)}곳 · 기록 ${enComma(rec._cnt)}건) — ${
+      [('merchant_group' in patch) ? `이름 → ${patch.merchant_group || '없음'}` : '',
+       ('emoji' in patch) ? `이모지 → ${patch.emoji || '없음'}` : ''].filter(Boolean).join(', ')}`,
     /* 그룹은 따로 저장된 표가 아니라 사용처에 붙은 이름표다 —
        지운다는 건 그 이름표를 떼는 것이고, 사용처와 기록은 그대로 남는다. */
     canDel: (rec) => !!rec._raw,
@@ -13650,14 +13675,35 @@ const DBM_AGG = {
       + `· 사용처와 기록 자체는 그대로 남습니다\n\n계속할까요?`,
     async del(sb, rec) { return this.apply(sb, rec, { merchant_group: '' }); },
     async apply(sb, rec, patch) {
-      const to = String(patch.merchant_group || '').trim() || null;
       const old = rec._raw;
-      let q1 = sb.from('merchants').update({ merchant_group: to });
-      let q2 = sb.from('transactions').update({ merchant_group: to });
-      q1 = old ? q1.eq('merchant_group', old) : q1.is('merchant_group', null);
-      q2 = old ? q2.eq('merchant_group', old) : q2.is('merchant_group', null);
-      const a = await q1; if (a.error) throw new Error(a.error.message);
-      const b = await q2; if (b.error) throw new Error(b.error.message);
+      const rename = ('merchant_group' in patch);
+      const to = rename ? (String(patch.merchant_group || '').trim() || null) : (old || null);
+
+      if (rename) {
+        let q1 = sb.from('merchants').update({ merchant_group: to });
+        let q2 = sb.from('transactions').update({ merchant_group: to });
+        q1 = old ? q1.eq('merchant_group', old) : q1.is('merchant_group', null);
+        q2 = old ? q2.eq('merchant_group', old) : q2.is('merchant_group', null);
+        const a = await q1; if (a.error) throw new Error(a.error.message);
+        const b = await q2; if (b.error) throw new Error(b.error.message);
+        /* 이름을 바꾸면 그림표도 따라간다. 그룹을 없애면 그림표에서도 지운다. */
+        if (old) {
+          if (to) {
+            const mv = await sb.from('merchant_groups').update({ name: to }).eq('name', old).select('id');
+            /* 기본 그림만 쓰고 있던 그룹이라 지정표에 줄이 없으면, 새 이름으로 하나 만들어 준다 */
+            if (!mv.error && !(mv.data || []).length) {
+              const keep = mgEmojiSet(old);
+              if (keep) await sb.from('merchant_groups').upsert({ name: to, emoji: keep }, { onConflict: 'owner_id,name' });
+            }
+          } else await sb.from('merchant_groups').delete().eq('name', old);
+        }
+      }
+      if ('emoji' in patch && to) {
+        const em = String(patch.emoji == null ? '' : patch.emoji).trim();
+        const { error } = await sb.from('merchant_groups')
+          .upsert({ name: to, emoji: em }, { onConflict: 'owner_id,name' });
+        if (error) throw new Error(error.message);
+      }
     }
   }
 };
@@ -13772,7 +13818,8 @@ function dbmOpenPop(anchor, opts, onPick, o) {
     const mk = el.querySelector('.mk');
     if (mk) {
       const raw = (q || '').trim();
-      const dup = opts.some(x => String(x.label).trim().toLowerCase() === raw.toLowerCase());
+      const dup = opts.some(x => [x.v, x.label].some(s =>
+        String(s == null ? '' : s).trim().toLowerCase() === raw.toLowerCase()));
       if (raw && !dup) {
         mk.hidden = false;
         mk.innerHTML = `<button type="button">＋ ‘${enEsc(raw)}’ ${enEsc(cfg.create)}</button>`;
@@ -13916,8 +13963,9 @@ async function dbmRenderPane() {
     }
     if (c.t === 'grp') {
       const t = String(v || '').trim();
+      const em = t ? mgEmojiSet(t) : '';
       return `<div class="dbm-cell"><button class="dbm-chip ${t ? 'c-tag' : 'none'}" data-pick="${c.k}">${
-        t ? enEsc(t) : '그룹 없음'}</button></div>`;
+        t ? enEsc((em ? em + ' ' : '') + t) : '그룹 없음'}</button></div>`;
     }
     /* tags — 여러 개, 눌러서 넣고 뺀다 */
     const list = Array.isArray(v) ? v : dbmTextToTags(v);
@@ -13945,7 +13993,10 @@ async function dbmRenderPane() {
       catOpts.map(o => ({ v: String(o.id), label: o.category + ' › ' + o.subcategory, cls: dbmTintOf(o.kind), group: o.kind })));
     if (c.t === 'sel') return c.o.map(o => ({ v: o, label: o || '—', cls: dbmTintOf(o) }));
     if (c.t === 'grp') return [{ v: '', label: '그룹 없음', cls: 'none' }]
-      .concat(mGroups.map(g => ({ v: g, label: g, cls: 'c-tag' })));
+      .concat(mGroups.map(g => {
+        const em = mgEmojiSet(g);
+        return { v: g, label: (em ? em + ' ' : '') + g, cls: 'c-tag' };
+      }));
     return themeList.map(t => ({ v: t, label: t, cls: 'c-tag' }));
   };
   function bindChips(scope, c, rec, onSet) {
@@ -14372,7 +14423,7 @@ async function dbmDelete(id) {
 
 /* 고친 목록이 화면에 바로 반영되게 한다 */
 async function dbmAfterChange(tabId) {
-  if (tabId === 'cat') { EN.loaded = false; await enEnsureRefs().catch(() => {}); }
+  if (tabId === 'cat' || tabId === 'merch') { EN.loaded = false; await enEnsureRefs().catch(() => {}); }
   if (tabId === 'acct') { SNAP.accountsLoaded = false; await snapLoadAccounts(true).catch(() => {}); }
   if (tabId === 'stock' || tabId === 'theme') {
     try {
