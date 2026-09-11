@@ -2810,7 +2810,10 @@ function lgSyncStickTop() {
   const stick = document.querySelector('.lg-wrap .lg-stick');
   const hdr = document.querySelector('.site-header');
   if (!stick || !hdr) return;
-  const h = Math.max(0, Math.round(hdr.getBoundingClientRect().bottom));
+  /* 머리줄은 top:0 에 붙어 있으므로 '높이'가 곧 고정줄이 붙을 자리다.
+     예전엔 bottom 을 썼는데, 스크롤 복원·배너 등장 순간에 쟰 큰 값이 그대로 굳어
+     고정줄이 제 자리보다 아래로 밀려내려갔다 — 위쪽에 빈 칸이 생기고 최신 행을 덮었다. */
+  const h = Math.max(0, Math.round(hdr.getBoundingClientRect().height));
   if (stick.dataset.top !== String(h)) {
     stick.dataset.top = String(h);
     stick.style.top = h + 'px';
@@ -2821,13 +2824,63 @@ function lgBindStickTop() {
   lgSyncStickTop();
   requestAnimationFrame(lgSyncStickTop);
   setTimeout(lgSyncStickTop, 300);
+  setTimeout(lgSyncStickTop, 1200);
+  const tick = () => requestAnimationFrame(lgSyncStickTop);
+  /* 머리줄 element 가 다시 그려졌을 수 있으니 감시자는 매번 다시 건다. */
+  const hdr = document.querySelector('.site-header');
+  if (hdr && window.ResizeObserver) {
+    if (!lgBindStickTop._ro) lgBindStickTop._ro = new ResizeObserver(tick);
+    lgBindStickTop._ro.disconnect();
+    lgBindStickTop._ro.observe(hdr);
+  }
   if (lgBindStickTop._bound) return;
   lgBindStickTop._bound = true;
-  const tick = () => requestAnimationFrame(lgSyncStickTop);
   window.addEventListener('scroll', tick, { passive: true });
   window.addEventListener('resize', tick);
-  const hdr = document.querySelector('.site-header');
-  if (hdr && window.ResizeObserver) new ResizeObserver(tick).observe(hdr);
+  window.addEventListener('load', tick);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(tick).catch(() => {});
+}
+
+/* 단축키 리모컨 — 표 위에 줄로 깔아두지 않고, 오른아래 버튼 안에 접어둔다. */
+function lgBindHelp() {
+  const fab = document.getElementById('lg-helpfab');
+  const pan = document.getElementById('lg-helppanel');
+  if (!fab || !pan) return;
+  const open = (on) => {
+    pan.hidden = !on;
+    fab.classList.toggle('on', on);
+    fab.setAttribute('aria-expanded', on ? 'true' : 'false');
+  };
+  fab.addEventListener('click', (e) => { e.stopPropagation(); open(pan.hidden); });
+  const x = document.getElementById('lg-helpx');
+  if (x) x.addEventListener('click', () => open(false));
+  document.addEventListener('click', (e) => {
+    if (pan.hidden) return;
+    if (pan.contains(e.target) || fab.contains(e.target)) return;
+    open(false);
+  });
+  if (!lgBindHelp._key) {
+    lgBindHelp._key = true;
+    document.addEventListener('keydown', (e) => {
+      const p = document.getElementById('lg-helppanel');
+      if (!p) return;
+      const t = e.target;
+      const typing = t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
+      if (e.key === '?' && !typing && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
+        const f = document.getElementById('lg-helpfab');
+        p.hidden = !p.hidden;
+        if (f) { f.classList.toggle('on', !p.hidden); f.setAttribute('aria-expanded', p.hidden ? 'false' : 'true'); }
+        return;
+      }
+      if (e.key === 'Escape' && !p.hidden) {
+        e.stopPropagation();
+        p.hidden = true;
+        const f = document.getElementById('lg-helpfab');
+        if (f) { f.classList.remove('on'); f.setAttribute('aria-expanded', 'false'); }
+      }
+    }, true);
+  }
 }
 
 /* 사용처 관리는 상단 '목록' 버튼(목록 관리 › 사용처)으로 옮겼다. 여기는 내역만 본다. */
@@ -2920,24 +2973,35 @@ async function renderLedgerPage(body) {
           </div>
         </div>
       </div>
-      <div class="lg-keys">
-        <span><kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> 칸 이동</span>
-        <span><kbd>Shift</kbd>+이동·클릭 여러 칸 묶기</span>
-        <span><kbd>Space</kbd> 한 행 통째로</span>
-        <span><kbd>Enter</kbd> 고치기 (그냥 쳐도 시작)</span>
-        <span><kbd>Tab</kbd> 오른쪽 칸</span>
-        <span><kbd>⌘</kbd>+<kbd>C</kbd> 복사</span>
-        <span><kbd>Esc</kbd> 해제</span>
-        <span><kbd>/</kbd> 검색</span>
-        <span><kbd>A</kbd> 새 행</span>
-        <span><kbd>F</kbd> 기간 · <kbd>K</kbd> 종류 · <kbd>C</kbd> 분류</span>
-      </div>
       <div id="lg-list"><div class="en-empty">불러오는 중…</div></div>
       <div class="lg-meta">
         <span id="lg-count"></span>
         <span class="lg-pager">
           <button id="lg-prev">‹ 이전</button><button id="lg-next">다음 ›</button>
         </span>
+      </div>
+
+      <button class="lg-helpfab" id="lg-helpfab" type="button"
+              title="단축키 (?)" aria-label="단축키 보기" aria-expanded="false">⌨</button>
+      <div class="lg-helppanel" id="lg-helppanel" hidden>
+        <div class="lg-helphd">
+          <span>단축키</span>
+          <button type="button" class="lg-helpx" id="lg-helpx" aria-label="닫기">×</button>
+        </div>
+        <div class="lg-helpgrid">
+          <span class="hk"><kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd></span><span class="hv">칸 이동</span>
+          <span class="hk"><kbd>Shift</kbd>+이동·클릭</span><span class="hv">여러 칸 묶기</span>
+          <span class="hk"><kbd>Space</kbd></span><span class="hv">한 행 통째로</span>
+          <span class="hk"><kbd>Enter</kbd></span><span class="hv">고치기 (그냥 쳐도 시작)</span>
+          <span class="hk"><kbd>Tab</kbd></span><span class="hv">오른쪽 칸</span>
+          <span class="hk"><kbd>⌘</kbd>+<kbd>C</kbd></span><span class="hv">복사</span>
+          <span class="hk"><kbd>⌘</kbd>+<kbd>⏎</kbd></span><span class="hv">모두 저장</span>
+          <span class="hk"><kbd>Esc</kbd></span><span class="hv">해제</span>
+          <span class="hk"><kbd>/</kbd></span><span class="hv">검색칸로</span>
+          <span class="hk"><kbd>A</kbd></span><span class="hv">새 행</span>
+          <span class="hk"><kbd>F</kbd> · <kbd>K</kbd> · <kbd>C</kbd></span><span class="hv">기간 · 종류 · 분류</span>
+          <span class="hk"><kbd>?</kbd></span><span class="hv">이 창 열기·닫기</span>
+        </div>
       </div>
     </div>`;
 
@@ -3001,6 +3065,7 @@ async function renderLedgerPage(body) {
   lgPopInit();
   lgSyncHead();
   lgBindKeys();
+  lgBindHelp();
   enSyncHeaderOffset();
   enLoadLedger();
 }

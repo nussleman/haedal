@@ -1119,11 +1119,35 @@ body{
   .lg-bulk .one .lg-ed,.lg-bulk .one .lg-cpick{width:100%;}
   .lg-bulk .one{flex:1 1 100%;}
 }
-/* 키보드 안내 — 표 위에 조용히 한 줄 */
-.lg-keys{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin:8px 4px 0;
+/* 키보드 안내 — 표 위를 비우고 오른아래 리모컨 버튼 안으로 들어갔다 */
+.lg-helpfab{position:fixed;right:20px;bottom:20px;z-index:120;
+  width:40px;height:40px;border-radius:50%;cursor:pointer;
+  background:var(--panel);border:1px solid var(--border-strong);color:var(--text-faint);
+  font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 6px 18px rgba(0,0,0,.45);transition:color .15s,border-color .15s,transform .15s;}
+.lg-helpfab:hover{color:var(--text);border-color:var(--accent-fill);transform:translateY(-1px);}
+.lg-helpfab.on{color:var(--accent-text);border-color:var(--accent-fill);}
+.lg-helppanel{position:fixed;right:20px;bottom:68px;z-index:121;
+  background:var(--panel);border:1px solid var(--border-strong);border-radius:var(--r-md);
+  padding:10px 12px 12px;box-shadow:0 14px 36px rgba(0,0,0,.6);
+  min-width:250px;max-width:min(340px,92vw);}
+.lg-helphd{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  font-family:var(--mono);font-size:var(--fs-micro);letter-spacing:.12em;
+  color:var(--text-faint);margin-bottom:8px;}
+.lg-helpx{background:none;border:0;color:var(--text-faint);font-size:var(--fs-lg);
+  line-height:1;cursor:pointer;padding:0 2px;}
+.lg-helpx:hover{color:var(--text);}
+.lg-helpgrid{display:grid;grid-template-columns:auto 1fr;gap:6px 10px;align-items:center;
+  font-size:var(--fs-xs);color:var(--text-dim);}
+.lg-helpgrid .hk{display:flex;gap:3px;align-items:center;white-space:nowrap;
   font-size:var(--fs-micro);color:var(--text-faint);}
-.lg-keys kbd{font-family:var(--mono);font-size:var(--fs-micro);background:var(--panel-2);
+.lg-helpgrid .hv{color:var(--text-dim);}
+.lg-helpgrid kbd{font-family:var(--mono);font-size:var(--fs-micro);background:var(--panel-2);
   border:1px solid var(--border);border-radius:var(--r-sm);padding:1px 4px;color:var(--text-dim);}
+@media (max-width:640px){
+  .lg-helpfab{right:14px;bottom:14px;width:36px;height:36px;}
+  .lg-helppanel{right:14px;bottom:58px;}
+}
 
 .lg-meta{display:flex;align-items:center;justify-content:space-between;gap:10px;
   font-family:var(--mono);font-size:var(--fs-xs);color:var(--text-dim);margin:16px 4px 0;}
