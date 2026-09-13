@@ -62,6 +62,7 @@ const state = {
   ledgerFilter: { q: '', major: 'all', page: 1, pageSize: 50 },
   charts: {},
   budgets: {},          // 분류별 예산 (Supabase app_settings)
+  transferGoals: {},    // 이체 대상별 월 기댓값 (Supabase app_settings)
   budgetsLoaded: false,
   incomeRange: 12,
   incomeTotalMode: 'category',
@@ -9690,6 +9691,13 @@ function renderHomePage(container, data, d) {
   const perDay = budget && days - now.getDate() > 0
     ? Math.max(0, Math.round(remain / (days - now.getDate()))) : null;
 
+  /* 이체 기댓값 — 설정에서 정한 몫을 이번 달에 얼마나 보냈는지 */
+  const isMove = r => r.major.includes('이체') || r.major.includes('자산');
+  const trSet = state.transferGoals || {};
+  const trGoal = Object.values(trSet).reduce((a, b) => a + (Number(b) || 0), 0);
+  const trDone = cur.filter(isMove).reduce((a, r) => a + r.amount, 0);
+  const trPct = trGoal ? (trDone / trGoal) * 100 : null;
+
   const debt = totalDebt();
   const net = d.totalAssets - debt;
   const up = d.deltaAssets !== null && d.deltaAssets >= 0;
@@ -9726,6 +9734,16 @@ function renderHomePage(container, data, d) {
           <div><span>저축률</span><b class="mono">${
             income > 0 ? (((income - expense) / income) * 100).toFixed(1) + '%' : '—'}</b></div>
         </div>
+        ${trGoal ? `
+          <div class="hm-pace">
+            <div class="hm-bar">
+              <i class="tr" style="width:${Math.min(100, trPct)}%"></i>
+            </div>
+            <div class="hm-paceL">
+              <span>이체 기댓값 ${formatWon(trGoal)} 중 <b>${trPct.toFixed(0)}%</b></span>
+              <span class="${trPct >= 100 ? 'in' : ''}">${trPct >= 100 ? '이번 달 몫 완료' : `${formatWon(trGoal - trDone)} 남음`}</span>
+            </div>
+          </div>` : ''}
         ${budget ? `
           <div class="hm-pace">
             <div class="hm-bar">
@@ -13114,14 +13132,17 @@ function renderSavingsPage(container, data, d, scopeKey) {
   drawSavContrib();
 }
 
-/* 분류별 예산은 localStorage shim 에 있었다 — 브라우저를 바꾸면 사라진다.
-   가계부 본체와 같은 곳에 두는 게 맞아서 Supabase app_settings 로 옮긴다. */
+/* 분류별 예산은 예전에 window.storage 에 넣었는데, GitHub Pages 에는 그 API 가 없어
+   실제로는 한 번도 저장되지 않았다. Supabase app_settings 로 옮긴다. */
 async function loadBudgets() {
   try {
     const sb = await enClient();
-    const { data } = await sb.from('app_settings').select('value')
-      .eq('key', 'budget_categories').maybeSingle();
-    if (data && data.value) state.budgets = data.value;
+    const { data } = await sb.from('app_settings').select('key,value')
+      .in('key', ['budget_categories', 'transfer_goals']);
+    (data || []).forEach(r => {
+      if (r.key === 'budget_categories') state.budgets = r.value || {};
+      if (r.key === 'transfer_goals') state.transferGoals = r.value || {};
+    });
   } catch (e) { /* 아직 저장된 값이 없다 */ }
   state.budgetsLoaded = true;
 }
@@ -13934,7 +13955,7 @@ function renderBudgetSettings(container, data, d) {
   for (let i = 1; i <= 3; i++) {
     const k = shiftMonthKey(mk, -i);
     ledger.filter(r => ledgerMonthKey(r.date) === k && r.major.includes('지출'))
-      .forEach(r => { const c = r.item || '기타';
+      .forEach(r => { const c = r.minor || '기타';
         avgBy[c] = (avgBy[c] || 0) + netExpenseOf(r) / 3; });
   }
   Object.values(avgBy).forEach(v => avg3 += v);
@@ -13942,11 +13963,28 @@ function renderBudgetSettings(container, data, d) {
 
   const spentBy = {};
   ledger.filter(r => ledgerMonthKey(r.date) === mk && r.major.includes('지출'))
-    .forEach(r => { const c = r.item || '기타';
+    .forEach(r => { const c = r.minor || '기타';
       spentBy[c] = (spentBy[c] || 0) + netExpenseOf(r); });
 
   const cats = [...new Set([...Object.keys(avgBy), ...Object.keys(spentBy)])]
     .sort((a, b) => (avgBy[b] || 0) - (avgBy[a] || 0));
+
+  /* 이체 — 대상은 세부분류(토스 증권·NH(CMA) 같은 계좌 이름)가 들고 있다 */
+  const isMove = r => r.major.includes('이체') || r.major.includes('자산');
+  const trAvg = {};
+  for (let i = 1; i <= 3; i++) {
+    const k = shiftMonthKey(mk, -i);
+    ledger.filter(r => ledgerMonthKey(r.date) === k && isMove(r))
+      .forEach(r => { const t = r.item || r.minor || '기타';
+        trAvg[t] = (trAvg[t] || 0) + r.amount / 3; });
+  }
+  const trNow = {};
+  ledger.filter(r => ledgerMonthKey(r.date) === mk && isMove(r))
+    .forEach(r => { const t = r.item || r.minor || '기타';
+      trNow[t] = (trNow[t] || 0) + r.amount; });
+  const trSet = state.transferGoals || {};
+  const trDests = [...new Set([...Object.keys(trAvg), ...Object.keys(trNow), ...Object.keys(trSet)])]
+    .sort((a, b) => (trAvg[b] || 0) - (trAvg[a] || 0));
   const set = state.budgets || {};
   const setSum = cats.reduce((a, c) => a + (Number(set[c]) || 0), 0);
 
@@ -14001,6 +14039,37 @@ function renderBudgetSettings(container, data, d) {
       </div>
       <div class="bud-note">왼쪽 숫자는 이번 달 실지출입니다. 막대는 예산(없으면 평균) 대비 비율이고요.</div>
       <div class="bud-acts"><button class="nav-act accent" id="budc-save">분류별 저장</button></div>
+    </div>
+
+    <div class="bud-card" style="margin-top:var(--gap);">
+      <div class="bud-row" style="margin-bottom:14px;">
+        <div class="bud-lab">
+          <b>이체 월 기댓값</b>
+          <span>지출 예산이 "넘지 마라"면 이건 "이만큼은 보내라"입니다</span>
+        </div>
+        <button class="nav-act" id="budt-avg">전부 평균으로 채우기</button>
+      </div>
+      <div class="budc">
+        ${trDests.length ? trDests.map(c => {
+          const base = Math.round(trAvg[c] || 0);
+          const exp = Number(trSet[c]) || 0;
+          const done = trNow[c] || 0;
+          const goal = exp || base;
+          const pct = goal ? (done / goal) * 100 : 0;
+          return `<div class="budc-row">
+            <span class="c">${enEsc(c)}</span>
+            <span class="bar"><i class="${pct >= 100 ? 'done' : 'tr'}" style="width:${Math.min(100, pct)}%"></i></span>
+            <span class="now mono">${enComma(Math.round(done))}</span>
+            <input class="budt-in mono" data-dest="${enEsc(c)}" type="text" inputmode="numeric"
+              value="${exp ? enComma(exp) : ''}" placeholder="${enComma(base)}">
+          </div>`;
+        }).join('') : '<div class="hm-none">이체 기록이 아직 없어요.</div>'}
+      </div>
+      <div class="bud-note">
+        왼쪽 숫자는 이번 달 실제 이체액입니다. 막대가 꽉 차면 그 달 몫을 다 보낸 거예요.
+        이체는 쓴 돈이 아니라 옮긴 돈이라 순자산에서는 그대로 남습니다.
+      </div>
+      <div class="bud-acts"><button class="nav-act accent" id="budt-save">이체 기댓값 저장</button></div>
     </div>`;
 
   const commafy = (el) => el.addEventListener('input', () => {
@@ -14027,6 +14096,39 @@ function renderBudgetSettings(container, data, d) {
     });
     budgetCatSave(v);
   });
+
+  container.querySelectorAll('.budt-in').forEach(commafy);
+  document.getElementById('budt-avg').addEventListener('click', () => {
+    container.querySelectorAll('.budt-in').forEach(el => { if (!el.value) el.value = el.placeholder; });
+    enToast('저장을 눌러야 반영됩니다');
+  });
+  document.getElementById('budt-save').addEventListener('click', () => {
+    const v = {};
+    container.querySelectorAll('.budt-in').forEach(el => {
+      const n = Number(el.value.replace(/[^\d]/g, ''));
+      if (n) v[el.dataset.dest] = n;
+    });
+    transferGoalSave(v);
+  });
+}
+
+async function transferGoalSave(map) {
+  const btn = document.getElementById('budt-save');
+  if (btn) { btn.disabled = true; btn.textContent = '저장 중…'; }
+  try {
+    const sb = await enClient();
+    const { error } = await sb.from('app_settings')
+      .upsert({ key: 'transfer_goals', value: map, updated_at: new Date().toISOString() },
+              { onConflict: 'owner_id,key' });
+    if (error) throw error;
+    state.transferGoals = map;
+    enToast(`이체 기댓값 ${Object.keys(map).length}건을 저장했습니다`);
+    renderPage();
+  } catch (e) {
+    enToast('저장하지 못했습니다 — ' + (e.message || e));
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '이체 기댓값 저장'; }
+  }
 }
 
 async function budgetSave(raw) {
