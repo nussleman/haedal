@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>해달 (이전 버전) — 당신의 자산관리 파트너</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2064%2064%22%3E%3Crect%20width=%2264%22%20height=%2264%22%20rx=%2214%22%20fill=%22%23171e2b%22/%3E%3Ctext%20x=%2232%22%20y=%2234%22%20font-size=%2240%22%20text-anchor=%22middle%22%20dominant-baseline=%22central%22%3E%F0%9F%A6%A6%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;700;900&family=Noto+Sans+KR:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.5.0/chart.umd.min.js"></script>
+<link rel="stylesheet" href="style-legacy.css?v=20260913">
+<style>
+  /* 새 버전으로 돌아가는 길. 이 블록과 아래 배너만 legacy 전용으로 더해진 부분이다. */
+  #legacy-bar{position:sticky;top:0;z-index:9999;display:flex;align-items:center;gap:10px;
+    padding:7px 16px;background:#2A2113;border-bottom:1px solid #4A3A1C;
+    font:500 12.5px/1.5 'Noto Sans KR',sans-serif;color:#D4A64A}
+  #legacy-bar a{margin-left:auto;color:#D4A64A;font-weight:700}
+</style>
+</head>
+<body>
+<div id="legacy-bar">이전 버전입니다. 예산·캘린더·흐름표·시뮬레이션·벤치마크가 여기 있습니다.
+  <a href="./">새 버전으로 →</a></div>
+<div id="app"></div>
+<script src="data.js?v=20260913"></script>
+<script src="app-legacy.js?v=20260913"></script>
+</body>
+</html>
