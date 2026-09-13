@@ -2105,6 +2105,7 @@ function renderShell() {
     <div class="site-layout">
       <aside class="railnav" id="railnav"></aside>
       <div class="site-main">
+        <div class="page-head" id="page-head"></div>
         <div id="page-content"></div>
         <div class="footer"></div>
       </div>
@@ -2232,6 +2233,18 @@ function renderPage() {
   routeWrite(section, SUB);
   renderNav();
   body.innerHTML = '';
+
+  /* 하위로 들어왔으면 어디인지 한 줄로 알려준다. 상단 메뉴만으로는 모른다.
+     각 렌더러가 page-content 를 통째로 덮어쓰므로 제목은 그 바깥에 둔다. */
+  const head = document.getElementById('page-head');
+  if (head) {
+    const subsAll = SECTION_SUBS[section] || [];
+    const label = (subsAll.find(x => x[0] === SUB) || [])[1];
+    const nItem = NAV_ITEMS.find(x => x.id === section);
+    const show = label && !(nItem && nItem.solo) && subsAll.filter(x => x[0] !== '#').length > 1;
+    head.textContent = show ? label : '';
+    head.hidden = !show;
+  }
 
   if (section === 'home') {
     renderHomePage(body, data, d);
@@ -9817,7 +9830,7 @@ function renderHomePage(container, data, d) {
   const isMove = r => r.major.includes('이체') || r.major.includes('자산');
   const trSet = state.transferGoals || {};
   const trGoal = Object.values(trSet).reduce((a, b) => a + (Number(b) || 0), 0);
-  const trDone = cur.filter(isMove).reduce((a, r) => a + r.amount, 0);
+  const trDone = cur.filter(isMove).reduce((a, r) => a + Math.abs(r.amount), 0);
   const trPct = trGoal ? (trDone / trGoal) * 100 : null;
 
   const debt = totalDebt();
@@ -9833,7 +9846,7 @@ function renderHomePage(container, data, d) {
     budget, used, elapsed, spentBy, trGoal, trDone,
     quarterEmpty: qGoals.indexOf('hm-none') >= 0
   });
-  const recent = ledger.slice().sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, 8);
+  const recent = ledger.slice().sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, 6);
 
   /* 상자는 한 겹만 쓴다. 상자 안에 또 상자를 두지 않고 구분선과 여백으로만 나눈다. */
   container.innerHTML = `
@@ -9848,7 +9861,7 @@ function renderHomePage(container, data, d) {
       </div>
     </section>` : ''}
 
-    <div class="hm">
+    <div class="hm hm3">
       <section class="hm-box hm-net">
         <div class="hm-hd"><b>순자산</b><span>${enEsc(d.latestMonth || '')}</span></div>
         <div class="hm-big mono">${formatWon(net)}</div>
@@ -9902,14 +9915,12 @@ function renderHomePage(container, data, d) {
         : `<div class="hm-paceS" style="margin-top:16px;">예산 기준이 없어요.
              <button class="hm-lnk" data-go="set/budget">설정 › 예산</button>에서 정하면 페이스가 보입니다.</div>`}
       </section>
+      <section class="hm-box hm-goals">
+        <div class="hm-hd"><b>이번 분기 목표</b>
+          <button class="hm-lnk" data-go="goals/main">전체 보기</button></div>
+        ${qGoals}
+      </section>
     </div>
-
-    <div class="hm">
-    <section class="hm-box hm-goals">
-      <div class="hm-hd"><b>이번 분기 목표</b>
-        <button class="hm-lnk" data-go="goals/main">전체 보기</button></div>
-      ${qGoals}
-    </section>
 
     <section class="hm-box hm-recent">
       <div class="hm-hd"><b>최근 거래</b>
@@ -9926,8 +9937,7 @@ function renderHomePage(container, data, d) {
             kind === 'out' ? netExpenseOf(r) : r.amount))}</td>
         </tr>`;
       }).join('')}</tbody></table>` : '<div class="hm-none">아직 기록이 없어요.</div>'}
-    </section>
-    </div>`;
+    </section>`;
 
   container.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', () => {
     const [p, v] = b.dataset.go.split('/');
@@ -14114,8 +14124,7 @@ function renderBudgetSettings(container, data, d) {
   const setSum = cats.reduce((a, c) => a + (Number(set[c]) || 0), 0);
 
   container.innerHTML = `
-    <div class="bud-wrap">
-    <div class="panel-title" style="margin:2px 0 14px;"><div>예산</div></div>
+    <div class="narrow-page">
 
     <div class="bud-card">
       <div class="bud-row">
@@ -14152,12 +14161,12 @@ function renderBudgetSettings(container, data, d) {
             <span class="now mono">${enComma(Math.round(used))}</span>
             <input class="budc-in mono" data-cat="${enEsc(c)}" type="text" inputmode="numeric"
               value="${lim ? enComma(lim) : ''}" placeholder="${enComma(base)}">
-          </div>
-    </div>`;
+          </div>`;
         }).join('') : '<div class="hm-none">지출 기록이 아직 없어요.</div>'}
       </div>
       <div class="bud-note">왼쪽 숫자는 이번 달 실지출입니다. 막대는 예산(없으면 평균) 대비 비율이고요.</div>
       <div class="bud-acts"><button class="nav-act accent" id="budc-save">분류별 저장</button></div>
+    </div>
     </div>`;
 
   /* 총액은 분류별 합계를 그대로 따라간다 — 두 곳에 따로 적으면 반드시 어긋난다 */
@@ -14206,12 +14215,12 @@ function renderSavingPlanSettings(container, data, d) {
     const k = shiftMonthKey(mk, -i);
     ledger.filter(r => ledgerMonthKey(r.date) === k && isMove(r))
       .forEach(r => { const t = r.item || r.minor || '기타';
-        trAvg[t] = (trAvg[t] || 0) + r.amount / 3; });
+        trAvg[t] = (trAvg[t] || 0) + Math.abs(r.amount) / 3; });
   }
   const trNow = {};
   ledger.filter(r => ledgerMonthKey(r.date) === mk && isMove(r))
     .forEach(r => { const t = r.item || r.minor || '기타';
-      trNow[t] = (trNow[t] || 0) + r.amount; });
+      trNow[t] = (trNow[t] || 0) + Math.abs(r.amount); });
 
   const trSet = state.transferGoals || {};
   const dests = [...new Set([...Object.keys(trAvg), ...Object.keys(trNow), ...Object.keys(trSet)])]
@@ -14220,8 +14229,7 @@ function renderSavingPlanSettings(container, data, d) {
   const doneSum = dests.reduce((a, c) => a + (trNow[c] || 0), 0);
 
   container.innerHTML = `
-    <div class="bud-wrap">
-    <div class="panel-title" style="margin:2px 0 14px;"><div>적립</div></div>
+    <div class="narrow-page">
 
     <div class="bud-card">
       <div class="bud-row" style="margin-bottom:14px;">
@@ -14242,10 +14250,9 @@ function renderSavingPlanSettings(container, data, d) {
             <span class="c">${enEsc(c)}</span>
             <span class="bar"><i class="${pct >= 100 ? 'done' : 'tr'}" style="width:${Math.min(100, pct)}%"></i></span>
             <span class="now mono">${enComma(Math.round(done))}</span>
-            <input class="budt-in mono" data-dest="${enEsc(c)}" type="text" inputmode="numeric"
+            <input class="budc-in budt-in mono" data-dest="${enEsc(c)}" type="text" inputmode="numeric"
               value="${exp ? enComma(exp) : ''}" placeholder="${enComma(base)}">
-          </div>
-    </div>`;
+          </div>`;
         }).join('') : '<div class="hm-none">이체 기록이 아직 없어요.</div>'}
       </div>
       <div class="bud-note">
@@ -14255,6 +14262,7 @@ function renderSavingPlanSettings(container, data, d) {
         이체는 쓴 돈이 아니라 옮긴 돈이라 순자산에서는 그대로 남습니다.
       </div>
       <div class="bud-acts"><button class="nav-act accent" id="budt-save">저장</button></div>
+    </div>
     </div>`;
 
   container.querySelectorAll('.budt-in').forEach(el => el.addEventListener('input', () => {
