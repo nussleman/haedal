@@ -231,3 +231,63 @@ button:focus-visible,.nav-item:focus-visible,.subtab:focus-visible,input:focus-v
   font-size:13px;color:var(--ink);opacity:0;pointer-events:none;transition:opacity .18s,transform .18s}
 #toast.on{opacity:1;transform:translate(-50%,0)}
 @media (prefers-reduced-motion:reduce){#toast{transition:none}}
+
+/* ═══ 기록하기 — 입출금 입력 ═══ */
+.entry{border:1px solid var(--line-soft);border-radius:var(--radius);overflow:hidden;background:var(--surface)}
+.entry-head,.entry-row{display:grid;
+  grid-template-columns:132px minmax(120px,1.2fr) minmax(150px,1.6fr) 150px minmax(100px,1fr) 132px 34px;
+  gap:8px;align-items:center;padding:9px 14px}
+.entry-head{font-size:11.5px;color:var(--ink-3);border-bottom:1px solid var(--line);padding-bottom:8px}
+.entry-row{border-bottom:1px solid var(--line-soft)}
+.entry-row:last-child{border-bottom:0}
+.entry-row:hover{background:rgba(255,255,255,.02)}
+.entry-row input,.entry-row select{width:100%;min-width:0;background:var(--ground);
+  border:1px solid var(--line-soft);border-radius:7px;color:var(--ink);font:inherit;font-size:13px;padding:6px 9px}
+.entry-row input[type=date]{color-scheme:dark;font-variant-numeric:tabular-nums}
+.entry-row .amt{position:relative;display:flex;align-items:center;gap:6px}
+.entry-row .amt input{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+.entry-row .kd{flex:none;width:30px;font-size:10.5px;text-align:center;color:var(--ink-3)}
+.entry-row .kd.수입{color:var(--income)} .entry-row .kd.지출{color:var(--expense)}
+.entry-row .kd.이체{color:var(--transfer)} .entry-row .kd.자산{color:var(--asset)}
+.entry-row .tags{display:flex;gap:4px}
+.tg{border:1px solid var(--line-soft);background:var(--ground);border-radius:6px;color:var(--ink-3);
+  font:inherit;font-size:11px;padding:5px 7px;cursor:pointer;line-height:1;white-space:nowrap}
+.tg:hover{border-color:var(--line);color:var(--ink-2)}
+.tg.on{background:var(--accent-dim);border-color:rgba(212,166,74,.35);color:var(--accent)}
+.tg.gb{min-width:44px}
+.tg.gb.good{background:var(--income-bg);border-color:rgba(63,185,132,.35);color:var(--income)}
+.tg.gb.bad{background:var(--expense-bg);border-color:rgba(224,105,95,.35);color:var(--expense)}
+.tg.off{opacity:.3;cursor:not-allowed}
+.tg.del{color:var(--ink-3);padding:5px 8px}
+.tg.del:hover{color:var(--expense);border-color:var(--expense)}
+.btn-tiny{margin-left:6px;border:1px solid var(--line-soft);background:none;border-radius:6px;
+  color:var(--ink-3);font:inherit;font-size:11px;padding:3px 7px;cursor:pointer}
+.btn-tiny:hover{color:var(--accent);border-color:var(--accent)}
+.entry-bar{display:flex;gap:8px;align-items:center;margin-top:14px;flex-wrap:wrap}
+.btn-primary{background:var(--accent);border:0;border-radius:8px;color:#1A1206;font:inherit;
+  font-weight:650;font-size:13.5px;padding:8px 18px;cursor:pointer}
+.btn-primary:hover{filter:brightness(1.06)}
+.btn-primary:disabled{opacity:.55;cursor:default}
+.btn-ghost{background:none;border:1px solid var(--line);border-radius:8px;color:var(--ink-2);
+  font:inherit;font-size:13.5px;padding:8px 14px;cursor:pointer}
+.btn-ghost:hover{color:var(--ink);border-color:var(--ink-3)}
+
+/* ═══ 기록하기 — 자산 스냅샷 ═══ */
+.snap-grid{padding:6px 18px 16px;display:grid;gap:2px}
+.snap-row{display:grid;grid-template-columns:1fr 170px 110px;gap:12px;align-items:center;
+  padding:8px 0;border-bottom:1px solid var(--line-soft)}
+.snap-row:last-child{border-bottom:0}
+.snap-row .nm{font-size:13.5px}
+.snap-row input{background:var(--ground);border:1px solid var(--line-soft);border-radius:7px;
+  color:var(--ink);font:inherit;font-size:13.5px;padding:7px 11px;text-align:right;
+  font-variant-numeric:tabular-nums;font-weight:600;min-width:0;width:100%}
+.snap-row .dl{font-size:11.5px;text-align:right;font-variant-numeric:tabular-nums;color:var(--ink-3)}
+.snap-row .dl.up{color:var(--income)} .snap-row .dl.down{color:var(--expense)}
+
+@media (max-width:900px){
+  .entry-head{display:none}
+  .entry-row{grid-template-columns:1fr 1fr;gap:7px;padding:14px}
+  .entry-row .tags{grid-column:1/-1}
+  .snap-row{grid-template-columns:1fr 130px;gap:8px}
+  .snap-row .dl{grid-column:2;text-align:right}
+}

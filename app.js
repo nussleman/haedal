@@ -137,6 +137,28 @@ const DB = {
     });
   },
 
+  /* 부채 — 조건은 debts, 월별 잔액은 asset_snapshots(asset_class='부채 자산')에 있다.
+     잔액을 매달 적는 기존 흐름을 그대로 쓰기 위해 나눠 두었다. */
+  async debts(){
+    const { data, error } = await sb.from('debts')
+      .select('id,name,account,kind,principal,interest_rate,monthly_payment,started_on,maturity_on,is_active,note')
+      .eq('is_active', true).order('id');
+    if (error) throw error;
+    return (data||[]).map(d => ({ ...d,
+      principal:num(d.principal), interest_rate:num(d.interest_rate), monthly_payment:num(d.monthly_payment) }));
+  },
+
+  /* 임계값 — 없으면 기본값. 화면은 항상 DEFAULT_RULES와 병합된 값을 본다. */
+  async rules(){
+    const { data } = await sb.from('app_settings').select('value').eq('key','rules').maybeSingle();
+    return { ...DEFAULT_RULES, ...(data?.value || {}) };
+  },
+  async saveRules(v){
+    const { error } = await sb.from('app_settings')
+      .upsert({ key:'rules', value:v, updated_at:new Date().toISOString() }, { onConflict:'owner_id,key' });
+    if (error) throw error;
+  },
+
   /* 상인 전체 — 고정비 지정 화면에서 쓴다. 캐시하지 않고 매번 읽어 토글 결과를 바로 본다. */
   async merchants(){
     const { data, error } = await sb.from('merchants')
@@ -163,6 +185,19 @@ const DB = {
     });
   }
 };
+
+const num = v => v==null ? null : Number(v);
+
+/* 판정 기준의 단일 출처. 설정 화면에서 덮어쓰기 전까지 이 값이 쓰인다. */
+const DEFAULT_RULES = {
+  fixedRiseMonths: 3,     // 고정비 몇 개월 연속 상승하면 할 일로 올릴지
+  spendOverPct:    100,   // 이번 달 지출이 평균의 몇 %를 넘으면 알릴지
+  overweightPct:   15,    // 포트폴리오 과대비중 기준
+  dustPct:         0.3,   // 먼지 포지션 기준
+  thesisMinPct:    1,     // 매도 조건을 따질 최소 비중
+  goalLagPct:      15     // 목표 진행률이 이 아래면 알릴지
+};
+let RULES = { ...DEFAULT_RULES };
 
 /* ═════════════════════════════════════════════════════════
    2. 계산 규칙 — 기존 해달에서 잡은 버그를 코드로 막는다
@@ -196,19 +231,27 @@ const esc = v => String(v ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;
    ═════════════════════════════════════════════════════════ */
 const TREE = {
   home:{title:'홈',tabs:[{id:'today',label:'오늘',ready:true}]},
+  entry:{title:'기록하기',tabs:[
+    {id:'ledger',label:'입출금',ready:true},
+    {id:'snapshot',label:'자산 스냅샷',ready:true}]},
   flow:{title:'현금흐름',tabs:[
     {id:'ledger',label:'거래 내역',ready:true},{id:'budget',label:'예산',ready:true},
     {id:'fixed',label:'고정비',ready:true},{id:'rules',label:'자금 흐름',ready:true}]},
   assets:{title:'자산 현황',tabs:[
     {id:'networth',label:'순자산',ready:true},{id:'accounts',label:'계좌',ready:true},
-    {id:'pension',label:'연금',ready:true},{id:'debt',label:'부채'}]},
+    {id:'pension',label:'연금',ready:true},{id:'debt',label:'부채',ready:true}]},
   invest:{title:'투자',tabs:[
     {id:'port',label:'포트폴리오',ready:true},{id:'holding',label:'종목 상세',ready:true},
     {id:'watch',label:'관심종목',ready:true},{id:'history',label:'매매 이력'}]},
   goals:{title:'목표',tabs:[{id:'targets',label:'재무 목표',ready:true},{id:'progress',label:'진행률',ready:true}]},
   report:{title:'리포트',tabs:[{id:'monthly',label:'월간',ready:true},{id:'yearly',label:'연간',ready:true}]},
-  settings:{title:'설정',tabs:[{id:'sources',label:'데이터 연동',ready:true},
-    {id:'cats',label:'카테고리',ready:true},{id:'alerts',label:'알림'}]}
+  settings:{title:'설정',tabs:[
+    {id:'budget',label:'예산 기준',ready:true},
+    {id:'fixedm',label:'고정비 지정',ready:true},
+    {id:'cats',label:'카테고리',ready:true},
+    {id:'accts',label:'계좌',ready:true},
+    {id:'alerts',label:'알림',ready:true},
+    {id:'sources',label:'데이터 연동',ready:true}]}
 };
 
 /* ═════════════════════════════════════════════════════════
@@ -244,10 +287,11 @@ function txRow(t){
       ${sign}${won(t.amount)}</td></tr>`;
 }
 
-/* 스냅샷을 월별 합계로 접는다 */
+/* 스냅샷을 월별 순자산으로 접는다. 부채 자산군은 빼야 순자산이 된다. */
+const IS_DEBT = r => r.asset_class === '부채 자산';
 function netWorthByMonth(snap){
   const m = new Map();
-  snap.forEach(r => m.set(r.ym, (m.get(r.ym)||0) + r.amount));
+  snap.forEach(r => m.set(r.ym, (m.get(r.ym)||0) + (IS_DEBT(r) ? -r.amount : r.amount)));
   return [...m.entries()].sort((a,b)=>a[0]<b[0]?-1:1);
 }
 
@@ -278,12 +322,13 @@ P['home:today'] = async () => {
   const rising = risingFixed(tx);
   rising.forEach(r => todos.push({t:`${r.name} 고정비 ${r.months}개월 연속 상승`,
     m:`${won(r.first)} → ${won(r.last)}원 · 요금제나 약정 확인 필요`}));
-  if (exp > avgExp && avgExp) todos.push({t:'이번 달 지출이 평균을 넘었습니다',
-    m:`${won(exp)}원 · 최근 평균 ${won(avgExp)}원`});
+  if (avgExp && exp > avgExp * RULES.spendOverPct/100)
+    todos.push({t:'이번 달 지출이 기준을 넘었습니다',
+      m:`${won(exp)}원 · 최근 평균 ${won(avgExp)}원의 ${(exp/avgExp*100).toFixed(0)}%`});
   goals.filter(g => g.lower_is_better && g.current > g.target)
        .forEach(g => todos.push({t:`${g.item}이 상한을 넘었습니다`,
     m:`${won(g.current)}원 · 상한 ${won(g.target)}원`}));
-  goals.filter(g => !g.lower_is_better && g.pct < 15)
+  goals.filter(g => !g.lower_is_better && g.pct < RULES.goalLagPct)
        .slice(0,1).forEach(g => todos.push({t:`${g.item} 진행이 더딥니다`,
     m:`${man(g.current)} / ${man(g.target)} · ${Math.round(g.pct)}%`}));
 
@@ -330,16 +375,17 @@ P['home:today'] = async () => {
 
 /* 고정비 3개월 연속 상승 감지 */
 function risingFixed(tx){
+  const N = RULES.fixedRiseMonths;
   const byName = {};
   tx.filter(t => t.is_fixed && isSpend(t)).forEach(t => {
     const k = t.merchant || t.category;
     (byName[k] ??= {})[ymOf(t.date)] = ((byName[k][ymOf(t.date)])||0) + t.amount;
   });
   return Object.entries(byName).map(([name,byYm])=>{
-    const ms = Object.keys(byYm).filter(y=>y!==CUR_YM).sort().slice(-3);
-    if (ms.length < 3) return null;
+    const ms = Object.keys(byYm).filter(y=>y!==CUR_YM).sort().slice(-N);
+    if (ms.length < N) return null;
     const v = ms.map(m=>byYm[m]);
-    return v[0]<v[1] && v[1]<v[2] ? {name, months:3, first:v[0], last:v[2]} : null;
+    return v.every((x,i)=>i===0||x>v[i-1]) ? {name, months:N, first:v[0], last:v.at(-1)} : null;
   }).filter(Boolean).slice(0,3);
 }
 
@@ -525,11 +571,11 @@ P['invest:port'] = async () => {
   if (!h.length) return wipbar('holdings 테이블에 스냅샷이 없습니다. 토스 수집 파이프라인을 먼저 돌려주세요.');
   const thByTicker = Object.fromEntries(th.map(t=>[t.ticker,t]));
   const total = h.reduce((s,x)=>s+x.value,0);
-  const over  = h.filter(x=>x.value/total > 0.15);
-  const dust  = h.filter(x=>x.value/total < 0.003);
+  const over  = h.filter(x=>x.value/total*100 > RULES.overweightPct);
+  const dust  = h.filter(x=>x.value/total*100 < RULES.dustPct);
   /* thesis 테이블이 아직 비어 있다. 74종목 전부에 경고를 띄우면 아무것도 안 보이므로,
      비중 1% 이상인 것만 "매도 조건 없음"으로 센다. 먼지는 어차피 정리 대상이다. */
-  const meaningful = h.filter(x => x.value/total >= 0.01);
+  const meaningful = h.filter(x => x.value/total*100 >= RULES.thesisMinPct);
   const noStop = meaningful.filter(x => !thByTicker[x.ticker]?.sell_trigger).length;
   const wSum = h.reduce((s,x)=>s+(x.pnl_pct??0)*x.value,0)/total;
 
@@ -543,7 +589,7 @@ P['invest:port'] = async () => {
     <div class="flow-card ${noStop?'e':''}"><h4>매도 조건 미설정</h4>
       <div class="v num" style="color:${noStop?'var(--expense)':'var(--ink-2)'}">${noStop}<span
         style="font-size:15px;color:var(--ink-3)"> / ${meaningful.length}</span></div>
-      <div class="m">비중 1% 이상 종목 기준 · thesis 미입력</div></div>
+      <div class="m">비중 ${RULES.thesisMinPct}% 이상 종목 기준 · thesis 미입력</div></div>
   </div>
 
   <div class="block">
@@ -553,14 +599,14 @@ P['invest:port'] = async () => {
       <th class="r" style="width:86px">수익률</th><th style="width:104px">상태</th></tr></thead>
     <tbody>${h.slice(0,60).map(x=>{
       const w = x.value/total*100, t = thByTicker[x.ticker];
-      const flag = w>15 ? '<span class="chip c-지출">과대비중</span>'
-                 : w<0.3 ? '<span class="chip c-w">먼지</span>'
+      const flag = w>RULES.overweightPct ? '<span class="chip c-지출">과대비중</span>'
+                 : w<RULES.dustPct ? '<span class="chip c-w">먼지</span>'
                  : (t?.logic && w<1.5) ? '<span class="chip c-자산">과소비중</span>'
-                 : (w>=1 && !t?.sell_trigger) ? '<span class="chip c-지출">조건 없음</span>'
+                 : (w>=RULES.thesisMinPct && !t?.sell_trigger) ? '<span class="chip c-지출">조건 없음</span>'
                  : '<span class="sub">—</span>';
       return `<tr><td>${esc(x.name)}${x.ticker?`(${esc(x.ticker)})`:''}
           ${memo3([t?.logic,t?.sell_trigger,t?.type].filter(Boolean).length)}</td>
-        <td><div class="bar"><i style="width:${Math.min(100,w*4)}%;background:var(--${w>15?'expense':'asset'})"></i></div>
+        <td><div class="bar"><i style="width:${Math.min(100,w*4)}%;background:var(--${w>RULES.overweightPct?'expense':'asset'})"></i></div>
           <div class="sub num">${w.toFixed(2)}%</div></td>
         <td class="r">${man(x.value)}</td>
         <td class="r" style="color:var(--${x.pnl_pct==null?'ink-3':x.pnl_pct>=0?'income':'expense'})">
@@ -653,7 +699,7 @@ P['goals:targets'] = async () => {
 P['settings:sources'] = async () => {
   const checks = await Promise.all([
     probe('v_transactions'), probe('asset_snapshots'), probe('holdings'),
-    probe('study_cards'), probe('goal_progress'), probe('merchants'), probe('thesis'), probe('accounts')
+    probe('study_cards'), probe('goal_progress'), probe('merchants'), probe('thesis'), probe('debts'), probe('app_settings')
   ]);
   return `<div class="block">
     <header><h2>Supabase 테이블</h2><p>${SB_URL.replace('https://','')}</p></header>
@@ -674,10 +720,268 @@ const ROLE = {v_transactions:'거래 원장 뷰 — kind·category 펼침', asse
   holdings:'보유 종목 스냅샷', study_cards:'종목 연구 카드 · 관심종목 L1~L3',
   goal_progress:'목표 뷰 — metric_source 기준 현재값 자동 계산',
   merchants:'상인 마스터 · 고정비 지정', thesis:'투자 논리 원장 (비어 있음)',
-  accounts:'계좌 마스터'};
+  debts:'부채 조건 — 잔액은 asset_snapshots', app_settings:'판정 기준 저장소'};
 async function probe(name){
   const { count, error } = await sb.from(name).select('*',{count:'exact',head:true});
   return { name, count, ok: !error };
+}
+
+/* ═════════════════════════════════════════════════════════
+   5-0. 기록하기 — 직접 입력하는 화면
+   ─────────────────────────────────────────────────────────
+   이전 버전의 입력 디테일을 그대로 옮겼다.
+   · 사용처를 적으면 예전에 쓰던 분류와 그룹이 따라온다
+   · 고정비는 줄마다 찍는 게 아니라 사용처의 성질이다 — 자동으로 켜진다
+   · Good/Bad 는 지출에만 매긴다
+   · 금액은 천 단위 쉼표, 앞에 −를 붙이면 음수
+   ═════════════════════════════════════════════════════════ */
+const ENTRY = { draft: [], refs: null };
+
+async function entryRefs(){
+  if (ENTRY.refs) return ENTRY.refs;
+  const [cats, merch, tx] = await Promise.all([DB.categories(), DB.merchants(), DB.transactions()]);
+  /* 사용처 → 마지막으로 쓴 분류·그룹을 기억해 둔다 */
+  const merchCat = {}, merchGroup = {};
+  [...tx].reverse().forEach(t => {
+    if (!t.merchant) return;
+    const hit = cats.find(c => c.category===t.category && (c.subcategory||'')===(t.sub||''));
+    if (hit) merchCat[t.merchant] = hit.id;
+    if (t.merchant_group) merchGroup[t.merchant] = t.merchant_group;
+  });
+  const names = [...new Set([...merch.map(m=>m.name), ...Object.keys(merchCat)])]
+    .sort((a,b)=>a.localeCompare(b,'ko'));
+  const fixed = {}; merch.forEach(m => { if (m.is_fixed) fixed[m.name] = true; });
+  /* 최근에 자주 쓴 분류를 위로 */
+  const freq = {}; tx.forEach(t => { const h = cats.find(c=>c.category===t.category
+    && (c.subcategory||'')===(t.sub||'')); if (h) freq[h.id]=(freq[h.id]||0)+1; });
+  ENTRY.refs = { cats: cats.filter(c=>c.kind!=='자산'), catById:Object.fromEntries(cats.map(c=>[c.id,c])),
+                 names, merchCat, merchGroup, fixed, freq };
+  return ENTRY.refs;
+}
+const todayISO = () => KST().toISOString().slice(0,10);
+function blankRow(prev){
+  return { date: prev?.date || todayISO(), merchant:'', merchant_group:'', catId: prev?.catId || '',
+           amount:'', note:'', is_fixed:false, fixedAuto:true, good_bad:null, company_paid:false };
+}
+
+P['entry:ledger'] = async () => {
+  const r = await entryRefs();
+  if (!ENTRY.draft.length) ENTRY.draft = [blankRow()];
+  const catOpts = [...r.cats].sort((a,b)=>(r.freq[b.id]||0)-(r.freq[a.id]||0)
+    || a.kind.localeCompare(b.kind) || (a.sort_order-b.sort_order));
+
+  return `<div class="block">
+    <header><h2>입출금 기록</h2><p>사용처를 먼저 적으면 분류와 고정비가 따라옵니다</p>
+      <span class="sub">${ENTRY.draft.length}건 작성 중</span></header>
+
+    <div class="entry">
+      <div class="entry-head">
+        <span>날짜</span><span>사용처</span><span>분류</span><span>금액</span>
+        <span>메모</span><span>표시</span><span></span>
+      </div>
+      ${ENTRY.draft.map((d,i)=>entryRow(d,i,catOpts,r)).join('')}
+    </div>
+
+    <div class="entry-bar">
+      <button class="btn-ghost" id="enAdd">＋ 행 추가</button>
+      <button class="btn-ghost" id="enDup">마지막 행 복제</button>
+      <span class="sub" style="margin-left:auto" id="enSum"></span>
+      <button class="btn-primary" id="enSave">모두 저장</button>
+    </div>
+  </div>
+
+  <div class="block">
+    <header><h2>최근 기록</h2><p>방금 넣은 것이 제대로 들어갔는지 확인하세요</p>
+      <button class="more" data-go="flow:ledger">전체 보기</button></header>
+    <table><thead><tr><th style="width:70px">날짜</th><th>내용</th><th style="width:74px">구분</th>
+      <th class="r" style="width:120px">금액</th></tr></thead>
+    <tbody>${(await DB.transactions()).slice(0,8).map(txRow).join('')}</tbody></table>
+  </div>`;
+};
+
+function entryRow(d, i, catOpts, r){
+  const c = d.catId ? r.catById[d.catId] : null;
+  const kind = c?.kind || '';
+  const gbOff = !c || c.kind !== '지출';
+  return `<div class="entry-row" data-i="${i}">
+    <input type="date" data-f="date" value="${d.date}">
+    <div class="ac">
+      <input type="text" data-f="merchant" value="${esc(d.merchant)}" placeholder="사용처"
+        list="merchList" autocomplete="off">
+    </div>
+    <select data-f="catId">
+      <option value="">분류 선택</option>
+      ${catOpts.map(o=>`<option value="${o.id}" ${String(d.catId)===String(o.id)?'selected':''}
+        >${o.kind} · ${esc(o.category)}${o.subcategory?' › '+esc(o.subcategory):''}</option>`).join('')}
+    </select>
+    <div class="amt">
+      <input type="text" data-f="amount" value="${esc(d.amount)}" placeholder="0" inputmode="numeric">
+      <span class="kd ${kind}">${kind||'—'}</span>
+    </div>
+    <input type="text" data-f="note" value="${esc(d.note)}" placeholder="메모">
+    <div class="tags">
+      <button class="tg ${d.is_fixed?'on':''}" data-t="is_fixed" title="고정비">📌</button>
+      <button class="tg gb ${d.good_bad==='Good'?'good':d.good_bad==='Bad'?'bad':''} ${gbOff?'off':''}"
+        data-t="good_bad" ${gbOff?'disabled':''} title="Good / Bad">${
+        d.good_bad==='Good'?'GOOD':d.good_bad==='Bad'?'BAD':'—'}</button>
+      <button class="tg ${d.company_paid?'on':''}" data-t="company_paid" title="회사 대납">회사</button>
+    </div>
+    <button class="tg del" data-del="${i}" title="이 행 삭제">✕</button>
+  </div>`;
+}
+
+/* 화면 값을 draft로 되받는다 — 다시 그릴 때 입력이 날아가지 않게 */
+function entrySync(){
+  document.querySelectorAll('.entry-row').forEach(row => {
+    const i = Number(row.dataset.i), d = ENTRY.draft[i];
+    if (!d) return;
+    row.querySelectorAll('[data-f]').forEach(el => d[el.dataset.f] = el.value);
+  });
+}
+const parseAmt = v => { const m = /^\s*[-−]/.test(v); const n = Number(String(v).replace(/[^\d]/g,''));
+                        return n ? (m ? -n : n) : 0; };
+
+async function entrySave(){
+  entrySync();
+  const r = await entryRefs();
+  const rows = ENTRY.draft
+    .map(d => ({ d, amt: parseAmt(d.amount) }))
+    .filter(x => x.amt !== 0 && x.d.catId);
+  if (!rows.length) { toast('분류와 금액이 채워진 행이 없습니다'); return; }
+
+  const payload = rows.map(({d,amt}) => ({
+    date: d.date, category_id: Number(d.catId), amount: amt,
+    merchant: d.merchant.trim() || null,
+    merchant_group: r.merchGroup[d.merchant.trim()] || null,
+    note: d.note.trim() || null,
+    is_fixed: !!d.is_fixed, good_bad: d.good_bad || null, company_paid: !!d.company_paid
+  }));
+
+  const btn = document.getElementById('enSave');
+  if (btn) { btn.disabled = true; btn.textContent = '저장 중…'; }
+  const { error } = await sb.from('transactions').insert(payload);
+  if (btn) { btn.disabled = false; btn.textContent = '모두 저장'; }
+  if (error) { toast('저장하지 못했습니다 · ' + error.message); return; }
+
+  /* 처음 보는 사용처는 사전에도 등록해 다음부터 자동완성에 뜨게 한다 */
+  const newNames = [...new Set(payload.map(p=>p.merchant).filter(Boolean))]
+    .filter(n => !r.names.includes(n));
+  if (newNames.length) await sb.from('merchants').upsert(
+    newNames.map(name=>({ name })), { onConflict:'owner_id,name' });
+
+  ENTRY.draft = [blankRow()];
+  ENTRY.refs = null; DB._c = {};
+  toast(`${payload.length}건 저장했습니다`);
+  render();
+}
+
+/* ── 기록하기 · 자산 스냅샷 ──
+   달마다 계좌 잔액을 한 번 적는 자리. 비워 두면 그 달 그 계좌 기록은 지워진다. */
+let SNAP_YM = null;
+P['entry:snapshot'] = async () => {
+  const [accts, snap] = await Promise.all([DB.accounts(), DB.snapshots()]);
+  const ym = SNAP_YM || KST().toISOString().slice(0,7);
+  const cur = {}; snap.filter(r=>r.ym===ym).forEach(r => cur[r.account] = r.amount);
+  const prevYm = shiftYm(ym,-1);
+  const prev = {}; snap.filter(r=>r.ym===prevYm).forEach(r => prev[r.account] = r.amount);
+
+  /* 계좌 목록 = accounts 테이블 + 과거 스냅샷에만 남아 있는 계좌 */
+  const known = new Map();
+  accts.forEach(a => known.set(a.name, a.asset_class));
+  snap.forEach(r => { if (!known.has(r.account)) known.set(r.account, r.asset_class); });
+  const ORDER = ['현금 자산','투자 자산','저축 자산','연금 자산','부채 자산'];
+  const byClass = {};
+  [...known.entries()].forEach(([name,cls]) => (byClass[cls] ??= []).push(name));
+
+  const filled = [...known.keys()].filter(n => cur[n] != null).length;
+  const total = ORDER.reduce((s,c)=>s + (byClass[c]||[]).reduce((x,n)=>
+    x + (cur[n]||0) * (c==='부채 자산'?-1:1), 0), 0);
+
+  return `<div class="toolbar">
+    <div class="stepper">
+      <button id="snPrev">←</button><span class="num">${ym}</span><button id="snNext">→</button>
+    </div>
+    <button class="btn-ghost" id="snCopy">전월 값 불러오기</button>
+    <span class="sub">${known.size}개 계좌 중 ${filled}개 입력됨</span>
+    <button class="btn-primary" id="snSave" style="margin-left:auto">저장</button>
+  </div>
+
+  <div class="block">
+    ${ORDER.filter(c=>byClass[c]?.length).map(cls=>`
+      <div class="tier"><header>
+        <span class="chip ${cls==='부채 자산'?'c-지출':'c-w'}">${cls}</span>
+        <span class="cap num">${won((byClass[cls]||[]).reduce((s,n)=>s+(cur[n]||0),0))}</span>
+      </header>
+      <div class="snap-grid">
+        ${byClass[cls].map(name=>{
+          const v = cur[name], p = prev[name];
+          const d = v!=null && p!=null ? v-p : null;
+          return `<label class="snap-row">
+            <span class="nm">${esc(name)}</span>
+            <input type="text" class="sn-in" data-acct="${esc(name)}" data-cls="${cls}"
+              value="${v!=null?won(v):''}" placeholder="${p!=null?won(p)+' (전월)':'비워두면 기록 없음'}"
+              inputmode="numeric">
+            <span class="dl ${d==null?'':d>=0?'up':'down'}">${
+              d==null?'':(d>=0?'+':'−')+won(Math.abs(d))}</span>
+          </label>`;}).join('')}
+      </div></div>`).join('')}
+  </div>
+
+  <div class="block">
+    <header><h2>${ym} 합계</h2><p>부채는 빼서 계산합니다</p></header>
+    <div class="slab"><div class="nw-value num">${Math.round(total/10000).toLocaleString()}<small>만원</small></div>
+      <div class="sub" style="margin-top:6px">전월 ${prevYm} 대비 ${(() => {
+        const pt = ORDER.reduce((s,c)=>s+(byClass[c]||[]).reduce((x,n)=>
+          x+(prev[n]||0)*(c==='부채 자산'?-1:1),0),0);
+        if (!pt) return '비교 대상 없음';
+        const d = total-pt;
+        return `<span style="color:var(--${d>=0?'income':'expense'})">${d>=0?'+':'−'}${won(Math.abs(d))}</span>`;
+      })()}</div></div>
+  </div>
+  ${stub('입력 규칙','칸을 비우고 저장하면 그 달 그 계좌 기록이 지워집니다. 잔액이 0원이면 0을 적으세요. 계좌를 추가하거나 이름을 바꾸는 건 설정 › 계좌에서 합니다.',
+    [{t:'<b>월·계좌 조합으로 덮어쓰기</b> — 같은 달을 여러 번 저장해도 중복되지 않습니다',has:true},
+     {t:'<b>전월 값 불러오기</b> — 안 바뀐 계좌는 그대로 두고 바뀐 것만 고치면 됩니다',has:true},
+     {t:'<b>부채는 순자산에서 차감</b>',has:true},
+     {t:'과거 스냅샷에만 있는 계좌도 함께 표시',has:true}])}`;
+};
+function shiftYm(ym,n){
+  const [y,m] = ym.split('-').map(Number);
+  const d = new Date(y, m-1+n, 1);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+}
+async function snapSave(){
+  const ym = SNAP_YM || KST().toISOString().slice(0,7);
+  const snap = await DB.snapshots();
+  const cur = {}; snap.filter(r=>r.ym===ym).forEach(r => cur[r.account] = r);
+  const ups = [], dels = [];
+  document.querySelectorAll('.sn-in').forEach(el => {
+    const acct = el.dataset.acct, cls = el.dataset.cls;
+    const raw = el.value.replace(/[^\d-]/g,'');
+    if (raw === '') { if (cur[acct]) dels.push(acct); return; }
+    ups.push({ month: ym+'-01', asset_class: cls, account: acct, amount: Number(raw) });
+  });
+  if (!ups.length && !dels.length) { toast('바뀐 값이 없습니다'); return; }
+
+  const btn = document.getElementById('snSave');
+  if (btn) { btn.disabled = true; btn.textContent = '저장 중…'; }
+  try {
+    if (ups.length) {
+      const { error } = await sb.from('asset_snapshots')
+        .upsert(ups, { onConflict:'owner_id,month,account' });
+      if (error) throw error;
+    }
+    if (dels.length) {
+      const { error } = await sb.from('asset_snapshots')
+        .delete().eq('month', ym+'-01').in('account', dels);
+      if (error) throw error;
+    }
+    DB._c = {};
+    toast(`${ym} 저장했습니다 · ${ups.length}건 반영${dels.length?`, ${dels.length}건 삭제`:''}`);
+    render();
+  } catch (e) {
+    toast('저장하지 못했습니다 · ' + (e.message||e));
+    if (btn) { btn.disabled = false; btn.textContent = '저장'; }
+  }
 }
 
 /* ── 현금흐름 · 예산 ──
@@ -723,12 +1027,14 @@ P['flow:budget'] = async () => {
       <div class="v num" style="color:var(--transfer)">${perDay!=null?won(Math.max(0,perDay)):'—'}</div>
       <div class="m">${days-d.getDate()}일 남음</div></div>
   </div>
-  <div class="block"><header><h2>예산 기준</h2><p>${budget.src}</p></header>
+  <div class="block"><header><h2>예산 기준</h2><p>${budget.src}</p>
+    <button class="more" data-go="settings:budget">기준 바꾸기</button></header>
     <div class="slab"><div class="track" style="height:10px">
       <i style="width:${Math.min(100,used)}%;background:var(--${used>elapsed?'expense':'income'})"></i></div>
       <div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--ink-3);margin-top:7px">
         <span>소진 ${used.toFixed(1)}%</span><span>경과 ${elapsed.toFixed(1)}%</span></div></div>
-  </div>` : wipbar('예산 기준을 정할 수 없습니다. 목표 탭에 월 지출 목표를 등록하거나, 마감된 달이 3개 이상 쌓여야 합니다.')}
+  </div>` : wipbar('예산 기준이 없습니다. 설정 › 예산 기준에서 월 지출 상한을 정하세요.')
+  + '<div class="entry-bar" style="margin:-10px 0 22px"><button class="btn-primary" data-go="settings:budget">예산 기준 정하기</button></div>'}
 
   <div class="block">
     <header><h2>카테고리별 집행</h2><p>기준선은 최근 3개월 평균 · 회사 환급분 제외</p></header>
@@ -784,7 +1090,7 @@ P['invest:holding'] = async () => {
 
   <div class="flow" style="margin-bottom:22px">
     <div class="flow-card a"><h4>평가액</h4><div class="v num">${man(sel.value)}</div>
-      <div class="m">비중 ${w.toFixed(2)}%${w>15?' · 과대비중':w<0.3?' · 먼지':''}</div></div>
+      <div class="m">비중 ${w.toFixed(2)}%${w>RULES.overweightPct?' · 과대비중':w<RULES.dustPct?' · 먼지':''}</div></div>
     <div class="flow-card ${(sel.pnl_pct??0)<0?'e':'i'}"><h4>수익률</h4>
       <div class="v num" style="color:var(--${(sel.pnl_pct??0)<0?'expense':'income'})">
         ${sel.pnl_pct==null?'—':sel.pnl_pct.toFixed(1)+'%'}</div>
@@ -982,57 +1288,6 @@ P['assets:pension'] = async () => {
      {t:'연간 납입액 대비 세액공제 한도 잔여 (900만원 기준)'},
      {t:'계좌별 운용 상품 · 수익률 — 현재 스냅샷에 잔액만 있음'},
      {t:'예상 수령액 시뮬레이션'}])}`;
-};
-
-/* ── 설정 · 카테고리 ──
-   고정비 지정은 읽기만 해서는 쓸모가 없다. merchants.is_fixed 를 직접 바꾼다. */
-P['settings:cats'] = async () => {
-  const [cats, merch, tx] = await Promise.all([DB.categories(), DB.merchants(), DB.transactions()]);
-  const use = {};
-  tx.forEach(t => { const k = t.category+'|'+(t.sub||'');
-    (use[k] ??= {n:0,amt:0}); use[k].n++; use[k].amt += t.amount; });
-
-  const byKind = {};
-  cats.forEach(c => ((byKind[c.kind] ??= {})[c.category] ??= []).push(c));
-
-  const merchUse = {};
-  tx.forEach(t => { if (t.merchant) merchUse[t.merchant] = (merchUse[t.merchant]||0)+1; });
-  const sorted = [...merch].sort((a,b)=>(b.is_fixed-a.is_fixed) || (merchUse[b.name]||0)-(merchUse[a.name]||0));
-
-  return `<div class="block">
-    <header><h2>고정비 지정</h2><p>여기서 켠 상인의 거래가 고정비 패널에 집계됩니다</p>
-      <span class="sub">${merch.filter(m=>m.is_fixed).length} / ${merch.length} 지정됨</span></header>
-    <table><thead><tr><th>상인</th><th style="width:150px">그룹</th>
-      <th class="r" style="width:90px">거래 건수</th><th style="width:80px">고정비</th></tr></thead>
-    <tbody>${sorted.map(m=>`<tr><td>${esc(m.name)}</td>
-      <td class="sub">${esc(m.merchant_group||'—')}</td>
-      <td class="r sub">${merchUse[m.name]||0}</td>
-      <td><button class="fixtog" data-id="${m.id}" data-on="${m.is_fixed}"
-        style="border:0;background:none;cursor:pointer;font:inherit;padding:0">
-        <span class="chip ${m.is_fixed?'c-지출':'c-w'}">${m.is_fixed?'고정비':'일반'}</span>
-      </button></td></tr>`).join('')}
-    </tbody></table>
-  </div>
-
-  <div class="block">
-    <header><h2>카테고리 체계</h2><p>categories ${cats.length}건 · kind → category → subcategory</p></header>
-    ${Object.entries(byKind).map(([kind,groups])=>`
-      <div class="tier"><header><span class="chip c-${kind}">${kind}</span>
-        <span>${Object.keys(groups).length}개 분류</span>
-        <span class="cap num">${Object.values(groups).flat().length}</span></header>
-        <ul>${Object.entries(groups).map(([cat,subs])=>{
-          const n = subs.reduce((s,c)=>s+(use[cat+'|'+(c.subcategory||'')]?.n||0),0);
-          const amt = subs.reduce((s,c)=>s+(use[cat+'|'+(c.subcategory||'')]?.amt||0),0);
-          return `<li><div><b>${subs[0].emoji_category||''} ${esc(cat)}</b>
-            <div class="sub">${n}건 · ${won(amt)}원</div></div>
-            <p>${subs.map(c=>esc(c.subcategory)).join(' · ')}</p></li>`;}).join('')}
-        </ul></div>`).join('')}
-  </div>
-  ${stub('카테고리를 늘릴 때','분류가 늘어나면 매번 고르는 피로가 커집니다. 지금 ${cats.length}건은 관리 가능한 수준이고, 새로 만들기 전에 기존 subcategory로 흡수되는지 먼저 보세요.'.replace('${cats.length}',cats.length),
-    [{t:'<b>merchants.is_fixed 토글</b> — 위 표에서 바로 저장됩니다',has:true},
-     {t:'카테고리 추가 · 병합 · 삭제'},
-     {t:'상인명 → 카테고리 자동 매핑 규칙 편집'},
-     {t:'12개월간 거래 0건인 카테고리 정리 제안'}])}`;
 };
 
 /* ── 현금흐름 · 저축·이체 규칙 ──
@@ -1300,23 +1555,308 @@ P['report:yearly'] = async () => {
      {t:'기부금 · 의료비 등 공제 항목'}])}`;
 };
 
+/* ── 자산 현황 · 부채 ──
+   조건은 debts, 월별 잔액은 asset_snapshots(asset_class='부채 자산')에서 온다. */
+P['assets:debt'] = async () => {
+  const [debts, snap] = await Promise.all([DB.debts(), DB.snapshots()]);
+  const dsnap = snap.filter(IS_DEBT);
+  const months = [...new Set(dsnap.map(r=>r.ym))].sort();
+  const last = months.at(-1), prevYm = months.at(-2);
+  const balAt = (ym, acc) => dsnap.filter(r=>r.ym===ym && (!acc || r.account===acc))
+                                  .reduce((s,r)=>s+r.amount,0);
+  const total = last ? balAt(last) : 0;
+  const dPrev = prevYm ? total - balAt(prevYm) : null;
+  const monthly = debts.reduce((s,d)=>s+(d.monthly_payment||0),0);
+  const yearlyInterest = debts.reduce((s,d)=>{
+    const bal = d.account ? balAt(last, d.account) : 0;
+    return s + (bal * (d.interest_rate||0) / 100);
+  },0);
+
+  if (!debts.length && !dsnap.length) return `
+    ${wipbar('부채가 등록되어 있지 않습니다. 없으시면 이 탭은 비워 두셔도 됩니다.')}
+    ${stub('부채를 등록하려면','스키마는 준비됐습니다. Supabase의 debts 테이블에 조건(금리·만기·월 상환액)을 넣고, 매달 잔액은 asset_snapshots에 asset_class=\'부채 자산\'으로 적으면 여기와 순자산에 함께 반영됩니다.',
+      [{t:'<b>debts 테이블 생성 완료</b> — name · account · kind · principal · interest_rate · monthly_payment · started_on · maturity_on',has:true},
+       {t:'<b>accounts.asset_class에 부채 자산 추가 완료</b>',has:true},
+       {t:'<b>순자산 계산에서 부채를 빼도록 반영 완료</b>',has:true},
+       {t:'앱에서 직접 부채 추가·편집하는 폼'}])}`;
+
+  return `<div class="flow" style="margin-bottom:22px">
+    <div class="flow-card e"><h4>남은 부채</h4>
+      <div class="v num" style="color:var(--expense)">${man(total)}</div>
+      <div class="m">${last} 기준 · ${debts.length}건</div></div>
+    <div class="flow-card ${dPrev!=null&&dPrev<0?'i':'e'}"><h4>전월 대비</h4>
+      <div class="v num" style="color:var(--${dPrev==null?'ink-3':dPrev<0?'income':'expense'})">
+        ${dPrev==null?'—':(dPrev<0?'−':'+')+won(Math.abs(dPrev))}</div>
+      <div class="m">${dPrev!=null&&dPrev<0?'상환이 진행 중입니다':'잔액이 늘었습니다'}</div></div>
+    <div class="flow-card t"><h4>월 상환액</h4>
+      <div class="v num" style="color:var(--transfer)">${won(monthly)}</div>
+      <div class="m">연 이자 추정 ${won(yearlyInterest)}</div></div>
+  </div>
+
+  <div class="block">
+    <header><h2>부채 목록</h2><p>조건은 debts · 잔액은 월 스냅샷</p></header>
+    <table><thead><tr><th>이름</th><th style="width:100px">종류</th>
+      <th class="r" style="width:110px">잔액</th><th class="r" style="width:80px">금리</th>
+      <th class="r" style="width:110px">월 상환</th><th style="width:110px">만기</th></tr></thead>
+    <tbody>${debts.map(d=>{
+      const bal = d.account ? balAt(last, d.account) : null;
+      const left = d.maturity_on ? Math.round((new Date(d.maturity_on)-KST())/864e5/30.4) : null;
+      return `<tr><td>${esc(d.name)}${d.note?`<div class="sub">${esc(d.note)}</div>`:''}</td>
+        <td class="sub">${esc(d.kind||'—')}</td>
+        <td class="r">${bal==null?'<span class="sub">계좌 미연결</span>':won(bal)}</td>
+        <td class="r sub">${d.interest_rate!=null?d.interest_rate+'%':'—'}</td>
+        <td class="r">${d.monthly_payment?won(d.monthly_payment):'<span class="sub">—</span>'}</td>
+        <td class="sub num">${d.maturity_on||'—'}${left!=null?`<div class="sub">${left}개월 남음</div>`:''}</td>
+        </tr>`;}).join('') || '<tr><td colspan="6" class="empty">debts에 등록된 조건이 없습니다. 잔액 스냅샷만 순자산에 반영됩니다.</td></tr>'}
+    </tbody>
+    <tfoot><tr><td colspan="2">합계</td><td class="r">${won(total)}</td><td></td>
+      <td class="r">${won(monthly)}</td><td></td></tr></tfoot></table>
+  </div>
+  ${stub('부채와 고정비의 관계','월 상환액은 고정비이기도 합니다. 원장에 상환 거래를 기록하고 해당 상인을 고정비로 지정하면 두 화면의 숫자가 맞물립니다.',
+    [{t:'<b>순자산에서 자동 차감</b>',has:true},
+     {t:'상환 스케줄 → 고정비 패널 자동 연동'},
+     {t:'금리 변동 시 월 상환액 재계산'},
+     {t:'앱에서 직접 부채 추가·편집하는 폼'}])}`;
+};
+
+/* ── 설정 · 고정비 지정 ──
+   고정비는 줄마다 찍는 값이 아니라 사용처의 성질이다. 여기서 켜면 기록이 따라간다. */
+let FIXQ = '';
+P['settings:fixedm'] = async () => {
+  const [merch, tx] = await Promise.all([DB.merchants(), DB.transactions()]);
+  const use = {}; tx.forEach(t => { if (t.merchant) use[t.merchant]=(use[t.merchant]||0)+1; });
+  const rows = merch
+    .filter(m => !FIXQ || m.name.toLowerCase().includes(FIXQ.toLowerCase()))
+    .sort((a,b)=>(b.is_fixed-a.is_fixed) || (use[b.name]||0)-(use[a.name]||0)
+      || a.name.localeCompare(b.name,'ko'));
+
+  return `<div class="toolbar">
+    <input type="search" id="fixQ" placeholder="사용처 검색" value="${esc(FIXQ)}">
+    <span class="sub">${merch.filter(m=>m.is_fixed).length} / ${merch.length} 지정됨</span>
+  </div>
+  <div class="block">
+    <header><h2>고정비 사용처</h2><p>켜면 그 사용처의 새 기록이 고정비로 잡힙니다</p></header>
+    <table><thead><tr><th>사용처</th><th style="width:150px">그룹</th>
+      <th class="r" style="width:90px">거래 건수</th><th style="width:150px">고정비</th></tr></thead>
+    <tbody>${rows.length ? rows.map(m=>`<tr><td>${esc(m.name)}</td>
+      <td class="sub">${esc(m.merchant_group||'—')}</td>
+      <td class="r sub">${use[m.name]||0}</td>
+      <td><button class="fixtog" data-id="${m.id}" data-name="${esc(m.name)}" data-on="${m.is_fixed}"
+          style="border:0;background:none;cursor:pointer;font:inherit;padding:0">
+          <span class="chip ${m.is_fixed?'c-지출':'c-w'}">${m.is_fixed?'고정비':'일반'}</span></button>
+        ${m.is_fixed&&use[m.name]?`<button class="btn-tiny" data-past="${esc(m.name)}"
+          data-on="true">과거도 반영</button>`:''}</td></tr>`).join('')
+      : '<tr><td colspan="4" class="empty">검색 결과가 없습니다.</td></tr>'}
+    </tbody></table>
+  </div>
+  ${stub('고정비를 사용처에 두는 이유','넷플릭스가 고정비면 넷플릭스로 찍힌 모든 줄이 고정비입니다. 줄마다 판단할 일이 아니라 사용처의 성질이라, 기준을 여기 두고 기록이 따라가게 했습니다.',
+    [{t:'<b>사용처 단위 지정</b> — 켜면 새 기록에 자동 적용',has:true},
+     {t:'<b>과거도 반영</b> — 기존 거래까지 일괄 수정',has:true},
+     {t:'고정비 월환산은 현금흐름 › 고정비에서 봅니다'}])}`;
+};
+
+/* ── 설정 · 카테고리 ── */
+P['settings:cats'] = async () => {
+  const [cats, tx] = await Promise.all([DB.categories(), DB.transactions()]);
+  const use = {};
+  tx.forEach(t => { const k = t.category+'|'+(t.sub||'');
+    (use[k] ??= {n:0,amt:0}); use[k].n++; use[k].amt += t.amount; });
+  const byKind = {};
+  cats.forEach(c => ((byKind[c.kind] ??= {})[c.category] ??= []).push(c));
+  const dead = cats.filter(c => !(use[c.category+'|'+(c.subcategory||'')]?.n));
+
+  return `<div class="block">
+    <header><h2>카테고리 체계</h2><p>kind → category → subcategory</p>
+      <span class="sub">${cats.length}건 · 14개월간 미사용 ${dead.length}건</span></header>
+    ${Object.entries(byKind).map(([kind,groups])=>`
+      <div class="tier"><header><span class="chip c-${kind}">${kind}</span>
+        <span>${Object.keys(groups).length}개 분류</span>
+        <span class="cap num">${Object.values(groups).flat().length}</span></header>
+        <ul>${Object.entries(groups).map(([cat,subs])=>{
+          const n = subs.reduce((s,c)=>s+(use[cat+'|'+(c.subcategory||'')]?.n||0),0);
+          const amt = subs.reduce((s,c)=>s+(use[cat+'|'+(c.subcategory||'')]?.amt||0),0);
+          return `<li><div><b>${subs[0].emoji_category||''} ${esc(cat)}</b>
+            <div class="sub">${n}건 · ${won(amt)}원</div></div>
+            <p>${subs.map(c=>{
+              const on = use[cat+'|'+(c.subcategory||'')]?.n;
+              return `<span style="color:var(--${on?'ink-2':'ink-3'})">${esc(c.subcategory)}${
+                on?'':' <span class="sub">(미사용)</span>'}</span>`;}).join(' · ')}</p></li>`;}).join('')}
+        </ul></div>`).join('')}
+  </div>
+  ${stub('카테고리를 늘리기 전에','분류가 늘면 매번 고르는 피로가 커집니다. 새로 만들기 전에 기존 subcategory로 흡수되는지 먼저 보세요. 지금 14개월간 한 건도 안 쓰인 분류가 '+dead.length+'개 있습니다.',
+    [{t:'카테고리 추가 · 병합 · 삭제'},
+     {t:'미사용 분류 일괄 비활성화'},
+     {t:'사용처 → 분류 자동 매핑 규칙 편집'}])}`;
+};
+
+/* ── 설정 · 계좌 ── */
+P['settings:accts'] = async () => {
+  const [accts, snap] = await Promise.all([DB.accounts(), DB.snapshots()]);
+  const last = netWorthByMonth(snap).at(-1)?.[0];
+  const bal = {}; snap.filter(r=>r.ym===last).forEach(r => bal[r.account]=r.amount);
+  const orphan = [...new Set(snap.map(r=>r.account))].filter(a => !accts.some(x=>x.name===a));
+
+  return `<div class="block">
+    <header><h2>계좌</h2><p>기록하기 › 자산 스냅샷의 입력 칸이 이 목록에서 나옵니다</p>
+      <span class="sub">활성 ${accts.length}개</span></header>
+    <table><thead><tr><th>계좌</th><th style="width:120px">자산군</th><th>메모</th>
+      <th class="r" style="width:120px">${last||''} 잔액</th></tr></thead>
+    <tbody>${accts.map(a=>`<tr><td>${esc(a.name)}</td>
+      <td><span class="chip ${a.asset_class==='부채 자산'?'c-지출':'c-w'}">${esc(a.asset_class)}</span></td>
+      <td class="sub">${esc(a.note||'')}</td>
+      <td class="r">${bal[a.name]!=null?won(bal[a.name]):'<span class="sub">이번 달 미입력</span>'}</td>
+      </tr>`).join('')}</tbody></table>
+  </div>
+  ${orphan.length?`<div class="block">
+    <header><h2>목록에 없는 계좌</h2><p>과거 스냅샷에만 남아 있습니다</p></header>
+    <table><tbody>${orphan.map(a=>`<tr><td>${esc(a)}</td>
+      <td class="r sub">${bal[a]!=null?won(bal[a]):'—'}</td></tr>`).join('')}</tbody></table>
+  </div>`:''}
+  ${stub('계좌를 추가하려면','지금은 Supabase의 accounts 테이블에서 직접 넣습니다. name · asset_class(현금/투자/저축/연금/부채 자산) · sort_order 세 개면 충분하고, 넣는 즉시 스냅샷 입력 칸에 나타납니다.',
+    [{t:'앱에서 계좌 추가·이름 변경·비활성화'},
+     {t:'계좌별 금리 · 만기일 컬럼'},
+     {t:'목록에 없는 계좌를 accounts로 승격'}])}`;
+};
+
+/* ── 설정 · 예산 기준 ──
+   예산 금액은 goals 테이블의 monthly_expense 목표가 원본이다.
+   여기서 고치면 goals에 저장되고, 현금흐름 › 예산이 그 값을 쓴다. */
+P['settings:budget'] = async () => {
+  const { data } = await sb.from('goals')
+    .select('id,item,target_amount,status,metric_source,note')
+    .eq('metric_source','monthly_expense').neq('status','중단')
+    .order('status').limit(1).maybeSingle();
+  const tx = await DB.transactions();
+  const prev3 = prevMonths(3);
+  const avg3 = tx.filter(t => prev3.includes(ymOf(t.date)) && isSpend(t) && !t.company_paid)
+                 .reduce((s,t)=>s+t.amount,0) / (prev3.length||1);
+  const cap = data ? Number(data.target_amount) : null;
+
+  const fixedCap = await sb.from('goals')
+    .select('id,item,target_amount').eq('metric_source','fixed_cost').neq('status','중단')
+    .limit(1).maybeSingle();
+
+  return `<div class="block">
+    <header><h2>월 지출 예산</h2><p>현금흐름 › 예산이 이 값을 기준으로 계산합니다</p></header>
+    <div class="slab">
+      <div style="display:flex;gap:16px;align-items:center;padding:6px 0 16px">
+        <div style="flex:1">
+          <div style="font-size:13.5px;font-weight:600">${data?esc(data.item):'월 지출 상한'}</div>
+          <div class="sub">${data?`goals #${data.id} · metric_source=monthly_expense`
+            :'등록된 목표가 없습니다. 저장하면 새로 만듭니다.'}</div></div>
+        <input type="text" id="budCap" value="${cap!=null?won(cap):''}"
+          placeholder="${won(avg3)}" inputmode="numeric" style="width:150px;text-align:right">
+        <span class="sub" style="width:24px">원</span>
+      </div>
+      <div style="display:flex;gap:16px;align-items:center;padding:14px 0 6px;border-top:1px solid var(--line-soft)">
+        <div style="flex:1">
+          <div style="font-size:13.5px;font-weight:600">고정비 상한</div>
+          <div class="sub">목표 › 재무 목표에도 상한형으로 함께 뜹니다</div></div>
+        <input type="text" id="budFixed" value="${fixedCap.data?won(Number(fixedCap.data.target_amount)):''}"
+          placeholder="입력 안 함" inputmode="numeric" style="width:150px;text-align:right">
+        <span class="sub" style="width:24px">원</span>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:18px">
+        <button class="btn-primary" id="budSave">저장</button>
+        <button class="btn-ghost" id="budAvg">최근 3개월 평균(${won(avg3)})으로</button>
+      </div>
+      <p class="sub" style="margin-top:14px">비워 두고 저장하면 목표가 해제되고, 예산 화면은 최근 3개월 평균을 기준으로 되돌아갑니다.</p>
+    </div>
+  </div>
+  ${stub('예산을 어디에 저장하는가','별도 예산 테이블을 만들지 않고 goals의 monthly_expense 목표를 그대로 씁니다. 예산과 목표가 따로 놀면 둘 중 뭘 믿어야 할지 모르게 되기 때문입니다.',
+    [{t:'<b>월 지출 상한을 앱에서 직접 수정</b>',has:true},
+     {t:'<b>고정비 상한도 함께 관리</b>',has:true},
+     {t:'카테고리별 예산 직접 지정 (지금은 3개월 평균 기준선)'},
+     {t:'예산 변경 이력'}])}`;
+};
+async function budgetSave(){
+  const cap = document.getElementById('budCap')?.value.replace(/[^\d]/g,'');
+  const fx  = document.getElementById('budFixed')?.value.replace(/[^\d]/g,'');
+  const one = async (metric, item, val) => {
+    const { data } = await sb.from('goals').select('id').eq('metric_source',metric)
+      .neq('status','중단').limit(1).maybeSingle();
+    if (val === '') {
+      if (data) await sb.from('goals').update({ status:'중단' }).eq('id', data.id);
+      return;
+    }
+    if (data) await sb.from('goals').update({ target_amount:Number(val), status:'진행중',
+      updated_at:new Date().toISOString() }).eq('id', data.id);
+    else await sb.from('goals').insert({ item, kind:'금융', metric_source:metric,
+      target_amount:Number(val), status:'진행중' });
+  };
+  const btn = document.getElementById('budSave');
+  if (btn) { btn.disabled = true; btn.textContent = '저장 중…'; }
+  try {
+    await one('monthly_expense','월 지출 상한', cap);
+    await one('fixed_cost','고정비 상한', fx);
+    DB._c = {}; toast('예산 기준을 저장했습니다'); render();
+  } catch (e) {
+    toast('저장하지 못했습니다 · ' + (e.message||e));
+    if (btn) { btn.disabled = false; btn.textContent = '저장'; }
+  }
+}
+
+/* ── 설정 · 알림 ──
+   판정 기준을 코드에서 꺼내 app_settings로 옮긴다. 여기서 바꾸면 전 화면에 적용된다. */
+const RULE_FIELDS = [
+  {k:'fixedRiseMonths', label:'고정비 연속 상승 개월', unit:'개월', min:2, max:6,
+   desc:'이만큼 연속으로 오르면 홈 할 일에 올립니다'},
+  {k:'spendOverPct', label:'지출 평균 초과 기준', unit:'%', min:80, max:200,
+   desc:'이번 달 지출이 최근 평균의 이 비율을 넘으면 알립니다'},
+  {k:'overweightPct', label:'과대비중 기준', unit:'%', min:5, max:40,
+   desc:'한 종목이 포트폴리오에서 이 비중을 넘으면 빨갛게 표시합니다'},
+  {k:'dustPct', label:'먼지 포지션 기준', unit:'%', min:0.1, max:2, step:0.1,
+   desc:'이 비중 미만이면 정리 대상으로 묶습니다'},
+  {k:'thesisMinPct', label:'매도 조건 점검 최소 비중', unit:'%', min:0.5, max:5, step:0.5,
+   desc:'이 비중 이상인 종목만 매도 조건 유무를 따집니다'},
+  {k:'goalLagPct', label:'목표 지연 기준', unit:'%', min:5, max:50,
+   desc:'진행률이 이 아래면 진행이 더디다고 알립니다'}
+];
+P['settings:alerts'] = async () => {
+  const r = await DB.rules();
+  return `<div class="block">
+    <header><h2>판정 기준</h2><p>홈 "지금 확인할 것"에 무엇이 올라올지를 정합니다</p></header>
+    <div class="slab">
+      ${RULE_FIELDS.map(f=>`<div style="display:flex;gap:16px;align-items:center;
+        padding:14px 0;border-top:1px solid var(--line-soft)">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13.5px;font-weight:600">${f.label}</div>
+          <div class="sub">${f.desc}</div></div>
+        <input type="number" class="ruleinp" data-k="${f.k}" value="${r[f.k]}"
+          min="${f.min}" max="${f.max}" step="${f.step||1}"
+          style="width:96px;min-width:0;text-align:right">
+        <span class="sub" style="width:32px">${f.unit}</span>
+      </div>`).join('')}
+      <div style="display:flex;gap:10px;margin-top:18px">
+        <button id="ruleSave" style="background:var(--accent);border:0;border-radius:8px;color:#1A1206;
+          font:inherit;font-weight:650;font-size:13.5px;padding:8px 18px;cursor:pointer">저장</button>
+        <button id="ruleReset" style="background:none;border:1px solid var(--line);border-radius:8px;
+          color:var(--ink-2);font:inherit;font-size:13.5px;padding:8px 16px;cursor:pointer">기본값으로</button>
+      </div>
+    </div>
+  </div>
+  ${stub('기준을 바꾸면 어디가 바뀌나','저장하면 홈 할 일, 예산 경고, 포트폴리오 플래그가 같은 값을 씁니다. 기준을 느슨하게 잡으면 알림은 줄지만 놓치는 것도 늘어납니다.',
+    [{t:'<b>app_settings 테이블에 저장</b> — 기기가 바뀌어도 유지됩니다',has:true},
+     {t:'<b>전 화면이 같은 기준을 참조</b>',has:true},
+     {t:'항목별 켜기·끄기'},
+     {t:'만기 · 갱신일 사전 알림 리드타임'}])}`;
+};
+async function saveRules(){
+  const v = {};
+  document.querySelectorAll('.ruleinp').forEach(i => v[i.dataset.k] = Number(i.value));
+  try { await DB.saveRules(v); RULES = { ...DEFAULT_RULES, ...v }; DB._c = {};
+        toast('기준을 저장했습니다'); }
+  catch (e) { toast('저장하지 못했습니다 · ' + e.message); }
+}
+
 /* ── 준비중 패널 ── */
 const WIP = {
-'assets:debt':['accounts.asset_class 제약이 현금·투자·저축·연금 네 가지뿐이라 부채를 넣을 칸이 없습니다. 제약을 넓히는 마이그레이션이 먼저입니다.','부채',
-  '순자산의 마이너스 항이자 고정비의 원천입니다.',
-  [{t:'대출별 잔액 · 금리 · 만기 · 월 상환액'},{t:'상환 스케줄 → 고정비 패널 자동 연동'},
-   {t:'asset_class check 제약에 부채 추가 필요'}], skel('',72,3)],
 'invest:history':['holdings 스냅샷이 1개(2026-08-24)뿐이라 차분을 낼 수 없습니다. 토스 수집을 정기 실행해 스냅샷이 2개 이상 쌓이면 자동으로 그려집니다.','매매 이력',
   '판 다음에 무슨 일이 있었는지를 보는 곳. 과대비중·과소비중 패턴을 끊으려면 이게 필요합니다.',
   [{t:'holdings 스냅샷 차분으로 매도 추정 가능'},
    {t:'매도 사유 vs 실제 결과 대조'},
    {t:'−50% 이상 손실 확정 건 아카이브'},
    {t:'분기별 복기 — 과대비중 실패 / 과소비중 기회손실'}], skel('',64,4)],
-'settings:alerts':['임계값을 저장할 곳이 없습니다. 설정 테이블을 하나 만들면 바로 붙습니다.','알림',
-  '홈 "지금 확인할 것"에 무엇이 올라올지를 정하는 곳. 알림 기준이 곧 판단 기준입니다.',
-  [{t:'고정비 연속 상승 감지 개월 수 (현재 3개월 고정)'},
-   {t:'지출 평균 초과 임계값'},{t:'매도 조건 미설정 경고 주기'},
-   {t:'목표 미달 감지 기준'}], skel('',60,4)]
 };
 Object.entries(WIP).forEach(([k,[b,h,d,i,s]]) => P[k] = async () => wipbar(b) + stub(h,d,i,s));
 
@@ -1343,6 +1883,75 @@ function toast(msg){
   window._tt = setTimeout(()=>t.classList.remove('on'), 2200);
 }
 
+/* 사용처를 적으면 예전에 쓰던 분류와 그룹이 따라오고, 고정비 사용처면 📌도 같이 켜진다.
+   손으로 끈 것을 다시 켜지는 않는다 — 자동은 fixedAuto가 살아 있을 때만. */
+function entryMerchant(inp){
+  const row = inp.closest('.entry-row');
+  const d = ENTRY.draft[Number(row.dataset.i)];
+  const r = ENTRY.refs;
+  if (!d || !r) return;
+  d.merchant = inp.value;
+  const name = inp.value.trim();
+  if (!r.names.includes(name)) return;
+
+  const sel = row.querySelector('[data-f="catId"]');
+  if (sel && !sel.value && r.merchCat[name]) {
+    sel.value = String(r.merchCat[name]);
+    d.catId = sel.value;
+    const c = r.catById[d.catId];
+    const kd = row.querySelector('.kd');
+    if (kd && c) { kd.className = 'kd ' + c.kind; kd.textContent = c.kind; }
+    const gb = row.querySelector('[data-t="good_bad"]');
+    if (gb) { const off = !c || c.kind !== '지출';
+              gb.disabled = off; gb.classList.toggle('off', off); }
+  }
+  const fx = row.querySelector('[data-t="is_fixed"]');
+  if (fx && d.fixedAuto) {
+    const on = !!r.fixed[name];
+    fx.classList.toggle('on', on); d.is_fixed = on;
+  }
+}
+
+function entryToggle(btn){
+  const row = btn.closest('.entry-row');
+  const d = ENTRY.draft[Number(row.dataset.i)];
+  if (!d) return;
+  const t = btn.dataset.t;
+  if (t === 'good_bad') {
+    if (btn.disabled) return;
+    d.good_bad = d.good_bad === null ? 'Good' : d.good_bad === 'Good' ? 'Bad' : null;
+    btn.className = 'tg gb ' + (d.good_bad==='Good'?'good':d.good_bad==='Bad'?'bad':'');
+    btn.textContent = d.good_bad==='Good'?'GOOD':d.good_bad==='Bad'?'BAD':'—';
+    return;
+  }
+  d[t] = !d[t];
+  if (t === 'is_fixed') d.fixedAuto = false;   // 손으로 건드린 순간부터 자동이 아니다
+  btn.classList.toggle('on', d[t]);
+}
+
+async function snapCopyPrev(){
+  const ym = SNAP_YM || KST().toISOString().slice(0,7);
+  const snap = await DB.snapshots();
+  const prev = {}; snap.filter(r=>r.ym===shiftYm(ym,-1)).forEach(r=>prev[r.account]=r.amount);
+  let n = 0;
+  document.querySelectorAll('.sn-in').forEach(el => {
+    if (el.value.trim()) return;                       // 이미 적은 칸은 건드리지 않는다
+    const v = prev[el.dataset.acct];
+    if (v != null) { el.value = won(v); n++; }
+  });
+  toast(n ? `${n}개 칸을 전월 값으로 채웠습니다. 저장을 눌러야 반영됩니다.` : '채울 전월 값이 없습니다');
+}
+
+/* 사용처를 고정비로 지정할 때 과거 기록까지 맞춘다 */
+async function applyFixedToPast(name){
+  const { data, error } = await sb.from('transactions')
+    .update({ is_fixed: true }).eq('merchant', name).neq('is_fixed', true).select('id');
+  if (error) { toast('반영하지 못했습니다 · ' + error.message); return; }
+  DB._c = {};
+  toast(`${name} 과거 기록 ${(data||[]).length}건을 고정비로 반영했습니다`);
+  render();
+}
+
 /* ═════════════════════════════════════════════════════════
    6. 셸 · 라우팅 · 로그인
    ═════════════════════════════════════════════════════════ */
@@ -1354,7 +1963,8 @@ function shell(){
     <nav class="rail" aria-label="주 메뉴">
       <div class="brand"><b>해달</b><span>자산관리</span></div>
       <div class="rail-group">
-        <button class="nav-item" data-sec="home"><i class="dot"></i>홈</button></div>
+        <button class="nav-item" data-sec="home"><i class="dot"></i>홈</button>
+        <button class="nav-item" data-sec="entry"><i class="dot"></i>기록하기</button></div>
       <div class="rail-group"><h6>기록 <em>— 사실을 쌓는 곳</em></h6>
         <button class="nav-item" data-sec="flow"><i class="dot"></i>현금흐름</button>
         <button class="nav-item" data-sec="assets"><i class="dot"></i>자산 현황</button></div>
@@ -1372,6 +1982,7 @@ function shell(){
         <div class="src" id="src"><i></i><span>연결 확인 중</span></div></div>
       <div class="subtabs" id="subtabs" role="tablist"></div>
       <div id="panels"></div>
+      <datalist id="merchList"></datalist>
     </main></div>`;
 
   $app.querySelector('.rail').addEventListener('click', e => {
@@ -1397,12 +2008,50 @@ function shell(){
     const y = e.target.closest('#rptYear button');
     if (y) { RPT_YEAR = Number(y.dataset.y); render(); return; }
     const ft = e.target.closest('.fixtog');
-    if (ft) { toggleFixed(ft); }
+    if (ft) { toggleFixed(ft); return; }
+    if (e.target.closest('#ruleSave')) { saveRules(); return; }
+    if (e.target.closest('#budSave')) { budgetSave(); return; }
+    if (e.target.closest('#budAvg')) {
+      const i = document.getElementById('budCap');
+      if (i) { i.value = i.placeholder; toast('저장을 눌러야 적용됩니다'); } return; }
+    if (e.target.closest('#enSave')) { entrySave(); return; }
+    if (e.target.closest('#enAdd')) { entrySync();
+      ENTRY.draft.push(blankRow(ENTRY.draft.at(-1))); render(); return; }
+    if (e.target.closest('#enDup')) { entrySync();
+      const l = ENTRY.draft.at(-1);
+      ENTRY.draft.push(l ? { ...l, amount:'' } : blankRow()); render(); return; }
+    const del = e.target.closest('[data-del]');
+    if (del) { entrySync(); ENTRY.draft.splice(Number(del.dataset.del),1);
+      if (!ENTRY.draft.length) ENTRY.draft=[blankRow()]; render(); return; }
+    const tg = e.target.closest('.entry-row .tg[data-t]');
+    if (tg) { entryToggle(tg); return; }
+    if (e.target.closest('#snSave')) { snapSave(); return; }
+    if (e.target.closest('#snPrev')) {
+      SNAP_YM = shiftYm(SNAP_YM || KST().toISOString().slice(0,7), -1); render(); return; }
+    if (e.target.closest('#snNext')) {
+      SNAP_YM = shiftYm(SNAP_YM || KST().toISOString().slice(0,7), 1); render(); return; }
+    if (e.target.closest('#snCopy')) { snapCopyPrev(); return; }
+    const past = e.target.closest('[data-past]');
+    if (past) { applyFixedToPast(past.dataset.past); return; }
+    if (e.target.closest('#ruleReset')) {
+      document.querySelectorAll('.ruleinp').forEach(i => i.value = DEFAULT_RULES[i.dataset.k]);
+      toast('기본값을 채웠습니다. 저장을 눌러야 적용됩니다.'); }
   });
   $p.addEventListener('change', e => {
-    if (e.target.id === 'holdPick') { HOLD_SEL = e.target.value; render(); }
+    if (e.target.id === 'holdPick') { HOLD_SEL = e.target.value; render(); return; }
+    if (e.target.matches('[data-f="catId"]')) { entrySync(); render(); }
   });
   $p.addEventListener('input', e => {
+    if (e.target.id === 'fixQ') { FIXQ = e.target.value;
+      clearTimeout(window._fq); window._fq = setTimeout(async()=>{ await render();
+        const i=document.getElementById('fixQ');
+        if(i){i.focus(); i.setSelectionRange(i.value.length,i.value.length);} },240); return; }
+    if (e.target.matches('[data-f="amount"], #budCap, #budFixed, .sn-in')) {
+      const t = e.target.value, minus = /^\s*[-−]/.test(t);
+      const raw = t.replace(/[^\d]/g,'');
+      e.target.value = raw ? (minus?'−':'') + Number(raw).toLocaleString('ko-KR') : (minus?'−':'');
+      return; }
+    if (e.target.matches('[data-f="merchant"]')) { entryMerchant(e.target); return; }
     if (e.target.id !== 'ledQ') return;
     LED.q = e.target.value;
     clearTimeout(window._deb);
@@ -1436,6 +2085,10 @@ async function render(){
   try {
     const html = P[key] ? await P[key]() : wipbar('준비중입니다.');
     $p.innerHTML = `<div class="panel">${html}</div>`;
+    if (cur.sec === 'entry' && ENTRY.refs) {
+      const dl = document.getElementById('merchList');
+      if (dl) dl.innerHTML = ENTRY.refs.names.map(n=>`<option value="${esc(n)}">`).join('');
+    }
     setSrc('live', 'Supabase 연결됨');
   } catch (err) {
     console.error(err);
@@ -1475,6 +2128,7 @@ function gate(msg=''){
 
 async function start(){
   DB.clear();
+  try { RULES = await DB.rules(); } catch (e) { RULES = { ...DEFAULT_RULES }; }
   shell();
   readRoute();
   route();
