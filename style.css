@@ -224,3 +224,10 @@ button:focus-visible,.nav-item:focus-visible,.subtab:focus-visible,input:focus-v
 /* 이전 버전 링크 — 사이드바 하단 */
 .rail a.signout{display:block;text-decoration:none;margin:14px 20px 0;color:var(--ink-3);font-size:11.5px}
 .rail a.signout:hover{color:var(--accent)}
+
+/* 저장 결과 알림 */
+#toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,14px);z-index:999;
+  background:var(--raised);border:1px solid var(--line);border-radius:9px;padding:9px 16px;
+  font-size:13px;color:var(--ink);opacity:0;pointer-events:none;transition:opacity .18s,transform .18s}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+@media (prefers-reduced-motion:reduce){#toast{transition:none}}

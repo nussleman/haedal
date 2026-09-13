@@ -126,6 +126,24 @@ const DB = {
     });
   },
 
+  /* 상인 전체 — 고정비 지정 화면에서 쓴다. 캐시하지 않고 매번 읽어 토글 결과를 바로 본다. */
+  async merchants(){
+    const { data, error } = await sb.from('merchants')
+      .select('id,name,merchant_group,is_fixed').order('name');
+    if (error) throw error;
+    return data || [];
+  },
+
+  categories(){
+    return this._once('cats', async () => {
+      const { data, error } = await sb.from('categories')
+        .select('id,kind,category,subcategory,emoji_category,sort_order,is_active')
+        .eq('is_active', true).order('kind').order('sort_order');
+      if (error) throw error;
+      return data || [];
+    });
+  },
+
   accounts(){
     return this._once('acc', async () => {
       const { data } = await sb.from('accounts')
@@ -172,14 +190,14 @@ const TREE = {
     {id:'fixed',label:'고정비',ready:true},{id:'rules',label:'저축·이체 규칙'}]},
   assets:{title:'자산 현황',tabs:[
     {id:'networth',label:'순자산',ready:true},{id:'accounts',label:'계좌',ready:true},
-    {id:'pension',label:'연금'},{id:'debt',label:'부채'}]},
+    {id:'pension',label:'연금',ready:true},{id:'debt',label:'부채'}]},
   invest:{title:'투자',tabs:[
     {id:'port',label:'포트폴리오',ready:true},{id:'holding',label:'종목 상세',ready:true},
     {id:'watch',label:'관심종목',ready:true},{id:'history',label:'매매 이력'}]},
   goals:{title:'목표',tabs:[{id:'targets',label:'재무 목표',ready:true},{id:'progress',label:'진행률'}]},
   report:{title:'리포트',tabs:[{id:'monthly',label:'월간',ready:true},{id:'yearly',label:'연간'}]},
   settings:{title:'설정',tabs:[{id:'sources',label:'데이터 연동',ready:true},
-    {id:'cats',label:'카테고리'},{id:'alerts',label:'알림'}]}
+    {id:'cats',label:'카테고리',ready:true},{id:'alerts',label:'알림'}]}
 };
 
 /* ═════════════════════════════════════════════════════════
@@ -883,6 +901,129 @@ P['report:monthly'] = async () => {
      {t:'PDF 내보내기'}])}`;
 };
 
+/* ── 자산 현황 · 연금 ──
+   납입 기록이 원장에 거의 없다. 세액공제 한도는 계산하지 않고,
+   스냅샷으로 확인 가능한 것(잔액·추이·증감)만 보여준다. */
+P['assets:pension'] = async () => {
+  const [snap, tx] = await Promise.all([DB.snapshots(), DB.transactions()]);
+  const pen = snap.filter(r => r.asset_class === '연금 자산');
+  if (!pen.length) return wipbar('연금 자산 스냅샷이 없습니다.');
+
+  const months = [...new Set(pen.map(r=>r.ym))].sort();
+  const last = months.at(-1), prevYm = months.at(-2), yearAgo = months.at(-13) || months[0];
+  const at = ym => pen.filter(r=>r.ym===ym);
+  const sum = ym => at(ym).reduce((s,r)=>s+r.amount,0);
+  const total = sum(last), dPrev = total - sum(prevYm||last), dYear = total - sum(yearAgo);
+
+  const totals = months.map(m => sum(m));
+  const accounts = [...new Set(pen.map(r=>r.account))];
+
+  /* 원장에 연금 납입이 잡히는지 확인한다. 없으면 세액공제 계산을 안 한다고 밝힌다. */
+  const paid = tx.filter(t => (t.category||'').includes('연금') && t.amount > 0
+                           && t.date >= `${new Date().getFullYear()}-01-01`);
+  const paidSum = paid.reduce((s,t)=>s+t.amount,0);
+
+  return `<div class="flow" style="margin-bottom:22px">
+    <div class="flow-card" style="border-left-color:var(--pension)"><h4>연금 합계</h4>
+      <div class="v num" style="color:var(--pension)">${man(total)}</div>
+      <div class="m">${last} 기준 · 계좌 ${accounts.length}개</div></div>
+    <div class="flow-card ${dPrev>=0?'i':'e'}"><h4>전월 대비</h4>
+      <div class="v num" style="color:var(--${dPrev>=0?'income':'expense'})">
+        ${dPrev>=0?'+':'−'}${won(Math.abs(dPrev))}</div>
+      <div class="m">${prevYm||'비교 대상 없음'}</div></div>
+    <div class="flow-card ${dYear>=0?'i':'e'}"><h4>${yearAgo} 대비</h4>
+      <div class="v num" style="color:var(--${dYear>=0?'income':'expense'})">
+        ${dYear>=0?'+':'−'}${man(Math.abs(dYear))}</div>
+      <div class="m">${months.length}개월 관측</div></div>
+  </div>
+
+  <div class="block">
+    <header><h2>연금 자산 추이</h2><p>${months[0]} ~ ${last}</p></header>
+    <div class="slab">${sparkline(totals, 760, 150)
+      .replace('class="spark"','style="width:100%;height:150px"')
+      .replaceAll('var(--asset)','var(--pension)').replaceAll('var(--asset-bg)','var(--pension-bg)')}
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--ink-3);margin-top:6px">
+        <span>${months[0]}</span><span>${last}</span></div></div>
+  </div>
+
+  <div class="block">
+    <header><h2>계좌별</h2><p>${last} 스냅샷</p></header>
+    <table><thead><tr><th>계좌</th><th style="width:170px">비중</th>
+      <th class="r" style="width:120px">적립금</th><th class="r" style="width:110px">전월 대비</th></tr></thead>
+    <tbody>${accounts.map(a=>{
+      const v = at(last).find(r=>r.account===a)?.amount || 0;
+      const p = prevYm ? (at(prevYm).find(r=>r.account===a)?.amount ?? null) : null;
+      const d = p==null ? null : v-p;
+      return `<tr><td>${esc(a)}</td>
+        <td><div class="bar"><i style="width:${v/total*100}%;background:var(--pension)"></i></div>
+          <div class="sub num">${(v/total*100).toFixed(1)}%</div></td>
+        <td class="r">${won(v)}</td>
+        <td class="r" style="color:var(--${d==null?'ink-3':d>=0?'income':'expense'})">
+          ${d==null?'—':(d>=0?'+':'−')+won(Math.abs(d))}</td></tr>`;}).join('')}
+    </tbody>
+    <tfoot><tr><td colspan="2">합계</td><td class="r">${won(total)}</td>
+      <td class="r" style="color:var(--${dPrev>=0?'income':'expense'})">
+        ${dPrev>=0?'+':'−'}${won(Math.abs(dPrev))}</td></tr></tfoot></table>
+  </div>
+  ${stub('세액공제는 아직 계산하지 않습니다',
+    `올해 원장에 잡힌 연금 납입이 ${paid.length}건 ${won(paidSum)}원뿐입니다. 실제 납입액이 원장에 들어오지 않으면 한도 소진율을 계산할 수 없어, 틀린 숫자를 띄우느니 비워 둡니다.`,
+    [{t:'연금 납입 거래를 원장에 기록 — 그래야 한도 계산이 가능해집니다'},
+     {t:'연간 납입액 대비 세액공제 한도 잔여 (900만원 기준)'},
+     {t:'계좌별 운용 상품 · 수익률 — 현재 스냅샷에 잔액만 있음'},
+     {t:'예상 수령액 시뮬레이션'}])}`;
+};
+
+/* ── 설정 · 카테고리 ──
+   고정비 지정은 읽기만 해서는 쓸모가 없다. merchants.is_fixed 를 직접 바꾼다. */
+P['settings:cats'] = async () => {
+  const [cats, merch, tx] = await Promise.all([DB.categories(), DB.merchants(), DB.transactions()]);
+  const use = {};
+  tx.forEach(t => { const k = t.category+'|'+(t.sub||'');
+    (use[k] ??= {n:0,amt:0}); use[k].n++; use[k].amt += t.amount; });
+
+  const byKind = {};
+  cats.forEach(c => ((byKind[c.kind] ??= {})[c.category] ??= []).push(c));
+
+  const merchUse = {};
+  tx.forEach(t => { if (t.merchant) merchUse[t.merchant] = (merchUse[t.merchant]||0)+1; });
+  const sorted = [...merch].sort((a,b)=>(b.is_fixed-a.is_fixed) || (merchUse[b.name]||0)-(merchUse[a.name]||0));
+
+  return `<div class="block">
+    <header><h2>고정비 지정</h2><p>여기서 켠 상인의 거래가 고정비 패널에 집계됩니다</p>
+      <span class="sub">${merch.filter(m=>m.is_fixed).length} / ${merch.length} 지정됨</span></header>
+    <table><thead><tr><th>상인</th><th style="width:150px">그룹</th>
+      <th class="r" style="width:90px">거래 건수</th><th style="width:80px">고정비</th></tr></thead>
+    <tbody>${sorted.map(m=>`<tr><td>${esc(m.name)}</td>
+      <td class="sub">${esc(m.merchant_group||'—')}</td>
+      <td class="r sub">${merchUse[m.name]||0}</td>
+      <td><button class="fixtog" data-id="${m.id}" data-on="${m.is_fixed}"
+        style="border:0;background:none;cursor:pointer;font:inherit;padding:0">
+        <span class="chip ${m.is_fixed?'c-지출':'c-w'}">${m.is_fixed?'고정비':'일반'}</span>
+      </button></td></tr>`).join('')}
+    </tbody></table>
+  </div>
+
+  <div class="block">
+    <header><h2>카테고리 체계</h2><p>categories ${cats.length}건 · kind → category → subcategory</p></header>
+    ${Object.entries(byKind).map(([kind,groups])=>`
+      <div class="tier"><header><span class="chip c-${kind}">${kind}</span>
+        <span>${Object.keys(groups).length}개 분류</span>
+        <span class="cap num">${Object.values(groups).flat().length}</span></header>
+        <ul>${Object.entries(groups).map(([cat,subs])=>{
+          const n = subs.reduce((s,c)=>s+(use[cat+'|'+(c.subcategory||'')]?.n||0),0);
+          const amt = subs.reduce((s,c)=>s+(use[cat+'|'+(c.subcategory||'')]?.amt||0),0);
+          return `<li><div><b>${subs[0].emoji_category||''} ${esc(cat)}</b>
+            <div class="sub">${n}건 · ${won(amt)}원</div></div>
+            <p>${subs.map(c=>esc(c.subcategory)).join(' · ')}</p></li>`;}).join('')}
+        </ul></div>`).join('')}
+  </div>
+  ${stub('카테고리를 늘릴 때','분류가 늘어나면 매번 고르는 피로가 커집니다. 지금 ${cats.length}건은 관리 가능한 수준이고, 새로 만들기 전에 기존 subcategory로 흡수되는지 먼저 보세요.'.replace('${cats.length}',cats.length),
+    [{t:'<b>merchants.is_fixed 토글</b> — 위 표에서 바로 저장됩니다',has:true},
+     {t:'카테고리 추가 · 병합 · 삭제'},
+     {t:'상인명 → 카테고리 자동 매핑 규칙 편집'},
+     {t:'12개월간 거래 0건인 카테고리 정리 제안'}])}`;
+};
+
 /* ── 준비중 패널 ── */
 const WIP = {
 'flow:rules':['자동이체 데이터가 원장에 구분돼 들어오면 붙습니다.','저축 · 이체 규칙',
@@ -890,10 +1031,6 @@ const WIP = {
   [{t:'급여일 기준 자동이체 순서와 금액'},{t:'선저축 비율 및 실제 집행률'},
    {t:'kind=자산 거래를 계좌 간 이동으로 해석하는 규칙'},
    {t:'연금 계좌 납입 스케줄 — DC · IRP · 연금저축'}], skel('',56,5)],
-'assets:pension':['연금 계좌가 accounts에 분리 등록되면 붙습니다.','연금 · 은퇴자산',
-  '세액공제 한도 소진 여부가 매년 12월에 필요한 숫자입니다.',
-  [{t:'연금 자산군 계좌별 적립금 · 운용 상품'},{t:'연간 납입액 및 세액공제 한도 잔여'},
-   {t:'예상 수령액 시뮬레이션'}], skel('row3',96)],
 'assets:debt':['asset_class에 부채 항목이 없습니다. 스키마 확장 후 붙습니다.','부채',
   '순자산의 마이너스 항이자 고정비의 원천입니다.',
   [{t:'대출별 잔액 · 금리 · 만기 · 월 상환액'},{t:'상환 스케줄 → 고정비 패널 자동 연동'},
@@ -913,12 +1050,6 @@ const WIP = {
   [{t:'연간 수입 · 지출 · 저축 총계'},{t:'연금 납입액 및 세액공제 대상'},
    {t:'금융소득 — 배당 · 이자 · 양도차익'},{t:'company_paid 제외 실지출 집계'},
    {t:'연간 투자 복기'}], skel('row3',96)],
-'settings:cats':['categories 62건 편집 UI를 붙일 자리입니다.','카테고리',
-  '카테고리가 늘어나면 분류 피로가 커지므로 상한을 두는 게 좋습니다.',
-  [{t:'kind · category · subcategory 3단 구조 편집',has:true},
-   {t:'merchants → category 자동 매핑 규칙',has:true},
-   {t:'merchants.is_fixed 지정 및 소급 전파',has:true},
-   {t:'미사용 카테고리 정리 제안'}], skel('row2',220,2)],
 'settings:alerts':['각 패널 완성 후 임계값을 한 번에 정합니다.','알림',
   '홈 "지금 확인할 것"에 무엇이 올라올지를 정하는 곳. 알림 기준이 곧 판단 기준입니다.',
   [{t:'고정비 연속 상승 감지 개월 수 (현재 3개월 고정)'},
@@ -926,6 +1057,29 @@ const WIP = {
    {t:'목표 미달 감지 기준'}], skel('',60,4)]
 };
 Object.entries(WIP).forEach(([k,[b,h,d,i,s]]) => P[k] = async () => wipbar(b) + stub(h,d,i,s));
+
+/* merchants.is_fixed 를 직접 바꾼다. RLS가 owner_id로 막아 주므로 본인 행만 수정된다.
+   낙관적으로 먼저 칠하고, 실패하면 되돌리고 알린다. */
+async function toggleFixed(btn){
+  const id = Number(btn.dataset.id), next = btn.dataset.on !== 'true';
+  const chip = btn.querySelector('.chip');
+  const paint = on => { chip.className = 'chip ' + (on ? 'c-지출' : 'c-w');
+                        chip.textContent = on ? '고정비' : '일반';
+                        btn.dataset.on = String(on); };
+  paint(next);
+  const { error } = await sb.from('merchants').update({ is_fixed: next }).eq('id', id);
+  if (error) { paint(!next); toast('저장하지 못했습니다 · ' + error.message); }
+  else { DB._c = {}; toast(next ? '고정비로 지정했습니다' : '고정비에서 해제했습니다'); }
+}
+function toast(msg){
+  let t = document.getElementById('toast');
+  if (!t) { t = document.createElement('div'); t.id = 'toast'; t.setAttribute('role','status');
+            document.body.appendChild(t); }
+  t.textContent = msg;
+  t.classList.add('on');
+  clearTimeout(window._tt);
+  window._tt = setTimeout(()=>t.classList.remove('on'), 2200);
+}
 
 /* ═════════════════════════════════════════════════════════
    6. 셸 · 라우팅 · 로그인
@@ -977,7 +1131,9 @@ function shell(){
     const k = e.target.closest('#ledKind button');
     if (k) { LED.kind = k.dataset.k; render(); return; }
     const m = e.target.closest('#rptYm button');
-    if (m) { RPT_YM = m.dataset.m; render(); }
+    if (m) { RPT_YM = m.dataset.m; render(); return; }
+    const ft = e.target.closest('.fixtog');
+    if (ft) { toggleFixed(ft); }
   });
   $p.addEventListener('change', e => {
     if (e.target.id === 'holdPick') { HOLD_SEL = e.target.value; render(); }
