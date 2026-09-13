@@ -21,23 +21,18 @@ const DB = {
   async _once(key, fn){ return this._c[key] ??= fn(); },
   clear(){ this._c = {}; },
 
-  /* 거래 원장 — kind는 transactions에 없다. categories를 조인해서 가져온다. */
+  /* 거래 원장 — v_transactions 뷰가 kind·category·subcategory를 이미 펼쳐 준다.
+     transactions에 kind 컬럼이 없어 직접 조인할 필요가 없다. */
   transactions(months = 14){
     return this._once('tx:'+months, async () => {
       const from = new Date(); from.setMonth(from.getMonth() - months);
-      const { data, error } = await sb.from('transactions')
-        .select('id,date,amount,merchant,merchant_group,note,is_fixed,good_bad,company_paid,'
-              + 'categories(kind,category,subcategory,emoji_category)')
+      const { data, error } = await sb.from('v_transactions')
+        .select('id,date,kind,category,subcategory,emoji_category,amount,merchant,merchant_group,'
+              + 'note,good_bad,company_paid,is_fixed')
         .gte('date', from.toISOString().slice(0,10))
         .order('date', { ascending:false });
       if (error) throw error;
-      return (data||[]).map(t => ({
-        ...t,
-        kind:     t.categories?.kind || '지출',
-        category: t.categories?.category || '미분류',
-        sub:      t.categories?.subcategory || '',
-        amount:   Number(t.amount)
-      }));
+      return (data||[]).map(t => ({ ...t, sub:t.subcategory||'', amount:Number(t.amount) }));
     });
   },
 
@@ -71,11 +66,12 @@ const DB = {
       const { data, error } = await sb.from('study_cards')
         .select('name,ticker,type,watch_level,watch_trigger,watch_date,buy_reason,stop,take,'
               + 'falsify1,falsify2,score,verdict')
-        .not('watch_level','is',null).order('watch_level');
+        .order('watch_level',{nullsFirst:false});
       if (error) throw error;
       return (data||[]).map(c => ({
         ...c,
-        tier: Number(c.watch_level.replace('L','')),
+        /* watch_level이 비어 있으면 0 = 미배정. 화면에서 따로 모아 보여준다. */
+        tier: c.watch_level ? Number(c.watch_level.replace('L','')) : 0,
         /* 3문장 메모 = ①왜 사는가 ②언제 파는가 ③틀렸다는 신호 */
         thesis: [c.buy_reason, (c.stop||c.take), (c.falsify1||c.falsify2)].filter(Boolean).length,
         daysLeft: c.watch_date ? 90 - Math.floor((Date.now()-new Date(c.watch_date))/864e5) : null
@@ -92,17 +88,33 @@ const DB = {
     });
   },
 
-  /* 재무 목표 — target_amount 가 있는 것만 (target_value는 비금융 목표) */
+  /* 재무 목표 — goals 테이블의 current_value는 비어 있다.
+     goal_progress 뷰가 metric_source를 보고 현재값·진행률을 계산해 준다. */
   goals(){
     return this._once('goals', async () => {
-      const { data, error } = await sb.from('goals')
-        .select('item,kind,period,target_amount,target_ratio,current_value,status,note,'
-              + 'metric_source,target_on,emoji,position')
-        .not('target_amount','is',null).neq('status','중단')
-        .order('position',{nullsFirst:false});
+      const { data, error } = await sb.from('goal_progress')
+        .select('id,item,emoji,kind,status,metric_source,target,current,progress_pct,'
+              + 'lower_is_better,unit,note,target_on,position')
+        .not('target_amount','is',null).neq('status','중단');
       if (error) throw error;
-      return (data||[]).map(g => ({ ...g, target_amount:Number(g.target_amount),
-        current_value: g.current_value==null ? null : Number(g.current_value) }));
+      /* numeric은 PostgREST에서 "10000000.00" 문자열로 온다. 반드시 Number()로 변환할 것. */
+      const rows = (data||[])
+        .map(g => ({ ...g, target:Number(g.target), current:Number(g.current||0),
+                     pct: Number(g.progress_pct||0) }))
+        .filter(g => Number.isFinite(g.target) && g.target > 0);
+
+      /* 같은 지표에 이정표가 사다리처럼 여러 개 걸려 있다(총 자산 5천만~2억).
+         달성한 계단은 접고, 지금 겨누는 다음 계단 하나만 남긴다. */
+      const byMetric = {};
+      rows.forEach(g => (byMetric[g.metric_source || g.item] ??= []).push(g));
+      const out = [];
+      Object.values(byMetric).forEach(list => {
+        const live = list.filter(g => g.status !== '달성/완료')
+                         .sort((a,b) => a.target - b.target);
+        const next = live.find(g => g.lower_is_better ? true : g.current < g.target) || live[0];
+        if (next) out.push({ ...next, cleared: list.length - live.length, ladder: list.length });
+      });
+      return out.sort((a,b) => (a.position ?? 999) - (b.position ?? 999));
     });
   },
 
@@ -236,10 +248,12 @@ P['home:today'] = async () => {
     m:`${won(r.first)} → ${won(r.last)}원 · 요금제나 약정 확인 필요`}));
   if (exp > avgExp && avgExp) todos.push({t:'이번 달 지출이 평균을 넘었습니다',
     m:`${won(exp)}원 · 최근 평균 ${won(avgExp)}원`});
-  goals.filter(g => g.current_value!=null && g.target_amount)
-       .filter(g => g.current_value/g.target_amount < 0.1)
+  goals.filter(g => g.lower_is_better && g.current > g.target)
+       .forEach(g => todos.push({t:`${g.item}이 상한을 넘었습니다`,
+    m:`${won(g.current)}원 · 상한 ${won(g.target)}원`}));
+  goals.filter(g => !g.lower_is_better && g.pct < 15)
        .slice(0,1).forEach(g => todos.push({t:`${g.item} 진행이 더딥니다`,
-    m:`${man(g.current_value)} / ${man(g.target_amount)} · 납입 계획 점검`}));
+    m:`${man(g.current)} / ${man(g.target)} · ${Math.round(g.pct)}%`}));
 
   return `<div class="hero">
     <div class="slab">
@@ -295,14 +309,20 @@ function risingFixed(tx){
   }).filter(Boolean).slice(0,3);
 }
 
+/* lower_is_better 목표(고정비·지출)는 "채우는" 게 아니라 "넘지 않는" 것이다.
+   같은 막대를 쓰되 색과 문구를 뒤집는다. */
 function goalRow(g){
-  const cur = g.current_value ?? 0, pct = g.target_amount ? cur/g.target_amount*100 : 0;
+  const over = g.lower_is_better && g.current > g.target;
+  const col  = g.lower_is_better ? (over ? 'var(--expense)' : 'var(--income)') : 'var(--asset)';
   return `<div class="goal"><header><b>${g.emoji?g.emoji+' ':''}${esc(g.item)}</b>
-    <span class="num">${man(cur)} / ${man(g.target_amount)} · ${Math.round(pct)}%</span></header>
-    <div class="track"><i style="width:${Math.min(100,Math.max(0,pct))}%"></i></div>
-    <footer>${g.note?`<span>${esc(g.note)}</span>`:''}
+    <span class="num">${man(g.current)} ${g.lower_is_better?'／상한':'/'} ${man(g.target)} · ${Math.round(g.pct)}%</span></header>
+    <div class="track"><i style="width:${Math.min(100,Math.max(0,g.pct))}%;background:${col}"></i></div>
+    <footer>
+      <span>${g.lower_is_better ? (over?'상한 초과':'상한 안쪽') : g.status}</span>
+      ${g.cleared ? `<span>이미 지난 이정표 ${g.cleared}개</span>` : ''}
       ${g.target_on?`<span>기한 ${g.target_on}</span>`:''}
-      ${g.metric_source?`<span>자동 계산 · ${g.metric_source}</span>`:'<span>수동 입력</span>'}</footer></div>`;
+      ${g.metric_source?`<span>자동 계산 · ${g.metric_source}</span>`:'<span>수동 입력</span>'}
+      ${g.note?`<span>${esc(g.note)}</span>`:''}</footer></div>`;
 }
 
 /* ── 현금흐름 · 거래 내역 ── */
@@ -314,8 +334,11 @@ P['flow:ledger'] = async () => {
     (!LED.q || (t.merchant+t.category+(t.note||'')).toLowerCase().includes(LED.q.toLowerCase())));
   const sum = k => rows.filter(t=>t.kind===k).reduce((s,t)=>s+t.amount,0);
 
+  /* 칩은 실제로 쓰인 구분만 띄운다. '자산'은 최근 원장에 없어서 자동으로 빠진다. */
+  const kinds = ['전체', ...['수입','지출','이체','자산'].filter(k => all.some(t=>t.kind===k))];
+
   return `<div class="toolbar">
-    <div class="seg" id="ledKind">${['전체','수입','지출','이체','자산'].map(k=>
+    <div class="seg" id="ledKind">${kinds.map(k=>
       `<button data-k="${k}" aria-pressed="${LED.kind===k}">${k}</button>`).join('')}</div>
     <input type="search" id="ledQ" placeholder="사용처 · 카테고리 · 메모 검색" value="${esc(LED.q)}">
   </div>
@@ -347,12 +370,26 @@ P['flow:fixed'] = async () => {
     const k = t.merchant || t.category;
     (byName[k] ??= { name:k, category:t.category, rows:[] }).rows.push(t);
   });
+  /* 규칙③ 핵심 — 나누는 값은 "등장한 달 수"가 아니라 "첫 등장 이후 경과한 달 수"다.
+     출현 개월로 나누면 연 1회 결제가 월 20만원짜리 고정비로 둔갑한다.
+     (기존 해달에서 이미 한 번 잡았던 버그) */
+  const lastYm = completed(tx).map(t=>ymOf(t.date)).sort().at(-1) || CUR_YM;
+  const spanTo = ym => {
+    const [y1,m1] = ym.split('-').map(Number), [y2,m2] = lastYm.split('-').map(Number);
+    return Math.max(1, (y2-y1)*12 + (m2-m1) + 1);
+  };
+
   const items = Object.values(byName).map(o => {
     const done = completed(o.rows);                             // 규칙② 진행 중인 달 제외
-    const months = new Set(done.map(r=>ymOf(r.date))).size || 1;
+    if (!done.length) return null;
+    const yms = [...new Set(done.map(r=>ymOf(r.date)))].sort();
+    const span = spanTo(yms[0]);                                // 경과 개월
+    const seen = yms.length;                                    // 출현 개월
     const total = done.reduce((s,r)=>s+r.amount,0);
-    return { ...o, monthly: total/months, months, last: o.rows[0], cycle: months && done.length/months < 0.6 ? '비정기' : '월납' };
-  }).sort((a,b)=>b.monthly-a.monthly);
+    const ratio = seen/span;
+    return { ...o, monthly: total/span, span, seen, total, last: o.rows[0],
+      cycle: ratio >= 0.8 ? '월납' : (span >= 10 && seen <= 2) ? '연납' : '비정기' };
+  }).filter(Boolean).sort((a,b)=>b.monthly-a.monthly);
 
   const total = items.reduce((s,x)=>s+x.monthly,0);
   const rising = risingFixed(tx);
@@ -360,7 +397,7 @@ P['flow:fixed'] = async () => {
   return `<div class="flow" style="margin-bottom:22px">
     <div class="flow-card e"><h4>월 고정비</h4>
       <div class="v num" style="color:var(--expense)">${won(total)}</div>
-      <div class="m">완료된 달 기준 평균 · 연납은 자동 12분의 1</div></div>
+      <div class="m">첫 등장 이후 경과 개월로 나눔 · 진행 중인 달 제외</div></div>
     <div class="flow-card"><h4>항목 수</h4><div class="v num">${items.length}</div>
       <div class="m">고정 상인 등록 ${merch.length}건</div></div>
     <div class="flow-card ${rising.length?'e':''}"><h4>연속 상승</h4>
@@ -375,18 +412,19 @@ P['flow:fixed'] = async () => {
     <tbody>${items.length ? items.map(x=>{
       const up = rising.find(r=>r.name===x.name);
       return `<tr><td>${esc(x.name)}<div class="sub">${esc(x.category)}</div></td>
-        <td class="sub">${x.cycle} · ${x.months}개월 관측</td>
+        <td class="sub">${x.cycle}<div class="sub">${x.span}개월 중 ${x.seen}회</div></td>
         <td class="sub num">${x.last.date.slice(5).replace('-','.')}</td>
-        <td class="r" style="font-weight:600">${won(x.monthly)}</td>
+        <td class="r" style="font-weight:600">${won(x.monthly)}
+          <div class="sub num">누적 ${won(x.total)}</div></td>
         <td>${up?'<span class="chip c-지출">상승</span>':'<span class="sub">—</span>'}</td></tr>`;}).join('')
       : '<tr><td colspan="5" class="empty">고정비로 표시된 거래가 없습니다. 설정에서 상인을 고정비로 지정하세요.</td></tr>'}
     </tbody>
     <tfoot><tr><td colspan="3">월 환산 합계</td><td class="r">${won(total)}</td><td></td></tr></tfoot></table>
   </div>
   ${stub('적용된 계산 규칙','기존 해달에서 잡았던 계산 버그 3건을 코드 레벨에서 막습니다. 이식할 때 이 규칙이 깨지지 않도록 유지하세요.',
-    [{t:'<b>이체·자산 이동은 지출 합계에서 제외</b> — categories.kind로 걸러냄',has:true},
+    [{t:'<b>이체·자산 이동은 지출 합계에서 제외</b> — v_transactions.kind로 걸러냄',has:true},
      {t:'<b>진행 중인 달은 평균 산출에서 제외</b> — completed()가 담당',has:true},
-     {t:'<b>연납은 관찰 기간이 아니라 경과 개월로 나눔</b> — 12개월 관측 시 자동 12분의 1',has:true},
+     {t:'<b>출현 개월이 아니라 경과 개월로 나눔</b> — 연 1회 결제가 월 20만원으로 둔갑하는 것을 막음',has:true},
      {t:'<b>3개월 연속 상승 시 홈 할 일로 자동 승격</b>',has:true},
      {t:'merchants.is_fixed 지정 시 과거 거래 소급 전파'}])}`;
 };
@@ -454,8 +492,11 @@ P['invest:port'] = async () => {
   const thByTicker = Object.fromEntries(th.map(t=>[t.ticker,t]));
   const total = h.reduce((s,x)=>s+x.value,0);
   const over  = h.filter(x=>x.value/total > 0.15);
-  const noStop = h.filter(x => !thByTicker[x.ticker]?.sell_trigger).length;
   const dust  = h.filter(x=>x.value/total < 0.003);
+  /* thesis 테이블이 아직 비어 있다. 74종목 전부에 경고를 띄우면 아무것도 안 보이므로,
+     비중 1% 이상인 것만 "매도 조건 없음"으로 센다. 먼지는 어차피 정리 대상이다. */
+  const meaningful = h.filter(x => x.value/total >= 0.01);
+  const noStop = meaningful.filter(x => !thByTicker[x.ticker]?.sell_trigger).length;
   const wSum = h.reduce((s,x)=>s+(x.pnl_pct??0)*x.value,0)/total;
 
   return `<div class="flow" style="margin-bottom:20px">
@@ -466,8 +507,9 @@ P['invest:port'] = async () => {
       <div class="v num" style="color:var(--${wSum<0?'expense':'income'})">${wSum.toFixed(2)}%</div>
       <div class="m">진입가는 판단 기준이 아닙니다</div></div>
     <div class="flow-card ${noStop?'e':''}"><h4>매도 조건 미설정</h4>
-      <div class="v num" style="color:${noStop?'var(--expense)':'var(--ink-2)'}">${noStop}</div>
-      <div class="m">기준 없으면 −90%까지 방치됩니다</div></div>
+      <div class="v num" style="color:${noStop?'var(--expense)':'var(--ink-2)'}">${noStop}<span
+        style="font-size:15px;color:var(--ink-3)"> / ${meaningful.length}</span></div>
+      <div class="m">비중 1% 이상 종목 기준 · thesis 미입력</div></div>
   </div>
 
   <div class="block">
@@ -480,7 +522,8 @@ P['invest:port'] = async () => {
       const flag = w>15 ? '<span class="chip c-지출">과대비중</span>'
                  : w<0.3 ? '<span class="chip c-w">먼지</span>'
                  : (t?.logic && w<1.5) ? '<span class="chip c-자산">과소비중</span>'
-                 : !t?.sell_trigger ? '<span class="chip c-지출">조건 없음</span>' : '<span class="sub">—</span>';
+                 : (w>=1 && !t?.sell_trigger) ? '<span class="chip c-지출">조건 없음</span>'
+                 : '<span class="sub">—</span>';
       return `<tr><td>${esc(x.name)}${x.ticker?`(${esc(x.ticker)})`:''}
           ${memo3([t?.logic,t?.sell_trigger,t?.type].filter(Boolean).length)}</td>
         <td><div class="bar"><i style="width:${Math.min(100,w*4)}%;background:var(--${w>15?'expense':'asset'})"></i></div>
@@ -519,6 +562,16 @@ P['invest:watch'] = async () => {
             ${x.daysLeft!=null && t===3 ? `<span class="sub"> · 남은 기간 ${x.daysLeft}일</span>`:''}
             ${x.thesis<3 && t<3 ? '<span class="sub"> · 3문장 미완성</span>':''}</p></li>`).join('')
           : `<li><p class="sub">비어 있습니다.</p></li>`}</ul></div>`;}).join('')}
+    ${(() => {
+      const un = w.filter(x => x.tier === 0);
+      if (!un.length) return '';
+      return `<div class="tier"><header><span class="rank">—</span><b>단계 미배정</b>
+        <span>study_cards에 있지만 watch_level이 비어 있는 카드</span>
+        <span class="cap num">${un.length}</span></header>
+        <ul>${un.map(x=>`<li><div><b>${esc(x.name)}${x.ticker?`(${esc(x.ticker)})`:''}</b>${memo3(x.thesis)}
+          ${x.type?`<div class="sub">${esc(x.type)}</div>`:''}</div>
+          <p>${esc(x.buy_reason || x.verdict || '논리 미정리')}</p></li>`).join('')}</ul></div>`;
+    })()}
   </div>
   ${stub('승격 규칙','L3 → L2 승격은 3문장 메모가 모두 채워졌을 때만 허용합니다. 위 초록 막대가 그 3칸이고, 각각 study_cards의 컬럼에 대응합니다.',
     [{t:'<b>① 왜 사는가</b> = buy_reason',has:true},
@@ -535,18 +588,25 @@ P['goals:targets'] = async () => {
   const [g, snap] = await Promise.all([DB.goals(), DB.snapshots()]);
   const series = netWorthByMonth(snap);
   const pace = series.length>1 ? (series.at(-1)[1]-series[0][1])/(series.length-1) : 0;
+  const cleared = g.reduce((s,x)=>s+(x.cleared||0),0);
+  const nwGoal = g.find(x => x.metric_source === 'total_asset');
+  const eta = nwGoal && pace>0 ? Math.ceil((nwGoal.target - nwGoal.current)/pace) : null;
+
   return `<div class="block">
-    <header><h2>재무 목표</h2><p>goals 테이블 · target_amount 기준 ${g.length}건</p></header>
+    <header><h2>재무 목표</h2><p>goal_progress 뷰 · 지금 겨누는 이정표만</p>
+      <span class="sub">지난 이정표 ${cleared}개는 접어 두었습니다</span></header>
     ${g.length ? g.map(goalRow).join('') : '<div class="empty">등록된 재무 목표가 없습니다.</div>'}
   </div>
   <div class="flow">
     <div class="flow-card a"><h4>월 평균 순자산 증가</h4><div class="v num">${man(pace)}</div>
       <div class="m">${series.length}개월 관측 · 진행 중인 달 제외</div></div>
-    <div class="flow-card t"><h4>관측 기간</h4><div class="v num">${series.length}개월</div>
-      <div class="m">${series[0]?.[0]} ~ ${series.at(-1)?.[0]}</div></div>
-    <div class="flow-card s"><h4>자동 계산 목표</h4>
-      <div class="v num" style="color:var(--save)">${g.filter(x=>x.metric_source).length}</div>
-      <div class="m">나머지 ${g.filter(x=>!x.metric_source).length}건은 수동 입력</div></div>
+    <div class="flow-card t"><h4>${nwGoal?esc(nwGoal.item)+' 도달':'관측 기간'}</h4>
+      <div class="v num">${eta ? `${Math.floor(eta/12)}년 ${eta%12}개월` : series.length+'개월'}</div>
+      <div class="m">${nwGoal?`${man(nwGoal.target)} 기준 · 현재 속도 유지 시`:`${series[0]?.[0]} ~ ${series.at(-1)?.[0]}`}</div></div>
+    <div class="flow-card s"><h4>자동 계산</h4>
+      <div class="v num" style="color:var(--save)">${g.filter(x=>x.metric_source).length}<span
+        style="font-size:15px;color:var(--ink-3)"> / ${g.length}</span></div>
+      <div class="m">나머지는 수동 입력</div></div>
   </div>
   ${stub('이 층이 하는 일','목표 진행률이 홈 "지금 확인할 것"의 우선순위를 결정합니다. 기록과 투자는 이 화면을 위해 존재합니다.',
     [{t:'metric_source 자동 계산 — goal_progress 뷰 활용',has:true},
@@ -558,8 +618,8 @@ P['goals:targets'] = async () => {
 /* ── 설정 · 데이터 연동 ── */
 P['settings:sources'] = async () => {
   const checks = await Promise.all([
-    probe('transactions'), probe('asset_snapshots'), probe('holdings'),
-    probe('study_cards'), probe('goals'), probe('merchants'), probe('thesis'), probe('stocks')
+    probe('v_transactions'), probe('asset_snapshots'), probe('holdings'),
+    probe('study_cards'), probe('goal_progress'), probe('merchants'), probe('thesis'), probe('accounts')
   ]);
   return `<div class="block">
     <header><h2>Supabase 테이블</h2><p>${SB_URL.replace('https://','')}</p></header>
@@ -576,10 +636,11 @@ P['settings:sources'] = async () => {
      {t:'스냅샷 누락 월 감지'},
      {t:'수집 실패 로그 및 재시도'}])}`;
 };
-const ROLE = {transactions:'거래 원장 (단일 소스)', asset_snapshots:'월별 계좌 잔액',
+const ROLE = {v_transactions:'거래 원장 뷰 — kind·category 펼침', asset_snapshots:'월별 계좌 잔액',
   holdings:'보유 종목 스냅샷', study_cards:'종목 연구 카드 · 관심종목 L1~L3',
-  goals:'목표 (금융 + 비금융)', merchants:'상인 마스터 · 고정비 지정',
-  thesis:'투자 논리 원장', stocks:'종목 마스터 · 테마'};
+  goal_progress:'목표 뷰 — metric_source 기준 현재값 자동 계산',
+  merchants:'상인 마스터 · 고정비 지정', thesis:'투자 논리 원장 (비어 있음)',
+  accounts:'계좌 마스터'};
 async function probe(name){
   const { count, error } = await sb.from(name).select('*',{count:'exact',head:true});
   return { name, count, ok: !error };
