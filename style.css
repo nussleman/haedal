@@ -2956,3 +2956,55 @@ body{font-variant-numeric:tabular-nums;}
 .hm-bar i.tr{background:var(--net-fill);}
 .budc-row .bar i.tr{background:var(--net-fill);}
 .budc-row .bar i.done{background:var(--income-fill);}
+
+/* ═══════════════════════════════════════════════════════════
+   설정 › 목록 — 남아 있던 밝은 하드코딩 색을 다크로 마저 덮는다.
+   원본 선언을 건드리지 않고 뒤에서 덮어써, 원래 규칙을 그대로 읽을 수 있게 둔다.
+   ═══════════════════════════════════════════════════════════ */
+.dbm-table.body tr:hover td{background:rgba(255,255,255,.035);}
+.dbm-table.body tr.dirty td{background:var(--accent-bg);}
+.dbm-table td.col-meta{background:var(--bg-2);}
+.dbm-table tr:hover td.col-meta{background:var(--panel-2);}
+.dbm-table .en-in:hover{background:var(--bg-2);border-color:var(--border-strong);}
+.dbm-table .en-in:focus{background:var(--bg-2);border-color:var(--accent-fill);}
+.dbm-rail button:hover{background:var(--panel-2);color:var(--text);}
+.dbm-views button:hover{background:var(--panel-2);color:var(--text);}
+.dbm-chip .x:hover,.dbm-x:hover{color:var(--expense-text);}
+.dbm-pop .mk button:hover{background:var(--accent-bg);}
+
+/* 값 칩 — 밝은 배경 대신 어두운 틴트 + 밝은 글자 */
+.dbm-page .c-in,.dbm-pop .c-in{background:var(--income-bg);border-color:rgba(90,160,120,.42);color:var(--income-text);}
+.dbm-page .c-out,.dbm-pop .c-out{background:var(--expense-bg);border-color:rgba(190,90,80,.42);color:var(--expense-text);}
+.dbm-page .c-tr,.dbm-pop .c-tr{background:rgba(60,130,200,.16);border-color:rgba(60,130,200,.42);color:#8fbdf0;}
+.dbm-page .c-as,.dbm-pop .c-as{background:var(--net-bg);border-color:rgba(140,120,215,.42);color:var(--net-text,#b3a4ee);}
+.dbm-page .c-cash,.dbm-pop .c-cash{background:rgba(60,170,160,.15);border-color:rgba(60,170,160,.40);color:#6fcfc4;}
+.dbm-page .c-inv,.dbm-pop .c-inv{background:var(--accent-bg);border-color:rgba(201,162,39,.45);color:var(--accent-text);}
+.dbm-page .c-sav,.dbm-pop .c-sav{background:rgba(215,120,170,.15);border-color:rgba(215,120,170,.40);color:#e290ba;}
+.dbm-page .c-pen,.dbm-pop .c-pen{background:rgba(125,138,225,.16);border-color:rgba(125,138,225,.42);color:#98a4ee;}
+.dbm-page .c-us,.dbm-pop .c-us{background:rgba(60,130,200,.14);border-color:rgba(60,130,200,.38);color:#8fbdf0;}
+.dbm-page .c-kr,.dbm-pop .c-kr{background:rgba(200,80,105,.15);border-color:rgba(200,80,105,.40);color:#e88fa1;}
+.dbm-page .c-tag,.dbm-pop .c-tag{background:var(--panel-2);border-color:var(--border-strong);color:var(--text-dim);}
+
+/* ═══ 좌측 레일 — 카테고리와 항목을 형태로 갈라놓는다 ═══ */
+.sub-cat{display:flex;align-items:center;gap:8px;
+  font-family:var(--sans);font-size:var(--fs-tiny);font-weight:700;
+  color:var(--text-faint);letter-spacing:.08em;text-transform:uppercase;
+  padding:18px 0 8px;margin:0 2px;}
+.sub-cat::after{content:'';flex:1;height:1px;background:var(--border);}
+.railnav .sub-cat:first-child{padding-top:2px;}
+.sub-btn{margin-left:8px;width:calc(100% - 8px);border-left:2px solid var(--border);
+  border-radius:0 var(--r-md) var(--r-md) 0;padding:8px 11px;}
+.sub-btn:hover{border-left-color:var(--border-strong);}
+.sub-btn.on{border-left-color:var(--accent-fill);border-top-color:transparent;
+  border-right-color:transparent;border-bottom-color:transparent;}
+/* 카테고리가 없는 섹션(투자·실험실)은 들여쓰기 없이 */
+.railnav:not(:has(.sub-cat)) .sub-btn{margin-left:0;width:100%;border-left-color:transparent;
+  border-radius:var(--r-md);}
+.railnav:not(:has(.sub-cat)) .sub-btn:hover{border-color:var(--border);}
+.railnav:not(:has(.sub-cat)) .sub-btn.on{border-color:rgba(201,162,39,0.45);}
+
+@media (max-width:860px){
+  .sub-cat{padding:0 2px 0 10px;margin:0;}
+  .sub-cat::after{display:none;}
+  .sub-btn{margin-left:0;width:auto;border-left-width:1px;border-radius:var(--r-md);}
+}
