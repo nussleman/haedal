@@ -168,16 +168,16 @@ const esc = v => String(v ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;
 const TREE = {
   home:{title:'홈',tabs:[{id:'today',label:'오늘',ready:true}]},
   flow:{title:'현금흐름',tabs:[
-    {id:'ledger',label:'거래 내역',ready:true},{id:'budget',label:'예산'},
+    {id:'ledger',label:'거래 내역',ready:true},{id:'budget',label:'예산',ready:true},
     {id:'fixed',label:'고정비',ready:true},{id:'rules',label:'저축·이체 규칙'}]},
   assets:{title:'자산 현황',tabs:[
     {id:'networth',label:'순자산',ready:true},{id:'accounts',label:'계좌',ready:true},
     {id:'pension',label:'연금'},{id:'debt',label:'부채'}]},
   invest:{title:'투자',tabs:[
-    {id:'port',label:'포트폴리오',ready:true},{id:'holding',label:'종목 상세'},
+    {id:'port',label:'포트폴리오',ready:true},{id:'holding',label:'종목 상세',ready:true},
     {id:'watch',label:'관심종목',ready:true},{id:'history',label:'매매 이력'}]},
   goals:{title:'목표',tabs:[{id:'targets',label:'재무 목표',ready:true},{id:'progress',label:'진행률'}]},
-  report:{title:'리포트',tabs:[{id:'monthly',label:'월간'},{id:'yearly',label:'연간'}]},
+  report:{title:'리포트',tabs:[{id:'monthly',label:'월간',ready:true},{id:'yearly',label:'연간'}]},
   settings:{title:'설정',tabs:[{id:'sources',label:'데이터 연동',ready:true},
     {id:'cats',label:'카테고리'},{id:'alerts',label:'알림'}]}
 };
@@ -237,9 +237,12 @@ P['home:today'] = async () => {
 
   const cur = tx.filter(t => ymOf(t.date) === CUR_YM);
   const inc = cur.filter(isIncome).reduce((s,t)=>s+t.amount,0);
-  const exp = cur.filter(isSpend).reduce((s,t)=>s+t.amount,0);
-  const avgExp = monthlyAverage(tx.filter(isSpend));
-  const rate = inc ? ((inc-exp)/inc*100).toFixed(1) : '—';
+  /* 실지출 = 회사 환급분 제외. 예산·리포트와 같은 기준으로 맞춘다. */
+  const exp = cur.filter(t => isSpend(t) && !t.company_paid).reduce((s,t)=>s+t.amount,0);
+  const avgExp = monthlyAverage(tx.filter(t => isSpend(t) && !t.company_paid));
+  /* 급여일 전이라 수입이 아직 0인 달이 있다. 그럴 땐 저축률 대신 지출 진도를 보여준다. */
+  const hasInc = inc > 0;
+  const rate = hasInc ? ((inc-exp)/inc*100).toFixed(1) : null;
 
   /* 할 일은 규칙에서 나온다 — 손으로 적지 않는다 */
   const todos = [];
@@ -277,8 +280,10 @@ P['home:today'] = async () => {
     <div class="flow-card e"><h4>이번 달 지출</h4>
       <div class="v num" style="color:var(--expense)">${won(exp)}</div>
       <div class="m">이체·자산 이동 제외 · 평균 ${won(avgExp)}</div></div>
-    <div class="flow-card s"><h4>저축률</h4>
-      <div class="v num" style="color:var(--save)">${rate}%</div><div class="m">(수입 − 지출) ÷ 수입</div></div>
+    <div class="flow-card s"><h4>${hasInc?'저축률':'평균 대비 지출'}</h4>
+      <div class="v num" style="color:var(--save)">${hasInc ? rate+'%'
+        : (avgExp ? (exp/avgExp*100).toFixed(0)+'%' : '—')}</div>
+      <div class="m">${hasInc ? '(수입 − 실지출) ÷ 수입' : '이번 달 수입 기록 전 · 평균 '+won(avgExp)+'원 기준'}</div></div>
   </div>
 
   <div class="block">
@@ -646,13 +651,240 @@ async function probe(name){
   return { name, count, ok: !error };
 }
 
+/* ── 현금흐름 · 예산 ──
+   예산 금액의 출처는 legacy와 같은 순서를 따른다.
+   1순위 goal_progress 의 monthly_expense 목표, 2순위 마감된 최근 3개월 실지출 평균.
+   실지출 = company_paid(회사 환급) 제외. 예산과 집행을 같은 기준으로 맞춘다. */
+P['flow:budget'] = async () => {
+  const [tx, goals] = await Promise.all([DB.transactions(), DB.goals()]);
+  const real = t => isSpend(t) && !t.company_paid;
+  const prev3 = prevMonths(3);
+
+  const cur = tx.filter(t => ymOf(t.date)===CUR_YM && real(t));
+  const spent = cur.reduce((s,t)=>s+t.amount,0);
+
+  const base3 = tx.filter(t => prev3.includes(ymOf(t.date)) && real(t));
+  const avg3 = base3.reduce((s,t)=>s+t.amount,0) / (prev3.length || 1);
+
+  const goalCap = goals.find(g => g.metric_source === 'monthly_expense');
+  const budget = goalCap ? { amount:goalCap.target, src:'목표 · '+goalCap.item }
+               : avg3    ? { amount:avg3, src:'최근 3개월 실지출 평균' } : null;
+
+  /* 경과율 — 달의 몇 %가 지났는가. 소진율이 이걸 앞지르면 속도가 빠른 것이다. */
+  const d = KST(), days = new Date(d.getFullYear(), d.getMonth()+1, 0).getDate();
+  const elapsed = d.getDate()/days*100;
+  const used = budget ? spent/budget.amount*100 : 0;
+  const left = budget ? budget.amount - spent : 0;
+  const perDay = budget && days-d.getDate() > 0 ? left/(days-d.getDate()) : null;
+
+  /* 카테고리별 기준선은 같은 3개월 평균에서 뽑는다. 별도 예산 테이블이 없다. */
+  const byCat = {};
+  cur.forEach(t => (byCat[t.category] ??= {cur:0,avg:0}).cur += t.amount);
+  base3.forEach(t => (byCat[t.category] ??= {cur:0,avg:0}).avg += t.amount/(prev3.length||1));
+  const cats = Object.entries(byCat).sort((a,b)=>b[1].avg-a[1].avg);
+
+  return `${budget ? `<div class="flow" style="margin-bottom:22px">
+    <div class="flow-card ${used>elapsed?'e':'i'}"><h4>소진율</h4>
+      <div class="v num" style="color:var(--${used>elapsed?'expense':'income'})">${used.toFixed(0)}%</div>
+      <div class="m">이 달 ${elapsed.toFixed(0)}% 경과 · ${used>elapsed?'속도가 빠릅니다':'여유 있습니다'}</div></div>
+    <div class="flow-card ${left<0?'e':''}"><h4>남은 예산</h4>
+      <div class="v num" style="color:${left<0?'var(--expense)':'var(--ink)'}">${won(left)}</div>
+      <div class="m">${won(spent)} / ${won(budget.amount)}</div></div>
+    <div class="flow-card t"><h4>하루 허용액</h4>
+      <div class="v num" style="color:var(--transfer)">${perDay!=null?won(Math.max(0,perDay)):'—'}</div>
+      <div class="m">${days-d.getDate()}일 남음</div></div>
+  </div>
+  <div class="block"><header><h2>예산 기준</h2><p>${budget.src}</p></header>
+    <div class="slab"><div class="track" style="height:10px">
+      <i style="width:${Math.min(100,used)}%;background:var(--${used>elapsed?'expense':'income'})"></i></div>
+      <div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--ink-3);margin-top:7px">
+        <span>소진 ${used.toFixed(1)}%</span><span>경과 ${elapsed.toFixed(1)}%</span></div></div>
+  </div>` : wipbar('예산 기준을 정할 수 없습니다. 목표 탭에 월 지출 목표를 등록하거나, 마감된 달이 3개 이상 쌓여야 합니다.')}
+
+  <div class="block">
+    <header><h2>카테고리별 집행</h2><p>기준선은 최근 3개월 평균 · 회사 환급분 제외</p></header>
+    <table><thead><tr><th>카테고리</th><th style="width:180px">이번 달 / 기준선</th>
+      <th class="r" style="width:110px">이번 달</th><th class="r" style="width:110px">기준선</th>
+      <th style="width:80px">상태</th></tr></thead>
+    <tbody>${cats.length ? cats.map(([name,v])=>{
+      const r = v.avg ? v.cur/v.avg*100 : (v.cur?200:0);
+      const hot = v.avg && r > Math.max(100, elapsed*1.2);
+      return `<tr><td>${esc(name)}</td>
+        <td><div class="bar"><i style="width:${Math.min(100,r)}%;background:var(--${hot?'expense':'income'})"></i></div>
+          <div class="sub num">${v.avg?r.toFixed(0)+'%':'기준 없음'}</div></td>
+        <td class="r">${won(v.cur)}</td><td class="r sub">${won(v.avg)}</td>
+        <td>${hot?'<span class="chip c-지출">초과</span>':'<span class="sub">—</span>'}</td></tr>`;}).join('')
+      : '<tr><td colspan="5" class="empty">이번 달 지출 기록이 아직 없습니다.</td></tr>'}
+    </tbody>
+    <tfoot><tr><td colspan="2">합계</td><td class="r">${won(spent)}</td>
+      <td class="r sub">${won(avg3)}</td><td></td></tr></tfoot></table>
+  </div>
+  ${stub('예산을 쓰는 방식','예산은 지키는 목표가 아니라 이탈을 알아채는 장치입니다. 소진율이 경과율을 넘으면 홈 할 일로 올라갑니다. 카테고리별 예산 테이블은 따로 두지 않고, 본인의 최근 3개월 평균을 기준선으로 씁니다.',
+    [{t:'<b>목표 monthly_expense를 1순위 기준으로 사용</b> — legacy와 동일',has:true},
+     {t:'<b>company_paid 회사 환급분 제외</b> — 예산·집행 기준 통일',has:true},
+     {t:'카테고리별 예산 직접 지정 (지금은 3개월 평균 고정)'},
+     {t:'고정비 제외 변동비만 보는 토글'}])}`;
+};
+function prevMonths(n){
+  const out = [], d = KST();
+  for (let i=1;i<=n;i++){ const x=new Date(d.getFullYear(), d.getMonth()-i, 1);
+    out.push(x.toISOString().slice(0,7)); }
+  return out;
+}
+
+/* ── 투자 · 종목 상세 ──
+   thesis 테이블이 비어 있다. 이 화면은 그걸 채우는 입구를 겸한다. */
+let HOLD_SEL = null;
+P['invest:holding'] = async () => {
+  const [h, th, cards] = await Promise.all([DB.holdings(), DB.thesis(), DB.watchlist()]);
+  if (!h.length) return wipbar('holdings 스냅샷이 없습니다.');
+  const total = h.reduce((s,x)=>s+x.value,0);
+  const sel = h.find(x => (x.ticker||x.name) === HOLD_SEL) || h[0];
+  const t = th.find(x => x.ticker === sel.ticker) || {};
+  const card = cards.find(c => c.ticker === sel.ticker) || {};
+  const w = sel.value/total*100;
+
+  return `<div class="toolbar">
+    <select id="holdPick" style="background:var(--surface);border:1px solid var(--line-soft);
+      border-radius:8px;color:var(--ink);font:inherit;font-size:13px;padding:7px 11px;min-width:280px">
+      ${h.map(x=>`<option value="${esc(x.ticker||x.name)}" ${x===sel?'selected':''}>
+        ${esc(x.name)}${x.ticker?`(${esc(x.ticker)})`:''} · ${(x.value/total*100).toFixed(1)}%</option>`).join('')}
+    </select>
+    <span class="sub">${h.length}종목 중</span>
+  </div>
+
+  <div class="flow" style="margin-bottom:22px">
+    <div class="flow-card a"><h4>평가액</h4><div class="v num">${man(sel.value)}</div>
+      <div class="m">비중 ${w.toFixed(2)}%${w>15?' · 과대비중':w<0.3?' · 먼지':''}</div></div>
+    <div class="flow-card ${(sel.pnl_pct??0)<0?'e':'i'}"><h4>수익률</h4>
+      <div class="v num" style="color:var(--${(sel.pnl_pct??0)<0?'expense':'income'})">
+        ${sel.pnl_pct==null?'—':sel.pnl_pct.toFixed(1)+'%'}</div>
+      <div class="m">진입가는 판단 기준이 아닙니다</div></div>
+    <div class="flow-card ${t.sell_trigger?'':'e'}"><h4>매도 조건</h4>
+      <div class="v num" style="color:var(--${t.sell_trigger?'income':'expense'});font-size:18px">
+        ${t.sell_trigger?'설정됨':'없음'}</div>
+      <div class="m">${t.reviewed_on?`최근 검토 ${t.reviewed_on}`:'검토 기록 없음'}</div></div>
+  </div>
+
+  <div class="block">
+    <header><h2>3문장 메모</h2><p>세 칸이 다 차야 판단할 준비가 된 것입니다</p></header>
+    <div class="slab">
+      ${memoField('① 왜 사는가', t.logic || card.buy_reason)}
+      ${memoField('② 언제 파는가', t.sell_trigger || [card.stop,card.take].filter(Boolean).join(' · '))}
+      ${memoField('③ 틀렸다는 신호는 무엇인가', [card.falsify1,card.falsify2].filter(Boolean).join(' · '))}
+    </div>
+  </div>
+
+  <div class="block">
+    <header><h2>연구 카드</h2><p>study_cards</p></header>
+    ${card.name ? `<table><tbody>
+      <tr><td style="width:130px" class="sub">유형</td><td>${esc(card.type||'—')}</td></tr>
+      <tr><td class="sub">점수</td><td>${card.score ?? '—'}</td></tr>
+      <tr><td class="sub">판정</td><td>${esc(card.verdict||'—')}</td></tr>
+      <tr><td class="sub">관심 단계</td><td>${card.watch_level || '<span class="sub">미배정</span>'}</td></tr>
+      </tbody></table>`
+      : '<div class="empty">이 종목의 연구 카드가 없습니다. 관심종목 탭에서 카드를 먼저 만드세요.</div>'}
+  </div>
+  ${stub('여기서 다음에 할 일','thesis 테이블이 0행이라 74종목 전부가 매도 조건 없음 상태입니다. 비중 1% 이상 종목부터 채우면 포트폴리오 탭의 경고가 줄어듭니다.',
+    [{t:'메모 직접 입력·저장 (현재는 읽기 전용)'},
+     {t:'촉매 날짜 — study_cards.check_date 연동'},
+     {t:'논리 수정 이력 — thesis.updated_at 기반 타임라인'},
+     {t:'포트폴리오 행 클릭으로 이 화면 진입'}])}`;
+};
+const memoField = (label, v) => `<div style="padding:14px 0;border-top:1px solid var(--line-soft)">
+  <div style="font-size:11.5px;color:var(--ink-3);margin-bottom:5px">${label}</div>
+  <div style="font-size:13.5px;color:var(--${v?'ink':'ink-3'})">${v?esc(v):'비어 있습니다'}</div></div>`;
+
+/* ── 리포트 · 월간 ── */
+let RPT_YM = null;
+P['report:monthly'] = async () => {
+  const [tx, snap, goals] = await Promise.all([DB.transactions(), DB.snapshots(), DB.goals()]);
+  const months = [...new Set(tx.map(t=>ymOf(t.date)))].sort().reverse();
+  const ym = RPT_YM && months.includes(RPT_YM) ? RPT_YM : (months.find(m=>m!==CUR_YM) || months[0]);
+  const prev = months[months.indexOf(ym)+1];
+
+  const of = m => tx.filter(t => ymOf(t.date)===m);
+  const agg = m => { const r = of(m);
+    const inc = r.filter(isIncome).reduce((s,t)=>s+t.amount,0);
+    const exp = r.filter(t=>isSpend(t)&&!t.company_paid).reduce((s,t)=>s+t.amount,0);
+    return { inc, exp, net: inc-exp, rate: inc ? (inc-exp)/inc*100 : 0, n: r.length }; };
+  const a = agg(ym), b = prev ? agg(prev) : null;
+
+  const nw = netWorthByMonth(snap);
+  const nwCur = nw.find(x=>x[0]===ym)?.[1], nwPrev = nw.find(x=>x[0]===prev)?.[1];
+
+  const cats = {};
+  of(ym).filter(t=>isSpend(t)&&!t.company_paid).forEach(t=>cats[t.category]=(cats[t.category]||0)+t.amount);
+  const pCats = {};
+  if (prev) of(prev).filter(t=>isSpend(t)&&!t.company_paid).forEach(t=>pCats[t.category]=(pCats[t.category]||0)+t.amount);
+  const top = Object.entries(cats).sort((x,y)=>y[1]-x[1]);
+
+  const big = of(ym).filter(t=>isSpend(t)&&!t.company_paid).sort((x,y)=>y.amount-x.amount).slice(0,5);
+  const delta = (c,p) => p==null ? '<span class="sub">—</span>'
+    : `<span style="color:var(--${c>=p?'expense':'income'})">${c>=p?'+':'−'}${won(Math.abs(c-p))}</span>`;
+
+  return `<div class="toolbar">
+    <div class="seg" id="rptYm">${months.slice(0,8).map(m=>
+      `<button data-m="${m}" aria-pressed="${m===ym}">${m.slice(2).replace('-','.')}</button>`).join('')}</div>
+    ${ym===CUR_YM?'<span class="sub">진행 중인 달입니다</span>':''}
+  </div>
+
+  <div class="flow" style="margin-bottom:22px">
+    <div class="flow-card i"><h4>수입</h4><div class="v num" style="color:var(--income)">${won(a.inc)}</div>
+      <div class="m">${b?`전월 ${won(b.inc)} · `:''}${delta(a.inc,b?.inc).replace('expense','income')}</div></div>
+    <div class="flow-card e"><h4>실지출</h4><div class="v num" style="color:var(--expense)">${won(a.exp)}</div>
+      <div class="m">${b?`전월 대비 `:''}${delta(a.exp,b?.exp)}</div></div>
+    <div class="flow-card s"><h4>저축률</h4><div class="v num" style="color:var(--save)">${a.rate.toFixed(1)}%</div>
+      <div class="m">${b?`전월 ${b.rate.toFixed(1)}%`:'비교 대상 없음'}</div></div>
+  </div>
+
+  <div class="block">
+    <header><h2>한 줄 요약</h2></header>
+    <div class="slab"><p style="font-size:14px;line-height:1.7">
+      ${ym}에 <b>${won(a.inc)}</b>원을 벌고 <b>${won(a.exp)}</b>원을 썼습니다.
+      ${b ? `지출은 전월보다 ${a.exp>=b.exp?'<b style="color:var(--expense)">'+won(a.exp-b.exp)+'원 늘었고</b>':'<b style="color:var(--income)">'+won(b.exp-a.exp)+'원 줄었고</b>'},` : ''}
+      저축률은 <b>${a.rate.toFixed(1)}%</b>였습니다.
+      ${nwCur!=null && nwPrev!=null ? `순자산은 ${man(nwPrev)}에서 <b>${man(nwCur)}</b>으로
+        ${nwCur>=nwPrev?'<span style="color:var(--income)">'+man(nwCur-nwPrev)+' 늘었습니다':'<span style="color:var(--expense)">'+man(nwPrev-nwCur)+' 줄었습니다'}</span>.` : ''}
+      ${top[0] ? `가장 많이 쓴 곳은 <b>${esc(top[0][0])}</b>(${won(top[0][1])}원)입니다.` : ''}
+    </p></div>
+  </div>
+
+  <div class="block">
+    <header><h2>카테고리별</h2><p>회사 환급분 제외 · 전월 대비</p></header>
+    <table><thead><tr><th>카테고리</th><th style="width:150px">비중</th>
+      <th class="r" style="width:110px">이번 달</th><th class="r" style="width:110px">전월 대비</th></tr></thead>
+    <tbody>${top.map(([k,v])=>`<tr><td>${esc(k)}</td>
+      <td><div class="bar"><i style="width:${v/a.exp*100}%;background:var(--expense)"></i></div>
+        <div class="sub num">${(v/a.exp*100).toFixed(1)}%</div></td>
+      <td class="r">${won(v)}</td><td class="r">${delta(v, prev?(pCats[k]||0):null)}</td></tr>`).join('')}
+    </tbody>
+    <tfoot><tr><td colspan="2">합계</td><td class="r">${won(a.exp)}</td>
+      <td class="r">${delta(a.exp,b?.exp)}</td></tr></tfoot></table>
+  </div>
+
+  <div class="block">
+    <header><h2>큰 지출 5건</h2></header>
+    <table><thead><tr><th style="width:70px">날짜</th><th>내용</th><th style="width:74px">구분</th>
+      <th class="r" style="width:120px">금액</th></tr></thead>
+    <tbody>${big.length?big.map(txRow).join('')
+      :'<tr><td colspan="4" class="empty">이 달 지출 기록이 없습니다.</td></tr>'}</tbody></table>
+  </div>
+
+  <div class="block">
+    <header><h2>목표 진행</h2><p>${ym} 시점이 아니라 현재 값입니다</p></header>
+    ${goals.slice(0,4).map(goalRow).join('')}
+  </div>
+  ${stub('월간 리포트','대시보드를 매번 직접 훑지 않아도 되게 만드는 게 목적입니다. 지금은 현재 시점 값으로 그리고, 월말 스냅샷이 쌓이면 그 달 시점 값으로 바꿉니다.',
+    [{t:'<b>수입·실지출·저축률 전월 대비</b>',has:true},
+     {t:'<b>카테고리별 증감과 큰 지출</b>',has:true},
+     {t:'목표 진행률을 그 달 시점 값으로 고정'},
+     {t:'다음 달 확인 항목 — 만기 · 갱신 · 촉매 날짜'},
+     {t:'PDF 내보내기'}])}`;
+};
+
 /* ── 준비중 패널 ── */
 const WIP = {
-'flow:budget':['카테고리별 예산 구조가 정해지면 붙습니다.','예산',
-  '예산은 "지키는 목표"가 아니라 "이탈을 알아채는 장치"로 씁니다. 초과하면 홈 할 일로 올라오게 만드는 게 목적입니다.',
-  [{t:'카테고리별 예산 설정 및 잔여 소진율'},{t:'속도 경고 — 월 중반에 70% 초과 시'},
-   {t:'고정비 제외 변동비 기준 예산'},{t:'최근 6개월 실집행 기반 예산 제안'},
-   {t:'예산 테이블이 아직 없음 — 스키마 추가 필요'}], skel('row3',88)+skel('',240,1)],
 'flow:rules':['자동이체 데이터가 원장에 구분돼 들어오면 붙습니다.','저축 · 이체 규칙',
   '급여일 이후 자금이 어디로 흘러가는지가 한눈에 보여야 합니다.',
   [{t:'급여일 기준 자동이체 순서와 금액'},{t:'선저축 비율 및 실제 집행률'},
@@ -666,12 +898,6 @@ const WIP = {
   '순자산의 마이너스 항이자 고정비의 원천입니다.',
   [{t:'대출별 잔액 · 금리 · 만기 · 월 상환액'},{t:'상환 스케줄 → 고정비 패널 자동 연동'},
    {t:'asset_class check 제약에 부채 추가 필요'}], skel('',72,3)],
-'invest:holding':['포트폴리오 행 클릭 진입 구조로 만들 예정입니다.','종목 상세',
-  '진입가는 표시하되 판단 기준으로 쓰지 않습니다. 이 화면의 질문은 언제나 "지금 현금으로 이 가격에 다시 살 것인가"입니다.',
-  [{t:'study_cards 게이트 0~2 전체 표시',has:true},
-   {t:'thesis.logic · sell_trigger · reviewed_on',has:true},
-   {t:'촉매 날짜 — study_cards.check_date',has:true},
-   {t:'논리 수정 이력 — updated_at 기반'}], skel('row2',180,2)],
 'invest:history':['매도 이력 테이블이 없습니다. 스키마 추가가 먼저입니다.','매매 이력',
   '판 다음에 무슨 일이 있었는지를 보는 곳. 과대비중·과소비중 패턴을 끊으려면 이게 필요합니다.',
   [{t:'holdings 스냅샷 차분으로 매도 추정 가능'},
@@ -682,11 +908,6 @@ const WIP = {
   '한 달 등락보다 12개월 추세선이 중요한 화면입니다.',
   [{t:'목표별 계획 궤적 vs 실제 궤적 오버레이'},{t:'이탈 감지 — 3개월 연속 미달'},
    {t:'시나리오 — 저축률 ±5% 변동 시 도달 시점'}], skel('',200,1)],
-'report:monthly':['각 패널이 안정된 뒤 자동 생성으로 붙입니다.','월간 리포트',
-  '대시보드를 매번 직접 훑지 않아도 되게 만드는 게 목적입니다.',
-  [{t:'수입 · 지출 · 저축률 전월 대비'},{t:'예산 초과 카테고리와 원인 거래'},
-   {t:'포트폴리오 비중 변화'},{t:'목표 진행률 변동'},
-   {t:'다음 달 확인 항목 — 만기 · 갱신 · 촉매 날짜'}], skel('',110,3)],
 'report:yearly':['연말정산 시즌에 첫 산출 예정입니다.','연간 리포트',
   '연말정산과 세금 신고에 그대로 쓸 수 있는 형태로 뽑습니다. 나중에 소급 정리하면 손이 훨씬 많이 갑니다.',
   [{t:'연간 수입 · 지출 · 저축 총계'},{t:'연금 납입액 및 세액공제 대상'},
@@ -754,7 +975,12 @@ function shell(){
     const tk = e.target.closest('.tick');
     if (tk) { tk.closest('.todo-row').classList.toggle('done'); badge(); return; }
     const k = e.target.closest('#ledKind button');
-    if (k) { LED.kind = k.dataset.k; render(); }
+    if (k) { LED.kind = k.dataset.k; render(); return; }
+    const m = e.target.closest('#rptYm button');
+    if (m) { RPT_YM = m.dataset.m; render(); }
+  });
+  $p.addEventListener('change', e => {
+    if (e.target.id === 'holdPick') { HOLD_SEL = e.target.value; render(); }
   });
   $p.addEventListener('input', e => {
     if (e.target.id !== 'ledQ') return;
