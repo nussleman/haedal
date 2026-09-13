@@ -2951,3 +2951,8 @@ body{font-variant-numeric:tabular-nums;}
   .budc-row .bar{grid-column:1/-1;order:3;}
   .budc-row .now{order:2;}
 }
+
+/* 이체 막대 — 채울수록 좋은 지표라 지출과 색을 달리한다 */
+.hm-bar i.tr{background:var(--net-fill);}
+.budc-row .bar i.tr{background:var(--net-fill);}
+.budc-row .bar i.done{background:var(--income-fill);}
