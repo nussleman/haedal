@@ -1053,13 +1053,13 @@ const SECTION_SUBS = {
   home:   [['main', '홈']],
   entry:  [['#', '입출금'], ['ledger', '입출금 내역'], ['calendar', '캘린더'],
            ['#', '자산'], ['snapshot', '자산 스냅샷']],
-  invest: [['overview', '요약'], ['book', '종목'], ['perf', '벤치마크·세금']],
+  invest: [['overview', '요약'], ['book', '종목'], ['bench', '벤치마크'], ['tax', '세금']],
   goals:  [['main', '목표']],
   report: [['#', '기간별'], ['monthly', '월간'], ['yearly', '연간'],
            ['#', '자산별'], ['networth', '순자산'], ['pension', '연금'], ['savings', '저축']],
   lab:    [['sim', '시뮬레이션'], ['flowmap', '흐름표'], ['fixed', '고정비 검토']],
-  set:    [['#', '가계부'], ['cat', '분류'], ['merch', '사용처'],
-           ['fixedm', '고정비 지정'], ['budget', '예산'],
+  set:    [['#', '가계부'], ['cat', '분류'], ['merch', '사용처'], ['fixedm', '고정비'],
+           ['#', '계획'], ['budget', '예산'], ['saving', '적립'],
            ['#', '자산·투자'], ['acct', '계좌'], ['stock', '종목']]
 };
 
@@ -1101,7 +1101,8 @@ const LEGACY_ROUTE = {
   'flow/now': 'report/monthly', 'flow/year': 'report/yearly',
   'flow/calendar': 'entry/calendar', 'flow/flowmap': 'lab/flowmap',
   'assets': 'report/networth', 'assets/overview': 'report/networth',
-  'assets/investment': 'invest/overview', 'invest/main': 'invest/overview', 'assets/pension': 'report/pension',
+  'assets/investment': 'invest/overview', 'invest/main': 'invest/overview',
+  'invest/perf': 'invest/bench', 'assets/pension': 'report/pension',
   'assets/savings': 'report/savings',
   'todo': 'goals/main', 'todo/goals': 'goals/main',
   'todo/fixed': 'lab/fixed', 'todo/structure': 'lab/sim',
@@ -2263,6 +2264,7 @@ function renderPage() {
 
   } else {
     if (SUB === 'budget') renderBudgetSettings(body, data, d);
+    else if (SUB === 'saving') renderSavingPlanSettings(body, data, d);
     else dbmRenderFor(body, SUB);
   }
 }
@@ -12682,12 +12684,14 @@ function bkVerdictMenu(cell, hostId, data, d) {
 const INV_SUBS = [
   ['overview', '요약'],
   ['book', '종목'],
-  ['perf', '벤치마크·세금']
+  ['bench', '벤치마크'],
+  ['tax', '세금']
 ];
 
 function renderInvestmentPage(container, data, d) {
   const SUB = INV_SUBS.some(s => s[0] === state.invSub) ? state.invSub : 'overview';
-  const subnav = `<div class="subnav sub2" id="inv-subnav" hidden>${INV_SUBS.map(([v, l]) =>
+  const subnav = '';
+  const _unusedInvSubs = `${INV_SUBS.map(([v, l]) =>
     `<button data-sub="${v}" class="${v === SUB ? 'active' : ''}">${l}</button>`).join('')}</div>`;
   const invCategories = ['투자 자산'];
   const byMonthCat = {};
@@ -12815,33 +12819,30 @@ function renderInvestmentPage(container, data, d) {
       </div>
     </div>` : ''}
 
-    ${SUB === 'perf' ? `
+    ${SUB === 'bench' ? `
     <div class="g">
-      <div class="panel s7" id="panel-bench"></div>
-      <div class="panel s5" id="panel-cgt"></div>
+      <div class="panel s12" id="panel-bench"></div>
     </div>
     <div class="g">
       <div class="panel s7" id="panel-discipline"></div>
       <div class="panel s5" id="panel-idle-invest"></div>
     </div>` : ''}
 
+    ${SUB === 'tax' ? `
+    <div class="g">
+      <div class="panel s12" id="panel-cgt"></div>
+    </div>` : ''}
+
     ${SUB === 'book' ? `<div id="panel-book"></div>` : ''}
 
   `;
 
-  document.getElementById('inv-subnav').addEventListener('click', (e) => {
-    const btn = e.target.closest('button');
-    if (!btn) return;
-    state.invSub = btn.dataset.sub;
-    renderPage();
-  });
-
-  if (SUB === 'perf') {
+  if (SUB === 'bench') {
     renderBenchmarkPanel('panel-bench', data, d);
-    renderCapitalGainsPanel('panel-cgt', data.ledger);
     renderDisciplinePanel('panel-discipline', data);
     renderIdlePanel('panel-idle-invest', data, d, ['투자 자산'], '방치된 증권 계좌');
   }
+  if (SUB === 'tax') renderCapitalGainsPanel('panel-cgt', data.ledger);
   if (SUB === 'book') renderBookPage('panel-book', data, d);
 
   if (SUB === 'overview') {
@@ -13968,23 +13969,6 @@ function renderBudgetSettings(container, data, d) {
 
   const cats = [...new Set([...Object.keys(avgBy), ...Object.keys(spentBy)])]
     .sort((a, b) => (avgBy[b] || 0) - (avgBy[a] || 0));
-
-  /* 이체 — 대상은 세부분류(토스 증권·NH(CMA) 같은 계좌 이름)가 들고 있다 */
-  const isMove = r => r.major.includes('이체') || r.major.includes('자산');
-  const trAvg = {};
-  for (let i = 1; i <= 3; i++) {
-    const k = shiftMonthKey(mk, -i);
-    ledger.filter(r => ledgerMonthKey(r.date) === k && isMove(r))
-      .forEach(r => { const t = r.item || r.minor || '기타';
-        trAvg[t] = (trAvg[t] || 0) + r.amount / 3; });
-  }
-  const trNow = {};
-  ledger.filter(r => ledgerMonthKey(r.date) === mk && isMove(r))
-    .forEach(r => { const t = r.item || r.minor || '기타';
-      trNow[t] = (trNow[t] || 0) + r.amount; });
-  const trSet = state.transferGoals || {};
-  const trDests = [...new Set([...Object.keys(trAvg), ...Object.keys(trNow), ...Object.keys(trSet)])]
-    .sort((a, b) => (trAvg[b] || 0) - (trAvg[a] || 0));
   const set = state.budgets || {};
   const setSum = cats.reduce((a, c) => a + (Number(set[c]) || 0), 0);
 
@@ -14039,37 +14023,6 @@ function renderBudgetSettings(container, data, d) {
       </div>
       <div class="bud-note">왼쪽 숫자는 이번 달 실지출입니다. 막대는 예산(없으면 평균) 대비 비율이고요.</div>
       <div class="bud-acts"><button class="nav-act accent" id="budc-save">분류별 저장</button></div>
-    </div>
-
-    <div class="bud-card" style="margin-top:var(--gap);">
-      <div class="bud-row" style="margin-bottom:14px;">
-        <div class="bud-lab">
-          <b>이체 월 기댓값</b>
-          <span>지출 예산이 "넘지 마라"면 이건 "이만큼은 보내라"입니다</span>
-        </div>
-        <button class="nav-act" id="budt-avg">전부 평균으로 채우기</button>
-      </div>
-      <div class="budc">
-        ${trDests.length ? trDests.map(c => {
-          const base = Math.round(trAvg[c] || 0);
-          const exp = Number(trSet[c]) || 0;
-          const done = trNow[c] || 0;
-          const goal = exp || base;
-          const pct = goal ? (done / goal) * 100 : 0;
-          return `<div class="budc-row">
-            <span class="c">${enEsc(c)}</span>
-            <span class="bar"><i class="${pct >= 100 ? 'done' : 'tr'}" style="width:${Math.min(100, pct)}%"></i></span>
-            <span class="now mono">${enComma(Math.round(done))}</span>
-            <input class="budt-in mono" data-dest="${enEsc(c)}" type="text" inputmode="numeric"
-              value="${exp ? enComma(exp) : ''}" placeholder="${enComma(base)}">
-          </div>`;
-        }).join('') : '<div class="hm-none">이체 기록이 아직 없어요.</div>'}
-      </div>
-      <div class="bud-note">
-        왼쪽 숫자는 이번 달 실제 이체액입니다. 막대가 꽉 차면 그 달 몫을 다 보낸 거예요.
-        이체는 쓴 돈이 아니라 옮긴 돈이라 순자산에서는 그대로 남습니다.
-      </div>
-      <div class="bud-acts"><button class="nav-act accent" id="budt-save">이체 기댓값 저장</button></div>
     </div>`;
 
   const commafy = (el) => el.addEventListener('input', () => {
@@ -14096,8 +14049,74 @@ function renderBudgetSettings(container, data, d) {
     });
     budgetCatSave(v);
   });
+}
 
-  container.querySelectorAll('.budt-in').forEach(commafy);
+/* ── 설정 › 적립 ──────────────────────────────────────────
+   예산이 "이만큼 넘지 마라"면 적립은 "이만큼은 보내라"다. 방향만 반대고 구조는 같다.
+   이체 대상은 세부분류(토스 증권·NH(CMA) 같은 계좌 이름)가 들고 있다. */
+function renderSavingPlanSettings(container, data, d) {
+  const ledger = data.ledger || [];
+  const mk = thisMonthKey();
+  const isMove = r => r.major.includes('이체') || r.major.includes('자산');
+
+  const trAvg = {};
+  for (let i = 1; i <= 3; i++) {
+    const k = shiftMonthKey(mk, -i);
+    ledger.filter(r => ledgerMonthKey(r.date) === k && isMove(r))
+      .forEach(r => { const t = r.item || r.minor || '기타';
+        trAvg[t] = (trAvg[t] || 0) + r.amount / 3; });
+  }
+  const trNow = {};
+  ledger.filter(r => ledgerMonthKey(r.date) === mk && isMove(r))
+    .forEach(r => { const t = r.item || r.minor || '기타';
+      trNow[t] = (trNow[t] || 0) + r.amount; });
+
+  const trSet = state.transferGoals || {};
+  const dests = [...new Set([...Object.keys(trAvg), ...Object.keys(trNow), ...Object.keys(trSet)])]
+    .sort((a, b) => (trAvg[b] || 0) - (trAvg[a] || 0));
+  const goalSum = dests.reduce((a, c) => a + (Number(trSet[c]) || 0), 0);
+  const doneSum = dests.reduce((a, c) => a + (trNow[c] || 0), 0);
+
+  container.innerHTML = `
+    <div class="panel-title" style="margin:2px 0 14px;"><div>적립</div></div>
+
+    <div class="bud-card">
+      <div class="bud-row" style="margin-bottom:14px;">
+        <div class="bud-lab">
+          <b>이체 대상별 월 기댓값</b>
+          <span>비워 두면 최근 3개월 평균을 기준선으로 씁니다</span>
+        </div>
+        <button class="nav-act" id="budt-avg">전부 평균으로 채우기</button>
+      </div>
+      <div class="budc">
+        ${dests.length ? dests.map(c => {
+          const base = Math.round(trAvg[c] || 0);
+          const exp = Number(trSet[c]) || 0;
+          const done = trNow[c] || 0;
+          const goal = exp || base;
+          const pct = goal ? (done / goal) * 100 : 0;
+          return `<div class="budc-row">
+            <span class="c">${enEsc(c)}</span>
+            <span class="bar"><i class="${pct >= 100 ? 'done' : 'tr'}" style="width:${Math.min(100, pct)}%"></i></span>
+            <span class="now mono">${enComma(Math.round(done))}</span>
+            <input class="budt-in mono" data-dest="${enEsc(c)}" type="text" inputmode="numeric"
+              value="${exp ? enComma(exp) : ''}" placeholder="${enComma(base)}">
+          </div>`;
+        }).join('') : '<div class="hm-none">이체 기록이 아직 없어요.</div>'}
+      </div>
+      <div class="bud-note">
+        ${goalSum ? `이번 달 <b>${enComma(Math.round(doneSum))}</b> / 기댓값 <b>${enComma(goalSum)}</b>원`
+                  : '아직 기댓값을 정하지 않았습니다.'}
+        · 왼쪽 숫자는 이번 달 실제 이체액이고, 막대가 꽉 차면 그 달 몫을 다 보낸 것입니다.
+        이체는 쓴 돈이 아니라 옮긴 돈이라 순자산에서는 그대로 남습니다.
+      </div>
+      <div class="bud-acts"><button class="nav-act accent" id="budt-save">저장</button></div>
+    </div>`;
+
+  container.querySelectorAll('.budt-in').forEach(el => el.addEventListener('input', () => {
+    const raw = el.value.replace(/[^\d]/g, '');
+    el.value = raw ? enComma(raw) : '';
+  }));
   document.getElementById('budt-avg').addEventListener('click', () => {
     container.querySelectorAll('.budt-in').forEach(el => { if (!el.value) el.value = el.placeholder; });
     enToast('저장을 눌러야 반영됩니다');
@@ -14127,7 +14146,7 @@ async function transferGoalSave(map) {
   } catch (e) {
     enToast('저장하지 못했습니다 — ' + (e.message || e));
   } finally {
-    if (btn) { btn.disabled = false; btn.textContent = '이체 기댓값 저장'; }
+    if (btn) { btn.disabled = false; btn.textContent = '저장'; }
   }
 }
 
