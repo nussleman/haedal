@@ -61,7 +61,7 @@ const state = {
   entryView: 'list',      // 입출금 보기: list | calendar
   ledgerFilter: { q: '', major: 'all', page: 1, pageSize: 50 },
   charts: {},
-  budgets: {},          // 카테고리별 사용자 지정 예산 (window.storage에 저장)
+  budgets: {},          // 분류별 예산 (Supabase app_settings)
   budgetsLoaded: false,
   incomeRange: 12,
   incomeTotalMode: 'category',
@@ -1050,21 +1050,23 @@ const NAV_ITEMS = [
 /* 2단계는 좌측 레일에 뜬다. solo 는 하위가 하나뿐이라 레일을 띄우지 않는다. */
 const SECTION_SUBS = {
   home:   [['main', '홈']],
-  entry:  [['ledger', '입출금'], ['snapshot', '자산 스냅샷']],
+  entry:  [['#', '입출금'], ['ledger', '입출금 내역'], ['calendar', '캘린더'],
+           ['#', '자산'], ['snapshot', '자산 스냅샷']],
   invest: [['overview', '요약'], ['book', '종목'], ['perf', '벤치마크·세금']],
   goals:  [['main', '목표']],
-  report: [['monthly', '월간'], ['yearly', '연간'],
-           ['networth', '순자산'], ['pension', '연금'], ['savings', '저축']],
+  report: [['#', '기간별'], ['monthly', '월간'], ['yearly', '연간'],
+           ['#', '자산별'], ['networth', '순자산'], ['pension', '연금'], ['savings', '저축']],
   lab:    [['sim', '시뮬레이션'], ['flowmap', '흐름표'], ['fixed', '고정비 검토']],
-  set:    [['cat', '분류'], ['merch', '사용처'], ['acct', '계좌'], ['stock', '종목'],
-           ['fixedm', '고정비 지정'], ['budget', '예산']]
+  set:    [['#', '가계부'], ['cat', '분류'], ['merch', '사용처'],
+           ['fixedm', '고정비 지정'], ['budget', '예산'],
+           ['#', '자산·투자'], ['acct', '계좌'], ['stock', '종목']]
 };
 
 const SECTION_STATE_KEY = { home: 'homeMainSub', entry: 'entrySub', invest: 'invSub',
   goals: 'goalsSub', report: 'reportSub', lab: 'labSub', set: 'setSub' };
 
 function currentSub(section) {
-  const subs = SECTION_SUBS[section] || [];
+  const subs = (SECTION_SUBS[section] || []).filter(x => x[0] !== '#');
   const key = SECTION_STATE_KEY[section];
   const cur = state[key];
   return subs.some(x => x[0] === cur) ? cur : (subs[0] ? subs[0][0] : null);
@@ -1096,7 +1098,7 @@ const LEGACY_ROUTE = {
   'status/structure': 'lab/sim',
   'flow': 'report/monthly', 'flow/today': 'home/main',
   'flow/now': 'report/monthly', 'flow/year': 'report/yearly',
-  'flow/calendar': 'entry/ledger', 'flow/flowmap': 'lab/flowmap',
+  'flow/calendar': 'entry/calendar', 'flow/flowmap': 'lab/flowmap',
   'assets': 'report/networth', 'assets/overview': 'report/networth',
   'assets/investment': 'invest/overview', 'invest/main': 'invest/overview', 'assets/pension': 'report/pension',
   'assets/savings': 'report/savings',
@@ -2182,7 +2184,7 @@ function renderNav() {
   /* 상단에는 최상위 개념만 둔다. 하위는 좌측 레일이 맡는다. */
   bar.innerHTML = NAV_ITEMS.map(n => {
     const on = n.id === state.page;
-    const v = currentSub(n.id) || ((SECTION_SUBS[n.id] || [])[0] || ['main'])[0];
+    const v = currentSub(n.id) || ((SECTION_SUBS[n.id] || []).filter(x => x[0] !== '#')[0] || ['main'])[0];
     return `<button class="nav-btn${on ? ' active' : ''}" data-page="${n.id}" data-sub="${v}">${n.label}${
       navSectionDot(n.id) ? '<span class="nav-dot" title="이번 달 자산 스냅샷이 아직 비어 있어요"></span>' : ''}</button>`;
   }).join('');
@@ -2196,21 +2198,23 @@ function renderSubNav() {
   const n = NAV_ITEMS.find(x => x.id === state.page);
   const subs = SECTION_SUBS[state.page] || [];
   const layout = document.querySelector('.site-layout');
-  if (!n || n.solo || subs.length < 2) {
+  if (!n || n.solo || subs.filter(x => x[0] !== '#').length < 2) {
     el.innerHTML = '';
     if (layout) layout.classList.add('no-rail');
     return;
   }
   if (layout) layout.classList.remove('no-rail');
   const cur = currentSub(state.page);
-  el.innerHTML = `<div class="sub-title">${n.label}</div>` + subs.map(([v, l]) =>
-    `<button class="sub-btn${v === cur ? ' on' : ''}" data-sub="${v}">${l}${
-      navNeedsDot(state.page, v) ? '<span class="nav-dot"></span>' : ''}</button>`).join('');
+  /* ['#', '기간별'] 처럼 v 가 '#' 이면 항목이 아니라 묶음 제목이다. */
+  el.innerHTML = subs.map(([v, l]) => v === '#'
+    ? `<div class="sub-cat">${l}</div>`
+    : `<button class="sub-btn${v === cur ? ' on' : ''}" data-sub="${v}">${l}${
+        navNeedsDot(state.page, v) ? '<span class="nav-dot"></span>' : ''}</button>`).join('');
 }
 
 /* 섹션 버튼에 점을 찍을지 — 하위 중 하나라도 알림이 있으면 */
 function navSectionDot(sec) {
-  return (SECTION_SUBS[sec] || []).some(([v]) => navNeedsDot(sec, v));
+  return (SECTION_SUBS[sec] || []).some(([v]) => v !== '#' && navNeedsDot(sec, v));
 }
 
 function renderPage() {
@@ -2234,7 +2238,8 @@ function renderPage() {
 
   } else if (section === 'entry') {
     if (SUB === 'snapshot') renderSnapshotPage(body);
-    else renderEntryLedger(body, data, d);
+    else if (SUB === 'calendar') renderEntryPane(body, data, d, 'calendar');
+    else renderEntryPane(body, data, d, 'list');
 
   } else if (section === 'invest') {
     renderInvestmentPage(body, data, d);
@@ -2261,28 +2266,19 @@ function renderPage() {
   }
 }
 
-/* 입출금 — 목록과 캘린더는 같은 자료를 다르게 보는 것이라 한 화면의 토글로 둔다. */
-function renderEntryLedger(body, data, d) {
+/* 입출금 — 목록과 캘린더는 좌측 메뉴로 갈린다. 기록 버튼만 공통으로 얹는다. */
+function renderEntryPane(body, data, d, view) {
   body.innerHTML = `
     <div class="entry-viewbar">
-      <div class="vseg">
-        <button data-v="list"${state.entryView === 'calendar' ? '' : ' class="on"'}>목록</button>
-        <button data-v="calendar"${state.entryView === 'calendar' ? ' class="on"' : ''}>캘린더</button>
-      </div>
       <button class="nav-act accent" id="entry-inline">＋ 기록<kbd>N</kbd></button>
     </div>
     <div id="entry-body"></div>`;
-  body.querySelector('.vseg').addEventListener('click', (e) => {
-    const b = e.target.closest('button[data-v]');
-    if (!b || b.dataset.v === state.entryView) return;
-    state.entryView = b.dataset.v;
-    renderPage();
-  });
   body.querySelector('#entry-inline').addEventListener('click', () => enOpen());
   const host = document.getElementById('entry-body');
-  if (state.entryView === 'calendar') renderCalendarPage(host, data, d);
+  if (view === 'calendar') renderCalendarPage(host, data, d);
   else renderLedgerShell(host);
 }
+
 
 
 
@@ -5317,7 +5313,6 @@ function renderGoalBoard(data, d) {
 
   host.innerHTML = `
     <div class="g" style="margin-bottom:20px;">
-      <div class="panel s12" id="panel-goal-ladder"></div>
     </div>
     <div class="g">
       <div class="panel s2" id="panel-goal-side"></div>
@@ -5344,8 +5339,6 @@ function renderGoalBoard(data, d) {
       </div>
     </div>
   `;
-
-  renderGoalLadder('panel-goal-ladder', allGoals, d, extra);
 
   /* --- 사이드: 상태 요약 --- */
   const byStatus = {};
@@ -9689,7 +9682,6 @@ function renderHomePage(container, data, d) {
   const expense = cur.filter(r => r.major.includes('지출')).reduce((a, r) => a + netExpenseOf(r), 0);
   const budget = monthlyExpenseTarget(data, ledger, mk);
 
-  /* 예산 페이스 — 달의 몇 %가 지났는지와 얼마나 썼는지를 나란히 본다 */
   const now = new Date();
   const days = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
   const elapsed = (now.getDate() / days) * 100;
@@ -9701,68 +9693,67 @@ function renderHomePage(container, data, d) {
   const debt = totalDebt();
   const net = d.totalAssets - debt;
   const up = d.deltaAssets !== null && d.deltaAssets >= 0;
-
+  const alloc = Object.entries(d.displayAllocation || {}).sort((a, b) => b[1] - a[1]);
   const recent = ledger.slice().sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, 8);
 
+  /* 상자는 한 겹만 쓴다. 상자 안에 또 상자를 두지 않고 구분선과 여백으로만 나눈다. */
   container.innerHTML = `
-    <div class="home-grid">
-      <section class="card home-net">
-        <div class="hd"><b>순자산</b><span>${enEsc(d.latestMonth || '')}</span></div>
-        <div class="big mono">${formatWon(net)}</div>
-        ${d.deltaAssets === null ? '' : `<div class="delta ${up ? 'up' : 'down'}">
-          ${up ? '▲' : '▼'} ${formatWon(Math.abs(d.deltaAssets))}
-          <span>전월 대비${d.deltaPct === null ? '' : ` ${d.deltaPct.toFixed(1)}%`}</span></div>`}
-        ${debt ? `<div class="sublt">총자산 ${formatWon(d.totalAssets)} − 부채 ${formatWon(debt)}</div>` : ''}
-        <div class="home-alloc">
-          ${Object.entries(d.displayAllocation || {}).sort((a, b) => b[1] - a[1]).map(([k, v]) => `
-            <div class="al-row"><span class="al-n">${enEsc(k)}</span>
-              <span class="al-b"><i style="width:${d.totalAssets ? (v / d.totalAssets) * 100 : 0}%"></i></span>
-              <span class="al-v mono">${formatWon(v)}</span></div>`).join('')}
+    <div class="hm">
+      <section class="hm-box hm-net">
+        <div class="hm-hd"><b>순자산</b><span>${enEsc(d.latestMonth || '')}</span></div>
+        <div class="hm-big mono">${formatWon(net)}</div>
+        <div class="hm-sub">
+          ${d.deltaAssets === null ? '<span>전월 비교 없음</span>' : `
+            <span class="${up ? 'up' : 'down'}">${up ? '▲' : '▼'} ${formatWon(Math.abs(d.deltaAssets))}</span>
+            <span>전월 대비${d.deltaPct === null ? '' : ` ${d.deltaPct.toFixed(1)}%`}</span>`}
+          ${debt ? `<span>부채 ${formatWon(debt)} 차감</span>` : ''}
+        </div>
+        <div class="hm-alloc">
+          ${alloc.map(([k, v]) => `
+            <div class="hm-al">
+              <span class="n">${enEsc(k)}</span>
+              <span class="b"><i style="width:${d.totalAssets ? (v / d.totalAssets) * 100 : 0}%"></i></span>
+              <span class="v mono">${formatWon(v)}</span>
+            </div>`).join('')}
         </div>
       </section>
 
-      <section class="card home-month">
-        <div class="hd"><b>이번 달</b><span>${mk.slice(5)}월 · ${now.getDate()}일째</span></div>
-        <div class="mrow">
-          <div class="m-cell"><span>수입</span><b class="mono in">${formatWon(income)}</b></div>
-          <div class="m-cell"><span>실지출</span><b class="mono out">${formatWon(expense)}</b></div>
-          <div class="m-cell"><span>저축률</span><b class="mono">${
+      <section class="hm-box hm-month">
+        <div class="hm-hd"><b>이번 달</b><span>${mk.slice(5)}월 ${now.getDate()}일</span></div>
+        <div class="hm-tri">
+          <div><span>수입</span><b class="mono in">${formatWon(income)}</b></div>
+          <div><span>실지출</span><b class="mono out">${formatWon(expense)}</b></div>
+          <div><span>저축률</span><b class="mono">${
             income > 0 ? (((income - expense) / income) * 100).toFixed(1) + '%' : '—'}</b></div>
         </div>
         ${budget ? `
-          <div class="pace">
-            <div class="pace-bar">
-              <i class="used ${used > elapsed ? 'over' : ''}" style="width:${Math.min(100, used)}%"></i>
-              <span class="mark" style="left:${Math.min(100, elapsed)}%"></span>
+          <div class="hm-pace">
+            <div class="hm-bar">
+              <i class="${used > elapsed ? 'over' : ''}" style="width:${Math.min(100, used)}%"></i>
+              <span class="tick" style="left:${Math.min(100, elapsed)}%"></span>
             </div>
-            <div class="pace-lab">
-              <span>예산 ${formatWon(budget.amount)} 중 <b>${used.toFixed(0)}%</b> 사용</span>
-              <span>${used > elapsed ? '페이스보다 빠릅니다' : '페이스 안쪽입니다'}</span>
+            <div class="hm-paceL">
+              <span>예산 ${formatWon(budget.amount)} 중 <b>${used.toFixed(0)}%</b></span>
+              <span class="${used > elapsed ? 'out' : 'in'}">${used > elapsed ? '페이스보다 빠름' : '페이스 안쪽'}</span>
             </div>
-            <div class="pace-sub">
-              남은 예산 <b class="${remain < 0 ? 'out' : ''}">${formatWon(remain)}</b>
-              ${perDay !== null ? ` · 하루 ${formatWon(perDay)}씩 쓸 수 있어요` : ''}
-              <em>(${budget.source})</em>
-            </div>
+            <div class="hm-paceS">남은 예산 <b class="${remain < 0 ? 'out' : ''}">${formatWon(remain)}</b>${
+              perDay !== null ? ` · 하루 ${formatWon(perDay)}` : ''} · ${enEsc(budget.source)}</div>
           </div>`
-        : `<div class="settings-note" style="margin-top:12px;">
-            예산 기준이 없어요. <a href="#set/budget" class="lnk">설정 › 예산</a>에서 월 지출 상한을 정하면
-            여기에 페이스가 표시됩니다.</div>`}
+        : `<div class="hm-paceS" style="margin-top:16px;">예산 기준이 없어요.
+             <button class="hm-lnk" data-go="set/budget">설정 › 예산</button>에서 정하면 페이스가 보입니다.</div>`}
       </section>
     </div>
 
-    <div class="panel-title" style="margin:20px 0 10px;">
-      <div>진행 중인 목표</div>
-      <button class="ptag lnk" data-go="goals/main">전체 보기</button>
-    </div>
-    <div id="home-goals"></div>
+    <section class="hm-box hm-goals">
+      <div class="hm-hd"><b>진행 중인 목표</b>
+        <button class="hm-lnk" data-go="goals/main">전체 보기</button></div>
+      <div id="home-goals"></div>
+    </section>
 
-    <div class="panel-title" style="margin:20px 0 10px;">
-      <div>최근 거래</div>
-      <button class="ptag lnk" data-go="entry/ledger">전체 보기</button>
-    </div>
-    <div class="card home-recent">
-      ${recent.length ? `<table class="home-rtab"><tbody>${recent.map(r => {
+    <section class="hm-box hm-recent">
+      <div class="hm-hd"><b>최근 거래</b>
+        <button class="hm-lnk" data-go="entry/ledger">전체 보기</button></div>
+      ${recent.length ? `<table class="hm-tab"><tbody>${recent.map(r => {
         const kind = r.major.includes('수입') ? 'in' : r.major.includes('지출') ? 'out'
                    : r.major.includes('이체') ? 'tr' : 'as';
         const sign = kind === 'in' ? '+' : kind === 'out' ? '−' : '';
@@ -9770,12 +9761,11 @@ function renderHomePage(container, data, d) {
           <td class="dt mono">${enEsc(String(r.date).slice(5))}</td>
           <td class="nm">${enEsc(r.vendor || r.item || r.minor || '')}
             <span>${enEsc([r.item, r.minor].filter(Boolean).join(' › '))}</span></td>
-          <td class="kd"><span class="k-${kind}">${enEsc(r.major)}</span></td>
           <td class="am mono k-${kind}">${sign}${enComma(Math.abs(
             kind === 'out' ? netExpenseOf(r) : r.amount))}</td>
         </tr>`;
-      }).join('')}</tbody></table>` : '<div class="en-empty">아직 기록이 없어요.</div>'}
-    </div>`;
+      }).join('')}</tbody></table>` : '<div class="hm-none">아직 기록이 없어요.</div>'}
+    </section>`;
 
   container.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', () => {
     const [p, v] = b.dataset.go.split('/');
@@ -13124,16 +13114,25 @@ function renderSavingsPage(container, data, d, scopeKey) {
   drawSavContrib();
 }
 
+/* 분류별 예산은 localStorage shim 에 있었다 — 브라우저를 바꾸면 사라진다.
+   가계부 본체와 같은 곳에 두는 게 맞아서 Supabase app_settings 로 옮긴다. */
 async function loadBudgets() {
   try {
-    const res = await window.storage.get('category-budgets', false);
-    if (res && res.value) state.budgets = JSON.parse(res.value);
-  } catch (e) { /* no saved budgets yet */ }
+    const sb = await enClient();
+    const { data } = await sb.from('app_settings').select('value')
+      .eq('key', 'budget_categories').maybeSingle();
+    if (data && data.value) state.budgets = data.value;
+  } catch (e) { /* 아직 저장된 값이 없다 */ }
   state.budgetsLoaded = true;
 }
 
 async function saveBudgets() {
-  try { await window.storage.set('category-budgets', JSON.stringify(state.budgets), false); } catch (e) {}
+  try {
+    const sb = await enClient();
+    await sb.from('app_settings').upsert(
+      { key: 'budget_categories', value: state.budgets, updated_at: new Date().toISOString() },
+      { onConflict: 'owner_id,key' });
+  } catch (e) {}
 }
 
 /* ================= 현황 › 자산 스냅샷 =================
@@ -13922,29 +13921,42 @@ function dbmRenderFor(host, sub) {
 }
 
 /* ── 설정 › 예산 ──────────────────────────────────────────
-   예산 금액은 목표의 "월 지출 N만원" 한 줄이 원본이다. 별도 저장소를 만들면
-   목표와 예산이 따로 놀아 둘 중 뭘 믿을지 모르게 되므로, 여기서 목표를 직접 고친다. */
+   총액은 목표의 "월 지출 N만원" 한 줄이 원본이다. 별도 저장소를 만들면 목표와 예산이
+   따로 놀아 둘 중 뭘 믿을지 모르게 되므로 여기서 목표를 직접 고친다.
+   분류별 금액은 app_settings 에 따로 둔다 — 목표로 두면 목표 화면이 분류 수만큼 지저분해진다. */
 function renderBudgetSettings(container, data, d) {
-  const cur = monthlyExpenseTarget(data, data.ledger || [], thisMonthKey());
-  const avg3 = (() => {
-    const cm = thisMonthKey(); const vals = [];
-    for (let i = 1; i <= 3; i++) {
-      const k = shiftMonthKey(cm, -i);
-      const sum = (data.ledger || []).filter(r => ledgerMonthKey(r.date) === k && r.major.includes('지출'))
-        .reduce((a, r) => a + netExpenseOf(r), 0);
-      if (sum > 0) vals.push(sum);
-    }
-    return vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : null;
-  })();
+  const ledger = data.ledger || [];
+  const mk = thisMonthKey();
+  const cur = monthlyExpenseTarget(data, ledger, mk);
+
+  /* 분류별 기준선 = 마감된 최근 3개월 실지출 평균 */
+  const avgBy = {}; let avg3 = 0;
+  for (let i = 1; i <= 3; i++) {
+    const k = shiftMonthKey(mk, -i);
+    ledger.filter(r => ledgerMonthKey(r.date) === k && r.major.includes('지출'))
+      .forEach(r => { const c = r.item || '기타';
+        avgBy[c] = (avgBy[c] || 0) + netExpenseOf(r) / 3; });
+  }
+  Object.values(avgBy).forEach(v => avg3 += v);
+  avg3 = Math.round(avg3);
+
+  const spentBy = {};
+  ledger.filter(r => ledgerMonthKey(r.date) === mk && r.major.includes('지출'))
+    .forEach(r => { const c = r.item || '기타';
+      spentBy[c] = (spentBy[c] || 0) + netExpenseOf(r); });
+
+  const cats = [...new Set([...Object.keys(avgBy), ...Object.keys(spentBy)])]
+    .sort((a, b) => (avgBy[b] || 0) - (avgBy[a] || 0));
+  const set = state.budgets || {};
+  const setSum = cats.reduce((a, c) => a + (Number(set[c]) || 0), 0);
 
   container.innerHTML = `
-    <div class="panel-title" style="margin:2px 0 14px;">
-      <div>예산</div><span class="ptag">월 지출 상한</span>
-    </div>
-    <div class="card bud-card">
+    <div class="panel-title" style="margin:2px 0 14px;"><div>예산</div></div>
+
+    <div class="bud-card">
       <div class="bud-row">
         <div class="bud-lab">
-          <b>월 지출 예산</b>
+          <b>월 지출 총액</b>
           <span>홈과 리포트의 예산 페이스가 이 값을 기준으로 계산됩니다</span>
         </div>
         <div class="bud-inp">
@@ -13954,29 +13966,67 @@ function renderBudgetSettings(container, data, d) {
         </div>
       </div>
       <div class="bud-note">
-        현재 기준: <b>${cur ? cur.source : '없음'}</b>${cur && cur.label ? ` · ${enEsc(cur.label)}` : ''}
-        ${avg3 ? ` · 최근 3개월 실지출 평균 ${enComma(avg3)}원` : ''}
+        현재 기준 <b>${cur ? enEsc(cur.source) : '없음'}</b>${avg3 ? ` · 최근 3개월 실지출 평균 ${enComma(avg3)}원` : ''}
+        ${setSum ? ` · 분류별 합계 ${enComma(setSum)}원` : ''}
       </div>
       <div class="bud-acts">
-        <button class="nav-act accent" id="bud-save">저장</button>
+        <button class="nav-act accent" id="bud-save">총액 저장</button>
         ${avg3 ? `<button class="nav-act" id="bud-avg">최근 3개월 평균으로</button>` : ''}
         <button class="nav-act" id="bud-clear">해제</button>
       </div>
-      <div class="settings-note" style="margin-top:12px;">
-        해제하면 목표에서 내려가고, 예산 페이스는 최근 3개월 실지출 평균을 기준으로 되돌아갑니다.
-        예산·실지출 모두 회사 환급분을 뺀 금액으로 맞춰져 있습니다.
+    </div>
+
+    <div class="bud-card" style="margin-top:var(--gap);">
+      <div class="bud-row" style="margin-bottom:14px;">
+        <div class="bud-lab">
+          <b>지출 분류별 예산</b>
+          <span>비워 두면 최근 3개월 평균을 기준선으로 씁니다</span>
+        </div>
+        <button class="nav-act" id="budc-avg">전부 평균으로 채우기</button>
       </div>
+      <div class="budc">
+        ${cats.length ? cats.map(c => {
+          const base = Math.round(avgBy[c] || 0);
+          const lim = Number(set[c]) || 0;
+          const used = spentBy[c] || 0;
+          const pct = lim ? (used / lim) * 100 : (base ? (used / base) * 100 : 0);
+          return `<div class="budc-row">
+            <span class="c">${enEsc(c)}</span>
+            <span class="bar"><i class="${pct > 100 ? 'over' : ''}" style="width:${Math.min(100, pct)}%"></i></span>
+            <span class="now mono">${enComma(Math.round(used))}</span>
+            <input class="budc-in mono" data-cat="${enEsc(c)}" type="text" inputmode="numeric"
+              value="${lim ? enComma(lim) : ''}" placeholder="${enComma(base)}">
+          </div>`;
+        }).join('') : '<div class="hm-none">지출 기록이 아직 없어요.</div>'}
+      </div>
+      <div class="bud-note">왼쪽 숫자는 이번 달 실지출입니다. 막대는 예산(없으면 평균) 대비 비율이고요.</div>
+      <div class="bud-acts"><button class="nav-act accent" id="budc-save">분류별 저장</button></div>
     </div>`;
 
-  const amt = document.getElementById('bud-amt');
-  amt.addEventListener('input', () => {
-    const raw = amt.value.replace(/[^\d]/g, '');
-    amt.value = raw ? enComma(raw) : '';
+  const commafy = (el) => el.addEventListener('input', () => {
+    const raw = el.value.replace(/[^\d]/g, '');
+    el.value = raw ? enComma(raw) : '';
   });
+  const amt = document.getElementById('bud-amt');
+  commafy(amt);
+  container.querySelectorAll('.budc-in').forEach(commafy);
+
   const avgBtn = document.getElementById('bud-avg');
   if (avgBtn) avgBtn.addEventListener('click', () => { amt.value = enComma(avg3); amt.focus(); });
   document.getElementById('bud-save').addEventListener('click', () => budgetSave(amt.value));
   document.getElementById('bud-clear').addEventListener('click', () => budgetSave(''));
+  document.getElementById('budc-avg').addEventListener('click', () => {
+    container.querySelectorAll('.budc-in').forEach(el => { if (!el.value) el.value = el.placeholder; });
+    enToast('저장을 눌러야 반영됩니다');
+  });
+  document.getElementById('budc-save').addEventListener('click', () => {
+    const v = {};
+    container.querySelectorAll('.budc-in').forEach(el => {
+      const n = Number(el.value.replace(/[^\d]/g, ''));
+      if (n) v[el.dataset.cat] = n;
+    });
+    budgetCatSave(v);
+  });
 }
 
 async function budgetSave(raw) {
@@ -14002,7 +14052,26 @@ async function budgetSave(raw) {
   } catch (e) {
     enToast('저장하지 못했습니다 — ' + (e.message || e));
   } finally {
-    if (btn) { btn.disabled = false; btn.textContent = '저장'; }
+    if (btn) { btn.disabled = false; btn.textContent = '총액 저장'; }
+  }
+}
+
+async function budgetCatSave(map) {
+  const btn = document.getElementById('budc-save');
+  if (btn) { btn.disabled = true; btn.textContent = '저장 중…'; }
+  try {
+    const sb = await enClient();
+    const { error } = await sb.from('app_settings')
+      .upsert({ key: 'budget_categories', value: map, updated_at: new Date().toISOString() },
+              { onConflict: 'owner_id,key' });
+    if (error) throw error;
+    state.budgets = map;
+    enToast(`분류별 예산 ${Object.keys(map).length}건을 저장했습니다`);
+    renderPage();
+  } catch (e) {
+    enToast('저장하지 못했습니다 — ' + (e.message || e));
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '분류별 저장'; }
   }
 }
 
