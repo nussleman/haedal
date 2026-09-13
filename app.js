@@ -2093,15 +2093,13 @@ function renderShell() {
           <span class="tagline">당신의 자산관리 파트너</span>
         </div>
         <div class="sync-box">
+          <button class="nav-act accent" id="entry-btn" title="가계부 기록 (N)">＋ 기록<kbd>N</kbd></button>
           <button class="hdr-btn" id="signout-btn">로그아웃</button>
         </div>
       </div>
       <div id="banner-slot"></div>
       <div class="navrow">
         <nav class="navbar" id="navbar"></nav>
-        <div class="navacts">
-          <button class="nav-act accent" id="entry-btn" title="가계부 기록 (N)">＋ 기록<kbd>N</kbd></button>
-        </div>
       </div>
     </div>
     <div class="site-layout">
@@ -2271,12 +2269,7 @@ function renderPage() {
 
 /* 입출금 — 목록과 캘린더는 좌측 메뉴로 갈린다. 기록 버튼만 공통으로 얹는다. */
 function renderEntryPane(body, data, d, view) {
-  body.innerHTML = `
-    <div class="entry-viewbar">
-      <button class="nav-act accent" id="entry-inline">＋ 기록<kbd>N</kbd></button>
-    </div>
-    <div id="entry-body"></div>`;
-  body.querySelector('#entry-inline').addEventListener('click', () => enOpen());
+  body.innerHTML = '<div id="entry-body"></div>';
   const host = document.getElementById('entry-body');
   if (view === 'calendar') renderCalendarPage(host, data, d);
   else renderLedgerShell(host);
@@ -9677,6 +9670,133 @@ const SAVE_RANGES = [[6, '6개월'], [12, '12개월'], [24, '24개월'], ['all',
 /* 홈 — 두 축(현금흐름·자산)이 만나는 단 하나의 화면.
    "이번 달 자산이 얼마 늘었고, 그게 아껴서인지 굴려서인지"를 먼저 보여준다.
    본체는 아래 renderSavingFlowPage 를 그대로 쓴다. */
+/* 홈에 올릴 목표는 이번 분기 것만. 시기가 반기 단위로 적혀 있으면 그 반기에
+   이번 분기가 포함되는지로 판단한다. 시기가 비어 있는 목표는 홈에 올리지 않는다. */
+function homeQuarterGoals(data, d) {
+  const now = new Date();
+  const y = now.getFullYear(), q = Math.floor(now.getMonth() / 3) + 1, h = q <= 2 ? 1 : 2;
+  const extra = goalMetricExtra(data, d);
+  const rows = (data.goals || [])
+    .filter(g => pickGoalField(g, 'title'))
+    .filter(g => String(pickGoalField(g, 'status') || '').indexOf('중단') < 0)
+    .map(g => {
+      const p = parseGoalPeriod(pickGoalField(g, 'period'));
+      if (!p || p.y !== y || p.h !== h) return null;
+      const pr = goalProgressOf(g, d, extra);
+      return { title: pickGoalField(g, 'title'), pr };
+    })
+    .filter(Boolean);
+
+  if (!rows.length) return `<div class="hm-none">${y}년 ${h === 1 ? '상' : '하'}반기로 잡힌 목표가 없어요.</div>`;
+
+  /* 덜 된 것부터 위로 — 신경 써야 할 순서다 */
+  const pctOf = r => {
+    if (!r.pr || !r.pr.target) return null;
+    const raw = (r.pr.current / r.pr.target) * 100;
+    return r.pr.invert ? Math.max(0, 200 - raw) : raw;
+  };
+  rows.sort((a, b) => (pctOf(a) ?? 999) - (pctOf(b) ?? 999));
+
+  return `<div class="hm-gl">${rows.slice(0, 6).map(r => {
+    const pct = pctOf(r);
+    const done = pct !== null && pct >= 100;
+    return `<div class="hm-glr">
+      <span class="t">${enEsc(r.title)}</span>
+      <span class="b"><i class="${done ? 'done' : ''}" style="width:${
+        pct === null ? 0 : Math.min(100, Math.max(0, pct))}%"></i></span>
+      <span class="p mono">${pct === null ? '—' : Math.round(pct) + '%'}</span>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+/* ── 지금 신경 쓸 3가지 ──────────────────────────────────────
+   손으로 적는 목록이 아니다. 규칙에 걸린 것만 올라오고, 급한 순으로 셋만 남긴다.
+   걸린 게 없으면 아무것도 띄우지 않는다 — 빈 카드를 보여줄 이유가 없다. */
+function homeFocus(data, d, ctx) {
+  const out = [];
+  const push = (sev, title, why, go) => out.push({ sev, title, why, go });
+
+  /* 1. 예산 페이스 */
+  if (ctx.budget && ctx.used > ctx.elapsed + 10) {
+    push(ctx.used > 100 ? 3 : 2, '이번 달 지출 페이스가 빠릅니다',
+      `달의 ${ctx.elapsed.toFixed(0)}%가 지났는데 예산의 ${ctx.used.toFixed(0)}%를 썼어요`,
+      'report/monthly');
+  }
+  /* 2. 분류별 예산 초과 */
+  const over = [];
+  Object.entries(state.budgets || {}).forEach(([c, lim]) => {
+    const used = ctx.spentBy[c] || 0;
+    if (lim && used > lim) over.push([c, used - lim]);
+  });
+  if (over.length) {
+    over.sort((a, b) => b[1] - a[1]);
+    push(2, `${over[0][0]} 예산을 넘었습니다`,
+      over.length > 1 ? `${formatWon(over[0][1])} 초과 · 외 ${over.length - 1}개 분류도 초과`
+                      : `${formatWon(over[0][1])} 초과`,
+      'set/budget');
+  }
+  /* 3. 적립 진도 — 달 후반인데 덜 보냈을 때만 */
+  if (ctx.trGoal && ctx.elapsed > 60) {
+    const p = (ctx.trDone / ctx.trGoal) * 100;
+    if (p < ctx.elapsed - 15) {
+      push(2, '이번 달 적립이 덜 됐습니다',
+        `기댓값 ${formatWon(ctx.trGoal)} 중 ${p.toFixed(0)}% · ${formatWon(ctx.trGoal - ctx.trDone)} 남음`,
+        'set/saving');
+    }
+  }
+  /* 4. 자산 스냅샷 미입력 */
+  if (typeof snapNeedsInput === 'function' && snapNeedsInput()) {
+    push(2, '이번 달 자산 스냅샷이 비어 있습니다',
+      '기록해야 순자산 추이와 목표 진행률이 이어집니다', 'entry/snapshot');
+  }
+  /* 5. 순자산이 줄었을 때 */
+  if (d.deltaAssets !== null && d.deltaAssets < 0) {
+    push(1, '순자산이 전월보다 줄었습니다',
+      `${formatWon(Math.abs(d.deltaAssets))} 감소${d.deltaPct === null ? '' : ` (${d.deltaPct.toFixed(1)}%)`}`,
+      'report/networth');
+  }
+  /* 6. 고정비가 계속 오르는 항목 */
+  const rise = homeRisingFixed(data.ledger || []);
+  if (rise) {
+    push(2, `${rise.name} 고정비가 3개월째 오릅니다`,
+      `${enComma(rise.first)} → ${enComma(rise.last)}원`, 'lab/fixed');
+  }
+  /* 7. 예산 기준 자체가 없을 때 */
+  if (!ctx.budget) {
+    push(1, '월 지출 예산이 정해져 있지 않습니다',
+      '정해두면 홈과 리포트에서 페이스를 볼 수 있어요', 'set/budget');
+  }
+  /* 8. 이번 분기 목표가 비었을 때 */
+  if (ctx.quarterEmpty) {
+    push(1, '이번 분기 목표가 없습니다',
+      '시기를 적어 두면 홈에서 진행률이 보입니다', 'goals/main');
+  }
+
+  out.sort((a, b) => b.sev - a.sev);
+  return out.slice(0, 3);
+}
+
+/* 고정비가 3개월 연속 오른 항목 하나 — 오른 폭이 가장 큰 것 */
+function homeRisingFixed(ledger) {
+  const by = {};
+  ledger.filter(r => r.fixed && r.major.includes('지출')).forEach(r => {
+    const k = r.vendor || r.item || r.minor;
+    const m = ledgerMonthKey(r.date);
+    (by[k] ??= {})[m] = ((by[k][m]) || 0) + netExpenseOf(r);
+  });
+  const cm = thisMonthKey();
+  let best = null;
+  Object.entries(by).forEach(([name, byM]) => {
+    const ms = Object.keys(byM).filter(m => m !== cm).sort().slice(-3);
+    if (ms.length < 3) return;
+    const v = ms.map(m => byM[m]);
+    if (!(v[0] < v[1] && v[1] < v[2])) return;
+    const gap = v[2] - v[0];
+    if (!best || gap > best.gap) best = { name, first: Math.round(v[0]), last: Math.round(v[2]), gap };
+  });
+  return best;
+}
+
 function renderHomePage(container, data, d) {
   const ledger = data.ledger || [];
   const mk = thisMonthKey();
@@ -9704,10 +9824,30 @@ function renderHomePage(container, data, d) {
   const net = d.totalAssets - debt;
   const up = d.deltaAssets !== null && d.deltaAssets >= 0;
   const alloc = Object.entries(d.displayAllocation || {}).sort((a, b) => b[1] - a[1]);
+
+  const spentBy = {};
+  cur.filter(r => r.major.includes('지출'))
+     .forEach(r => { const c = r.minor || '기타'; spentBy[c] = (spentBy[c] || 0) + netExpenseOf(r); });
+  const qGoals = homeQuarterGoals(data, d);
+  const focus = homeFocus(data, d, {
+    budget, used, elapsed, spentBy, trGoal, trDone,
+    quarterEmpty: qGoals.indexOf('hm-none') >= 0
+  });
   const recent = ledger.slice().sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, 8);
 
   /* 상자는 한 겹만 쓴다. 상자 안에 또 상자를 두지 않고 구분선과 여백으로만 나눈다. */
   container.innerHTML = `
+    ${focus.length ? `<section class="hm-box hm-focus">
+      <div class="hm-hd"><b>지금 신경 쓸 것</b><span>규칙에 걸린 것만 올라옵니다</span></div>
+      <div class="hm-fl">
+        ${focus.map((f, i) => `<button class="hm-fr s${f.sev}" data-go="${f.go}">
+          <span class="n">${i + 1}</span>
+          <span class="tx"><b>${enEsc(f.title)}</b><em>${enEsc(f.why)}</em></span>
+          <span class="go">→</span>
+        </button>`).join('')}
+      </div>
+    </section>` : ''}
+
     <div class="hm">
       <section class="hm-box hm-net">
         <div class="hm-hd"><b>순자산</b><span>${enEsc(d.latestMonth || '')}</span></div>
@@ -9764,10 +9904,11 @@ function renderHomePage(container, data, d) {
       </section>
     </div>
 
+    <div class="hm">
     <section class="hm-box hm-goals">
-      <div class="hm-hd"><b>진행 중인 목표</b>
+      <div class="hm-hd"><b>이번 분기 목표</b>
         <button class="hm-lnk" data-go="goals/main">전체 보기</button></div>
-      <div id="home-goals"></div>
+      ${qGoals}
     </section>
 
     <section class="hm-box hm-recent">
@@ -9785,13 +9926,13 @@ function renderHomePage(container, data, d) {
             kind === 'out' ? netExpenseOf(r) : r.amount))}</td>
         </tr>`;
       }).join('')}</tbody></table>` : '<div class="hm-none">아직 기록이 없어요.</div>'}
-    </section>`;
+    </section>
+    </div>`;
 
   container.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', () => {
     const [p, v] = b.dataset.go.split('/');
     goTo(p, v);
   }));
-  renderGoalBoard(data, d);
 }
 
 
@@ -13973,28 +14114,21 @@ function renderBudgetSettings(container, data, d) {
   const setSum = cats.reduce((a, c) => a + (Number(set[c]) || 0), 0);
 
   container.innerHTML = `
+    <div class="bud-wrap">
     <div class="panel-title" style="margin:2px 0 14px;"><div>예산</div></div>
 
     <div class="bud-card">
       <div class="bud-row">
         <div class="bud-lab">
           <b>월 지출 총액</b>
-          <span>홈과 리포트의 예산 페이스가 이 값을 기준으로 계산됩니다</span>
+          <span>아래 분류별 예산을 더한 값입니다. 따로 적지 않습니다.</span>
         </div>
-        <div class="bud-inp">
-          <input id="bud-amt" type="text" inputmode="numeric"
-            value="${cur ? enComma(cur.amount) : ''}" placeholder="${avg3 ? enComma(avg3) : '예: 2,000,000'}">
-          <span>원</span>
-        </div>
+        <div class="bud-total mono" id="bud-total">${enComma(setSum)}<small>원</small></div>
       </div>
       <div class="bud-note">
-        현재 기준 <b>${cur ? enEsc(cur.source) : '없음'}</b>${avg3 ? ` · 최근 3개월 실지출 평균 ${enComma(avg3)}원` : ''}
-        ${setSum ? ` · 분류별 합계 ${enComma(setSum)}원` : ''}
-      </div>
-      <div class="bud-acts">
-        <button class="nav-act accent" id="bud-save">총액 저장</button>
-        ${avg3 ? `<button class="nav-act" id="bud-avg">최근 3개월 평균으로</button>` : ''}
-        <button class="nav-act" id="bud-clear">해제</button>
+        홈과 리포트의 예산 페이스가 이 값을 기준으로 계산됩니다.
+        ${avg3 ? `최근 3개월 실지출 평균은 ${enComma(avg3)}원입니다.` : ''}
+        ${cur && cur.amount !== setSum ? `<br>저장된 기준은 아직 ${enComma(cur.amount)}원입니다 — 아래에서 저장하면 맞춰집니다.` : ''}
       </div>
     </div>
 
@@ -14018,36 +14152,44 @@ function renderBudgetSettings(container, data, d) {
             <span class="now mono">${enComma(Math.round(used))}</span>
             <input class="budc-in mono" data-cat="${enEsc(c)}" type="text" inputmode="numeric"
               value="${lim ? enComma(lim) : ''}" placeholder="${enComma(base)}">
-          </div>`;
+          </div>
+    </div>`;
         }).join('') : '<div class="hm-none">지출 기록이 아직 없어요.</div>'}
       </div>
       <div class="bud-note">왼쪽 숫자는 이번 달 실지출입니다. 막대는 예산(없으면 평균) 대비 비율이고요.</div>
       <div class="bud-acts"><button class="nav-act accent" id="budc-save">분류별 저장</button></div>
     </div>`;
 
+  /* 총액은 분류별 합계를 그대로 따라간다 — 두 곳에 따로 적으면 반드시 어긋난다 */
+  const syncTotal = () => {
+    let sum = 0;
+    container.querySelectorAll('.budc-in').forEach(el => {
+      sum += Number(el.value.replace(/[^\d]/g, '')) || 0;
+    });
+    const t = document.getElementById('bud-total');
+    if (t) t.innerHTML = enComma(sum) + '<small>원</small>';
+    return sum;
+  };
   const commafy = (el) => el.addEventListener('input', () => {
     const raw = el.value.replace(/[^\d]/g, '');
     el.value = raw ? enComma(raw) : '';
+    syncTotal();
   });
-  const amt = document.getElementById('bud-amt');
-  commafy(amt);
   container.querySelectorAll('.budc-in').forEach(commafy);
 
-  const avgBtn = document.getElementById('bud-avg');
-  if (avgBtn) avgBtn.addEventListener('click', () => { amt.value = enComma(avg3); amt.focus(); });
-  document.getElementById('bud-save').addEventListener('click', () => budgetSave(amt.value));
-  document.getElementById('bud-clear').addEventListener('click', () => budgetSave(''));
   document.getElementById('budc-avg').addEventListener('click', () => {
     container.querySelectorAll('.budc-in').forEach(el => { if (!el.value) el.value = el.placeholder; });
+    syncTotal();
     enToast('저장을 눌러야 반영됩니다');
   });
-  document.getElementById('budc-save').addEventListener('click', () => {
+  document.getElementById('budc-save').addEventListener('click', async () => {
     const v = {};
+    let sum = 0;
     container.querySelectorAll('.budc-in').forEach(el => {
       const n = Number(el.value.replace(/[^\d]/g, ''));
-      if (n) v[el.dataset.cat] = n;
+      if (n) { v[el.dataset.cat] = n; sum += n; }
     });
-    budgetCatSave(v);
+    await budgetCatSave(v, sum);
   });
 }
 
@@ -14078,6 +14220,7 @@ function renderSavingPlanSettings(container, data, d) {
   const doneSum = dests.reduce((a, c) => a + (trNow[c] || 0), 0);
 
   container.innerHTML = `
+    <div class="bud-wrap">
     <div class="panel-title" style="margin:2px 0 14px;"><div>적립</div></div>
 
     <div class="bud-card">
@@ -14101,7 +14244,8 @@ function renderSavingPlanSettings(container, data, d) {
             <span class="now mono">${enComma(Math.round(done))}</span>
             <input class="budt-in mono" data-dest="${enEsc(c)}" type="text" inputmode="numeric"
               value="${exp ? enComma(exp) : ''}" placeholder="${enComma(base)}">
-          </div>`;
+          </div>
+    </div>`;
         }).join('') : '<div class="hm-none">이체 기록이 아직 없어요.</div>'}
       </div>
       <div class="bud-note">
@@ -14150,34 +14294,33 @@ async function transferGoalSave(map) {
   }
 }
 
-async function budgetSave(raw) {
+/* 목표의 "월 지출 상한" 한 줄을 고친다. 이제 분류별 예산 저장이 합계를 넘겨 부르는
+   내부 함수라, 버튼 상태는 호출한 쪽이 관리한다. */
+async function budgetSave(raw, quiet) {
   const v = String(raw).replace(/[^\d]/g, '');
-  const btn = document.getElementById('bud-save');
-  if (btn) { btn.disabled = true; btn.textContent = '저장 중…'; }
   try {
     const sb = await enClient();
     const { data: row } = await sb.from('goals').select('id')
       .eq('metric_source', 'monthly_expense').neq('status', '중단').limit(1).maybeSingle();
     if (!v) {
       if (row) await sb.from('goals').update({ status: '중단' }).eq('id', row.id);
-      enToast('예산을 해제했습니다');
+      if (!quiet) enToast('예산을 해제했습니다');
     } else if (row) {
       await sb.from('goals').update({ target_amount: Number(v), status: '진행중' }).eq('id', row.id);
-      enToast('예산을 저장했습니다');
+      if (!quiet) enToast('예산을 저장했습니다');
     } else {
       await sb.from('goals').insert({ item: '월 지출 상한', kind: '금융',
         metric_source: 'monthly_expense', target_amount: Number(v), status: '진행중' });
-      enToast('예산을 저장했습니다');
+      if (!quiet) enToast('예산을 저장했습니다');
     }
-    await fetchLive(true);
+    if (!quiet) await fetchLive(true);
   } catch (e) {
-    enToast('저장하지 못했습니다 — ' + (e.message || e));
-  } finally {
-    if (btn) { btn.disabled = false; btn.textContent = '총액 저장'; }
+    if (!quiet) enToast('저장하지 못했습니다 — ' + (e.message || e));
+    else throw e;
   }
 }
 
-async function budgetCatSave(map) {
+async function budgetCatSave(map, total) {
   const btn = document.getElementById('budc-save');
   if (btn) { btn.disabled = true; btn.textContent = '저장 중…'; }
   try {
@@ -14187,7 +14330,9 @@ async function budgetCatSave(map) {
               { onConflict: 'owner_id,key' });
     if (error) throw error;
     state.budgets = map;
-    enToast(`분류별 예산 ${Object.keys(map).length}건을 저장했습니다`);
+    /* 합계를 목표의 월 지출 상한에도 그대로 반영한다 */
+    if (total !== undefined) await budgetSave(String(total), true);
+    enToast(`분류별 예산 ${Object.keys(map).length}건 · 총액 ${enComma(total || 0)}원을 저장했습니다`);
     renderPage();
   } catch (e) {
     enToast('저장하지 못했습니다 — ' + (e.message || e));
