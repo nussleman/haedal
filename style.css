@@ -3057,3 +3057,85 @@ body{font-variant-numeric:tabular-nums;}
 /* 예산 총액 — 읽기 전용 합계 */
 .bud-total{font-size:var(--fs-3xl);font-weight:700;letter-spacing:-0.025em;color:var(--text);}
 .bud-total small{font-size:var(--fs-md);font-weight:500;color:var(--text-faint);margin-left:3px;}
+
+/* ═══════════════════════════════════════════════════════════
+   마감 — 화면 끝까지 채우기, 레일 형태, 홈 3단, 설정 상자선 제거
+   ═══════════════════════════════════════════════════════════ */
+
+/* body 좌우 여백을 걷고, 본문 쪽에서만 다시 준다 → 헤더·레일이 끝까지 닿는다 */
+body{padding-left:0;padding-right:0;}
+.site-header{margin:0;padding-left:clamp(16px,2.5vw,40px);padding-right:clamp(16px,2.5vw,40px);}
+.site-layout{gap:0;}
+.site-main{padding:0 clamp(16px,2.5vw,40px) 80px;}
+
+/* ── 좌측 레일 ── */
+.railnav{background:var(--bg-2);border-right:1px solid var(--border);
+  border-radius:0;box-shadow:none;margin-right:0;
+  padding:16px 14px 28px clamp(16px,2.5vw,40px);
+  width:calc(176px + clamp(16px,2.5vw,40px));}
+.site-layout{grid-template-columns:calc(176px + clamp(16px,2.5vw,40px)) minmax(0,1fr);}
+
+/* 카테고리 — 가로선 없이, 배경 틴트로 층을 구분 */
+.sub-cat{display:block;font-family:var(--sans);font-size:var(--fs-xs);font-weight:700;
+  color:var(--text-dim);letter-spacing:.01em;text-transform:none;
+  background:var(--panel-2);border-radius:var(--r-sm);
+  padding:6px 10px;margin:16px 0 6px;}
+.sub-cat::after{display:none;}
+.railnav .sub-cat:first-child{margin-top:0;}
+
+/* 하위메뉴 — 세로선 대신 불렛 */
+.sub-btn{position:relative;margin-left:0;width:100%;border:1px solid transparent;
+  border-radius:var(--r-md);padding:7px 10px 7px 22px;}
+.sub-btn::before{content:'';position:absolute;left:10px;top:50%;transform:translateY(-50%);
+  width:4px;height:4px;border-radius:50%;background:var(--border-strong);}
+.sub-btn:hover{background:var(--panel);border-color:var(--border);color:var(--text);}
+.sub-btn:hover::before{background:var(--text-faint);}
+.sub-btn.on{background:var(--accent-bg);border-color:rgba(201,162,39,0.45);
+  color:var(--accent-text);font-weight:700;}
+.sub-btn.on::before{background:var(--accent-text);}
+.railnav:not(:has(.sub-cat)) .sub-btn{margin-left:0;width:100%;}
+
+@media (max-width:860px){
+  .site-layout{grid-template-columns:minmax(0,1fr);}
+  .railnav{width:auto;background:transparent;border-right:0;border-bottom:1px solid var(--border);
+    padding:10px clamp(16px,2.5vw,40px) 12px;}
+  .sub-cat{display:none;}
+}
+
+/* ── 하위 화면 제목 ── */
+.page-head{font-family:var(--sans);font-size:var(--fs-2xl);font-weight:700;
+  letter-spacing:-0.02em;color:var(--text);padding:22px 0 0;}
+.page-head[hidden]{display:none;}
+.page-head + #page-content{padding-top:14px;}
+
+/* ── 홈 3단 ── */
+.hm3{grid-template-columns:1.05fr 1.15fr 0.9fr;}
+.hm-box{padding:16px 18px;}
+.hm-hd{margin-bottom:11px;}
+.hm-big{font-size:var(--fs-3xl);}
+.hm-alloc{margin-top:14px;padding-top:12px;gap:7px;}
+.hm-pace{margin-top:14px;padding-top:12px;}
+.hm-tri b{font-size:var(--fs-lg);}
+.hm-focus{margin-bottom:var(--gap);}
+.hm-fr{padding:9px 12px;}
+.hm-fr .tx b{font-size:var(--fs-sm);}
+.hm-gl{gap:8px;}
+.hm-recent{margin-top:var(--gap);}
+.hm-recent .hm-tab{display:grid;grid-template-columns:1fr 1fr;column-gap:26px;}
+.hm-recent .hm-tab tbody{display:contents;}
+.hm-recent .hm-tab tr{display:grid;grid-template-columns:46px 1fr 110px;align-items:center;}
+.hm-tab td{padding:8px 2px;}
+@media (max-width:1180px){ .hm3{grid-template-columns:1fr 1fr;} }
+@media (max-width:860px){
+  .hm3{grid-template-columns:1fr;}
+  .hm-recent .hm-tab{grid-template-columns:1fr;}
+}
+
+/* ── 예산·적립 — 가운데 일부 폭만 ── */
+.narrow-page{max-width:640px;}
+.narrow-page .bud-card + .bud-card{margin-top:var(--gap);}
+
+/* ── 설정 › 목록 — 본문 감싸는 상자선 제거 ── */
+.dbm-page{min-height:0;border:0;background:transparent;box-shadow:none;}
+.dbm-main{border:0;background:transparent;box-shadow:none;padding:0 0 40px;}
+.dbm-body{border:0;background:transparent;}
