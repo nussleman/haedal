@@ -706,12 +706,17 @@ function dockAmount(dock) {
   const d = S.d;
   const often = oftenAmounts();
   dock.innerHTML = `<div class="inner">
-    ${often.length ? `<div class="sugs">${often.map(a =>
-      `<button data-a="${a}">${comma(a)}</button>`).join('')}</div>` : ''}
+    <div class="sugs">
+      <button data-neg="1" class="${d.neg ? 'on' : 'mut'}">− 마이너스</button>
+      ${often.map(a => `<button data-a="${a}">${comma(a)}</button>`).join('')}
+    </div>
     ${padHtml('pad1')}
     <button class="save" id="f-next" ${d.amount ? '' : 'disabled'}>다음</button>
   </div>`;
   bindPad('pad1', () => d.amount, (v) => { d.amount = v; }, () => renderTab());
+  $$('[data-neg]', dock).forEach(b => b.addEventListener('click', () => {
+    d.neg = !d.neg; renderTab();
+  }));
   $$('[data-a]', dock).forEach(b => b.addEventListener('click', () => {
     d.amount = b.dataset.a; d.step = 4; renderTab();
   }));
