@@ -126,6 +126,17 @@ const DB = {
     });
   },
 
+  /* 연간 집계 — 기본 14개월 캐시로는 한 해를 못 덮는다. 연도별로 따로 읽는다. */
+  yearly(year){
+    return this._once('yr:'+year, async () => {
+      const { data, error } = await sb.from('v_transactions')
+        .select('date,kind,category,subcategory,amount,merchant,company_paid,is_fixed,good_bad')
+        .gte('date', `${year}-01-01`).lte('date', `${year}-12-31`);
+      if (error) throw error;
+      return (data||[]).map(t => ({ ...t, sub:t.subcategory||'', amount:Number(t.amount) }));
+    });
+  },
+
   /* 상인 전체 — 고정비 지정 화면에서 쓴다. 캐시하지 않고 매번 읽어 토글 결과를 바로 본다. */
   async merchants(){
     const { data, error } = await sb.from('merchants')
@@ -187,15 +198,15 @@ const TREE = {
   home:{title:'홈',tabs:[{id:'today',label:'오늘',ready:true}]},
   flow:{title:'현금흐름',tabs:[
     {id:'ledger',label:'거래 내역',ready:true},{id:'budget',label:'예산',ready:true},
-    {id:'fixed',label:'고정비',ready:true},{id:'rules',label:'저축·이체 규칙'}]},
+    {id:'fixed',label:'고정비',ready:true},{id:'rules',label:'자금 흐름',ready:true}]},
   assets:{title:'자산 현황',tabs:[
     {id:'networth',label:'순자산',ready:true},{id:'accounts',label:'계좌',ready:true},
     {id:'pension',label:'연금',ready:true},{id:'debt',label:'부채'}]},
   invest:{title:'투자',tabs:[
     {id:'port',label:'포트폴리오',ready:true},{id:'holding',label:'종목 상세',ready:true},
     {id:'watch',label:'관심종목',ready:true},{id:'history',label:'매매 이력'}]},
-  goals:{title:'목표',tabs:[{id:'targets',label:'재무 목표',ready:true},{id:'progress',label:'진행률'}]},
-  report:{title:'리포트',tabs:[{id:'monthly',label:'월간',ready:true},{id:'yearly',label:'연간'}]},
+  goals:{title:'목표',tabs:[{id:'targets',label:'재무 목표',ready:true},{id:'progress',label:'진행률',ready:true}]},
+  report:{title:'리포트',tabs:[{id:'monthly',label:'월간',ready:true},{id:'yearly',label:'연간',ready:true}]},
   settings:{title:'설정',tabs:[{id:'sources',label:'데이터 연동',ready:true},
     {id:'cats',label:'카테고리',ready:true},{id:'alerts',label:'알림'}]}
 };
@@ -1024,33 +1035,284 @@ P['settings:cats'] = async () => {
      {t:'12개월간 거래 0건인 카테고리 정리 제안'}])}`;
 };
 
+/* ── 현금흐름 · 저축·이체 규칙 ──
+   자동이체 설정 테이블이 없고, 실제 이체도 날짜가 제각각이라 "규칙"이 아니다.
+   그래서 설정값을 흉내내지 않고, 원장에 남은 실제 흐름을 그대로 보여준다. */
+P['flow:rules'] = async () => {
+  const tx = await DB.transactions();
+  const months = [...new Set(completed(tx).map(t=>ymOf(t.date)))].sort();
+  const n = months.length || 1;
+
+  const per = kind => tx.filter(t => t.kind===kind && months.includes(ymOf(t.date)));
+  const incTx = per('수입'), movTx = [...per('이체'), ...per('자산')];
+  const inc = incTx.reduce((s,t)=>s+t.amount,0);
+  const spend = tx.filter(t=>isSpend(t)&&!t.company_paid&&months.includes(ymOf(t.date)))
+                  .reduce((s,t)=>s+t.amount,0);
+  const moved = movTx.reduce((s,t)=>s+t.amount,0);
+
+  /* 급여일 — 근로소득이 들어온 날의 중앙값 */
+  const payDays = incTx.filter(t=>(t.category||'').includes('근로')).map(t=>Number(t.date.slice(8,10))).sort((a,b)=>a-b);
+  const payDay = payDays.length ? payDays[Math.floor(payDays.length/2)] : null;
+
+  /* 이체 대상별 집계 — 얼마나 자주, 얼마씩, 어느 날에 */
+  const dest = {};
+  movTx.forEach(t => {
+    const k = t.merchant || t.sub || t.category;
+    const d = (dest[k] ??= {name:k, kind:t.kind, n:0, amt:0, yms:new Set(), days:[]});
+    d.n++; d.amt += t.amount; d.yms.add(ymOf(t.date)); d.days.push(Number(t.date.slice(8,10)));
+  });
+  const rows = Object.values(dest).map(d => {
+    const days = d.days.slice().sort((a,b)=>a-b);
+    const med = days[Math.floor(days.length/2)];
+    const spread = days.at(-1) - days[0];
+    return { ...d, monthly: d.amt/n, med, spread,
+      pattern: d.yms.size >= n*0.8 && spread <= 6 ? '정기' : d.yms.size >= n*0.8 ? '매월 수시' : '비정기' };
+  }).sort((a,b)=>b.monthly-a.monthly);
+
+  return `<div class="flow" style="margin-bottom:22px">
+    <div class="flow-card i"><h4>월 평균 수입</h4>
+      <div class="v num" style="color:var(--income)">${won(inc/n)}</div>
+      <div class="m">${payDay?`급여일 대략 ${payDay}일`:'급여일 불명'} · ${n}개월 평균</div></div>
+    <div class="flow-card t"><h4>월 평균 이동</h4>
+      <div class="v num" style="color:var(--transfer)">${won(moved/n)}</div>
+      <div class="m">수입의 ${inc?(moved/inc*100).toFixed(0):'—'}%가 다른 계좌로</div></div>
+    <div class="flow-card e"><h4>월 평균 실지출</h4>
+      <div class="v num" style="color:var(--expense)">${won(spend/n)}</div>
+      <div class="m">수입의 ${inc?(spend/inc*100).toFixed(0):'—'}%</div></div>
+  </div>
+
+  <div class="block">
+    <header><h2>수입 100원이 가는 곳</h2><p>${months[0]} ~ ${months.at(-1)} 평균</p></header>
+    <div class="slab"><div class="track" style="height:14px;display:flex">
+      <i style="width:${inc?spend/inc*100:0}%;background:var(--expense);border-radius:0"></i>
+      <i style="width:${inc?moved/inc*100:0}%;background:var(--transfer);border-radius:0"></i>
+      <i style="flex:1;background:var(--income);border-radius:0"></i></div>
+      <div style="display:flex;gap:16px;font-size:12px;color:var(--ink-3);margin-top:9px;flex-wrap:wrap">
+        <span><span class="chip c-지출">지출</span> ${inc?(spend/inc*100).toFixed(0):0}%</span>
+        <span><span class="chip c-이체">이동</span> ${inc?(moved/inc*100).toFixed(0):0}%</span>
+        <span><span class="chip c-수입">계좌에 남음</span> ${inc?Math.max(0,100-(spend+moved)/inc*100).toFixed(0):0}%</span>
+      </div>
+      <p class="sub" style="margin-top:12px">이동은 쓴 돈이 아닙니다. 증권·CMA 계좌로 옮긴 것이라 순자산에서는 그대로 남아 있습니다.</p>
+    </div>
+  </div>
+
+  <div class="block">
+    <header><h2>이동 대상별</h2><p>이체·자산 이동 ${movTx.length}건</p></header>
+    <table><thead><tr><th>대상</th><th style="width:110px">패턴</th>
+      <th class="r" style="width:80px">횟수</th><th class="r" style="width:120px">월 평균</th>
+      <th style="width:110px">주로 며칠</th></tr></thead>
+    <tbody>${rows.length ? rows.map(d=>`<tr>
+      <td>${esc(d.name)}<div class="sub">${d.kind}</div></td>
+      <td><span class="chip ${d.pattern==='정기'?'c-이체':'c-w'}">${d.pattern}</span></td>
+      <td class="r sub">${d.n}회 / ${d.yms.size}개월</td>
+      <td class="r" style="font-weight:600">${won(d.monthly)}</td>
+      <td class="sub num">${d.med}일${d.spread>6?` <span class="sub">(±${Math.round(d.spread/2)}일)</span>`:''}</td>
+      </tr>`).join('')
+      : '<tr><td colspan="5" class="empty">이체 기록이 없습니다.</td></tr>'}
+    </tbody>
+    <tfoot><tr><td colspan="3">합계</td><td class="r">${won(moved/n)}</td><td></td></tr></tfoot></table>
+  </div>
+  ${stub('여기서 읽어야 할 것','자동이체 설정 테이블이 없어서, 설정된 규칙이 아니라 실제로 일어난 일을 보여줍니다. 선저축을 하고 있다면 급여일 직후에 정기 이동이 몰려야 하는데, 지금은 토스 증권 입금이 달마다 날짜가 흩어져 있습니다.',
+    [{t:'급여일 직후 정기 이동 여부 판정',has:true},
+     {t:'이동을 지출과 분리해 표시',has:true},
+     {t:'선저축 비율 목표를 세우고 실제와 대조'},
+     {t:'자동이체 설정 테이블 추가 — 계획 대비 실행 비교'}])}`;
+};
+
+/* ── 목표 · 진행률 ──
+   목표별 계획 궤적과 실제 궤적을 겹쳐 본다. 한 달 등락이 아니라 추세선을 보는 화면. */
+P['goals:progress'] = async () => {
+  const [goals, snap] = await Promise.all([DB.goals(), DB.snapshots()]);
+  const series = netWorthByMonth(snap);
+  if (series.length < 2) return wipbar('스냅샷이 2개월 이상 쌓여야 궤적을 그릴 수 있습니다.');
+
+  const pace = (series.at(-1)[1] - series[0][1]) / (series.length - 1);
+  const pace3 = series.length >= 4
+    ? (series.at(-1)[1] - series.at(-4)[1]) / 3 : pace;
+  const trend = pace3 > pace*1.1 ? '가속' : pace3 < pace*0.9 ? '둔화' : '유지';
+
+  const assetGoals = goals.filter(g => ['total_asset','available_asset'].includes(g.metric_source));
+
+  return `<div class="flow" style="margin-bottom:22px">
+    <div class="flow-card a"><h4>전체 평균 속도</h4><div class="v num">${man(pace)}</div>
+      <div class="m">${series.length}개월 · 월 평균 증가</div></div>
+    <div class="flow-card ${trend==='가속'?'i':trend==='둔화'?'e':''}"><h4>최근 3개월 속도</h4>
+      <div class="v num" style="color:var(--${trend==='가속'?'income':trend==='둔화'?'expense':'ink'})">${man(pace3)}</div>
+      <div class="m">전체 평균 대비 ${trend}</div></div>
+    <div class="flow-card t"><h4>관측 구간</h4><div class="v num">${series.length}개월</div>
+      <div class="m">${series[0][0]} ~ ${series.at(-1)[0]}</div></div>
+  </div>
+
+  <div class="block">
+    <header><h2>순자산 궤적</h2><p>실선 실제 · 점선 현재 속도 유지 시 12개월 예상</p></header>
+    <div class="slab">${trajectory(series, pace, assetGoals)}</div>
+  </div>
+
+  ${assetGoals.map(g => {
+    const need = g.target - g.current;
+    const mo = pace > 0 ? Math.ceil(need/pace) : null;
+    const mo3 = pace3 > 0 ? Math.ceil(need/pace3) : null;
+    return `<div class="block"><header><h2>${esc(g.item)} · ${man(g.target)}</h2></header>
+      <table><tbody>
+        <tr><td style="width:180px" class="sub">남은 금액</td><td class="num">${man(need)}</td></tr>
+        <tr><td class="sub">전체 평균 속도 기준</td>
+          <td class="num">${mo?`${Math.floor(mo/12)}년 ${mo%12}개월 · ${etaLabel(mo)}`:'현재 속도로는 도달 불가'}</td></tr>
+        <tr><td class="sub">최근 3개월 속도 기준</td>
+          <td class="num">${mo3?`${Math.floor(mo3/12)}년 ${mo3%12}개월 · ${etaLabel(mo3)}`:'현재 속도로는 도달 불가'}</td></tr>
+        ${g.target_on?`<tr><td class="sub">설정한 기한</td><td class="num">${g.target_on}</td></tr>`:''}
+      </tbody></table></div>`;}).join('')}
+
+  ${stub('이 화면을 보는 법','한 달 등락은 시장이 흔든 것이고, 3개월 속도가 전체 평균과 벌어지면 그건 습관이 바뀐 것입니다. 둘이 크게 다를 때만 행동을 바꾸세요.',
+    [{t:'전체 평균 속도와 최근 3개월 속도 비교',has:true},
+     {t:'목표별 도달 시점 역산',has:true},
+     {t:'3개월 연속 계획 미달 시 홈 할 일 자동 승격'},
+     {t:'저축률 ±5% 변동 시나리오'}])}`;
+};
+function etaLabel(mo){
+  const d = KST(); d.setMonth(d.getMonth() + mo);
+  return d.toISOString().slice(0,7) + ' 무렵';
+}
+/* 실제 궤적 + 현재 속도 연장선. 목표선은 가로 점선으로 얹는다. */
+function trajectory(series, pace, goals){
+  const W = 760, H = 190, PAD = 8;
+  const future = 12;
+  const projected = Array.from({length:future}, (_,i)=> series.at(-1)[1] + pace*(i+1));
+  const all = [...series.map(x=>x[1]), ...projected, ...goals.map(g=>g.target)];
+  const lo = Math.min(...all)*0.97, hi = Math.max(...all)*1.03, r = hi-lo || 1;
+  const n = series.length + future - 1;
+  const X = i => PAD + i/(n)*(W-PAD*2);
+  const Y = v => H - PAD - ((v-lo)/r)*(H-PAD*2);
+  const real = series.map((s,i)=>`${X(i).toFixed(1)},${Y(s[1]).toFixed(1)}`).join(' ');
+  const proj = [series.at(-1)[1], ...projected]
+    .map((v,i)=>`${X(series.length-1+i).toFixed(1)},${Y(v).toFixed(1)}`).join(' ');
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:${H}px" aria-label="순자산 궤적">
+    ${goals.map(g=>`<line x1="${PAD}" y1="${Y(g.target).toFixed(1)}" x2="${W-PAD}" y2="${Y(g.target).toFixed(1)}"
+        stroke="var(--accent)" stroke-width="1" stroke-dasharray="3 4" opacity=".65"/>
+      <text x="${W-PAD}" y="${(Y(g.target)-6).toFixed(1)}" text-anchor="end"
+        font-size="11" fill="var(--accent)">${esc(g.item)} ${man(g.target)}</text>`).join('')}
+    <polyline points="${real} ${X(series.length-1).toFixed(1)},${H-PAD} ${PAD},${H-PAD}"
+      fill="var(--asset-bg)" stroke="none"/>
+    <polyline points="${real}" fill="none" stroke="var(--asset)" stroke-width="2.5" stroke-linejoin="round"/>
+    <polyline points="${proj}" fill="none" stroke="var(--asset)" stroke-width="2"
+      stroke-dasharray="5 5" opacity=".6"/>
+  </svg>
+  <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--ink-3);margin-top:6px">
+    <span>${series[0][0]}</span><span>${series.at(-1)[0]}</span><span>+12개월 예상</span></div>`;
+}
+
+/* ── 리포트 · 연간 ── */
+let RPT_YEAR = null;
+P['report:yearly'] = async () => {
+  const thisYear = KST().getFullYear();
+  const year = RPT_YEAR || thisYear;
+  const [rows, prev] = await Promise.all([DB.yearly(year), DB.yearly(year-1)]);
+
+  const agg = r => {
+    const inc = r.filter(isIncome).reduce((s,t)=>s+t.amount,0);
+    const exp = r.filter(t=>isSpend(t)&&!t.company_paid).reduce((s,t)=>s+t.amount,0);
+    const reimb = r.filter(t=>isSpend(t)&&t.company_paid).reduce((s,t)=>s+t.amount,0);
+    const fixed = r.filter(t=>isSpend(t)&&t.is_fixed&&!t.company_paid).reduce((s,t)=>s+t.amount,0);
+    return { inc, exp, reimb, fixed, n:r.length, rate: inc?(inc-exp)/inc*100:0 };
+  };
+  const a = agg(rows), b = prev.length ? agg(prev) : null;
+  const partial = year === thisYear;
+  const monthsIn = partial ? KST().getMonth()+1 : 12;
+
+  const cats = {}; rows.filter(t=>isSpend(t)&&!t.company_paid)
+    .forEach(t=>cats[t.category]=(cats[t.category]||0)+t.amount);
+  const pcats = {}; prev.filter(t=>isSpend(t)&&!t.company_paid)
+    .forEach(t=>pcats[t.category]=(pcats[t.category]||0)+t.amount);
+
+  const byMonth = Array.from({length:12},(_,i)=>{
+    const ym = `${year}-${String(i+1).padStart(2,'0')}`;
+    const r = rows.filter(t=>ymOf(t.date)===ym);
+    return { ym, inc: r.filter(isIncome).reduce((s,t)=>s+t.amount,0),
+             exp: r.filter(t=>isSpend(t)&&!t.company_paid).reduce((s,t)=>s+t.amount,0) };
+  }).filter(m=>m.inc||m.exp);
+
+  const years = [thisYear, thisYear-1, thisYear-2];
+  const delta = (c,p,lowerBetter=true) => p==null||!p ? '<span class="sub">—</span>'
+    : `<span style="color:var(--${(c>=p)===lowerBetter?'expense':'income'})">${c>=p?'+':'−'}${won(Math.abs(c-p))}</span>`;
+
+  return `<div class="toolbar">
+    <div class="seg" id="rptYear">${years.map(y=>
+      `<button data-y="${y}" aria-pressed="${y===year}">${y}</button>`).join('')}</div>
+    ${partial?`<span class="sub">${monthsIn}개월 진행 중 · 전년 전체와 직접 비교하지 마세요</span>`:''}
+  </div>
+
+  <div class="flow" style="margin-bottom:22px">
+    <div class="flow-card i"><h4>연 수입</h4><div class="v num" style="color:var(--income)">${man(a.inc)}</div>
+      <div class="m">월 평균 ${won(a.inc/monthsIn)}</div></div>
+    <div class="flow-card e"><h4>연 실지출</h4><div class="v num" style="color:var(--expense)">${man(a.exp)}</div>
+      <div class="m">월 평균 ${won(a.exp/monthsIn)} · 고정비 ${won(a.fixed/monthsIn)}</div></div>
+    <div class="flow-card s"><h4>저축률</h4><div class="v num" style="color:var(--save)">${a.rate.toFixed(1)}%</div>
+      <div class="m">${b?`${year-1}년 ${b.rate.toFixed(1)}%`:'비교 대상 없음'}</div></div>
+  </div>
+
+  <div class="block">
+    <header><h2>월별 흐름</h2><p>${byMonth.length}개월 기록</p></header>
+    <table><thead><tr><th style="width:90px">월</th><th class="r" style="width:130px">수입</th>
+      <th class="r" style="width:130px">실지출</th><th style="width:170px">비율</th>
+      <th class="r" style="width:100px">저축률</th></tr></thead>
+    <tbody>${byMonth.map(m=>{
+      const rate = m.inc ? (m.inc-m.exp)/m.inc*100 : null;
+      return `<tr><td class="num">${m.ym.slice(5)}월</td>
+        <td class="r" style="color:var(--income)">${won(m.inc)}</td>
+        <td class="r" style="color:var(--expense)">${won(m.exp)}</td>
+        <td><div class="bar"><i style="width:${m.inc?Math.min(100,m.exp/m.inc*100):100}%;
+          background:var(--${rate!=null&&rate<0?'expense':'transfer'})"></i></div></td>
+        <td class="r">${rate==null?'<span class="sub">—</span>'
+          :`<span style="color:var(--${rate<0?'expense':'income'})">${rate.toFixed(0)}%</span>`}</td></tr>`;}).join('')}
+    </tbody>
+    <tfoot><tr><td>합계</td><td class="r">${won(a.inc)}</td><td class="r">${won(a.exp)}</td>
+      <td></td><td class="r">${a.rate.toFixed(1)}%</td></tr></tfoot></table>
+  </div>
+
+  <div class="block">
+    <header><h2>카테고리별</h2><p>${year-1}년 대비</p></header>
+    <table><thead><tr><th>카테고리</th><th style="width:150px">비중</th>
+      <th class="r" style="width:120px">${year}</th><th class="r" style="width:120px">${year-1}</th>
+      <th class="r" style="width:110px">증감</th></tr></thead>
+    <tbody>${Object.entries(cats).sort((x,y)=>y[1]-x[1]).map(([k,v])=>`<tr>
+      <td>${esc(k)}</td>
+      <td><div class="bar"><i style="width:${v/a.exp*100}%;background:var(--expense)"></i></div>
+        <div class="sub num">${(v/a.exp*100).toFixed(1)}%</div></td>
+      <td class="r">${won(v)}</td><td class="r sub">${won(pcats[k]||0)}</td>
+      <td class="r">${delta(v, pcats[k]??null)}</td></tr>`).join('')}
+    </tbody></table>
+  </div>
+
+  <div class="block">
+    <header><h2>연말정산 참고</h2><p>세무 신고용 원자료 — 그대로 쓰지 말고 증빙과 대조하세요</p></header>
+    <table><tbody>
+      <tr><td style="width:220px" class="sub">총 수입 (원장 기준)</td><td class="r num">${won(a.inc)}</td></tr>
+      <tr><td class="sub">총 실지출 (환급 제외)</td><td class="r num">${won(a.exp)}</td></tr>
+      <tr><td class="sub">회사 대납·환급분</td><td class="r num">${won(a.reimb)}</td></tr>
+      <tr><td class="sub">고정비 합계</td><td class="r num">${won(a.fixed)}</td></tr>
+      <tr><td class="sub">거래 건수</td><td class="r num">${a.n}건</td></tr>
+    </tbody></table>
+  </div>
+  ${stub('아직 못 채운 항목','연금 납입액과 금융소득은 원장에 거래로 남아야 집계할 수 있습니다. 지금은 스냅샷에 잔액만 있어 계산하지 않습니다.',
+    [{t:'<b>수입·실지출·고정비·환급분 연간 집계</b>',has:true},
+     {t:'<b>월별 흐름과 카테고리 전년 대비</b>',has:true},
+     {t:'연금 납입액 및 세액공제 대상 금액'},
+     {t:'금융소득 — 배당 · 이자 · 양도차익'},
+     {t:'기부금 · 의료비 등 공제 항목'}])}`;
+};
+
 /* ── 준비중 패널 ── */
 const WIP = {
-'flow:rules':['자동이체 데이터가 원장에 구분돼 들어오면 붙습니다.','저축 · 이체 규칙',
-  '급여일 이후 자금이 어디로 흘러가는지가 한눈에 보여야 합니다.',
-  [{t:'급여일 기준 자동이체 순서와 금액'},{t:'선저축 비율 및 실제 집행률'},
-   {t:'kind=자산 거래를 계좌 간 이동으로 해석하는 규칙'},
-   {t:'연금 계좌 납입 스케줄 — DC · IRP · 연금저축'}], skel('',56,5)],
-'assets:debt':['asset_class에 부채 항목이 없습니다. 스키마 확장 후 붙습니다.','부채',
+'assets:debt':['accounts.asset_class 제약이 현금·투자·저축·연금 네 가지뿐이라 부채를 넣을 칸이 없습니다. 제약을 넓히는 마이그레이션이 먼저입니다.','부채',
   '순자산의 마이너스 항이자 고정비의 원천입니다.',
   [{t:'대출별 잔액 · 금리 · 만기 · 월 상환액'},{t:'상환 스케줄 → 고정비 패널 자동 연동'},
    {t:'asset_class check 제약에 부채 추가 필요'}], skel('',72,3)],
-'invest:history':['매도 이력 테이블이 없습니다. 스키마 추가가 먼저입니다.','매매 이력',
+'invest:history':['holdings 스냅샷이 1개(2026-08-24)뿐이라 차분을 낼 수 없습니다. 토스 수집을 정기 실행해 스냅샷이 2개 이상 쌓이면 자동으로 그려집니다.','매매 이력',
   '판 다음에 무슨 일이 있었는지를 보는 곳. 과대비중·과소비중 패턴을 끊으려면 이게 필요합니다.',
   [{t:'holdings 스냅샷 차분으로 매도 추정 가능'},
    {t:'매도 사유 vs 실제 결과 대조'},
    {t:'−50% 이상 손실 확정 건 아카이브'},
    {t:'분기별 복기 — 과대비중 실패 / 과소비중 기회손실'}], skel('',64,4)],
-'goals:progress':['궤적 데이터가 3개월 이상 쌓이면 의미가 생깁니다.','진행률 추적',
-  '한 달 등락보다 12개월 추세선이 중요한 화면입니다.',
-  [{t:'목표별 계획 궤적 vs 실제 궤적 오버레이'},{t:'이탈 감지 — 3개월 연속 미달'},
-   {t:'시나리오 — 저축률 ±5% 변동 시 도달 시점'}], skel('',200,1)],
-'report:yearly':['연말정산 시즌에 첫 산출 예정입니다.','연간 리포트',
-  '연말정산과 세금 신고에 그대로 쓸 수 있는 형태로 뽑습니다. 나중에 소급 정리하면 손이 훨씬 많이 갑니다.',
-  [{t:'연간 수입 · 지출 · 저축 총계'},{t:'연금 납입액 및 세액공제 대상'},
-   {t:'금융소득 — 배당 · 이자 · 양도차익'},{t:'company_paid 제외 실지출 집계'},
-   {t:'연간 투자 복기'}], skel('row3',96)],
-'settings:alerts':['각 패널 완성 후 임계값을 한 번에 정합니다.','알림',
+'settings:alerts':['임계값을 저장할 곳이 없습니다. 설정 테이블을 하나 만들면 바로 붙습니다.','알림',
   '홈 "지금 확인할 것"에 무엇이 올라올지를 정하는 곳. 알림 기준이 곧 판단 기준입니다.',
   [{t:'고정비 연속 상승 감지 개월 수 (현재 3개월 고정)'},
    {t:'지출 평균 초과 임계값'},{t:'매도 조건 미설정 경고 주기'},
@@ -1132,6 +1394,8 @@ function shell(){
     if (k) { LED.kind = k.dataset.k; render(); return; }
     const m = e.target.closest('#rptYm button');
     if (m) { RPT_YM = m.dataset.m; render(); return; }
+    const y = e.target.closest('#rptYear button');
+    if (y) { RPT_YEAR = Number(y.dataset.y); render(); return; }
     const ft = e.target.closest('.fixtog');
     if (ft) { toggleFixed(ft); }
   });
