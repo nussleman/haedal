@@ -56,7 +56,7 @@ const state = {
   range: 12,
   page: 'home',
   homeMainSub: 'main',
-  entrySub: 'ledger', investSub: 'main', goalsSub: 'main',
+  entrySub: 'ledger', goalsSub: 'main',
   reportSub: 'monthly', labSub: 'sim', setSub: 'cat',
   entryView: 'list',      // 입출금 보기: list | calendar
   ledgerFilter: { q: '', major: 'all', page: 1, pageSize: 50 },
@@ -1040,7 +1040,7 @@ function setSyncState(status) {
 const NAV_ITEMS = [
   { id: 'home',   label: '홈', solo: true },
   { id: 'entry',  label: '기록' },
-  { id: 'invest', label: '투자', solo: true },
+  { id: 'invest', label: '투자' },
   { id: 'goals',  label: '목표', solo: true },
   { id: 'report', label: '리포트' },
   { id: 'lab',    label: '실험실' },
@@ -1051,7 +1051,7 @@ const NAV_ITEMS = [
 const SECTION_SUBS = {
   home:   [['main', '홈']],
   entry:  [['ledger', '입출금'], ['snapshot', '자산 스냅샷']],
-  invest: [['main', '투자']],
+  invest: [['overview', '요약'], ['book', '종목'], ['perf', '벤치마크·세금']],
   goals:  [['main', '목표']],
   report: [['monthly', '월간'], ['yearly', '연간'],
            ['networth', '순자산'], ['pension', '연금'], ['savings', '저축']],
@@ -1060,7 +1060,7 @@ const SECTION_SUBS = {
            ['fixedm', '고정비 지정'], ['budget', '예산']]
 };
 
-const SECTION_STATE_KEY = { home: 'homeMainSub', entry: 'entrySub', invest: 'investSub',
+const SECTION_STATE_KEY = { home: 'homeMainSub', entry: 'entrySub', invest: 'invSub',
   goals: 'goalsSub', report: 'reportSub', lab: 'labSub', set: 'setSub' };
 
 function currentSub(section) {
@@ -1098,7 +1098,7 @@ const LEGACY_ROUTE = {
   'flow/now': 'report/monthly', 'flow/year': 'report/yearly',
   'flow/calendar': 'entry/ledger', 'flow/flowmap': 'lab/flowmap',
   'assets': 'report/networth', 'assets/overview': 'report/networth',
-  'assets/investment': 'invest/main', 'assets/pension': 'report/pension',
+  'assets/investment': 'invest/overview', 'invest/main': 'invest/overview', 'assets/pension': 'report/pension',
   'assets/savings': 'report/savings',
   'todo': 'goals/main', 'todo/goals': 'goals/main',
   'todo/fixed': 'lab/fixed', 'todo/structure': 'lab/sim',
@@ -12679,7 +12679,7 @@ const INV_SUBS = [
 
 function renderInvestmentPage(container, data, d) {
   const SUB = INV_SUBS.some(s => s[0] === state.invSub) ? state.invSub : 'overview';
-  const subnav = `<div class="subnav sub2" id="inv-subnav">${INV_SUBS.map(([v, l]) =>
+  const subnav = `<div class="subnav sub2" id="inv-subnav" hidden>${INV_SUBS.map(([v, l]) =>
     `<button data-sub="${v}" class="${v === SUB ? 'active' : ''}">${l}</button>`).join('')}</div>`;
   const invCategories = ['투자 자산'];
   const byMonthCat = {};
