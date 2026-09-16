@@ -119,7 +119,16 @@ const state = {
   calMode: 'all',
   calHeat: false,         // 지출 진하기(히트맵) — 기본 끔
   calSelDay: null,         // 캘린더에서 선택한 날 (YYYY-MM-DD)
-  invSub: 'overview',      // 투자 하위: overview | book | holdings | perf
+  invSub: 'ovGrowth',      // 투자 하위: ovGrowth | ovTransfer | ovRealized | ovUnrealized | book | bench | tax
+  /* 요약을 4개 차트 화면으로 쪼갰다. 화면마다 기본으로 켜 둘 계열이 다르고,
+     체크박스를 만지면 그 화면에만 남는다.
+     누적 원금이 세 화면에 겹쳐 나오는 건 중복이 아니라 공통 기준선이다. */
+  invSeriesBySub: {
+    ovGrowth:     { balance: false, contrib: true,  transfer: false, returns: false, returnsCum: false, roi: true,  share: false },
+    ovTransfer:   { balance: false, contrib: true,  transfer: true,  returns: false, returnsCum: false, roi: false, share: false },
+    ovRealized:   { balance: false, contrib: false, transfer: false, returns: true,  returnsCum: true,  roi: false, share: false },
+    ovUnrealized: { balance: true,  contrib: true,  transfer: false, returns: false, returnsCum: false, roi: false, share: false }
+  },
   study: { name: '', step: 0, ans: {}, chk: {}, memo: {}, stop: '', take: '', weight: '', crit: [], val: {}, price: '', editId: null },
   bookFilter: 'all',       // 내 종목 필터: all | due | action | none
   bookOpen: null,          // 내 종목에서 펼친 행 (종목명)
@@ -1053,7 +1062,9 @@ const SECTION_SUBS = {
   home:   [['main', '홈']],
   entry:  [['#', '입출금'], ['ledger', '입출금 내역'], ['calendar', '캘린더'],
            ['#', '자산'], ['snapshot', '자산 스냅샷']],
-  invest: [['overview', '요약'], ['book', '종목'], ['bench', '벤치마크'], ['tax', '세금']],
+  invest: [['#', '요약'], ['ovGrowth', '자산 성장률'], ['ovTransfer', '투자 이체'],
+           ['ovRealized', '실현 수익'], ['ovUnrealized', '평가손익'],
+           ['#', '포트폴리오'], ['book', '종목'], ['bench', '벤치마크'], ['tax', '세금']],
   goals:  [['main', '목표']],
   report: [['#', '기간별'], ['monthly', '월간'], ['yearly', '연간'],
            ['#', '자산별'], ['networth', '순자산'], ['pension', '연금'], ['savings', '저축']],
@@ -1101,7 +1112,8 @@ const LEGACY_ROUTE = {
   'flow/now': 'report/monthly', 'flow/year': 'report/yearly',
   'flow/calendar': 'entry/calendar', 'flow/flowmap': 'lab/flowmap',
   'assets': 'report/networth', 'assets/overview': 'report/networth',
-  'assets/investment': 'invest/overview', 'invest/main': 'invest/overview',
+  'assets/investment': 'invest/ovGrowth', 'invest/main': 'invest/ovGrowth',
+  'invest/overview': 'invest/ovGrowth',
   'invest/perf': 'invest/bench', 'assets/pension': 'report/pension',
   'assets/savings': 'report/savings',
   'todo': 'goals/main', 'todo/goals': 'goals/main',
@@ -3011,7 +3023,6 @@ async function renderLedgerPage(body) {
           <button class="lg-fbtn add" id="lg-addnew">＋ 새 행<kbd>A</kbd></button>
           <button class="lg-fbtn save" id="lg-savetop" hidden>모두 저장<kbd>⌘⏎</kbd></button>
           <button class="lg-reset" id="lg-reset">초기화</button>
-          <div class="lg-sum" id="lg-sum"></div>
         </div>
         <div class="lg-cols">
           <button class="k hcell" data-pop="kind">종류<i>▾</i></button>
@@ -3419,25 +3430,14 @@ async function enLoadLedger() {
   const [col, asc] = sorts[g.sort] || sorts.date_desc;
   const from = (g.page - 1) * g.size;
 
-  const [rowsRes, cntRes, sumRes] = await Promise.all([
+  /* 이 화면은 기록을 편하게 하는 곳이다. 합계·순액 같은 지표는 리포트가 맡는다.
+     지표를 걷어낸 덕분에 합계 질의(sum)도 한 번 덜 나간다. */
+  const [rowsRes, cntRes] = await Promise.all([
     enLedgerQuery(sb, 'rows').order(col, { ascending: asc }).range(from, from + g.size - 1),
-    enLedgerQuery(sb, 'count'),
-    enLedgerQuery(sb, 'sum').limit(20000)
+    enLedgerQuery(sb, 'count')
   ]);
   const rows = rowsRes.data || [];
   const total = cntRes.count || 0;
-  const agg = { 수입: 0, 지출: 0, 이체: 0 };
-  (sumRes.data || []).forEach(r => { agg[r.kind] = (agg[r.kind] || 0) + Number(r.amount); });
-
-  const sumBox = enQS('#lg-sum');
-  if (sumBox) {
-    const net = (agg['수입'] || 0) - (agg['지출'] || 0);
-    sumBox.innerHTML =
-      `<div><span class="k">수입</span><span class="v" style="color:var(--income-text);">${enComma(Math.round(agg['수입'] || 0))}</span></div>
-       <div><span class="k">지출</span><span class="v" style="color:var(--expense-text);">${enComma(Math.round(agg['지출'] || 0))}</span></div>
-       <div><span class="k">이체</span><span class="v" style="color:var(--transfer-text);">${enComma(Math.round(agg['이체'] || 0))}</span></div>
-       <div><span class="k">수입 − 지출</span><span class="v" style="color:${net >= 0 ? 'var(--income-text)' : 'var(--expense-text)'};">${enComma(Math.round(net))}</span></div>`;
-  }
 
   const box = enQS('#lg-list');
   if (!box) return;
@@ -3461,19 +3461,18 @@ async function enLoadLedger() {
     }
     box.innerHTML = groups.map(grp => {
       const dt = new Date(grp.date + 'T00:00:00');
-      const spend = grp.items.filter(x => x.kind === '지출').reduce((a, x) => a + Number(x.amount), 0);
       return `<div class="lg-dg" data-date="${grp.date}"><div class="lg-day">
           <span class="d">${grp.date.slice(2).replace(/-/g, '.')}</span>
           <span class="w">${EN_WD[dt.getDay()]}</span>
           <button class="lg-dayadd" data-add="${grp.date}" title="이 날짜로 행 추가" tabindex="-1">+</button>
-          <span class="s">${grp.items.length}건${spend ? ' · 지출 ' + enComma(Math.round(spend)) : ''}</span>
+          <span class="s">${grp.items.length}건</span>
         </div><div class="lg-card">` +
         grp.items.map(r => `<div class="lg-line k-${r.kind}" draggable="true" data-id="${r.id}" data-date="${r.date}"
           data-cat="${r.category_id}" data-amt="${r.amount}" data-mgroup="${enEsc(r.merchant_group || '')}"
           data-merch="${enEsc(r.merchant || '')}" data-note="${enEsc(r.note || '')}">
           <span class="k"><i class="lg-kd ${r.kind}">${r.kind}</i></span>
           <span class="e" aria-hidden="true">${r.emoji_category || ''}</span>
-          <span class="c" data-ed="cat" title="더블클릭해서 분류 변경"><span class="ct">${enEsc(r.category)} › ${enEsc(r.subcategory)}</span></span>
+          <span class="c" data-ed="cat" title="눌러서 분류 변경"><span class="ct">${enEsc(r.category)} › ${enEsc(r.subcategory)}</span></span>
           <span class="n" data-ed="merchant" title="더블클릭해서 수정">${r.merchant_group ? `<i class="lg-mg">${enEsc((mgEmojiSet(r.merchant_group) ? mgEmojiSet(r.merchant_group) + ' ' : '') + r.merchant_group)}</i>` : ''}${enEsc(r.merchant || r.subcategory)}</span>
           <span class="mm" data-ed="note" title="더블클릭해서 메모 수정">${r.note ? enEsc(r.note) : '<i class="lg-ph">메모</i>'}</span>
           <span class="f">
@@ -3530,25 +3529,18 @@ function lgCellEdit(cell, opts) {
   LGK.move = null;
   cell.classList.add('editing');
 
-  let input;
+  let input, catHidden = null;
   if (what === 'cat') {
-    input = document.createElement('select');
-    input.className = 'lg-ed sel';
-    const cur = Number(line.dataset.cat);
-    ['지출', '수입', '이체'].forEach(k => {
-      const list = EN.cats.filter(c => c.kind === k);
-      if (!list.length) return;
-      const og = document.createElement('optgroup');
-      og.label = k;
-      list.forEach(c => {
-        const o = document.createElement('option');
-        o.value = c.id;
-        o.textContent = c.category + ' › ' + c.subcategory;
-        if (c.id === cur) o.selected = true;
-        og.appendChild(o);
-      });
-      input.appendChild(og);
-    });
+    /* 셀렉트로는 수십 개 소분류를 못 찾는다. 검색 + 종류 칩 + 이모지가 붙은 목록으로 고른다. */
+    input = document.createElement('input');
+    input.className = 'lg-ed cat';
+    input.setAttribute('autocomplete', 'off');
+    input.placeholder = '입력해서 찾기';
+    catHidden = document.createElement('input');
+    catHidden.type = 'hidden';
+    catHidden.value = line.dataset.cat || '';
+    const curCat = EN.catById[Number(line.dataset.cat)];
+    input.value = curCat ? `${curCat.category} › ${curCat.subcategory}` : '';
   } else {
     input = document.createElement('input');
     input.className = 'lg-ed' + (what === 'amount' ? ' mono' : '');
@@ -3568,6 +3560,7 @@ function lgCellEdit(cell, opts) {
 
   cell.innerHTML = '';
   cell.appendChild(input);
+  if (catHidden) { cell.appendChild(catHidden); lgCatPick(input, catHidden, null, { fixed: true }); }
   if (what === 'merchant') lgMerchantAC(input);
   input.focus();
   if (input.select && seed == null) input.select();
@@ -3589,11 +3582,13 @@ function lgCellEdit(cell, opts) {
     if (done) return;
     done = true;
     cell.classList.remove('editing');
+    /* body 에 띄워둔 분류 목록이 남지 않게 여기서 확실히 걷는다 */
+    document.querySelectorAll('.lg-cpfixed').forEach(b => b.remove());
     const bail = () => { cell.innerHTML = prev; land(false); };
     if (!commit) { bail(); return; }
     const patch = {};
     if (what === 'cat') {
-      const cid = Number(input.value);
+      const cid = Number(catHidden ? catHidden.value : input.value);
       if (!cid || cid === Number(line.dataset.cat)) { bail(); return; }
       patch.category_id = cid;
     } else if (what === 'amount') {
@@ -3632,12 +3627,21 @@ function lgCellEdit(cell, opts) {
     else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); LGK.move = null; finish(false); }
   });
   input.addEventListener('blur', () => finish(true));
-  if (what === 'cat') input.addEventListener('change', () => finish(true));
+  if (what === 'cat' && catHidden) catHidden.addEventListener('change', () => finish(true));
 }
 
 function lgBindEdit(box) {
   box.querySelectorAll('[data-ed]').forEach(cell =>
     cell.addEventListener('dblclick', () => lgCellEdit(cell)));
+
+  /* 분류는 한 번만 눌러도 바로 목록이 열린다 — 제일 자주 고치는 칸인데
+     칸 고르기 → 편집 시작 두 단계를 거칠 이유가 없다. */
+  box.querySelectorAll('[data-ed="cat"]').forEach(cell =>
+    cell.addEventListener('click', (e) => {
+      if (e.detail > 1) return;                 /* 더블클릭은 위 핸들러가 받는다 */
+      if (LGK.editing || cell.classList.contains('editing')) return;
+      lgCellEdit(cell);
+    }));
 
   box.querySelectorAll('[data-tg]').forEach(btn => btn.addEventListener('click', async () => {
     const line = btn.closest('.lg-line');
@@ -3683,20 +3687,33 @@ function lgFixedBtn(merchant, on) {
 
 /* 분류를 셀렉트 대신 검색으로 고른다 — 소분류가 수십 개라 스크롤로는 못 찾는다.
    보이는 칸은 input, 실제 값은 옆의 hidden 이 들고 있다. */
-function lgCatPick(input, hidden, onPick) {
+function lgCatPick(input, hidden, onPick, opts) {
   if (!input || input.dataset.cp) return;
   input.dataset.cp = '1';
+  const O = opts || {};
   const rank = { '지출': 0, '수입': 1, '이체': 2 };
   const all = () => [...EN.cats].sort((a, b) =>
     (rank[a.kind] ?? 9) - (rank[b.kind] ?? 9) || a.sort_order - b.sort_order);
   const box = document.createElement('div');
-  box.className = 'lg-catdrop lg-cpdrop';
+  box.className = 'lg-catdrop lg-cpdrop' + (O.fixed ? ' lg-cpfixed' : '');
   box.hidden = true;
-  (input.parentElement || document.body).appendChild(box);
+  /* 표 안(칸 편집)에서 쓸 때는 칸 안에 붙이면 잘린다 — 내역 카드가 overflow:hidden 이다.
+     그래서 body 에 붙이고 입력칸 위치를 따라 화면 좌표로 띄운다. */
+  (O.fixed ? document.body : (input.parentElement || document.body)).appendChild(box);
+  const place = () => {
+    if (!O.fixed) return;
+    const r = input.getBoundingClientRect();
+    const w = Math.max(300, r.width);
+    box.style.width = w + 'px';
+    box.style.left = Math.round(Math.max(8, Math.min(r.left, window.innerWidth - w - 10))) + 'px';
+    const below = window.innerHeight - r.bottom;
+    if (below < 230 && r.top > below) { box.style.top = 'auto'; box.style.bottom = Math.round(window.innerHeight - r.top + 5) + 'px'; }
+    else { box.style.bottom = 'auto'; box.style.top = Math.round(r.bottom + 5) + 'px'; }
+  };
 
   let list = [], cur = -1;
   const label = (c) => `${c.category} › ${c.subcategory}`;
-  const close = () => { box.hidden = true; cur = -1; };
+  const close = () => { box.hidden = true; cur = -1; if (O.fixed && !input.isConnected) box.remove(); };
   const paint = () => box.querySelectorAll('.lg-catopt').forEach((el, i) => el.classList.toggle('on', i === cur));
   const restore = () => {
     const c = EN.catById[Number(hidden.value)];
@@ -3708,7 +3725,7 @@ function lgCatPick(input, hidden, onPick) {
     const isLabel = chosen && input.value === label(chosen);
     list = all().filter(c => !q || isLabel ||
       (c.category + ' ' + c.subcategory + ' ' + c.kind).toLowerCase().includes(q)).slice(0, 60);
-    if (!list.length) { box.innerHTML = '<div class="lg-catempty">일치하는 분류가 없습니다.</div>'; box.hidden = false; return; }
+    if (!list.length) { box.innerHTML = '<div class="lg-catempty">일치하는 분류가 없습니다.</div>'; box.hidden = false; place(); return; }
     let last = '';
     box.innerHTML = list.map((c, i) => {
       const head = c.kind !== last ? `<div class="lg-cathead">${c.kind}</div>` : '';
@@ -3719,6 +3736,7 @@ function lgCatPick(input, hidden, onPick) {
         <span class="tx">${enEsc(c.category)} › <b>${enEsc(c.subcategory)}</b></span></div>`;
     }).join('');
     box.hidden = false;
+    place();
     cur = -1;
     box.querySelectorAll('.lg-catopt').forEach(el =>
       el.addEventListener('mousedown', (e) => { e.preventDefault(); pick(list[Number(el.dataset.i)]); }));
@@ -6159,7 +6177,7 @@ function rxLedgerLineEdit(r) {
     data-merch="${rxEsc(merch)}" data-note="${rxEsc(r.memo || '')}">
     <span class="k"><i class="lg-kd ${k}">${k}</i></span>
     <span class="e" aria-hidden="true">${r.emoji || ''}</span>
-    <span class="c" data-ed="cat" title="더블클릭해서 분류 변경"><span class="ct">${[r.minor, r.item].filter(Boolean).map(rxEsc).join(' › ') || '-'}</span></span>
+    <span class="c" data-ed="cat" title="눌러서 분류 변경"><span class="ct">${[r.minor, r.item].filter(Boolean).map(rxEsc).join(' › ') || '-'}</span></span>
     <span class="n" data-ed="merchant" title="더블클릭해서 수정">${r.mgroup && r.mgroup !== merch ? `<i class="lg-mg">${rxEsc(r.mgroup)}</i>` : ''}${rxEsc(merch || r.item || '')}</span>
     <span class="mm" data-ed="note" title="더블클릭해서 메모 수정">${r.memo ? rxEsc(r.memo) : '<i class="lg-ph">메모</i>'}</span>
     <span class="f">
@@ -11174,6 +11192,7 @@ const INV_SERIES = [
   { key: 'contrib', label: '누적 원금', color: '#e0c766' },
   { key: 'transfer', label: '투자 이체', color: '#39a8bd' },
   { key: 'returns', label: '실현 수익', color: '#d9884f' },
+  { key: 'returnsCum', label: '누적 실현수익', color: '#c56a3a' },
   { key: 'roi', label: '원금 대비 수익률', color: '#9b7fc2' },
   { key: 'share', label: '총자산 대비 비중', color: '#5b8fc7' }
 ];
@@ -12833,15 +12852,29 @@ function bkVerdictMenu(cell, hostId, data, d) {
   setTimeout(() => document.addEventListener('mousedown', close, { once: true }), 0);
 }
 
+/* 요약 하위 4개 화면. "한 차트로 보면 좋은 것끼리"를 화면마다 기본값으로 켜 둔다. */
+const INV_VIEWS = {
+  ovGrowth:     { label: '자산 성장률', note: '넣은 돈 대비 몇 % 불었나' },
+  ovTransfer:   { label: '투자 이체',   note: '원금이 쌓여온 과정' },
+  ovRealized:   { label: '실현 수익',   note: '확정된 수익 — 판매수익 + 배당' },
+  ovUnrealized: { label: '평가손익',    note: '평가액과 원금의 간격 = 미실현 손익' }
+};
+
 const INV_SUBS = [
-  ['overview', '요약'],
+  ['ovGrowth', '자산 성장률'],
+  ['ovTransfer', '투자 이체'],
+  ['ovRealized', '실현 수익'],
+  ['ovUnrealized', '평가손익'],
   ['book', '종목'],
   ['bench', '벤치마크'],
   ['tax', '세금']
 ];
 
 function renderInvestmentPage(container, data, d) {
-  const SUB = INV_SUBS.some(s => s[0] === state.invSub) ? state.invSub : 'overview';
+  const SUB = INV_SUBS.some(s => s[0] === state.invSub) ? state.invSub : 'ovGrowth';
+  const VIEW = INV_VIEWS[SUB] || null;
+  if (VIEW && !state.invSeriesBySub[SUB]) state.invSeriesBySub[SUB] = { ...state.invSeries };
+  const SER = VIEW ? state.invSeriesBySub[SUB] : state.invSeries;
   const subnav = '';
   const _unusedInvSubs = `${INV_SUBS.map(([v, l]) =>
     `<button data-sub="${v}" class="${v === SUB ? 'active' : ''}">${l}</button>`).join('')}</div>`;
@@ -12923,7 +12956,7 @@ function renderInvestmentPage(container, data, d) {
   });
 
   container.innerHTML = subnav + `
-    ${SUB === 'overview' ? `
+    ${VIEW ? `
     <div class="g">
       <div class="stat-grid s12" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-bottom:0;">
         <div class="stat-card">
@@ -12952,7 +12985,7 @@ function renderInvestmentPage(container, data, d) {
     <div class="g">
       <div class="panel s12">
         <div class="panel-title">
-          <div>투자 추이</div>
+          <div>${VIEW ? VIEW.label : '투자 추이'}${VIEW ? `<span style="margin-left:9px;font-size:var(--fs-tiny);color:var(--text-faint);font-weight:400;">${VIEW.note}</span>` : ''}</div>
           <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
             <div class="range-toggle" id="inv-period-toggle">
               <button data-period="month" class="${(state.invPeriod || 'month') === 'month' ? 'active' : ''}">월</button>
@@ -12962,8 +12995,8 @@ function renderInvestmentPage(container, data, d) {
           </div>
         </div>
         <div class="series-toggles" id="inv-series-toggles">
-          ${INV_SERIES.map(sr => `<label class="series-chk ${state.invSeries[sr.key] ? 'on' : ''}">
-            <input type="checkbox" data-key="${sr.key}" ${state.invSeries[sr.key] ? 'checked' : ''} />
+          ${INV_SERIES.map(sr => `<label class="series-chk ${SER[sr.key] ? 'on' : ''}">
+            <input type="checkbox" data-key="${sr.key}" ${SER[sr.key] ? 'checked' : ''} />
             <i style="background:${sr.color}"></i>${sr.label}
           </label>`).join('')}
         </div>
@@ -12997,7 +13030,7 @@ function renderInvestmentPage(container, data, d) {
   if (SUB === 'tax') renderCapitalGainsPanel('panel-cgt', data.ledger);
   if (SUB === 'book') renderBookPage('panel-book', data, d);
 
-  if (SUB === 'overview') {
+  if (VIEW) {
 
   const returnsDataFull = getInvestmentIncomeMonthly(data.ledger);
   /* --- 통합 추이 차트 --- */
@@ -13017,6 +13050,24 @@ function renderInvestmentPage(container, data, d) {
   Object.keys(returnsDataFull.byMonthItem).forEach(k => {
     returnsByYM[k] = Object.values(returnsDataFull.byMonthItem[k]).reduce((a, v) => a + v, 0);
   });
+  /* 누적 실현수익은 흐름이 아니라 잔액성이다 — 연 단위로 볼 때도 그 해 합이 아니라
+     그 시점까지의 누적을 집어야 한다. 그래서 flowAgg 가 아니라 별도 조회를 쓴다. */
+  const cumReturnsByYM = {};
+  (() => {
+    let acc = 0;
+    Object.keys(returnsByYM).sort().forEach(k => { acc += returnsByYM[k]; cumReturnsByYM[k] = acc; });
+  })();
+  const cumReturnsKeys = Object.keys(cumReturnsByYM).sort();
+  const cumReturnsAt = (am) => {
+    const ym = amToYM(am);
+    if (!ym) return null;
+    if (cumReturnsByYM[ym] !== undefined) return cumReturnsByYM[ym];
+    let v = 0;
+    for (let i = 0; i < cumReturnsKeys.length; i++) {
+      if (cumReturnsKeys[i] <= ym) v = cumReturnsByYM[cumReturnsKeys[i]]; else break;
+    }
+    return v;
+  };
 
   const drawInvMain = () => {
     const ctx = document.getElementById('chart-inv-main');
@@ -13044,10 +13095,11 @@ function renderInvestmentPage(container, data, d) {
     const cumMap = {}; cumSeries.forEach(x => { cumMap[x.month] = x; });
     const roiMap = {}; roiSeries.forEach(x => { roiMap[x.month] = x.roi; });
 
-    const S = state.invSeries;
+    const S = SER;
     const ds = [];
     if (S.transfer) ds.push({ type: 'bar', label: '투자 이체', data: flowAgg(transferByYM), backgroundColor: 'rgba(57,168,189,0.7)', borderRadius: 3, yAxisID: 'yFlow', labelColor: '#a8e6f0', order: 4 });
     if (S.returns) ds.push({ type: 'bar', label: '실현 수익', data: flowAgg(returnsByYM), backgroundColor: 'rgba(224,138,95,0.85)', borderRadius: 3, yAxisID: 'yFlow', labelColor: '#f0b795', order: 3 });
+    if (S.returnsCum) ds.push({ type: 'line', label: '누적 실현수익', data: pick.map(cumReturnsAt), borderColor: '#c56a3a', backgroundColor: 'rgba(197,106,58,0.12)', fill: true, tension: 0.3, pointRadius: 2, spanGaps: true, yAxisID: 'y', labelColor: '#f0b795', labelOffset: -18, order: 2 });
     if (S.balance) ds.push({ type: 'line', label: '평가액', data: pick.map(am => (cumMap[am] ? cumMap[am].balance : 0)), borderColor: '#4c8c6b', backgroundColor: 'rgba(76,140,107,0.10)', fill: true, tension: 0.3, pointRadius: 2, yAxisID: 'y', labelColor: '#a8d8bf', labelOffset: -18, order: 1 });
     if (S.contrib) ds.push({ type: 'line', label: '누적 원금', data: pick.map(am => (cumMap[am] ? cumMap[am].cumContribution : 0)), borderColor: '#e0c766', borderDash: [5, 4], backgroundColor: 'transparent', tension: 0.3, pointRadius: 2, yAxisID: 'y', labelColor: '#efdfa0', labelOffset: 16, order: 2 });
     if (S.roi) ds.push({ type: 'line', label: '원금 대비 수익률', data: pick.map(am => (roiMap[am] === undefined ? null : roiMap[am])), borderColor: '#9b7fc2', backgroundColor: 'transparent', borderDash: [3, 3], tension: 0.3, pointRadius: 0, spanGaps: true, yAxisID: 'yRoi', order: 0,
@@ -13071,7 +13123,7 @@ function renderInvestmentPage(container, data, d) {
         scales: {
           x: { ticks: { ...MONO_TICK, autoSkip: true, maxRotation: 0 }, grid: { display: false } },
           /* 좌축 = 잔액성(평가액·원금), 우축 = 흐름성(이체·실현수익) — 자릿수가 달라 축을 나눈다 */
-          y: { display: S.balance || S.contrib, position: 'left', ticks: { ...MONO_TICK, color: '#7fc0a0', callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT, title: { display: true, text: '잔액', color: '#7fc0a0', font: { family: 'IBM Plex Mono', size: 9 } } },
+          y: { display: !!(S.balance || S.contrib || S.returnsCum), position: 'left', ticks: { ...MONO_TICK, color: '#7fc0a0', callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT, title: { display: true, text: '잔액', color: '#7fc0a0', font: { family: 'IBM Plex Mono', size: 9 } } },
           yFlow: { display: S.transfer || S.returns, position: 'right', beginAtZero: true, ticks: { ...MONO_TICK, color: '#e0c766', callback: (v) => formatCompactWon(v) }, grid: { display: false }, title: { display: true, text: '월/연 흐름', color: '#e0c766', font: { family: 'IBM Plex Mono', size: 9 } } },
           yRoi: { display: !!(S.roi || S.share), position: 'right', ticks: { ...MONO_TICK, color: '#c0a8e0', callback: (v) => `${v}%` }, grid: { display: false } }
         }
@@ -13097,7 +13149,7 @@ function renderInvestmentPage(container, data, d) {
   document.getElementById('inv-series-toggles').addEventListener('change', (e) => {
     const cb = e.target.closest('input[type="checkbox"]');
     if (!cb) return;
-    state.invSeries[cb.dataset.key] = cb.checked;
+    SER[cb.dataset.key] = cb.checked;
     cb.closest('.series-chk').classList.toggle('on', cb.checked);
     drawInvMain();
   });

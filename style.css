@@ -810,9 +810,11 @@ body{
   border-radius:var(--r-xl);padding:5px 10px;cursor:pointer;font-family:var(--sans);font-size:var(--fs-xs);}
 .lg-quick button:hover{color:var(--text);}
 .lg-quick button.on{background:var(--accent-fill);color:var(--ink-on-accent);font-weight:700;}
-.lg-sum{display:flex;gap:18px;align-items:baseline;margin:0 0 0 auto;flex-wrap:wrap;}
-.lg-sum span.k{font-size:var(--fs-tiny);color:var(--text-faint);margin-right:6px;}
-.lg-sum span.v{font-family:var(--mono);font-size:var(--fs-md);font-weight:600;font-variant-numeric:tabular-nums;}
+/* 분류 칸을 그 자리에서 검색으로 고를 때 쓰는 목록.
+   내역 카드가 overflow:hidden 이라 칸 안에 붙이면 잘린다 — body 에 붙이고 화면 좌표로 띄운다. */
+.lg-cpfixed{position:fixed;right:auto;max-height:min(320px,52vh);z-index:120;}
+.lg-ed.cat{font-family:var(--mono);font-size:var(--fs-xs);}
+.lg-ed.cat::placeholder{color:var(--text-faint);}
 
 /* 열 머리글 */
 /* ---------- 내역 머리줄에 녹인 필터 ----------
