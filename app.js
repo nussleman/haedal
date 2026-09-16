@@ -1064,7 +1064,8 @@ const SECTION_SUBS = {
            ['#', '자산'], ['snapshot', '자산 스냅샷']],
   invest: [['#', '요약'], ['ovGrowth', '자산 성장률'], ['ovTransfer', '투자 이체'],
            ['ovRealized', '실현 수익'], ['ovUnrealized', '평가손익'],
-           ['#', '포트폴리오'], ['book', '종목'], ['bench', '벤치마크'], ['tax', '세금']],
+           ['#', '포트폴리오'], ['book', '종목'], ['bench', '벤치마크'], ['tax', '세금'],
+           ['#', '규율'], ['rules', '매매원칙'], ['journal', '매매일지']],
   goals:  [['main', '목표']],
   report: [['#', '기간별'], ['monthly', '월간'], ['yearly', '연간'],
            ['#', '자산별'], ['networth', '순자산'], ['pension', '연금'], ['savings', '저축']],
@@ -2450,6 +2451,9 @@ async function enRegisterMerchant(name, group) {
   const { error } = await sb.from('merchants')
     .upsert({ name: nm, merchant_group: group || null }, { onConflict: 'owner_id,name' });
   if (error) return false;
+  /* 참조 데이터가 아직 안 온 상태에서 불릴 수 있다 — 캐시가 없으면 여기서 만든다 */
+  EN.merchants = EN.merchants || [];
+  EN.merchGroup = EN.merchGroup || {};
   if (!EN.merchants.includes(nm)) EN.merchants.push(nm);
   if (group) EN.merchGroup[nm] = group;
   EN.merchants.sort((a, b) => a.localeCompare(b, 'ko'));
@@ -4820,7 +4824,11 @@ async function renderMerchantPage(host) {
     if (!r.tags.length) { groups['(그룹 없음)'] = (groups['(그룹 없음)'] || 0) + 1; return; }
     r.tags.forEach(t => { groups[t] = (groups[t] || 0) + 1; });
   });
-  const gList = Object.keys(groups).sort((a, b) => groups[b] - groups[a]);
+  /* 사용처가 아직 하나도 없는, 방금 만든 그룹도 목록에 보여야 고를 수 있다 */
+  Object.keys(EN.groupEmoji || {}).forEach(g => { if (g && groups[g] === undefined) groups[g] = 0; });
+  const gList = Object.keys(groups).filter(g => g !== '(그룹 없음)')
+    .sort((a, b) => groups[b] - groups[a] || a.localeCompare(b, 'ko'));
+  const noneCnt = groups['(그룹 없음)'] || 0;
   const fxCnt = { y: MG.rows.filter(r => r.fixed).length, gap: MG.rows.filter(r => r.fixedGap).length };
 
   const q = MG.q.trim().toLowerCase();
@@ -4865,6 +4873,8 @@ async function renderMerchantPage(host) {
             <button class="lg-catx" id="mg-gx" aria-label="그룹 해제" ${MG.group === 'all' ? 'hidden' : ''}>×</button>
             <div class="lg-catdrop" id="mg-gdrop" hidden>
               <div class="lg-catopt" data-g="all"><span class="tx"><b>전체</b></span><span class="cnt">${MG.rows.length}</span></div>
+              <div class="lg-catopt mg-noneopt" data-g="(그룹 없음)"><span class="em">⚠️</span>
+                <span class="tx"><b>그룹 없음</b></span><span class="cnt">${noneCnt}</span></div>
               ${gList.map(g => `<div class="lg-catopt" data-g="${enEsc(g)}">
                 <span class="em">${mgEmoji(g)}</span><span class="tx">${enEsc(g)}</span>
                 <span class="cnt">${groups[g]}</span></div>`).join('')}
@@ -4881,8 +4891,15 @@ async function renderMerchantPage(host) {
           </div>
         </div>
         <div class="lg-grp">
+          <span class="lg-glab">그룹 없음</span>
+          <button class="mg-nonebtn ${MG.group === '(그룹 없음)' ? 'on' : ''}" id="mg-noneonly"
+                  title="그룹이 비어 있는 사용처만 보기">⚠️ ${noneCnt}곳</button>
+        </div>
+        <div class="lg-grp">
           <span class="lg-glab">&nbsp;</span>
-          <button class="bk-add" id="mg-add">+ 사용처 추가</button>
+          <button class="bk-add" id="mg-add">+ 사용처</button>
+          <button class="bk-add" id="mg-gadd">+ 그룹</button>
+          <button class="bk-add" id="mg-bulk">분류 → 그룹 일괄</button>
           <button class="lg-reset" id="mg-reload">다시 읽기</button>
         </div>
       </div>
@@ -4943,6 +4960,20 @@ async function renderMerchantPage(host) {
   }));
   host.querySelectorAll('[data-mfx]').forEach(b => b.addEventListener('click', () =>
     mgToggleFixed(b.closest('.mg-row').dataset.m, host)));
+  enQS('#mg-noneonly').addEventListener('click', () => {
+    MG.group = MG.group === '(그룹 없음)' ? 'all' : '(그룹 없음)';
+    renderMerchantPage(host);
+  });
+  enQS('#mg-gadd').addEventListener('click', async () => {
+    const nm = (prompt('새 사용처 그룹 이름') || '').trim();
+    if (!nm) return;
+    if (gList.includes(nm)) { enToast(`'${nm}' 그룹은 이미 있습니다`); return; }
+    const em = (prompt(`'${nm}' 앞에 붙일 그림 — 비워두면 기본값`, mgEmojiSet(nm) || '') || '').trim();
+    const ok = await mgAddGroup(nm, em);
+    enToast(ok ? `'${nm}' 그룹을 만들었습니다` : '만들지 못했습니다');
+    if (ok) { MG.rows = null; renderMerchantPage(host); }
+  });
+  enQS('#mg-bulk').addEventListener('click', () => mgBulkOpen(host));
   enQS('#mg-add').addEventListener('click', async () => {
     const nm = (prompt('추가할 사용처 이름') || '').trim();
     if (!nm) return;
@@ -4985,6 +5016,142 @@ async function mgToggleFixed(name, host) {
   renderMerchantPage(host);
 }
 
+/* 사용처 그룹을 사전에 등록한다. 사용처가 아직 하나도 없어도 목록에 떠야
+   '먼저 그룹을 만들고 거기에 사용처를 넣는' 순서가 가능해진다. */
+async function mgAddGroup(name, emoji) {
+  const nm = String(name || '').trim();
+  if (!nm) return false;
+  const sb = await enClient();
+  const { error } = await sb.from('merchant_groups').insert({ name: nm, emoji: emoji || null });
+  if (error) return false;
+  EN.groupEmoji = EN.groupEmoji || {};
+  EN.groupEmoji[nm] = emoji || '';
+  return true;
+}
+
+/* 그룹 추천 — 짐작이 아니라 이미 쌓인 기록에서 뽑는다.
+   '이 사용처와 같은 분류를 쓰면서 그룹이 정해져 있는 다른 사용처들'의 최빈 그룹.
+   식비 › 외식을 쓰는 곳 186군데가 이미 음식점이면, 새로 들어온 식당도 음식점이다. */
+function mgSuggestGroups(rec, limit) {
+  if (!rec || !rec.catId || !MG.rows) return [];
+  const tally = {};
+  MG.rows.forEach(r => {
+    if (r.catId !== rec.catId || r.name === rec.name) return;
+    r.tags.forEach(t => { tally[t] = (tally[t] || 0) + 1; });
+  });
+  return Object.keys(tally).sort((a, b) => tally[b] - tally[a])
+    .slice(0, limit || 3).map(g => ({ name: g, n: tally[g] }));
+}
+
+/* 분류별로 '그룹이 비어 있는 사용처'를 모아 한 번에 채운다.
+   99곳을 하나씩 찍는 대신, 분류 한 줄에 그룹 하나를 정하면 그 아래가 전부 따라간다. */
+function mgBulkOpen(host) {
+  const none = MG.rows.filter(r => !r.tags.length);
+  const byCat = {};
+  none.forEach(r => {
+    const c = EN.catById[r.catId];
+    const key = c ? c.category + ' › ' + c.subcategory : '(분류 없음)';
+    if (!byCat[key]) byCat[key] = { key, catId: r.catId, rows: [], sug: [] };
+    byCat[key].rows.push(r);
+  });
+  const list = Object.values(byCat).map(g => {
+    g.sug = mgSuggestGroups({ catId: g.catId, name: '' }, 3);
+    g.cnt = g.rows.reduce((a, r) => a + r.cnt, 0);
+    return g;
+  }).sort((a, b) => b.rows.length - a.rows.length || b.cnt - a.cnt);
+
+  const gAll = (() => {
+    const t = {};
+    MG.rows.forEach(r => r.tags.forEach(x => { t[x] = (t[x] || 0) + 1; }));
+    Object.keys(EN.groupEmoji || {}).forEach(g => { if (g && t[g] === undefined) t[g] = 0; });
+    return Object.keys(t).sort((a, b) => t[b] - t[a] || a.localeCompare(b, 'ko'));
+  })();
+
+  const ov = enOverlay();
+  ov.hidden = false;
+  document.body.style.overflow = 'hidden';
+  ov.innerHTML = `
+    <div class="en-modal mg-bulkmodal">
+      <div class="en-head">
+        <h3>분류 → 그룹 일괄 적용</h3>
+        <button class="en-x" id="mgb-x" aria-label="닫기">×</button>
+      </div>
+      <p class="mgb-lead">그룹이 비어 있는 <b>${none.length}곳</b>을 주로 쓰는 분류로 묶었습니다.
+        분류마다 그룹을 하나 정하면 그 아래 사용처가 한 번에 바뀝니다.
+        <b>추천</b>은 같은 분류를 쓰면서 이미 그룹이 정해진 사용처들에서 뽑은 값입니다.</p>
+      <div class="mgb-cols"><span class="ck"></span><span class="ct">분류</span>
+        <span class="mc">사용처</span><span class="gp">넣을 그룹</span></div>
+      <div class="mgb-list">${list.map((g, i) => `
+        <div class="mgb-row" data-i="${i}">
+          <span class="ck"><input type="checkbox" data-gck ${g.sug.length ? 'checked' : ''}></span>
+          <span class="ct">${enEsc(g.key)}</span>
+          <span class="mc" title="${enEsc(g.rows.map(r => r.name).join(', '))}">
+            ${g.rows.length}곳 · 기록 ${enComma(g.cnt)}건</span>
+          <span class="gp">
+            <input class="en-in" data-gin list="mgb-glist" placeholder="그룹 이름"
+                   value="${enEsc(g.sug[0] ? g.sug[0].name : '')}">
+            ${g.sug.length ? `<span class="mgb-sug">${g.sug.map(x =>
+              `<button type="button" data-sg="${enEsc(x.name)}">${mgEmoji(x.name)} ${enEsc(x.name)}<i>${x.n}</i></button>`).join('')}</span>` : '<span class="mgb-nosug">추천 없음 — 직접 적어주세요</span>'}
+          </span>
+        </div>`).join('') || '<div class="en-empty">그룹이 비어 있는 사용처가 없습니다.</div>'}</div>
+      <datalist id="mgb-glist">${gAll.map(g => `<option value="${enEsc(g)}">`).join('')}</datalist>
+      <p class="mgb-note" id="mgb-note"></p>
+      <div class="mgb-foot">
+        <button class="lg-reset" id="mgb-cancel">닫기</button>
+        <button class="lg-addsave" id="mgb-apply">선택한 분류 적용</button>
+      </div>
+    </div>`;
+
+  const close = () => { ov.hidden = true; document.body.style.overflow = ''; };
+  ov.querySelector('#mgb-x').addEventListener('click', close);
+  ov.querySelector('#mgb-cancel').addEventListener('click', close);
+  ov.querySelectorAll('[data-sg]').forEach(b => b.addEventListener('click', () => {
+    const row = b.closest('.mgb-row');
+    row.querySelector('[data-gin]').value = b.dataset.sg;
+    row.querySelector('[data-gck]').checked = true;
+  }));
+
+  ov.querySelector('#mgb-apply').addEventListener('click', async () => {
+    const picks = [];
+    ov.querySelectorAll('.mgb-row').forEach(row => {
+      if (!row.querySelector('[data-gck]').checked) return;
+      const g = list[Number(row.dataset.i)];
+      const v = row.querySelector('[data-gin]').value.trim();
+      if (!v) return;
+      picks.push({ group: v, names: g.rows.map(r => r.name), cat: g.key, cnt: g.cnt });
+    });
+    if (!picks.length) { ov.querySelector('#mgb-note').textContent = '적용할 분류를 고르고 그룹 이름을 채워주세요.'; return; }
+    const shops = picks.reduce((a, p) => a + p.names.length, 0);
+    const rec = picks.reduce((a, p) => a + p.cnt, 0);
+    const lines = picks.slice(0, 8).map(p => `· ${p.cat} → ${p.group} (${p.names.length}곳)`).join('\n');
+    if (!confirm(`사용처 ${shops}곳 · 기록 ${enComma(rec)}건의 그룹을 바꿉니다.\n\n${lines}`
+      + (picks.length > 8 ? `\n… 외 ${picks.length - 8}개 분류` : '')
+      + '\n\n되돌리려면 같은 방법으로 다시 고쳐야 합니다. 계속할까요?')) return;
+
+    const btn = ov.querySelector('#mgb-apply');
+    const note = ov.querySelector('#mgb-note');
+    btn.disabled = true;
+    const sb = await enClient();
+    let done = 0, failed = 0;
+    for (const p of picks) {
+      note.textContent = `적용 중… ${++done}/${picks.length} — ${p.cat}`;
+      /* 사용처 이름은 많아야 수십 개라 한 번에 넘긴다 */
+      const { error } = await sb.from('transactions')
+        .update({ merchant_group: p.group }).in('merchant', p.names);
+      if (error) { failed++; continue; }
+      for (const nm of p.names) await enRegisterMerchant(nm, p.group);
+    }
+    btn.disabled = false;
+    close();
+    enToast(failed ? `${picks.length - failed}개 분류 적용 · ${failed}개 실패`
+      : `사용처 ${shops}곳의 그룹을 채웠습니다`);
+    MG.rows = null;
+    EN.loaded = false;
+    await enEnsureRefs();
+    renderMerchantPage(host);
+  });
+}
+
 /* 여기서 고친 건 과거 기록 전체에 적용된다. 몇 건이 바뀌는지 먼저 알려주고 묻는다. */
 function mgEdit(cell, host) {
   if (cell.classList.contains('editing')) return;
@@ -5017,18 +5184,11 @@ function mgEdit(cell, host) {
     input = document.createElement('input');
     input.className = 'lg-ed';
     input.value = what === 'group' ? (rec.group || '') : rec.name;
-    if (what === 'group') input.setAttribute('list', 'mg-glist');
+    if (what === 'group') input.setAttribute('autocomplete', 'off');
   }
   cell.innerHTML = '';
   cell.appendChild(input);
-  if (what === 'group' && !document.getElementById('mg-glist')) {
-    const dl = document.createElement('datalist');
-    dl.id = 'mg-glist';
-    const seen = {};
-    MG.rows.forEach(r => { if (r.group) seen[r.group] = 1; });
-    dl.innerHTML = Object.keys(seen).sort().map(g => `<option value="${enEsc(g)}">`).join('');
-    document.body.appendChild(dl);
-  }
+  if (what === 'group') mgGroupDrop(input, rec, () => finish(true));
   input.focus();
   if (input.select) input.select();
 
@@ -5074,6 +5234,70 @@ function mgEdit(cell, host) {
   });
   input.addEventListener('blur', () => finish(true));
   if (what === 'cat') input.addEventListener('change', () => finish(true));
+}
+
+/* 그룹 칸 전용 목록. datalist 는 추천을 위로 올릴 수도, 몇 곳이 쓰는지 보여줄 수도 없다.
+   맨 위에 '추천'을 따로 세우고, 그 아래에 많이 쓰는 순서로 나머지를 깐다. */
+function mgGroupDrop(input, rec, onPick) {
+  const box = document.createElement('div');
+  box.className = 'lg-catdrop lg-cpdrop lg-cpfixed mg-gdrop2';
+  box.hidden = true;
+  document.body.appendChild(box);
+  const kill = () => box.remove();
+
+  const tally = {};
+  MG.rows.forEach(r => r.tags.forEach(t => { tally[t] = (tally[t] || 0) + 1; }));
+  Object.keys(EN.groupEmoji || {}).forEach(g => { if (g && tally[g] === undefined) tally[g] = 0; });
+  const all = Object.keys(tally).sort((a, b) => tally[b] - tally[a] || a.localeCompare(b, 'ko'));
+  const sug = mgSuggestGroups(rec, 3).map(x => x.name);
+
+  const place = () => {
+    const r = input.getBoundingClientRect();
+    const w = Math.max(268, r.width);
+    box.style.width = w + 'px';
+    box.style.left = Math.round(Math.max(8, Math.min(r.left, window.innerWidth - w - 10))) + 'px';
+    const below = window.innerHeight - r.bottom;
+    if (below < 240 && r.top > below) { box.style.top = 'auto'; box.style.bottom = Math.round(window.innerHeight - r.top + 5) + 'px'; }
+    else { box.style.bottom = 'auto'; box.style.top = Math.round(r.bottom + 5) + 'px'; }
+  };
+  let list = [], cur = -1;
+  const paint = () => box.querySelectorAll('.lg-catopt').forEach((el, i) => el.classList.toggle('on', i === cur));
+
+  const open = () => {
+    const q = input.value.trim().toLowerCase();
+    const hit = (g) => !q || g.toLowerCase().includes(q) || g === input.value.trim();
+    const top = sug.filter(hit);
+    const rest = all.filter(g => hit(g) && !top.includes(g));
+    list = [...top, ...rest];
+    const opt = (g, isSug) => `<div class="lg-catopt" data-g="${enEsc(g)}">
+        <span class="em">${mgEmoji(g)}</span><span class="tx">${enEsc(g)}</span>
+        ${isSug ? '<b class="mg-sugtag">추천</b>' : ''}<span class="cnt">${tally[g] || 0}</span></div>`;
+    let html = '';
+    if (top.length) html += '<div class="lg-cathead">추천 — 같은 분류를 쓰는 사용처 기준</div>' + top.map(g => opt(g, true)).join('');
+    if (rest.length) html += '<div class="lg-cathead">전체 그룹</div>' + rest.map(g => opt(g, false)).join('');
+    if (!list.length) html = '<div class="lg-catempty">없는 이름입니다 — 그대로 두면 새 그룹으로 들어갑니다.</div>';
+    box.innerHTML = html;
+    box.hidden = false;
+    place();
+    cur = -1;
+    box.querySelectorAll('[data-g]').forEach(el => el.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      input.value = el.dataset.g;
+      box.hidden = true;
+      if (onPick) onPick();
+    }));
+  };
+
+  input.addEventListener('focus', () => { input.select(); open(); });
+  input.addEventListener('input', open);
+  input.addEventListener('blur', () => setTimeout(kill, 150));
+  input.addEventListener('keydown', (e) => {
+    if (box.hidden) return;
+    if (e.key === 'ArrowDown') { e.preventDefault(); cur = Math.min(cur + 1, list.length - 1); paint(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); cur = Math.max(cur - 1, 0); paint(); }
+    else if (e.key === 'Enter' && cur >= 0) { e.preventDefault(); e.stopPropagation(); input.value = list[cur]; box.hidden = true; if (onPick) onPick(); }
+    else if (e.key === 'Escape') { e.stopPropagation(); box.hidden = true; }
+  });
 }
 
 /* ---------------- 단축키 ---------------- */
@@ -6996,65 +7220,84 @@ function renderNowPage(container, data, d) {
     .filter(r => !sel || (sel.includes(' › ') ? expItemKeyOf(r) === sel : expCatOf(r) === sel))
     .sort((a, b) => expDayNo(b) - expDayNo(a) || netOfR(b) - netOfR(a));
 
-  const NOW_SUBS =[['summary', '요약'], ['income', '수입'], ['expense', '지출']];
-  const NSUB_MIGRATE = { budget: 'expense', detail: 'expense', saving: 'summary' };
-  if (NSUB_MIGRATE[state.nowSub]) state.nowSub = NSUB_MIGRATE[state.nowSub];
-  const NSUB = NOW_SUBS.some(x => x[0] === state.nowSub) ? state.nowSub : 'summary';
+  /* ================= 월간 요약 재구성 =================
+     대시보드는 "얼마였나"에 답하고, 리포트는 "무엇이 달랐고 다음에 뭘 할까"에 답한다.
+     아래 네 덩이가 그 차이를 만든다: 한 줄 판정 · 변동 요인 · 고정/변동 분해 · 다음 액션. */
 
-  container.innerHTML = `
-    <div class="page-daybar">
-      <div class="today-datewrap">
-        <div class="day-title">${scopeLabel}</div>
-        <div class="month-nav">
-          <button id="now-prev" ${availableKeys.indexOf(monthKey) <= 0 ? 'disabled' : ''}>◀</button>
-          <select id="now-month-select">${monthOptions}</select>
-          <button id="now-next" ${availableKeys.indexOf(monthKey) >= availableKeys.length - 1 ? 'disabled' : ''}>▶</button>
-          <button class="btn small" id="now-thismonth">이번 달</button>
-        </div>
-      </div>
-    </div>
+  /* --- 순자산 증감: 현금흐름만 보면 '저축했는데 자산은 줄어든 달'을 놓친다 --- */
+  const nwKeyOf = (mk) => { const [y, m] = String(mk).split('-'); return `${String(y).slice(2)}년 ${m}월`; };
+  const nwCur = d.byMonth ? d.byMonth[nwKeyOf(monthKey)] : undefined;
+  const nwPrev = d.byMonth ? d.byMonth[nwKeyOf(prevKey)] : undefined;
+  const nwDelta = (nwCur === undefined || nwPrev === undefined) ? null : nwCur - nwPrev;
+  /* 순저축과 순자산 증감의 차 = 투자 평가손익 등 '내가 넣지 않았는데 움직인 몫' */
+  const nwMarket = nwDelta === null ? null : nwDelta - sNet;
 
-    <div class="subnav sub2" id="now-subnav">${NOW_SUBS.map(([v, l]) =>
-      `<button data-sub="${v}" class="${v === NSUB ? 'active' : ''}">${l}</button>`).join('')}</div>
+  /* --- 변동 요인: 전월 같은 시점과 견준다 (진행 중인 달은 D+N 까지만) --- */
+  const drvLimit = week ? null : cmpDay;
+  const drvCatOf = (r) => r.minor || '기타';
+  const drvPrevRows = (week || drvLimit === null) ? [] :
+    ledger.filter(r => r.major.includes('지출') && ledgerMonthKey(r.date) === prevKey
+      && (() => { const pp = parseLedgerDateParts(r.date); return pp && pp.d <= drvLimit; })());
+  const drivers = (() => {
+    if (week || drvLimit === null) return [];
+    const cur = {}, prv = {};
+    scopeRows.filter(r => r.major.includes('지출')).forEach(r => {
+      const k = drvCatOf(r); cur[k] = (cur[k] || 0) + netOfR(r);
+    });
+    drvPrevRows.forEach(r => { const k = drvCatOf(r); prv[k] = (prv[k] || 0) + netOfR(r); });
+    return [...new Set([...Object.keys(cur), ...Object.keys(prv)])]
+      .map(k => ({ name: k, cur: cur[k] || 0, prev: prv[k] || 0, diff: (cur[k] || 0) - (prv[k] || 0) }))
+      .filter(x => Math.abs(x.diff) >= 1000)
+      .sort((a, b) => Math.abs(b.diff) - Math.abs(a.diff)).slice(0, 5);
+  })();
+  /* 분류가 왜 움직였는지는 결국 가게 이름에 있다 — 한 단계 더 파서 같이 보여준다 */
+  const drvWhy = (catName) => {
+    const cur = {}, prv = {};
+    scopeRows.filter(r => r.major.includes('지출') && drvCatOf(r) === catName)
+      .forEach(r => { const v = r.vendor || r.item || '-'; cur[v] = (cur[v] || 0) + netOfR(r); });
+    drvPrevRows.filter(r => drvCatOf(r) === catName)
+      .forEach(r => { const v = r.vendor || r.item || '-'; prv[v] = (prv[v] || 0) + netOfR(r); });
+    return [...new Set([...Object.keys(cur), ...Object.keys(prv)])]
+      .map(v => ({ name: v, diff: (cur[v] || 0) - (prv[v] || 0) }))
+      .filter(x => Math.abs(x.diff) >= 1000)
+      .sort((a, b) => Math.abs(b.diff) - Math.abs(a.diff)).slice(0, 2);
+  };
+  const drvUp = drivers.filter(x => x.diff > 0)[0] || null;
+  const drvDown = drivers.filter(x => x.diff < 0)[0] || null;
 
-    ${NSUB === 'summary' ? `
-    <div class="stat-grid">
-      <div class="stat-card clickable" data-goto="income" title="수입 탭으로 이동">
-        <div class="label">수입</div>
-        <div class="value" style="color:var(--income-text)">${formatKrw(sIncome)}</div>
-        ${week ? `<div class="sub">${week.label}</div>` : nowDeltaSub(sIncome, prevIncomeSame, false, cmpNote)}
-      </div>
-      <div class="stat-card clickable" data-goto="expense" title="지출 탭으로 이동">
-        <div class="label">지출</div>
-        <div class="value" style="color:var(--expense-text)">${formatKrw(sExpense)}</div>
-        ${week ? `<div class="sub">${week.label}</div>` : nowDeltaSub(sExpense, prevExpenseSame, true, cmpNote)}
-        <div class="sub">하루 평균 <b>${formatKrw(Math.round(M.expense / Math.max(isThisMonth ? elapsed : M.days, 1)))}</b></div>
-        ${projected === null ? '' : `<div class="sub">월말 예상 <b>${formatKrw(projected + fixedPendingSum)}</b> · 미결 고정비 ${formatCompactWon(fixedPendingSum)} 포함</div>`}
-      </div>
-      <div class="stat-card clickable" data-goto="saving" title="순저축 탭으로 이동">
-        <div class="label">순저축</div>
-        <div class="value" style="color:${sNet >= 0 ? 'var(--net-text)' : 'var(--expense-text)'}">${formatWon(sNet)}</div>
-        ${week ? '' : cmpSub(sNet, avgNet, false, avgNote)}
-      </div>
-      <div class="stat-card">
-        <div class="label">저축률</div>
-        <div class="value" style="color:${sRate === null ? 'var(--text)' : sRate >= rateTarget ? 'var(--net-text)' : 'var(--expense-text)'}">${sRate === null ? '—' : sRate.toFixed(1) + '%'}</div>
-        ${cmpSubPp(sRate, rateTarget, `목표 ${rateTarget}% 대비`)}
-      </div>
-      <div class="stat-card">
-        <div class="label">투자원금 이체</div>
-        <div class="value" style="color:var(--transfer-text)">${formatKrw(investTr)}</div>
-        ${week ? `<div class="sub">${week.label}</div>` : nowDeltaSub(investTr, prevInvestSame, false, cmpNote)}
-        ${investRate === null ? '' : `<div class="sub">수입의 <b>${investRate.toFixed(1)}%</b></div>`}
-      </div>
-      <div class="stat-card">
-        <div class="label">비상금 이체</div>
-        <div class="value" style="color:var(--transfer-text)">${formatKrw(emgTr)}</div>
-        ${week ? `<div class="sub">${week.label}</div>` : nowDeltaSub(emgTr, prevEmgSame, false, cmpNote)}
-        ${sIncome > 0 ? `<div class="sub">수입의 <b>${((emgTr / sIncome) * 100).toFixed(1)}%</b></div>` : ''}
-      </div>
-    </div>
+  /* --- 한 줄 판정: 저축률을 목표에 견줘 한 마디로 끝낸다 --- */
+  const verdict = (() => {
+    if (sRate === null) return { tone: 'none', badge: '판단 보류', line: '이 달 수입 기록이 없어 저축률을 낼 수 없습니다.' };
+    const gap = sRate - rateTarget;
+    const tone = gap >= 0 ? 'good' : gap >= -rateTarget * 0.3 ? 'ok' : 'warn';
+    const badge = gap >= 0 ? '목표 달성' : gap >= -rateTarget * 0.3 ? '목표 근처' : '목표 미달';
+    const head = `${isThisMonth ? `지금까지(D+${elapsed}/${M.days}일) ` : ''}저축률 ${sRate.toFixed(1)}%`
+      + ` — 목표 ${rateTarget}% ${gap >= 0 ? `+${gap.toFixed(1)}%p` : `${gap.toFixed(1)}%p`}`;
+    const tail = drvUp ? ` 지난달 같은 시점보다 가장 많이 늘어난 건 ${drvUp.name} +${formatKrw(drvUp.diff)}입니다.`
+      : drvDown ? ` 지난달 같은 시점보다 ${drvDown.name}에서 ${formatKrw(-drvDown.diff)} 덜 썼습니다.`
+      : '';
+    return { tone, badge, line: head + '.' + tail };
+  })();
 
+  /* --- 다음 달 한 가지 액션: 가장 크게 움직인 것 하나만 짚는다 --- */
+  const nextAction = (() => {
+    if (drvUp && drvUp.prev > 0)
+      return `${drvUp.name}를 지난달 수준(${formatKrw(drvUp.prev)})으로 되돌리면 순저축이 ${formatKrw(drvUp.diff)} 늘어납니다.`;
+    if (drvUp)
+      return `${drvUp.name}는 지난달엔 없던 지출입니다 — 이번 한 번인지, 앞으로도 나갈 돈인지 정해두세요.`;
+    if (expRegret > 0)
+      return `아낄 수 있었던 소비 ${formatKrw(expRegret)} — 지출의 ${expNet > 0 ? ((expRegret / expNet) * 100).toFixed(0) : 0}%입니다. 여기서 한 건만 줄여보세요.`;
+    if (sRate !== null && sRate < rateTarget && expVar > 0)
+      return `목표까지 ${formatKrw(Math.max(0, (netTarget || 0) - sNet))} 남았습니다. 변동비 ${formatKrw(expVar)} 안에서 찾는 게 가장 빠릅니다.`;
+    return '이번 달은 특별히 손댈 곳이 보이지 않습니다. 이대로 유지하세요.';
+  })();
+
+  /* --- 후회한 소비 상위 --- */
+  const regretTop = expRows.filter(r => r.regret)
+    .sort((a, b) => netOfR(b) - netOfR(a)).slice(0, 3);
+
+  /* --- 페이스 차트: 진행 중인 달이면 위, 마감된 달이면 아래로 --- */
+  const pacePanel = `
     <div class="g">
       <div class="panel s12">
         <div class="panel-title">
@@ -7081,7 +7324,147 @@ function renderNowPage(container, data, d) {
           <span class="now-progress-text">${isThisMonth ? `D+${elapsed} / ${M.days}일 · 남은 ${M.days - elapsed}일` : `${M.days}일 · 마감`}</span>
         </div>
       </div>
-    </div>` : ''}
+    </div>`;
+
+  const barPct = (v) => (expNet > 0 ? Math.max(0, (v / expNet) * 100) : 0);
+
+  const NOW_SUBS =[['summary', '요약'], ['income', '수입'], ['expense', '지출']];
+  const NSUB_MIGRATE = { budget: 'expense', detail: 'expense', saving: 'summary' };
+  if (NSUB_MIGRATE[state.nowSub]) state.nowSub = NSUB_MIGRATE[state.nowSub];
+  const NSUB = NOW_SUBS.some(x => x[0] === state.nowSub) ? state.nowSub : 'summary';
+
+  container.innerHTML = `
+    <div class="page-daybar">
+      <div class="today-datewrap">
+        <div class="day-title">${scopeLabel}</div>
+        <div class="month-nav">
+          <button id="now-prev" ${availableKeys.indexOf(monthKey) <= 0 ? 'disabled' : ''}>◀</button>
+          <select id="now-month-select">${monthOptions}</select>
+          <button id="now-next" ${availableKeys.indexOf(monthKey) >= availableKeys.length - 1 ? 'disabled' : ''}>▶</button>
+          <button class="btn small" id="now-thismonth">이번 달</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="subnav sub2" id="now-subnav">${NOW_SUBS.map(([v, l]) =>
+      `<button data-sub="${v}" class="${v === NSUB ? 'active' : ''}">${l}</button>`).join('')}</div>
+
+    ${NSUB === 'summary' ? `
+    <div class="nw-verdict ${verdict.tone}">
+      <div class="nw-vhead">
+        <span class="nw-badge">${verdict.badge}</span>
+        <span class="nw-vline">${verdict.line}</span>
+      </div>
+      <div class="nw-vfig">
+        <button class="nw-fig" data-goto="income"><span>수입</span><b style="color:var(--income-text)">${formatKrw(sIncome)}</b></button>
+        <span class="nw-op">−</span>
+        <button class="nw-fig" data-goto="expense"><span>지출</span><b style="color:var(--expense-text)">${formatKrw(sExpense)}</b></button>
+        <span class="nw-op">=</span>
+        <span class="nw-fig flat"><span>순저축</span><b style="color:${sNet >= 0 ? 'var(--net-text)' : 'var(--expense-text)'}">${formatWon(sNet)}</b></span>
+        ${projected === null ? '' : `<span class="nw-proj">월말 예상 지출 <b>${formatKrw(projected + fixedPendingSum)}</b></span>`}
+      </div>
+    </div>
+
+    <div class="stat-grid" style="grid-template-columns:repeat(auto-fit,minmax(190px,1fr));">
+      <div class="stat-card">
+        <div class="label">순저축</div>
+        <div class="value" style="color:${sNet >= 0 ? 'var(--net-text)' : 'var(--expense-text)'}">${formatWon(sNet)}</div>
+        ${week ? `<div class="sub">${week.label}</div>` : cmpSub(sNet, avgNet, false, avgNote)}
+        <div class="sub dimline">투자 <b>${formatCompactWon(investTr)}</b> · 비상금 <b>${formatCompactWon(emgTr)}</b></div>
+      </div>
+      <div class="stat-card">
+        <div class="label">저축률</div>
+        <div class="value" style="color:${sRate === null ? 'var(--text)' : sRate >= rateTarget ? 'var(--net-text)' : 'var(--expense-text)'}">${sRate === null ? '—' : sRate.toFixed(1) + '%'}</div>
+        ${cmpSubPp(sRate, rateTarget, `목표 ${rateTarget}% 대비`)}
+        ${netTarget === null ? '' : `<div class="sub dimline">목표 금액 <b>${formatCompactWon(Math.round(netTarget))}</b></div>`}
+      </div>
+      <div class="stat-card clickable" data-goto="expense" title="지출 탭으로 이동">
+        <div class="label">변동비 <i class="nw-hint" title="고정비를 뺀, 이번 달에 내가 손댈 수 있었던 몫">?</i></div>
+        <div class="value" style="color:var(--expense-text)">${formatKrw(expVar)}</div>
+        <div class="sub">지출의 <b>${expNet > 0 ? ((expVar / expNet) * 100).toFixed(0) : 0}%</b> · 고정비 ${formatCompactWon(expFixed)}</div>
+        ${fixedPendingSum > 0 ? `<div class="sub dimline">미결 고정비 <b>${formatCompactWon(fixedPendingSum)}</b> 남음</div>` : ''}
+      </div>
+      <div class="stat-card">
+        <div class="label">순자산 증감</div>
+        <div class="value" style="color:${nwDelta === null ? 'var(--text)' : nwDelta >= 0 ? 'var(--net-text)' : 'var(--expense-text)'}">${nwDelta === null ? '—' : (nwDelta >= 0 ? '+' : '') + formatCompactWon(nwDelta) + '원'}</div>
+        ${nwDelta === null
+          ? '<div class="sub">자산 스냅샷이 아직 없는 달입니다</div>'
+          : `<div class="sub ${nwMarket >= 0 ? 'good' : 'warn'}">넣은 돈 ${formatCompactWon(sNet)} · 시장이 움직인 몫 ${nwMarket >= 0 ? '+' : ''}${formatCompactWon(nwMarket)}</div>`}
+      </div>
+    </div>
+
+    ${isThisMonth ? pacePanel : ''}
+
+    <div class="g">
+      <div class="panel s7">
+        <div class="panel-title">
+          <div>무엇이 달랐나<span class="p-note">지출 변동 TOP 5</span></div>
+          <span class="ptag">${week ? '주간에는 비교하지 않습니다' : cmpNote}</span>
+        </div>
+        ${drivers.length ? `<div class="nw-drv">${drivers.map(x => {
+          const why = drvWhy(x.name);
+          const up = x.diff > 0;
+          const mag = Math.abs(x.diff);
+          const max = Math.abs(drivers[0].diff) || 1;
+          return `<div class="nw-drvrow ${up ? 'up' : 'dn'}" data-drv="${enEsc(x.name)}">
+            <span class="nm">${enEsc(x.name)}</span>
+            <span class="bar"><i style="width:${Math.max(3, (mag / max) * 100)}%"></i></span>
+            <span class="df">${up ? '+' : '−'}${formatKrw(mag)}</span>
+            <span class="pv">${formatCompactWon(x.prev)} → ${formatCompactWon(x.cur)}</span>
+            ${why.length ? `<span class="wy">${why.map(w =>
+              `${enEsc(w.name)} ${w.diff > 0 ? '+' : '−'}${formatCompactWon(Math.abs(w.diff))}`).join(' · ')}</span>` : '<span class="wy"></span>'}
+          </div>`;
+        }).join('')}</div>`
+        : `<div class="empty-state">${week ? '주차를 해제하면 전월 같은 시점과 견줍니다.' : '전월과 견줄 만큼 달라진 분류가 없습니다.'}</div>`}
+      </div>
+
+      <div class="panel s5">
+        <div class="panel-title"><div>고정비와 변동비</div><span class="ptag">${formatCompactWon(expNet)}원</span></div>
+        <div class="nw-split">
+          <div class="nw-splitbar">
+            <i class="fx" style="width:${barPct(expFixed)}%" title="고정비 ${formatWon(expFixed)}"></i>
+            <i class="vr" style="width:${barPct(expVar)}%" title="변동비 ${formatWon(expVar)}"></i>
+          </div>
+          <div class="nw-splitleg">
+            <span><i class="fx"></i>고정비 <b>${formatKrw(expFixed)}</b> (${expNet > 0 ? ((expFixed / expNet) * 100).toFixed(0) : 0}%)</span>
+            <span><i class="vr"></i>변동비 <b>${formatKrw(expVar)}</b> (${expNet > 0 ? ((expVar / expNet) * 100).toFixed(0) : 0}%)</span>
+          </div>
+          <p class="nw-splitnote">고정비는 계약을 바꿔야 줄고, 변동비는 이번 주에도 줄일 수 있습니다.
+            ${fixedPending.length ? `아직 안 나간 고정비가 <b>${fixedPending.length}건</b> 있습니다.` : ''}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="g">
+      <div class="panel s7">
+        <div class="panel-title"><div>잘한 소비 · 아낄 수 있었던 소비</div>
+          <span class="ptag">기록할 때 찍은 GOOD/BAD</span></div>
+        ${(expGood || expRegret) ? `
+        <div class="nw-gb">
+          <div class="nw-gbcell good">
+            <span class="k">잘한 소비</span>
+            <b>${formatKrw(expGood)}</b>
+            <span class="s">지출의 ${expNet > 0 ? ((expGood / expNet) * 100).toFixed(0) : 0}%</span>
+          </div>
+          <div class="nw-gbcell bad">
+            <span class="k">아낄 수 있었던</span>
+            <b>${formatKrw(expRegret)}</b>
+            <span class="s">지출의 ${expNet > 0 ? ((expRegret / expNet) * 100).toFixed(0) : 0}%</span>
+          </div>
+        </div>
+        ${regretTop.length ? `<div class="nw-rtop">${regretTop.map(r =>
+          `<div><span class="n">${enEsc(r.vendor || r.item || '-')}</span>
+            <span class="c">${enEsc(r.minor || '')}</span>
+            <b>${formatKrw(netOfR(r))}</b></div>`).join('')}</div>` : ''}`
+        : '<div class="empty-state">이 달에는 GOOD/BAD를 찍은 기록이 없습니다.</div>'}
+      </div>
+      <div class="panel s5 nw-actpanel">
+        <div class="panel-title"><div>다음 달 한 가지</div></div>
+        <p class="nw-act">${nextAction}</p>
+      </div>
+    </div>
+
+    ${isThisMonth ? '' : pacePanel}` : ''}
 
     ${NSUB === 'income' ? `
     <div class="inc-scope" id="now-inc-scope"></div>
@@ -7170,8 +7553,18 @@ function renderNowPage(container, data, d) {
     </div>` : ''}
   `;
 
-  container.querySelectorAll('.stat-card[data-goto]').forEach(el => el.addEventListener('click', () => {
+  container.querySelectorAll('[data-goto]').forEach(el => el.addEventListener('click', () => {
     state.nowSub = el.dataset.goto;
+    renderPage();
+  }));
+
+  /* 변동 요인 한 줄을 누르면 그 분류가 펼쳐진 지출 탭으로 바로 간다 —
+     "왜 늘었지?"에서 "무엇 때문에 늘었지?"까지 한 번에 닿게. */
+  container.querySelectorAll('[data-drv]').forEach(el => el.addEventListener('click', () => {
+    state.nowSub = 'expense';
+    state.nowExpFilter = 'all';
+    state.nowExpOpen = el.dataset.drv;
+    state.nowExpSel = el.dataset.drv;
     renderPage();
   }));
 
@@ -12897,6 +13290,415 @@ function bkVerdictMenu(cell, hostId, data, d) {
 }
 
 /* 요약 하위 4개 화면. "한 차트로 보면 좋은 것끼리"를 화면마다 기본값으로 켜 둔다. */
+
+/* ================= 매매원칙 · 매매일지 =================
+   원칙은 손실 중인 종목을 보면서 만들면 안 된다. 그래서 규칙을 화면에 고정해 두고,
+   매매일지는 "어느 규칙으로 샀고 팔았는지"를 반드시 적게 만든다.
+   규칙에 없는 매매가 쌓이면, 수익률보다 그 사실이 먼저 보여야 한다. */
+
+const TR_BUY_RULES = [
+  ['BUY-1', '3줄 메모를 썼다', '① 왜 사는가 ② 언제 파는가(사건·지표) ③ 무엇이 보이면 내가 틀린 것인가'],
+  ['BUY-2', '최소 매수 금액 충족', '전체 자산의 0.5% 이상. 그보다 작으면 사지 않는다'],
+  ['BUY-3', '월간 점검일에 산다', '그 외에는 관심종목에 적어두고 한 달 기다린다'],
+  ['BUY-X', '규칙 밖 매수', '원칙에 없는 매수 — 그래도 적는다. 안 적으면 고칠 수 없다']
+];
+
+const TR_SELL_RULES = [
+  ['SELL-1', '비중 상한 초과', '개별 15% · 테마 5% 위반 → 초과분만. 익절이 아니라 리밸런싱이다'],
+  ['SELL-2', '② 번이 실현됨', '계속 보유하려면 새 3줄 메모를 써야 하고, 못 쓰면 판다'],
+  ['SELL-3', '그 돈이 실제로 필요함', '원래는 돈 A(활주로 자금)에 있어야 했던 돈'],
+  ['SELL-4', '③ 번이 현실이 됨', '유일하고 진짜인 손절 사유. 손실률 무관 — −5%여도 팔고 −60%여도 판다'],
+  ['SELL-5', '왜 샀는지 설명 못 함', '3줄 메모가 없거나 스스로 납득이 안 되는 종목. 논리 없는 보유는 방치다'],
+  ['SELL-6', '더 나은 곳에 자본이 필요', '연 2~3회 제한. 갈아탈 종목의 3줄 메모를 먼저 쓴 뒤에만'],
+  ['SELL-7', '연말 손익통산 (12월)', '해외주식 양도세 연 250만원 공제. 단 SELL-4/5 해당 종목만'],
+  ['SELL-P', '가격 손절선 −25%', '논리를 세울 수 없는 테마·모멘텀 종목 전용. 대신 개별 비중 1% 이하'],
+  ['SELL-X', '규칙 밖 매도', '7가지 중 어디에도 안 맞는 매도 — 그래도 적는다']
+];
+
+const TR_EMOTIONS = ['많이 떨어져서', '많이 올라서', '내부자가 팔아서', '뉴스가 무서워서',
+  '남들이 파니까', '본전 오면 팔려고', '지루해서'];
+
+const TR_RULE_LABEL = (() => {
+  const m = {};
+  [...TR_BUY_RULES, ...TR_SELL_RULES].forEach(([k, l]) => { m[k] = l; });
+  return m;
+})();
+
+function renderRulesPage(hostId) {
+  const host = document.getElementById(hostId);
+  if (!host) return;
+  const sec = (n, title, body) => `
+    <div class="panel s12 rl-sec">
+      <div class="rl-hd"><span class="no">${n}</span><h3>${title}</h3></div>
+      ${body}
+    </div>`;
+  const ruleList = (rules, cls) => `<div class="rl-rules ${cls}">${rules.map(([k, l, d]) => `
+    <div class="rl-rule" data-rule="${k}">
+      <span class="k">${k}</span>
+      <span class="l">${l}</span>
+      <span class="d">${d}</span>
+      <button class="rl-log" data-logrule="${k}" title="이 규칙으로 매매일지 쓰기">일지 쓰기</button>
+    </div>`).join('')}</div>`;
+
+  host.innerHTML = `
+    <div class="g"><div class="panel s12 rl-top">
+      <div class="rl-toplead">
+        <h2>매매원칙</h2>
+        <p>투자는 목적이 아니라 <b>창작으로 먹고살 자유를 사는 수단</b>이다.
+           자산 목표는 숫자가 아니라 “돈 때문에 하기 싫은 일을 하지 않아도 되는 기간”으로
+           환산될 때만 의미가 있다. 계좌를 보는 시간이 창작 시간을 갉아먹으면,
+           수익률과 무관하게 규칙이 잘못된 것이다.</p>
+      </div>
+      <div class="rl-money">
+        <div class="rl-mcell a"><span class="t">돈 A — 활주로 자금</span>
+          <p>전세 보증금 + 창작 기간 생활비. 목적은 수익률이 아니라 <b>잃지 않는 것</b>.
+             예금·MMF·단기채로 분리한다. <b>주식 계좌에 두지 않는다.</b></p></div>
+        <div class="rl-mcell b"><span class="t">돈 B — 증식 자금</span>
+          <p>현재 주식 계좌. <b>10년 안 건드려도 되는 돈</b>일 때만 고위험 종목이 값을 한다.</p></div>
+      </div>
+    </div></div>
+
+    <div class="g">
+      ${sec('01', '매수', ruleList(TR_BUY_RULES.filter(r => r[0] !== 'BUY-X'), 'buy'))}
+    </div>
+
+    <div class="g">
+      ${sec('02', '비중', `
+        <div class="rl-size">
+          <div><span class="n">15%</span><span class="l">개별 종목 상한</span></div>
+          <div><span class="n">5%</span><span class="l">테마 상한 — 같이 움직이는 묶음은 하나의 베팅<br><i>양자 · 우주 · 원자력 · 레버리지</i></span></div>
+          <div class="wide"><span class="n">초과분만</span><span class="l">상한을 넘으면 넘은 만큼만 판다. 전량 매도 금지.</span></div>
+        </div>`)}
+    </div>
+
+    <div class="g">
+      ${sec('03', '매도 — 이 7개에 해당하지 않으면 팔지 않는다', `
+        <p class="rl-note">익절이 정당한 3가지 · 손절이 정당한 4가지. 그 밖은 매도가 아니라 충동이다.</p>
+        ${ruleList(TR_SELL_RULES.filter(r => /^SELL-\d$/.test(r[0])), 'sell')}
+        <div class="rl-exc">
+          <span class="t">예외 — 논리를 세울 수 없는 종목</span>
+          <p>테마·모멘텀으로 산 종목은 ③번을 쓸 수 없다. 그래서 <b>가격 손절선 −25%</b>를 기계적으로 건다.
+             대신 개별 비중은 <b>1% 이하</b>로 묶는다. 일지에는 <code>SELL-P</code>로 적는다.</p>
+          <button class="rl-log" data-logrule="SELL-P">일지 쓰기</button>
+        </div>
+        <div class="rl-emo">
+          <span class="t">팔면 안 되는 이유 — 이 중 하나가 떠올랐다면 그날은 아무것도 하지 않는다</span>
+          <div class="chips">${TR_EMOTIONS.map(e => `<span>${e}</span>`).join('')}</div>
+        </div>`)}
+    </div>
+
+    <div class="g">
+      ${sec('04', '점검 — 매월 첫째 주 토요일, 30분', `
+        <ol class="rl-steps">
+          <li>비중부터 본다 (15% / 5% 초과 여부)</li>
+          <li>지난달 실적 발표가 있었던 종목만 연다 → ②③ 확인</li>
+          <li>3줄 메모가 없는 종목 목록 확인 → 이번 달에 쓰거나 판다 (월 3개씩)</li>
+          <li>매수 후보 검토 (아직도 사고 싶은 것만)</li>
+          <li>30분이 지나면 덮는다. 결론이 안 나면 다음 달로.</li>
+        </ol>
+        <p class="rl-note">그 외의 날에는 계좌를 열지 않는다.</p>`)}
+    </div>
+
+    <div class="g"><div class="panel s12 rl-foot">
+      <p>규칙은 고쳐도 되지만 <b>손실 중인 종목을 보면서 고치지는 않는다.</b>
+         개정은 월간 점검일에만, 이유를 함께 적는다.</p>
+      <p class="dim">개인 투자 원칙 정리이며 투자 자문이 아닙니다. 최종 판단과 책임은 본인에게 있습니다.</p>
+    </div></div>`;
+
+  host.querySelectorAll('[data-logrule]').forEach(b => b.addEventListener('click', (e) => {
+    e.stopPropagation();
+    TJ.seedRule = b.dataset.logrule;
+    TJ.formOpen = true;
+    state.invSub = 'journal';
+    renderPage();
+  }));
+}
+
+/* ---------------- 매매일지 ---------------- */
+const TJ = { rows: null, loading: false, formOpen: false, seedRule: null, openId: null, filter: 'all' };
+
+function tjSideOf(rule) { return String(rule || '').startsWith('SELL') ? 'sell' : 'buy'; }
+
+async function tjLoad(force) {
+  if (TJ.rows && !force) return TJ.rows;
+  const sb = await enClient();
+  const { data, error } = await sb.from('trade_log').select('*')
+    .order('traded_on', { ascending: false }).order('id', { ascending: false }).limit(500);
+  TJ.rows = error ? [] : (data || []);
+  return TJ.rows;
+}
+
+async function renderJournalPage(hostId) {
+  const host = document.getElementById(hostId);
+  if (!host) return;
+  host.innerHTML = '<div class="g"><div class="panel s12"><div class="en-empty">매매일지를 불러오는 중…</div></div></div>';
+  const rows = await tjLoad();
+  if (!document.getElementById(hostId)) return;
+
+  const F = ['all', 'buy', 'sell', 'nomemo'].includes(TJ.filter) ? TJ.filter : 'all';
+  const shown = rows.filter(r =>
+    F === 'all' ? true : F === 'nomemo' ? !(r.why || '').trim() : r.side === F);
+
+  /* --- 규율 지표: 수익률보다 이게 먼저다 --- */
+  const buys = rows.filter(r => r.side === 'buy');
+  const sells = rows.filter(r => r.side === 'sell');
+  const memoOk = buys.filter(r => (r.why || '').trim() && (r.exit_when || '').trim() && (r.falsify || '').trim()).length;
+  const offRule = rows.filter(r => !r.rule || r.rule.endsWith('-X')).length;
+  const emoCnt = rows.filter(r => (r.emotion || '').trim()).length;
+  const realized = sells.reduce((a, r) => a + (Number(r.realized) || 0), 0);
+  const pct = (n, tot) => (tot > 0 ? Math.round((n / tot) * 100) : null);
+
+  host.innerHTML = `
+    <div class="g">
+      <div class="stat-grid s12" style="grid-template-columns:repeat(auto-fit,minmax(170px,1fr));margin-bottom:0;">
+        <div class="stat-card">
+          <div class="label">기록한 매매</div>
+          <div class="value">${rows.length}건</div>
+          <div class="sub">매수 ${buys.length} · 매도 ${sells.length}</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">3줄 메모를 쓴 매수</div>
+          <div class="value" style="color:${memoOk === buys.length ? 'var(--income-text)' : 'var(--expense-text)'}">${buys.length ? `${pct(memoOk, buys.length)}%` : '—'}</div>
+          <div class="sub">${buys.length ? `${buys.length}건 중 ${memoOk}건` : 'BUY-1'}</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">규칙 밖 매매</div>
+          <div class="value" style="color:${offRule ? 'var(--expense-text)' : 'var(--income-text)'}">${offRule}건</div>
+          <div class="sub">${rows.length ? `전체의 ${pct(offRule, rows.length)}%` : '원칙에 없는 매매'}</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">감정이 끼어든 날</div>
+          <div class="value" style="color:${emoCnt ? 'var(--expense-text)' : 'var(--text)'}">${emoCnt}건</div>
+          <div class="sub">적어둔 감정 신호</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">기록된 실현손익</div>
+          <div class="value" style="color:${realized >= 0 ? 'var(--income-text)' : 'var(--expense-text)'}">${realized >= 0 ? '+' : ''}${formatCompactWon(realized)}원</div>
+          <div class="sub">매도 ${sells.length}건 합계</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="g"><div class="panel s12">
+      <div class="panel-title">
+        <div>매매일지<span class="p-note">산 이유와 판 이유를 그 자리에서 남긴다</span></div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <div class="range-toggle" id="tj-filter">
+            ${[['all', '전체'], ['buy', '매수'], ['sell', '매도'], ['nomemo', '메모 없음']].map(([v, l]) =>
+              `<button data-f="${v}" class="${F === v ? 'active' : ''}">${l}</button>`).join('')}
+          </div>
+          <button class="bk-add" id="tj-new">${TJ.formOpen ? '접기' : '+ 새 기록'}</button>
+        </div>
+      </div>
+      <div id="tj-form">${TJ.formOpen ? tjFormHTML() : ''}</div>
+      <div id="tj-list">${tjListHTML(shown)}</div>
+    </div></div>`;
+
+  document.getElementById('tj-filter').addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    TJ.filter = b.dataset.f;
+    renderJournalPage(hostId);
+  });
+  document.getElementById('tj-new').addEventListener('click', () => {
+    TJ.formOpen = !TJ.formOpen;
+    if (!TJ.formOpen) TJ.seedRule = null;
+    renderJournalPage(hostId);
+  });
+  if (TJ.formOpen) tjBindForm(hostId);
+  tjBindList(hostId, shown);
+}
+
+function tjFormHTML() {
+  const seed = TJ.seedRule;
+  const side = seed ? tjSideOf(seed) : 'buy';
+  const opts = (list) => list.map(([k, l]) =>
+    `<option value="${k}" ${k === seed ? 'selected' : ''}>${k} — ${l}</option>`).join('');
+  return `
+    <div class="tj-form" data-side="${side}">
+      <div class="tj-frow">
+        <label><span>날짜</span><input class="en-in" type="date" data-t="traded_on" value="${enToday()}"></label>
+        <label><span>구분</span>
+          <select class="en-in" data-t="side">
+            <option value="buy" ${side === 'buy' ? 'selected' : ''}>매수</option>
+            <option value="sell" ${side === 'sell' ? 'selected' : ''}>매도</option>
+          </select></label>
+        <label class="grow"><span>종목</span><input class="en-in" data-t="name" placeholder="예: 로켓 랩" autocomplete="off"></label>
+        <label><span>티커</span><input class="en-in" data-t="ticker" placeholder="RKLB" autocomplete="off"></label>
+      </div>
+      <div class="tj-frow">
+        <label><span>수량</span><input class="en-in mono" data-t="quantity" inputmode="decimal" placeholder="0"></label>
+        <label><span>단가</span><input class="en-in mono" data-t="price" inputmode="decimal" placeholder="0"></label>
+        <label><span>통화</span>
+          <select class="en-in" data-t="currency"><option>KRW</option><option>USD</option></select></label>
+        <label class="grow"><span>체결금액 (원)</span><input class="en-in mono" data-t="amount" inputmode="numeric" placeholder="비우면 수량×단가"></label>
+        <label class="tj-sellonly"><span>실현손익 (원)</span><input class="en-in mono" data-t="realized" inputmode="numeric" placeholder="0"></label>
+      </div>
+      <div class="tj-frow">
+        <label class="grow"><span>규칙 — 어느 원칙으로 하는가</span>
+          <select class="en-in" data-t="rule">
+            <optgroup label="매수" data-g="buy">${opts(TR_BUY_RULES)}</optgroup>
+            <optgroup label="매도" data-g="sell">${opts(TR_SELL_RULES)}</optgroup>
+          </select></label>
+        <label class="grow"><span>감정 신호 — 있으면 오늘은 아무것도 하지 않는다</span>
+          <select class="en-in" data-t="emotion">
+            <option value="">없음</option>
+            ${TR_EMOTIONS.map(e => `<option value="${e}">${e}</option>`).join('')}
+          </select></label>
+      </div>
+      <div class="tj-memo">
+        <div class="tj-memohd">3줄 메모 <i>BUY-1 — 이걸 못 쓰면 사지 않는다</i></div>
+        <label><span>① 왜 사는가 (한 문장)</span><textarea class="en-in" data-t="why" rows="2"></textarea></label>
+        <label><span>② 언제 파는가 (사건·지표 — 가격 금지)</span><textarea class="en-in" data-t="exit_when" rows="2"></textarea></label>
+        <label><span>③ 무엇이 보이면 내가 틀린 것인가</span><textarea class="en-in" data-t="falsify" rows="2"></textarea></label>
+      </div>
+      <p class="tj-warn" id="tj-warn" hidden></p>
+      <div class="tj-ffoot">
+        <span class="tj-hint" id="tj-hint"></span>
+        <button class="lg-addsave" id="tj-save">기록하기</button>
+      </div>
+    </div>`;
+}
+
+function tjListHTML(rows) {
+  if (!rows.length) return '<div class="empty-state">아직 기록이 없습니다. 첫 매매부터 적어두면 규율이 눈에 보입니다.</div>';
+  return `<div class="tj-cols"><span class="dt">날짜</span><span class="sd">구분</span>
+      <span class="nm">종목</span><span class="rl">규칙</span><span class="wy">왜</span>
+      <span class="am">금액</span><span class="pl">실현</span><span class="x"></span></div>
+    <div class="lg-card">${rows.map(r => {
+    const sell = r.side === 'sell';
+    const noMemo = !(r.why || '').trim();
+    const off = !r.rule || r.rule.endsWith('-X');
+    const open = TJ.openId === r.id;
+    return `<div class="tj-row ${sell ? 'sell' : 'buy'} ${open ? 'open' : ''}" data-tj="${r.id}">
+      <span class="dt">${String(r.traded_on || '').slice(2).replace(/-/g, '.')}</span>
+      <span class="sd"><i class="tj-kd ${sell ? 'sell' : 'buy'}">${sell ? '매도' : '매수'}</i></span>
+      <span class="nm">${enEsc(r.name || '')}${r.ticker ? `<em>${enEsc(r.ticker)}</em>` : ''}</span>
+      <span class="rl">${r.rule ? `<i class="tj-rule ${off ? 'off' : ''}" title="${enEsc(TR_RULE_LABEL[r.rule] || '')}">${enEsc(r.rule)}</i>` : '<i class="tj-rule off">없음</i>'}</span>
+      <span class="wy ${noMemo ? 'none' : ''}">${noMemo ? '3줄 메모 없음' : enEsc(r.why)}</span>
+      <span class="am">${r.amount ? formatCompactWon(Number(r.amount)) : '—'}</span>
+      <span class="pl">${r.realized === null || r.realized === undefined || r.realized === '' ? '—'
+        : `<b class="${Number(r.realized) >= 0 ? 'up' : 'dn'}">${Number(r.realized) >= 0 ? '+' : ''}${formatCompactWon(Number(r.realized))}</b>`}</span>
+      <button class="x" data-tjx="${r.id}" aria-label="삭제" tabindex="-1">×</button>
+    </div>
+    ${open ? `<div class="tj-detail" data-tjd="${r.id}">
+      ${r.emotion ? `<div class="tj-emo">⚠️ 감정 신호를 적어둔 매매 — <b>${enEsc(r.emotion)}</b></div>` : ''}
+      <div class="tj-3">
+        <div><span>① 왜</span><p>${r.why ? enEsc(r.why) : '<i>비어 있음</i>'}</p></div>
+        <div><span>② 언제 판다</span><p>${r.exit_when ? enEsc(r.exit_when) : '<i>비어 있음</i>'}</p></div>
+        <div><span>③ 틀렸다는 신호</span><p>${r.falsify ? enEsc(r.falsify) : '<i>비어 있음</i>'}</p></div>
+      </div>
+      <div class="tj-rv">
+        <span>복기 — 지나고 보니</span>
+        <textarea class="en-in" data-tjrv="${r.id}" rows="2" placeholder="이 판단은 맞았나? 다음에 무엇을 다르게 할까?">${enEsc(r.review || '')}</textarea>
+        <button class="btn small" data-tjrvsave="${r.id}">복기 저장</button>
+      </div>
+    </div>` : ''}`;
+  }).join('')}</div>`;
+}
+
+function tjBindForm(hostId) {
+  const form = document.querySelector('.tj-form');
+  if (!form) return;
+  const val = (k) => { const el = form.querySelector(`[data-t="${k}"]`); return el ? el.value.trim() : ''; };
+  const sideSel = form.querySelector('[data-t="side"]');
+  const ruleSel = form.querySelector('[data-t="rule"]');
+  const warn = document.getElementById('tj-warn');
+  const hint = document.getElementById('tj-hint');
+
+  /* 구분을 바꾸면 그쪽 규칙만 고를 수 있게 한다 — 매수인데 SELL-4 를 고르는 일이 없게 */
+  const syncSide = () => {
+    const sd = sideSel.value;
+    form.dataset.side = sd;
+    ruleSel.querySelectorAll('optgroup').forEach(og => { og.disabled = og.dataset.g !== sd; });
+    const cur = ruleSel.selectedOptions[0];
+    if (!cur || cur.parentElement.dataset.g !== sd) {
+      const first = ruleSel.querySelector(`optgroup[data-g="${sd}"] option`);
+      if (first) ruleSel.value = first.value;
+    }
+    form.querySelectorAll('.tj-sellonly').forEach(el => { el.style.display = sd === 'sell' ? '' : 'none'; });
+    const memo = form.querySelector('.tj-memo');
+    memo.classList.toggle('opt', sd === 'sell');
+    memo.querySelector('.tj-memohd i').textContent = sd === 'sell'
+      ? 'SELL-2 로 계속 보유하려면 새 3줄 메모가 필요하다 — 매도에서는 선택'
+      : 'BUY-1 — 이걸 못 쓰면 사지 않는다';
+    check();
+  };
+  const check = () => {
+    const sd = sideSel.value;
+    const emo = val('emotion');
+    const msgs = [];
+    if (emo) msgs.push(`감정 신호(${emo})를 골랐습니다. 원칙대로라면 <b>오늘은 아무것도 하지 않습니다.</b> 그래도 적어둘 수는 있습니다.`);
+    if (sd === 'buy' && !(val('why') && val('exit_when') && val('falsify')))
+      msgs.push('BUY-1 — 3줄 메모 세 칸이 다 차야 매수입니다.');
+    warn.hidden = !msgs.length;
+    warn.innerHTML = msgs.join('<br>');
+    hint.textContent = ruleSel.value ? `${ruleSel.value} — ${TR_RULE_LABEL[ruleSel.value] || ''}` : '';
+  };
+  sideSel.addEventListener('change', syncSide);
+  ruleSel.addEventListener('change', check);
+  form.querySelectorAll('[data-t]').forEach(el => el.addEventListener('input', check));
+  syncSide();
+
+  document.getElementById('tj-save').addEventListener('click', async () => {
+    const name = val('name');
+    if (!name) { warn.hidden = false; warn.innerHTML = '종목 이름은 있어야 합니다.'; return; }
+    const num = (k) => { const t = val(k).replace(/[^\d.\-]/g, ''); return t === '' ? null : Number(t); };
+    const qty = num('quantity'), price = num('price');
+    let amount = num('amount');
+    if (amount === null && qty !== null && price !== null && val('currency') === 'KRW') amount = Math.round(qty * price);
+    const rec = {
+      traded_on: val('traded_on') || enToday(),
+      side: sideSel.value,
+      name, ticker: val('ticker') || null,
+      quantity: qty, price, currency: val('currency') || 'KRW', amount,
+      rule: ruleSel.value || null,
+      why: val('why') || null, exit_when: val('exit_when') || null, falsify: val('falsify') || null,
+      emotion: val('emotion') || null,
+      realized: sideSel.value === 'sell' ? num('realized') : null
+    };
+    const btn = document.getElementById('tj-save');
+    btn.disabled = true; btn.textContent = '저장 중…';
+    const { error } = await (await enClient()).from('trade_log').insert(rec);
+    btn.disabled = false; btn.textContent = '기록하기';
+    if (error) { warn.hidden = false; warn.innerHTML = '저장하지 못했습니다. 다시 시도하세요.'; return; }
+    enToast(`${rec.side === 'sell' ? '매도' : '매수'} 기록을 남겼습니다`);
+    TJ.rows = null; TJ.formOpen = false; TJ.seedRule = null;
+    renderJournalPage(hostId);
+  });
+}
+
+function tjBindList(hostId, shown) {
+  const list = document.getElementById('tj-list');
+  if (!list) return;
+  list.querySelectorAll('.tj-row').forEach(row => row.addEventListener('click', (e) => {
+    if (e.target.closest('[data-tjx]')) return;
+    const id = Number(row.dataset.tj);
+    TJ.openId = TJ.openId === id ? null : id;
+    renderJournalPage(hostId);
+  }));
+  list.querySelectorAll('[data-tjx]').forEach(b => b.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    if (!confirm('이 매매 기록을 지울까요?')) return;
+    await (await enClient()).from('trade_log').delete().eq('id', Number(b.dataset.tjx));
+    enToast('지웠습니다');
+    TJ.rows = null;
+    renderJournalPage(hostId);
+  }));
+  list.querySelectorAll('[data-tjrvsave]').forEach(b => b.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    const id = Number(b.dataset.tjrvsave);
+    const ta = list.querySelector(`[data-tjrv="${id}"]`);
+    const { error } = await (await enClient()).from('trade_log')
+      .update({ review: ta.value.trim() || null }).eq('id', id);
+    if (error) { enToast('저장하지 못했습니다'); return; }
+    enToast('복기를 저장했습니다');
+    TJ.rows = null;
+    renderJournalPage(hostId);
+  }));
+  list.querySelectorAll('.tj-detail').forEach(el => el.addEventListener('click', (e) => e.stopPropagation()));
+}
+
 const INV_VIEWS = {
   ovGrowth:     { label: '자산 성장률', note: '넣은 돈 대비 몇 % 불었나' },
   ovTransfer:   { label: '투자 이체',   note: '원금이 쌓여온 과정' },
@@ -12911,7 +13713,9 @@ const INV_SUBS = [
   ['ovUnrealized', '평가손익'],
   ['book', '종목'],
   ['bench', '벤치마크'],
-  ['tax', '세금']
+  ['tax', '세금'],
+  ['rules', '매매원칙'],
+  ['journal', '매매일지']
 ];
 
 function renderInvestmentPage(container, data, d) {
@@ -13064,6 +13868,9 @@ function renderInvestmentPage(container, data, d) {
 
     ${SUB === 'book' ? `<div id="panel-book"></div>` : ''}
 
+    ${SUB === 'rules' ? `<div id="panel-rules"></div>` : ''}
+    ${SUB === 'journal' ? `<div id="panel-journal"></div>` : ''}
+
   `;
 
   if (SUB === 'bench') {
@@ -13073,6 +13880,8 @@ function renderInvestmentPage(container, data, d) {
   }
   if (SUB === 'tax') renderCapitalGainsPanel('panel-cgt', data.ledger);
   if (SUB === 'book') renderBookPage('panel-book', data, d);
+  if (SUB === 'rules') renderRulesPage('panel-rules');
+  if (SUB === 'journal') renderJournalPage('panel-journal');
 
   if (VIEW) {
 
