@@ -980,7 +980,13 @@ body{
 
 /* ---------- 전체 내역 › 사용처 ---------- */
 .lg-shell{padding-top:26px;}
-.mg-stick{position:sticky;top:var(--hdr-h,0px);z-index:30;background:var(--bg);padding-top:4px;}
+/* 사용처 고정줄. 행이 이 줄 위로 비쳐 보이지 않게 세 가지를 같이 건다.
+   ① 행(z-index 없음)보다 확실히 위 ② 머리줄과의 틈을 :before 로 덮어 불투명하게
+   ③ 아래 경계 그림자는 .lg-stick:after 가 이미 그린다. */
+.mg-stick{position:sticky;top:var(--hdr-h,0px);z-index:80;background:var(--bg);
+  padding:4px 0 6px;margin-bottom:0;}
+.mg-stick:before{content:'';position:absolute;left:0;right:0;bottom:100%;
+  height:30px;background:var(--bg);pointer-events:none;}
 .mg-bar{display:flex;flex-wrap:wrap;gap:10px 12px;align-items:flex-end;margin:16px 0 12px;}
 #mg-cols [data-s]{cursor:pointer;user-select:none;display:flex;align-items:center;gap:4px;}
 #mg-cols .cn,#mg-cols .sm,#mg-cols .lt{justify-content:flex-end;}

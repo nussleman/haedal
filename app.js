@@ -2253,7 +2253,9 @@ function renderPage() {
     const subsAll = SECTION_SUBS[section] || [];
     const label = (subsAll.find(x => x[0] === SUB) || [])[1];
     const nItem = NAV_ITEMS.find(x => x.id === section);
-    const show = label && !(nItem && nItem.solo) && subsAll.filter(x => x[0] !== '#').length > 1;
+    /* 화면 스스로 기간(연도·연도/월)을 크게 띄우는 곳은 제목을 겹쳐 달지 않는다 */
+    const selfTitled = section === 'report' && (SUB === 'monthly' || SUB === 'yearly');
+    const show = label && !selfTitled && !(nItem && nItem.solo) && subsAll.filter(x => x[0] !== '#').length > 1;
     head.textContent = show ? label : '';
     head.hidden = !show;
   }
@@ -2480,10 +2482,12 @@ async function enEnsureRefs() {
   EN.merchGroup = {};
   (recentRes.data || []).forEach(r => {
     EN.freq[r.category_id] = (EN.freq[r.category_id] || 0) + 1;
-    if (r.merchant) {
-      mc[r.merchant] = mc[r.merchant] || {};
-      mc[r.merchant][r.category_id] = (mc[r.merchant][r.category_id] || 0) + 1;
-      if (r.merchant_group && !EN.merchGroup[r.merchant]) EN.merchGroup[r.merchant] = r.merchant_group;
+    /* 앞뒤 공백을 여기서 떼지 않으면 '사용처 '와 '사용처'가 목록에 따로 뜬다 */
+    const mname = String(r.merchant || '').trim();
+    if (mname) {
+      mc[mname] = mc[mname] || {};
+      mc[mname][r.category_id] = (mc[mname][r.category_id] || 0) + 1;
+      if (r.merchant_group && !EN.merchGroup[mname]) EN.merchGroup[mname] = r.merchant_group;
     }
   });
   EN.merchFixed = {};
@@ -2886,14 +2890,17 @@ function enQuickRange(key) {
    '제자리'는 언제나 그 빈 칸이 알려주므로 값이 어긋날 여지가 없다. */
 function lgSyncStickTop() {
   const stick = document.querySelector('.lg-wrap .lg-stick');
-  if (!stick || stick.classList.contains('mg-stick')) return;   // 사용처 관리 화면은 건드리지 않는다
-  const wrap = stick.closest('.lg-wrap');
   const hdr = document.querySelector('.site-header');
-  if (!wrap || !hdr) return;
-
-  let h = Math.round(hdr.getBoundingClientRect().height);
+  /* 머리줄 높이는 어느 화면이든 재 둔다 — 사용처 화면의 고정줄도 이 값을 쓴다.
+     예전엔 아래에서 잰 탓에, 사용처 화면에서는 값이 낡거나 0으로 남아
+     고정줄이 머리줄 뒤로 파고들고 그 틈으로 행이 지나가 보였다. */
+  let h = hdr ? Math.round(hdr.getBoundingClientRect().height) : 0;
   if (!(h > 0 && h < 500)) h = 0;
   document.documentElement.style.setProperty('--hdr-h', h + 'px');
+
+  if (!stick || stick.classList.contains('mg-stick')) return;   // 사용처 관리 화면은 직접 고정하지 않는다
+  const wrap = stick.closest('.lg-wrap');
+  if (!wrap || !hdr) return;
 
   let sp = wrap.querySelector('.lg-stick-hole');
   if (!sp) {
@@ -3775,16 +3782,35 @@ function lgSplitMerchant(v) {
 
 /* 사용처 자동완성 — 어떤 그룹·분류로 쓰던 곳인지 같이 보여준다.
    고르면 분류까지 따라오게 onPick 으로 넘긴다. */
+/* 사용처 목록은 화면에 딱 하나만 있으면 된다 — 한 번에 한 칸만 입력 중이니까.
+   예전에는 입력칸마다 새로 만들어 body 에 붙였는데, 초안 행이 다시 그려질 때
+   입력칸이 blur 없이 사라져 옛 목록이 body 에 그대로 남았다. 그 위에 새 목록이
+   겹쳐 뜨면 같은 사용처가 두 번 보인다. 하나를 돌려 쓰면 그럴 일이 없다. */
+function lgACBox() {
+  let b = document.getElementById('lg-acbox');
+  if (!b) {
+    b = document.createElement('div');
+    b.id = 'lg-acbox';
+    b.className = 'lg-acbox';
+    b.hidden = true;
+    document.body.appendChild(b);
+    /* 스크롤 추적도 목록 하나에만 건다 — 입력칸마다 걸면 핸들러가 쌓인다 */
+    window.addEventListener('scroll', () => {
+      if (!b.hidden && typeof b.__place === 'function') b.__place();
+    }, true);
+  }
+  return b;
+}
+
 function lgMerchantAC(input, onPick) {
   if (!input || input.dataset.ac) return;
   input.dataset.ac = '1';
   input.setAttribute('autocomplete', 'off');
   /* 목록은 body 에 붙이고 화면 좌표로 띄운다.
      표 안에 넣으면 겹침·잘림 규칙에 걸려 안 보이는 경우가 생긴다. */
-  const box = document.createElement('div');
-  box.className = 'lg-acbox';
-  box.hidden = true;
-  document.body.appendChild(box);
+  const box = lgACBox();
+  const own = 'ac' + (lgMerchantAC._n = (lgMerchantAC._n || 0) + 1);
+  const mine = () => box.dataset.own === own;
   const place = () => {
     const r = input.getBoundingClientRect();
     box.style.left = Math.max(8, Math.min(r.left, window.innerWidth - 310)) + 'px';
@@ -3803,11 +3829,11 @@ function lgMerchantAC(input, onPick) {
   };
 
   let list = [], cur = -1;
-  const close = () => { box.hidden = true; cur = -1; };
-  window.addEventListener('scroll', () => { if (!box.hidden) place(); }, true);
+  /* 내가 띄운 목록일 때만 닫는다 — 다른 칸이 이미 가져갔으면 건드리지 않는다 */
+  const close = () => { if (mine()) { box.hidden = true; box.dataset.own = ''; } cur = -1; };
   const paint = () => box.querySelectorAll('.lg-acitem').forEach((el, i) => el.classList.toggle('on', i === cur));
   const groupOf = (m) => (EN.merchGroup && EN.merchGroup[m]) || '';
-  const rows = () => box.querySelectorAll('.lg-acitem');
+  const rows = () => (mine() ? box.querySelectorAll('.lg-acitem') : []);
 
   const open = () => {
     const raw = input.value.trim();
@@ -3817,6 +3843,8 @@ function lgMerchantAC(input, onPick) {
     const exact = list.some(m => m.toLowerCase() === q);
     const canAdd = q && !exact;
     if (!list.length && !canAdd) { close(); return; }
+    box.dataset.own = own;
+    box.__place = place;
     place();
     const raw2 = (raw.includes('›') ? raw.split('›').slice(1).join('›') : raw).trim();
     box.innerHTML = (canAdd ? `<div class="lg-acitem lg-acnew" data-new="1">
@@ -3863,7 +3891,7 @@ function lgMerchantAC(input, onPick) {
   input.addEventListener('focus', open);
   input.addEventListener('blur', () => setTimeout(close, 130));
   input.addEventListener('keydown', (e) => {
-    if (box.hidden) return;
+    if (box.hidden || !mine()) return;
     if (e.key === 'ArrowDown') { e.preventDefault(); cur = Math.min(cur + 1, rows().length - 1); paint(); }
     else if (e.key === 'ArrowUp') { e.preventDefault(); cur = Math.max(cur - 1, 0); paint(); }
     else if (e.key === 'Enter' && cur >= 0) {
@@ -4559,7 +4587,18 @@ async function lgDupes(rows) {
   return out;
 }
 
+/* 상단 고정줄과 초안 바에 저장 버튼이 둘이고 ⌘⏎ 도 있다. 앞의 저장이 끝나기 전에
+   다시 누르면 EN.draft 가 아직 비워지지 않아 같은 기록이 두 번 들어간다. */
 async function lgDraftSave() {
+  if (lgDraftSave._busy) return;
+  lgDraftSave._busy = true;
+  const top = document.getElementById('lg-savetop');
+  if (top) top.disabled = true;
+  try { await lgDraftSaveRun(); }
+  finally { lgDraftSave._busy = false; if (top) top.disabled = false; }
+}
+
+async function lgDraftSaveRun() {
   lgDraftSync();
   const host = document.getElementById('lg-add');
   const err = document.getElementById('lg-drerr');
@@ -4580,7 +4619,11 @@ async function lgDraftSave() {
       if (el) el.classList.add('bad');
       return;
     }
-    const { group, merchant } = lgSplitMerchant(d.merchant);
+    let { group, merchant } = lgSplitMerchant(d.merchant);
+    /* 목록에서 고르면 '그룹 › 사용처'로 들어오지만 손으로 적으면 그룹이 없다.
+       그대로 저장하면 같은 사용처가 '그룹 있음'과 '그룹 없음' 두 갈래로 갈라져,
+       내역과 사용처 화면에서 한 가게가 둘처럼 보인다. 아는 그룹은 물려준다. */
+    if (!group && merchant && EN.merchGroup && EN.merchGroup[merchant]) group = EN.merchGroup[merchant];
     rows.push({
       date: d.date, category_id: d.catId, amount: neg ? -n : n,
       merchant_group: group, merchant, note: d.note || null,
@@ -4892,6 +4935,7 @@ async function renderMerchantPage(host) {
       });
     }, 260);
   });
+  lgBindStickTop();   /* 고정줄이 앉을 높이(--hdr-h)를 사용처 화면에서도 계속 맞춘다 */
   enQS('#mg-reload').addEventListener('click', () => { MG.rows = null; renderMerchantPage(host); });
   host.querySelectorAll('#mg-fxseg [data-fx]').forEach(b => b.addEventListener('click', () => {
     MG.fixed = b.dataset.fx;
