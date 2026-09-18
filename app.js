@@ -2137,6 +2137,7 @@ function renderShell() {
     goTo(state.page, btn.dataset.sub);
   });
   renderNav();
+  rcInit();
   enSyncHeaderOffset();
 }
 
@@ -2632,7 +2633,13 @@ function enRenderEntry() {
     if (minus !== EN.neg) { EN.neg = minus; amt.classList.toggle('neg', EN.neg); }
     amt.value = raw ? (EN.neg ? '−' : '') + enComma(raw) : (EN.neg ? '−' : '');
   });
-  amt.addEventListener('keydown', e => { if (e.key === 'Enter') enSave(); });
+  amt.addEventListener('keydown', e => {
+    /* 키를 살짝 길게 눌러 생기는 반복 입력(e.repeat)과,
+       한글 조합 중 확정 엔터(isComposing / keyCode 229)는 저장으로 치지 않는다. */
+    if (e.key !== 'Enter' || e.repeat || e.isComposing || e.keyCode === 229) return;
+    e.preventDefault();
+    enSave();
+  });
 
   ['#en-co', '#en-fx'].forEach(sel => enQS(sel).addEventListener('click', () => {
     const el = enQS(sel);
@@ -2647,7 +2654,9 @@ function enRenderEntry() {
 
   enQS('#en-save').addEventListener('click', enSave);
   enQS('.en-modal').addEventListener('keydown', e => {
-    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); enSave(); }
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && !e.repeat && !e.isComposing) {
+      e.preventDefault(); enSave();
+    }
   });
   enBuildTopChips();
   enSyncCat();
@@ -2788,7 +2797,19 @@ function enSyncCat() {
   badge.textContent = c ? c.kind + ' · ' + c.subcategory : '분류 미선택';
 }
 
+/* 한 번 눌렀는데 두 건이 들어가던 것 막기.
+   버튼 disabled 만으로는 못 막는다 — 엔터·Ctrl+Enter 는 버튼을 거치지 않고
+   바로 enSave 를 부르기 때문에, 저장이 끝나기 전에 또 불리면 그대로 두 번 들어간다.
+   저장 중인지를 함수 밖 깃발로 들고, 끝날 때까지 두 번째 호출을 그냥 흘린다. */
+let EN_SAVING = false;
 async function enSave() {
+  if (EN_SAVING) return;
+  EN_SAVING = true;
+  try { return await enSaveRun(); }
+  finally { EN_SAVING = false; }
+}
+
+async function enSaveRun() {
   const amt = enQS('#en-amt');
   if (!amt) return;
   const n = Number(amt.value.replace(/[^\d]/g, ''));
@@ -4309,15 +4330,17 @@ function lgBulkPaint() {
    같은 날짜·금액·사용처가 이미 있으면 저장 직전에 알려준다. */
 
 /* 새 기록 행에서 오갈 수 있는 칸 — 화면에 놓인 차례와 같게 둔다 */
-const LG_DCOLS = ['date', 'merchant', 'catq', 'amount', 'note'];
+const LG_DCOLS = ['date', 'merchant', 'note', 'catq', 'amount'];
 
 function lgDraftRowHTML(i, seed) {
   const c = EN.catById[seed.catId];
-  /* 칸 순서 = 생각하는 순서. 어디서 샀나 → 무슨 갈래인가 → 얼마인가 → 남길 말.
-     사용처를 먼저 적으면 분류·고정비가 따라오므로 분류 칸은 대개 그냥 지나친다. */
+  /* 칸 순서 = 생각하는 순서. 어디서 샀나 → 뭘 샀나(메모) → 무슨 갈래인가 → 얼마인가.
+     사용처를 먼저 적으면 분류·고정비가 따라오므로 분류 칸은 대개 그냥 지나치고,
+     금액이 마지막이라 금액칸 Enter 로 바로 다음 행이 열린다. */
   return `<div class="lg-dr" data-dr="${i}">
     <span class="dt"><input class="lg-ed" type="date" data-d="date" value="${enEsc(seed.date)}" style="color-scheme:dark;"></span>
     <span class="nm"><input class="lg-ed" data-d="merchant" placeholder="사용처" autocomplete="off" value="${enEsc(seed.merchant || '')}"></span>
+    <span class="no"><input class="lg-ed" data-d="note" placeholder="메모" autocomplete="off" value="${enEsc(seed.note || '')}"></span>
     <span class="ck"><i class="lg-kd ${c ? c.kind : ''}" data-kd>${c ? c.kind : '—'}</i>
       <span class="lg-cpick">
         <input class="lg-ed" data-d="catq" placeholder="분류 검색" autocomplete="off"
@@ -4325,7 +4348,6 @@ function lgDraftRowHTML(i, seed) {
         <input type="hidden" data-d="cat" value="${seed.catId || ''}">
       </span></span>
     <span class="am"><input class="lg-ed mono" data-d="amount" inputmode="numeric" placeholder="0" value="${enEsc(seed.amount || '')}"></span>
-    <span class="no"><input class="lg-ed" data-d="note" placeholder="메모" autocomplete="off" value="${enEsc(seed.note || '')}"></span>
     <span class="tg">
       <button class="lg-tg ${seed.company_paid ? 'on' : ''}" data-dtg="company_paid" title="회사 환급" tabindex="-1">🏢</button>
       <button class="lg-tg ${seed.is_fixed || enMerchFixed(seed.merchant) ? 'on' : ''}${enMerchFixed(seed.merchant) ? ' auto' : ''}" data-dtg="is_fixed" title="고정비" tabindex="-1">📌</button>
@@ -5300,17 +5322,88 @@ function mgGroupDrop(input, rec, onPick) {
   });
 }
 
+/* ---------------- 즐겨찾기 리모컨 ----------------
+   어느 화면에 있든 자주 가는 메뉴로 한 번에 건너뛴다. F(ㄹ) 로 열고 숫자로 고른다.
+   메뉴를 늘리려면 아래 한 줄만 더하면 된다 — [섹션, 하위탭, 이름, 아이콘]. */
+const RC_ITEMS = [
+  ['report', 'monthly', '월간 리포트', '📅'],
+  ['entry',  'ledger',  '입출금 내역', '📒']
+];
+
+function rcIsOpen() {
+  const p = document.getElementById('rc-panel');
+  return !!p && !p.hidden;
+}
+
+function rcToggle(force) {
+  const p = document.getElementById('rc-panel');
+  if (!p) return;
+  const next = (force === undefined) ? p.hidden : !!force;
+  p.hidden = !next;
+  const b = document.getElementById('rc-btn');
+  if (b) { b.classList.toggle('on', next); b.setAttribute('aria-expanded', String(next)); }
+  if (next) { const f = p.querySelector('.rc-item'); if (f) f.focus(); }
+}
+
+function rcGo(sec, sub) {
+  rcToggle(false);
+  const ov = document.getElementById('en-ov');
+  if (ov && !ov.hidden) enClose();
+  goTo(sec, sub);
+}
+
+function rcInit() {
+  if (document.getElementById('rc-dock')) return;
+  const dock = document.createElement('div');
+  dock.id = 'rc-dock';
+  dock.innerHTML = `
+    <div class="rc-panel" id="rc-panel" hidden>
+      <div class="rc-hd"><span>즐겨찾기</span><kbd>F</kbd></div>
+      ${RC_ITEMS.map(([sec, sb, label, icon], i) => `
+        <button class="rc-item" data-sec="${sec}" data-sub="${sb}">
+          <span class="ic">${icon}</span><span class="tx">${label}</span><kbd>${i + 1}</kbd>
+        </button>`).join('')}
+      <div class="rc-ft"><kbd>N</kbd>기록<kbd>Esc</kbd>닫기</div>
+    </div>
+    <button class="rc-btn" id="rc-btn" title="즐겨찾기 리모컨 (F)" aria-expanded="false">
+      <span class="d">🎛</span><span class="l">리모컨</span><kbd>F</kbd>
+    </button>`;
+  document.body.appendChild(dock);
+  document.getElementById('rc-btn').addEventListener('click', () => rcToggle());
+  dock.addEventListener('click', (e) => {
+    const b = e.target.closest('.rc-item');
+    if (b) rcGo(b.dataset.sec, b.dataset.sub);
+  });
+  /* 딴 데를 누르면 닫힌다 — 리모컨이 화면을 가리고 서 있지 않게 */
+  document.addEventListener('mousedown', (e) => {
+    if (!rcIsOpen()) return;
+    if (e.target.closest && e.target.closest('#rc-dock')) return;
+    rcToggle(false);
+  });
+}
+
 /* ---------------- 단축키 ---------------- */
 document.addEventListener('keydown', (e) => {
   const ov = document.getElementById('en-ov');
   const open = ov && !ov.hidden;
   if (e.key === 'Escape' && open) { enClose(); return; }
+  if (e.key === 'Escape' && rcIsOpen()) { rcToggle(false); return; }
   if (e.metaKey || e.ctrlKey || e.altKey) return;
   const t = e.target;
   if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
-  if (e.key === 'n' || e.key === 'N' || e.key === 'ㅜ') { e.preventDefault(); open ? enClose() : enOpen(); }
-  else if (e.key === 'l' || e.key === 'L' || e.key === 'ㅣ') { e.preventDefault(); if (open) enClose(); goTo('entry', 'ledger'); }
-  else if (e.key === 'm' || e.key === 'M' || e.key === 'ㅡ') { e.preventDefault(); if (open) enClose(); dbmOpen(); }
+  /* 키를 누르고 있어서 생기는 반복은 단축키로 치지 않는다 — 창이 깜빡이며 열고 닫히던 것 */
+  if (e.repeat) return;
+  /* 표에서 글자를 쳐서 칸 고치기가 열린 경우처럼, 이미 누가 가져간 키는 단축키로 쓰지 않는다 */
+  if (e.defaultPrevented) return;
+  /* 리모컨이 열려 있으면 숫자로 바로 간다 */
+  if (rcIsOpen() && /^[1-9]$/.test(e.key)) {
+    const it = RC_ITEMS[Number(e.key) - 1];
+    if (it) { e.preventDefault(); rcGo(it[0], it[1]); return; }
+  }
+  if (e.key === 'f' || e.key === 'F' || e.key === 'ㄹ') { e.preventDefault(); rcToggle(); }
+  else if (e.key === 'n' || e.key === 'N' || e.key === 'ㅜ') { e.preventDefault(); rcToggle(false); open ? enClose() : enOpen(); }
+  else if (e.key === 'l' || e.key === 'L' || e.key === 'ㅣ') { e.preventDefault(); rcToggle(false); if (open) enClose(); goTo('entry', 'ledger'); }
+  else if (e.key === 'm' || e.key === 'M' || e.key === 'ㅡ') { e.preventDefault(); rcToggle(false); if (open) enClose(); dbmOpen(); }
 });
 
 /* 가계부를 고쳤으면 캐시된 원장도 같이 갱신한다 — 탭을 옮겼을 때 옛 숫자가 남지 않게 */
