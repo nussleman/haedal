@@ -7453,7 +7453,7 @@ function renderNowPage(container, data, d) {
         <span class="nw-op">−</span>
         <button class="nw-fig" data-goto="expense"><span>지출</span><b style="color:var(--expense-text)">${formatKrw(sExpense)}</b></button>
         <span class="nw-op">=</span>
-        <span class="nw-fig flat"><span>순저축</span><b style="color:${sNet >= 0 ? 'var(--net-text)' : 'var(--expense-text)'}">${formatWon(sNet)}</b></span>
+        <span class="nw-fig flat"><span>순저축</span><b style="color:${sNet >= 0 ? 'var(--net-text)' : 'var(--expense-text)'}">${formatKrw(sNet)}</b></span>
         ${projected === null ? '' : `<span class="nw-proj">월말 예상 지출 <b>${formatKrw(projected + fixedPendingSum)}</b></span>`}
       </div>
     </div>
@@ -7461,7 +7461,7 @@ function renderNowPage(container, data, d) {
     <div class="stat-grid" style="grid-template-columns:repeat(auto-fit,minmax(190px,1fr));">
       <div class="stat-card">
         <div class="label">순저축</div>
-        <div class="value" style="color:${sNet >= 0 ? 'var(--net-text)' : 'var(--expense-text)'}">${formatWon(sNet)}</div>
+        <div class="value" style="color:${sNet >= 0 ? 'var(--net-text)' : 'var(--expense-text)'}">${formatKrw(sNet)}</div>
         ${week ? `<div class="sub">${week.label}</div>` : cmpSub(sNet, avgNet, false, avgNote)}
         <div class="sub dimline">투자 <b>${formatCompactWon(investTr)}</b> · 비상금 <b>${formatCompactWon(emgTr)}</b></div>
       </div>
@@ -7515,8 +7515,8 @@ function renderNowPage(container, data, d) {
         <div class="panel-title"><div>고정비와 변동비</div><span class="ptag">${formatCompactWon(expNet)}원</span></div>
         <div class="nw-split">
           <div class="nw-splitbar">
-            <i class="fx" style="width:${barPct(expFixed)}%" title="고정비 ${formatWon(expFixed)}"></i>
-            <i class="vr" style="width:${barPct(expVar)}%" title="변동비 ${formatWon(expVar)}"></i>
+            <i class="fx" style="width:${barPct(expFixed)}%" title="고정비 ${formatKrw(expFixed)}"></i>
+            <i class="vr" style="width:${barPct(expVar)}%" title="변동비 ${formatKrw(expVar)}"></i>
           </div>
           <div class="nw-splitleg">
             <span><i class="fx"></i>고정비 <b>${formatKrw(expFixed)}</b> (${expNet > 0 ? ((expFixed / expNet) * 100).toFixed(0) : 0}%)</span>
@@ -7614,7 +7614,7 @@ function renderNowPage(container, data, d) {
     <div class="stat-grid">
       <div class="stat-card">
         <div class="label">순저축</div>
-        <div class="value" style="color:${sNet >= 0 ? 'var(--net-text)' : 'var(--expense-text)'}">${formatWon(sNet)}</div>
+        <div class="value" style="color:${sNet >= 0 ? 'var(--net-text)' : 'var(--expense-text)'}">${formatKrw(sNet)}</div>
         ${week ? `<div class="sub">${week.label}</div>` : cmpSub(sNet, avgNet, false, avgNote)}
       </div>
       <div class="stat-card">
@@ -7672,14 +7672,14 @@ function renderNowPage(container, data, d) {
   /* --- 고정비 --- */
   const fixedBody = document.getElementById('now-fixed-body');
   if (fixedBody) fixedBody.innerHTML = `
-    <div class="now-kv"><span>완료 ${fixedRows.length - fixedPending.length}건</span><b>${formatWon(fixedPaidSum)}</b></div>
-    <div class="now-kv"><span>미결제 ${fixedPending.length}건</span><b style="color:${fixedPending.length ? 'var(--expense-text)' : 'var(--income-text)'}">${formatWon(fixedPendingSum)}</b></div>
+    <div class="now-kv"><span>완료 ${fixedRows.length - fixedPending.length}건</span><b>${formatKrw(fixedPaidSum)}</b></div>
+    <div class="now-kv"><span>미결제 ${fixedPending.length}건</span><b style="color:${fixedPending.length ? 'var(--expense-text)' : 'var(--income-text)'}">${formatKrw(fixedPendingSum)}</b></div>
     <div style="max-height:220px;overflow-y:auto;margin-top:10px;">
       ${fixedRows.length ? fixedRows.map(f => `
         <div class="acct-row">
           <span style="width:16px;flex-shrink:0;">${f.paid !== null ? '✅' : '⬜'}</span>
           <span class="acct-name" style="${f.paid === null ? 'color:var(--text-dim)' : ''}">${f.item}${f.vendor ? `<div class="acct-cat">${f.vendor}</div>` : ''}</span>
-          <span class="acct-amt" style="${f.paid === null ? 'color:var(--text-faint)' : ''}">${formatWon(f.paid !== null ? f.paid : f.expected)}</span>
+          <span class="acct-amt" style="${f.paid === null ? 'color:var(--text-faint)' : ''}">${formatKrw(f.paid !== null ? f.paid : f.expected)}</span>
         </div>`).join('') : '<div class="empty-state">고정비로 표시된 항목이 없어요.</div>'}
     </div>
   `;
@@ -7692,7 +7692,7 @@ function renderNowPage(container, data, d) {
       ${transferRows.length ? transferRows.map(t => `
         <div class="acct-row">
           <span class="acct-name">${t.name}<div class="acct-cat">${Object.keys(t.detail).join(' · ')}</div></span>
-          <span class="acct-amt">${formatWon(t.total)}</span>
+          <span class="acct-amt">${formatKrw(t.total)}</span>
         </div>`).join('') : '<div class="empty-state">이 기간 이체 내역이 없어요.</div>'}
     </div>
   `;
@@ -7790,7 +7790,7 @@ function renderNowPage(container, data, d) {
         <div class="stat-card">
           <div class="label">이번 달 수입</div>
           <div class="value" style="color:var(--income-text)">${formatKrw(st.cur)}</div>
-          ${incStats.months ? `<div class="sub" style="color:${up ? 'var(--income-text)' : '#d9884f'}">평소보다 ${up ? '+' : '−'}${wonComma(Math.abs(Math.round(st.diff)))}원</div>` : ''}
+          ${incStats.months ? `<div class="sub" style="color:${up ? 'var(--income-text)' : '#d9884f'}">평소보다 ${up ? '+' : '−'}${formatKrw(Math.abs(Math.round(st.diff)))}</div>` : ''}
         </div>
         <div class="stat-card">
           <div class="label">지난 ${incStats.months || 0}개월 월평균</div>
@@ -7825,7 +7825,7 @@ function renderNowPage(container, data, d) {
               <td class="c-date">${p ? `${p.mo}/${p.d}` : r.date}</td>
               <td class="c-cat">${rxCat(r)}</td>
               <td class="c-vendor">${rxEsc((r.vendor || '').split('›').pop().trim())}${r.memo ? `<div class="acct-cat">${rxEsc(r.memo)}</div>` : ''}</td>
-              <td class="amt c-amt"><span class="v 수입">${wonComma(r.amount)}</span></td>
+              <td class="amt c-amt" title="${wonComma(r.amount)}원"><span class="v 수입">${formatKrw(r.amount)}</span></td>
             </tr>`; }).join('')}</tbody>
           </table>
         </div>`
@@ -7900,14 +7900,14 @@ function renderNowPage(container, data, d) {
               filter: (item) => item.raw !== null && item.raw !== undefined,
               callbacks: {
                 title: (items) => items.length ? String(R[items[0].dataIndex].label).replace(/^[▸▾\s]+/, '') : '',
-                label: (c) => ` ${c.dataset.label}: ${formatWon(c.raw)}`,
+                label: (c) => ` ${c.dataset.label}: ${formatKrw(c.raw)}`,
                 afterBody: (items) => {
                   if (!items.length) return '';
                   const r = R[items[0].dataIndex];
                   if (!r) return '';
                   return [r.ratio === null
                     ? '평소 기록 없음'
-                    : `평소 대비 ${r.ratio.toFixed(0)}% (${r.diff >= 0 ? '+' : '−'}${wonComma(Math.abs(Math.round(r.diff)))}원)`];
+                    : `평소 대비 ${r.ratio.toFixed(0)}% (${r.diff >= 0 ? '+' : '−'}${formatKrw(Math.abs(Math.round(r.diff)))})`];
                 }
               }
             }
@@ -8069,7 +8069,7 @@ function renderNowPage(container, data, d) {
         <div class="stat-card">
           <div class="label">이번 달 지출</div>
           <div class="value" style="color:var(--expense-text)">${formatKrw(st.cur)}</div>
-          ${expStats.months ? `<div class="sub" style="color:${less ? 'var(--income-text)' : 'var(--expense-text)'}">평소보다 ${less ? '−' : '+'}${wonComma(Math.abs(Math.round(st.diff)))}원</div>` : ''}
+          ${expStats.months ? `<div class="sub" style="color:${less ? 'var(--income-text)' : 'var(--expense-text)'}">평소보다 ${less ? '−' : '+'}${formatKrw(Math.abs(Math.round(st.diff)))}</div>` : ''}
           ${isThisMonth && !week ? `<div class="sub">월말 예상 <b>${formatKrw(Math.round(st.cur * projRate))}</b></div>` : ''}
         </div>
         <div class="stat-card">
@@ -8160,14 +8160,14 @@ function renderNowPage(container, data, d) {
               filter: (item) => item.raw !== null && item.raw !== undefined,
               callbacks: {
                 title: (items) => items.length ? String(R[items[0].dataIndex].label).replace(/^[▸▾\s]+/, '') : '',
-                label: (c) => ` ${c.dataset.label}: ${formatWon(c.raw)}`,
+                label: (c) => ` ${c.dataset.label}: ${formatKrw(c.raw)}`,
                 afterBody: (items) => {
                   if (!items.length) return '';
                   const r = R[items[0].dataIndex];
                   if (!r) return '';
                   return [r.ratio === null
                     ? '평소 기록 없음'
-                    : `평소 대비 ${r.ratio.toFixed(0)}% (${r.diff >= 0 ? '+' : '−'}${wonComma(Math.abs(Math.round(r.diff)))}원)`];
+                    : `평소 대비 ${r.ratio.toFixed(0)}% (${r.diff >= 0 ? '+' : '−'}${formatKrw(Math.abs(Math.round(r.diff)))})`];
                 }
               }
             }
@@ -8234,14 +8234,14 @@ function renderNowPage(container, data, d) {
     const diff = r.cur - r.prev;
     let deltaHtml = '';
     if (showCatDelta) {
-      const txt = r.prev === 0 ? '신규' : diff === 0 ? '동일' : `${diff > 0 ? '+' : '−'}${wonComma(diff)}`;
+      const txt = r.prev === 0 ? '신규' : diff === 0 ? '동일' : `${diff > 0 ? '+' : '−'}${formatKrw(Math.abs(diff))}`;
       const col = r.prev === 0 ? 'var(--text-faint)' : diff > 0 ? 'var(--expense-text)' : diff < 0 ? 'var(--income-text)' : 'var(--text-faint)';
       deltaHtml = ` · <span style="color:${col}">${cmpNote} ${txt}</span>`;
     }
     return `<div class="budget-row-compact">
       <span class="b-name" title="${r.name}">${r.name}</span>
       <div class="b-bar-track"><div class="b-bar-fill ${showCatDelta && diff > 0 && r.prev > 0 ? 'over' : ''}" style="width:${(r.cur / catMax) * 100}%"></div></div>
-      <span class="b-figures">${wonComma(r.cur)}원 · ${r.pct.toFixed(0)}%${deltaHtml}</span>
+      <span class="b-figures">${formatKrw(r.cur)} · ${r.pct.toFixed(0)}%${deltaHtml}</span>
     </div>`;
   }).join('') : '<div class="empty-state">이 기간 지출 내역이 없어요.</div>')
   + (showCatDelta ? `<div class="settings-note">비교 기준 · ${cmpRange}${isThisMonth ? ' 같은 기간' : ''}</div>` : '');
@@ -8251,7 +8251,7 @@ function renderNowPage(container, data, d) {
     <div class="table-scroll" style="max-height:320px;">
       <table class="data-table">
         <thead><tr><th>날짜</th><th>항목</th><th>사용처</th><th style="text-align:right">금액</th></tr></thead>
-        <tbody>${topExpenses.length ? topExpenses.map(r => `<tr><td>${r.date}</td><td>${r.item}</td><td>${r.vendor || ''}</td><td class="amt expense">${formatWon(r.amount)}</td></tr>`).join('')
+        <tbody>${topExpenses.length ? topExpenses.map(r => `<tr><td>${r.date}</td><td>${r.item}</td><td>${r.vendor || ''}</td><td class="amt expense" title="${wonComma(r.amount)}원">${formatKrw(r.amount)}</td></tr>`).join('')
           : '<tr><td colspan="4" style="text-align:center;color:var(--text-faint);padding:20px;">지출 내역이 없어요.</td></tr>'}</tbody>
       </table>
     </div>
@@ -8267,13 +8267,13 @@ function renderNowPage(container, data, d) {
           <tr>
             <td>${w.label}</td>
             <td style="color:var(--text-faint);">${w.range}</td>
-            <td class="amt income">${w.income ? formatWon(w.income) : '—'}</td>
-            <td class="amt expense">${w.expense ? formatWon(w.expense) : '—'}</td>
-            <td class="amt" style="color:${w.income - w.expense >= 0 ? 'var(--net-text)' : 'var(--expense-text)'}">${formatWon(w.income - w.expense)}</td>
+            <td class="amt income">${w.income ? formatKrw(w.income) : '—'}</td>
+            <td class="amt expense">${w.expense ? formatKrw(w.expense) : '—'}</td>
+            <td class="amt" style="color:${w.income - w.expense >= 0 ? 'var(--net-text)' : 'var(--expense-text)'}">${formatKrw(w.income - w.expense)}</td>
           </tr>`).join('')}</tbody>
       </table>
     </div>
-    ${M.weeks.length ? `<div class="settings-note">최다 지출 주 · <b style="color:var(--accent-text)">${M.weeks.reduce((a, b) => b.expense > a.expense ? b : a).label}</b> ${formatWon(weekMax)}</div>` : ''}
+    ${M.weeks.length ? `<div class="settings-note">최다 지출 주 · <b style="color:var(--accent-text)">${M.weeks.reduce((a, b) => b.expense > a.expense ? b : a).label}</b> ${formatKrw(weekMax)}</div>` : ''}
   `;
 
   /* --- 요일별 평균 지출 --- */
@@ -8292,9 +8292,9 @@ function renderNowPage(container, data, d) {
       <div class="dow-avg-row">
         <span class="nm">${x.name}</span>
         <div class="b-bar-track"><div class="b-bar-fill" style="width:${(x.avg / dowMax) * 100}%"></div></div>
-        <span class="fig">${x.avg ? formatWon(Math.round(x.avg)) : '—'}</span>
+        <span class="fig">${x.avg ? formatKrw(Math.round(x.avg)) : '—'}</span>
       </div>`).join('')}
-    <div class="settings-note">${dowTop && dowTop.avg > 0 ? `최다 · <b style="color:var(--accent-text)">${dowTop.name}요일</b> 평균 ${formatWon(Math.round(dowTop.avg))}` : '계산할 지출이 없어요.'}</div>
+    <div class="settings-note">${dowTop && dowTop.avg > 0 ? `최다 · <b style="color:var(--accent-text)">${dowTop.name}요일</b> 평균 ${formatKrw(Math.round(dowTop.avg))}` : '계산할 지출이 없어요.'}</div>
   `;
 
   /* --- 내역 테이블 --- */
@@ -8385,7 +8385,7 @@ function renderNowPage(container, data, d) {
         const verb = AX.key === 'expense' ? (dv > 0 ? '더 쓰는' : '덜 쓰는')
                    : AX.key === 'income' ? (dv > 0 ? '더 버는' : '덜 버는')
                    : (dv > 0 ? '더 모으는' : '덜 모으는');
-        tagEl.textContent = `평소보다 ${wonComma(Math.abs(Math.round(dv)))}원 ${verb} 페이스`;
+        tagEl.textContent = `평소보다 ${formatKrw(Math.abs(Math.round(dv)))} ${verb} 페이스`;
         tagEl.style.color = Math.abs(dv) < 1 ? 'var(--text-dim)' : (better ? 'var(--income-text)' : '#d9884f');
       }
     }
@@ -8427,7 +8427,7 @@ function renderNowPage(container, data, d) {
         interaction: { mode: 'index', intersect: false },
         plugins: {
           legend: { display: false },
-          tooltip: { callbacks: { label: (c) => (c.raw === null ? null : ` ${c.dataset.label}: ${formatWon(c.raw)}`) } }
+          tooltip: { callbacks: { label: (c) => (c.raw === null ? null : ` ${c.dataset.label}: ${formatKrw(c.raw)}`) } }
         },
         scales: {
           x: { ticks: { ...MONO_TICK, autoSkip: true, maxRotation: 0 }, grid: { display: false } },
@@ -8895,7 +8895,7 @@ function renderYearPage(container, data, d) {
         </div>
         <div class="stat-card clickable" data-goto="saving" title="순저축 탭으로 이동">
           <div class="label">순익 (쌓인 돈)</div>
-          <div class="value" style="color:${net >= 0 ? 'var(--net-text)' : 'var(--expense-text)'}">${formatWon(net)}</div>
+          <div class="value" style="color:${net >= 0 ? 'var(--net-text)' : 'var(--expense-text)'}">${formatKrw(net)}</div>
           ${cmpSub(net, pNet, false, cmpNote)}
           <div class="sub">월 평균 ${formatCompactWon(monthsElapsed ? net / monthsElapsed : 0)}원</div>
         </div>
@@ -9066,7 +9066,7 @@ function renderYearPage(container, data, d) {
           const verb = AX.key === 'expense' ? (dv > 0 ? '더 쓰는' : '덜 쓰는')
                      : AX.key === 'income' ? (dv > 0 ? '더 버는' : '덜 버는')
                      : (dv > 0 ? '더 모으는' : '덜 모으는');
-          tag.textContent = `${prevY}년 같은 시점보다 ${wonComma(Math.abs(Math.round(dv)))}원 ${verb} 페이스`;
+          tag.textContent = `${prevY}년 같은 시점보다 ${formatKrw(Math.abs(Math.round(dv)))} ${verb} 페이스`;
           tag.style.color = Math.abs(dv) < 1 ? 'var(--text-dim)' : (better ? 'var(--income-text)' : '#d9884f');
         }
       }
@@ -9096,7 +9096,7 @@ function renderYearPage(container, data, d) {
         options: {
           responsive: true, maintainAspectRatio: false, layout: { padding: { top: 24, right: 12 } },
           interaction: { mode: 'index', intersect: false },
-          plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => (c.raw === null ? null : ` ${c.dataset.label}: ${formatWon(c.raw)}`) } } },
+          plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => (c.raw === null ? null : ` ${c.dataset.label}: ${formatKrw(c.raw)}`) } } },
           scales: { x: { ticks: MONO_TICK, grid: { display: false } }, y: { ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT } }
         },
         plugins: [valueLabelPlugin]
@@ -9124,7 +9124,7 @@ function renderYearPage(container, data, d) {
       options: {
         responsive: true, maintainAspectRatio: false, layout: { padding: { top: 24 } },
         interaction: { mode: 'index', intersect: false },
-        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` ${c.dataset.label}: ${c.raw === null ? '—' : formatWon(c.raw)}` } } },
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` ${c.dataset.label}: ${c.raw === null ? '—' : formatKrw(c.raw)}` } } },
         scales: { x: { ticks: MONO_TICK, grid: { display: false } }, y: { ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT } }
       },
       plugins: [valueLabelPlugin]
@@ -9300,7 +9300,7 @@ function renderYearSubTab(sub, Y, data, d, yrRows, TOP_PCT) {
       options: Object.assign({
         responsive: true, maintainAspectRatio: false, layout: { padding: { top: 20, right: 6 } },
         interaction: { mode: 'index', intersect: false },
-        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => c.raw === null ? null : ` ${c.dataset.label}: ${formatWon(c.raw)}` } } },
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => c.raw === null ? null : ` ${c.dataset.label}: ${formatKrw(c.raw)}` } } },
         scales: {
           x: { stacked: true, ticks: MONO_TICK, grid: { display: false } },
           y: { stacked: true, ticks: { ...MONO_TICK, callback: (v) => formatCompactWon(v) }, grid: GRID_FAINT },
@@ -9331,17 +9331,17 @@ function renderYearSubTab(sub, Y, data, d, yrRows, TOP_PCT) {
     const shareOf = (rows) => { const t = incOf(rows); return t ? ((t - incOf(rows, '근로')) / t) * 100 : null; };
     const pTotal = incOf(prevRows), pWork = incOf(prevRows, '근로'), pInv = incOf(prevRows, '투자'), pSide = incOf(prevRows, '부수입');
     statBox.innerHTML = [
-      yrStatCard('수입 합계', formatWon(total),
+      yrStatCard('수입 합계', formatKrw(total),
         [cmpSub(total, pTotal, false, pvNote), avgSub(total, incOf, false), `${capNote} · 월 평균 ${formatCompactWon(nMonths ? total / nMonths : 0)}원`], 'var(--income-text)'),
-      yrStatCard('월 평균', formatWon(Math.round(nMonths ? total / nMonths : 0)),
+      yrStatCard('월 평균', formatKrw(Math.round(nMonths ? total / nMonths : 0)),
         [cmpSub(Math.round(nMonths ? total / nMonths : 0), Math.round(incAvgOf(prevRows)), false, pvNote), avgSub(Math.round(nMonths ? total / nMonths : 0), (rows) => Math.round(incAvgOf(rows)), false), `${nMonths}개월 기준`]),
-      yrStatCard('근로소득', formatWon(work),
+      yrStatCard('근로소득', formatKrw(work),
         [cmpSub(work, pWork, false, pvNote), `전체의 <b>${total ? ((work / total) * 100).toFixed(0) : 0}%</b> · 작년 ${pTotal ? ((pWork / pTotal) * 100).toFixed(0) + '%' : '—'}`]),
-      yrStatCard('투자수익', formatWon(invest),
+      yrStatCard('투자수익', formatKrw(invest),
         [cmpSub(invest, pInv, false, pvNote), avgSub(invest, (rows) => incOf(rows, '투자'), false), `전체의 <b>${total ? ((invest / total) * 100).toFixed(0) : 0}%</b>`]),
-      yrStatCard('부수입', formatWon(side),
+      yrStatCard('부수입', formatKrw(side),
         [cmpSub(side, pSide, false, pvNote), `전체의 <b>${total ? ((side / total) * 100).toFixed(0) : 0}%</b>`]),
-      yrStatCard('그 외', formatWon(etc),
+      yrStatCard('그 외', formatKrw(etc),
         [cmpSub(etc, pTotal - pWork - pInv - pSide, false, pvNote), `전체의 <b>${total ? ((etc / total) * 100).toFixed(0) : 0}%</b>`]),
       yrStatCard('근로 외 수입 비중', (total ? ((nonWork / total) * 100).toFixed(1) : '0.0') + '%',
         [cmpSubPp(total ? (nonWork / total) * 100 : null, shareOf(prevRows), pvNote),
@@ -9367,7 +9367,7 @@ function renderYearSubTab(sub, Y, data, d, yrRows, TOP_PCT) {
       type: 'doughnut',
       data: { labels: cats, datasets: [{ data: pieData, backgroundColor: cats.map(c => incomeCatColorOf(incCmap, c)), borderWidth: 0 }] },
       options: { responsive: true, maintainAspectRatio: false, cutout: '46%',
-        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` ${c.label}: ${formatWon(c.raw)}` } } } },
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` ${c.label}: ${formatKrw(c.raw)}` } } } },
       plugins: [donutLabelPlugin]
     });
 
@@ -9392,17 +9392,17 @@ function renderYearSubTab(sub, Y, data, d, yrRows, TOP_PCT) {
     const pTotal = expOf(prevRows), pFixed = expOf(prevRows, r => r.fixed), pRegret = expOf(prevRows, r => r.regret);
     const pRefund = prevRows.filter(r => r.major.includes('지출')).reduce((a, r) => a + (r.refund || 0), 0);
     statBox.innerHTML = [
-      yrStatCard('지출 합계', formatWon(total),
+      yrStatCard('지출 합계', formatKrw(total),
         [cmpSub(total, pTotal, true, pvNote), avgSub(total, expOf, true), `${capNote} · 월 평균 ${formatCompactWon(nMonths ? total / nMonths : 0)}원`], 'var(--expense-text)'),
-      yrStatCard('월 평균 지출', formatWon(Math.round(nMonths ? total / nMonths : 0)),
+      yrStatCard('월 평균 지출', formatKrw(Math.round(nMonths ? total / nMonths : 0)),
         [cmpSub(Math.round(nMonths ? total / nMonths : 0), Math.round(expAvgOf(prevRows)), true, pvNote), avgSub(Math.round(nMonths ? total / nMonths : 0), (rows) => Math.round(expAvgOf(rows)), true), `${nMonths}개월 기준`]),
-      yrStatCard('고정비', formatWon(fixed),
+      yrStatCard('고정비', formatKrw(fixed),
         [cmpSub(fixed, pFixed, true, pvNote), cmpSubPp(total ? (fixed / total) * 100 : null, pTotal ? (pFixed / pTotal) * 100 : null, '지출 내 비중 변화'), `지출의 <b>${total ? ((fixed / total) * 100).toFixed(0) : 0}%</b>`]),
-      yrStatCard('월 평균 고정비', formatWon(Math.round(nMonths ? fixed / nMonths : 0)),
+      yrStatCard('월 평균 고정비', formatKrw(Math.round(nMonths ? fixed / nMonths : 0)),
         [cmpSub(Math.round(nMonths ? fixed / nMonths : 0), Math.round(fixAvgOf(prevRows)), true, pvNote), `매달 반드시 나가는 돈 — 줄면 구조가 가벼워짐`]),
-      yrStatCard('아낄 수 있었던 소비', formatWon(regret),
+      yrStatCard('아낄 수 있었던 소비', formatKrw(regret),
         [cmpSub(regret, pRegret, true, pvNote), { text: `지출의 <b>${total ? ((regret / total) * 100).toFixed(1) : 0}%</b> · 작년 ${pTotal ? ((pRegret / pTotal) * 100).toFixed(1) + '%' : '—'}`, tone: (pTotal && total && (regret / total) <= (pRegret / pTotal)) ? 'good' : 'warn' }], '#e6b48f'),
-      yrStatCard('회사 환급', formatWon(refund),
+      yrStatCard('회사 환급', formatKrw(refund),
         [cmpSub(refund, pRefund, false, pvNote), `이미 지출에서 차감된 금액`], 'var(--income-text)')
     ].join('');
     mkChart([
@@ -9435,16 +9435,16 @@ function renderYearSubTab(sub, Y, data, d, yrRows, TOP_PCT) {
     const pNetY = netOfYear(prevRows);
     const curRate = incTot > 0 ? (total / incTot) * 100 : null;
     statBox.innerHTML = [
-      yrStatCard('순저축 합계', formatWon(total),
+      yrStatCard('순저축 합계', formatKrw(total),
         [cmpSub(total, pNetY, false, pvNote), avgSub(total, netOfYear, false), `${capNote} · 수입 ${formatCompactWon(incTot)} − 지출 ${formatCompactWon(incTot - total)}`], total >= 0 ? 'var(--net-text)' : 'var(--expense-text)'),
-      yrStatCard('월 평균 순저축', formatWon(Math.round(nMonths ? total / nMonths : 0)),
+      yrStatCard('월 평균 순저축', formatKrw(Math.round(nMonths ? total / nMonths : 0)),
         [cmpSub(Math.round(nMonths ? total / nMonths : 0), Math.round(netAvgOf(prevRows)), false, pvNote), avgSub(Math.round(nMonths ? total / nMonths : 0), (rows) => Math.round(netAvgOf(rows)), false), `${nMonths}개월 기준`]),
       yrStatCard('저축률', curRate === null ? '—' : curRate.toFixed(1) + '%',
         [cmpSubPp(curRate, rateOf(prevRows), pvNote),
          { text: `목표 ${state.goals.savingsRateTarget}% 대비 ${curRate === null ? '—' : (curRate - state.goals.savingsRateTarget).toFixed(1) + '%p'}`, tone: curRate !== null && curRate >= state.goals.savingsRateTarget ? 'good' : 'warn' }]),
-      yrStatCard('자산으로 옮긴 돈', formatWon(trTot),
+      yrStatCard('자산으로 옮긴 돈', formatKrw(trTot),
         [cmpSub(trTot, trOf(prevRows), false, pvNote), `순저축의 <b>${total > 0 ? ((trTot / total) * 100).toFixed(0) + '%' : '—'}</b> · 나머지는 통장에 남음`], 'var(--transfer-text)'),
-      yrStatCard('가장 많이 모은 달', best === null ? '—' : (best + 1) + '월', [best === null ? '' : formatWon(netM[best]) + ' 저축'])
+      yrStatCard('가장 많이 모은 달', best === null ? '—' : (best + 1) + '월', [best === null ? '' : formatKrw(netM[best]) + ' 저축'])
     ].join('');
     mkChart([
       { type: 'bar', label: '월 순저축', data: netM, backgroundColor: netM.map(v => (v || 0) >= 0 ? 'rgba(57,168,189,0.75)' : 'rgba(193,72,63,0.75)'), borderRadius: 2, order: 3, hideLabel: true },
@@ -9482,19 +9482,19 @@ function renderYearSubTab(sub, Y, data, d, yrRows, TOP_PCT) {
     let pLastIdx = -1; for (let i = 0; i <= pCapIdx; i++) if (pVal[i] !== null) pLastIdx = i;
     const pYtdPL = (pFirst != null && pLastIdx >= 0) ? (pVal[pLastIdx] - pFirst - pPrin) : null;
     statBox.innerHTML = [
-      yrStatCard('투자수익 합계', formatWon(total),
+      yrStatCard('투자수익 합계', formatKrw(total),
         [cmpSub(total, pTotal, false, pvNote), avgSub(total, invOf, false), `${capNote} · 판매 ${formatCompactWon(sale)} · 배당 ${formatCompactWon(dividend)}`], total >= 0 ? 'var(--income-text)' : 'var(--expense-text)'),
-      yrStatCard('월 평균 투자수익', formatWon(Math.round(nMonths ? total / nMonths : 0)),
+      yrStatCard('월 평균 투자수익', formatKrw(Math.round(nMonths ? total / nMonths : 0)),
         [cmpSub(Math.round(nMonths ? total / nMonths : 0), Math.round(invAvgOf(prevRows)), false, pvNote), `${nMonths}개월 기준`]),
-      yrStatCard('판매수익', formatWon(sale),
+      yrStatCard('판매수익', formatKrw(sale),
         [cmpSub(sale, pSale, false, pvNote), `실현손익 · 양도세 과세 대상`]),
-      yrStatCard('배당금', formatWon(dividend),
+      yrStatCard('배당금', formatKrw(dividend),
         [cmpSub(dividend, pDiv, false, pvNote), avgSub(dividend, (rows) => invOf(rows, '배당'), false), `이자 ${formatCompactWon(interest)}원 별도`]),
-      yrStatCard('세금', formatWon(taxPaid),
+      yrStatCard('세금', formatKrw(taxPaid),
         [cmpSub(taxPaid, pTax, true, `${prevY}년 납부액 대비`), taxRow ? `${Y}년 실현손익 기준 예상 ${formatCompactWon(Math.round(taxRow.est))}원` : '해당 연도 납부 내역'], 'var(--expense-text)'),
-      yrStatCard('올해 누적 원금', formatWon(principal),
+      yrStatCard('올해 누적 원금', formatKrw(principal),
         [cmpSub(principal, pPrin, false, pvNote), avgSub(principal, prinOf, false), `투자 계좌로 새로 넣은 돈`], 'var(--transfer-text)'),
-      yrStatCard('연초 대비 평가손익', ytdPL === null ? '—' : formatWon(ytdPL),
+      yrStatCard('연초 대비 평가손익', ytdPL === null ? '—' : formatKrw(ytdPL),
         [cmpSub(ytdPL === null ? 0 : ytdPL, pYtdPL, false, `${prevY}년 같은 시점 대비`),
          { text: first == null ? '평가액 스냅샷 부족' : `${formatCompactWon(first)} → ${formatCompactWon(last)} (원금 유입 ${formatCompactWon(principal)} 제외)`, tone: (ytdPL || 0) >= 0 ? 'good' : 'warn' }],
         (ytdPL || 0) >= 0 ? 'var(--net-text)' : 'var(--expense-text)')
@@ -10234,259 +10234,123 @@ const SAVE_RANGES = [[6, '6개월'], [12, '12개월'], [24, '24개월'], ['all',
    본체는 아래 renderSavingFlowPage 를 그대로 쓴다. */
 /* 홈에 올릴 목표는 이번 분기 것만. 시기가 반기 단위로 적혀 있으면 그 반기에
    이번 분기가 포함되는지로 판단한다. 시기가 비어 있는 목표는 홈에 올리지 않는다. */
-function homeQuarterGoals(data, d) {
-  const now = new Date();
-  const y = now.getFullYear(), q = Math.floor(now.getMonth() / 3) + 1, h = q <= 2 ? 1 : 2;
-  const extra = goalMetricExtra(data, d);
-  const rows = (data.goals || [])
-    .filter(g => pickGoalField(g, 'title'))
-    .filter(g => String(pickGoalField(g, 'status') || '').indexOf('중단') < 0)
-    .map(g => {
-      const p = parseGoalPeriod(pickGoalField(g, 'period'));
-      if (!p || p.y !== y || p.h !== h) return null;
-      const pr = goalProgressOf(g, d, extra);
-      return { title: pickGoalField(g, 'title'), pr };
-    })
-    .filter(Boolean);
+/* ---------------- 홈 ----------------
+   홈은 '지금 어떤가'만 본다. 판단·목표·거래내역은 각자의 화면이 있으니 여기서 겹치지 않는다.
+   오늘 → 이번 달 → 최근 3달 추이 순으로, 가운데 한 줄로만 쌓는다. */
 
-  if (!rows.length) return `<div class="hm-none">${y}년 ${h === 1 ? '상' : '하'}반기로 잡힌 목표가 없어요.</div>`;
-
-  /* 덜 된 것부터 위로 — 신경 써야 할 순서다 */
-  const pctOf = r => {
-    if (!r.pr || !r.pr.target) return null;
-    const raw = (r.pr.current / r.pr.target) * 100;
-    return r.pr.invert ? Math.max(0, 200 - raw) : raw;
-  };
-  rows.sort((a, b) => (pctOf(a) ?? 999) - (pctOf(b) ?? 999));
-
-  return `<div class="hm-gl">${rows.slice(0, 6).map(r => {
-    const pct = pctOf(r);
-    const done = pct !== null && pct >= 100;
-    return `<div class="hm-glr">
-      <span class="t">${enEsc(r.title)}</span>
-      <span class="b"><i class="${done ? 'done' : ''}" style="width:${
-        pct === null ? 0 : Math.min(100, Math.max(0, pct))}%"></i></span>
-      <span class="p mono">${pct === null ? '—' : Math.round(pct) + '%'}</span>
-    </div>`;
-  }).join('')}</div>`;
-}
-
-/* ── 지금 신경 쓸 3가지 ──────────────────────────────────────
-   손으로 적는 목록이 아니다. 규칙에 걸린 것만 올라오고, 급한 순으로 셋만 남긴다.
-   걸린 게 없으면 아무것도 띄우지 않는다 — 빈 카드를 보여줄 이유가 없다. */
-function homeFocus(data, d, ctx) {
+/* 이번 달을 마지막에 두는 최근 N개월 키 */
+function hmRecentMonths(n) {
+  const cur = thisMonthKey();
   const out = [];
-  const push = (sev, title, why, go) => out.push({ sev, title, why, go });
-
-  /* 1. 예산 페이스 */
-  if (ctx.budget && ctx.used > ctx.elapsed + 10) {
-    push(ctx.used > 100 ? 3 : 2, '이번 달 지출 페이스가 빠릅니다',
-      `달의 ${ctx.elapsed.toFixed(0)}%가 지났는데 예산의 ${ctx.used.toFixed(0)}%를 썼어요`,
-      'report/monthly');
-  }
-  /* 2. 분류별 예산 초과 */
-  const over = [];
-  Object.entries(state.budgets || {}).forEach(([c, lim]) => {
-    const used = ctx.spentBy[c] || 0;
-    if (lim && used > lim) over.push([c, used - lim]);
-  });
-  if (over.length) {
-    over.sort((a, b) => b[1] - a[1]);
-    push(2, `${over[0][0]} 예산을 넘었습니다`,
-      over.length > 1 ? `${formatWon(over[0][1])} 초과 · 외 ${over.length - 1}개 분류도 초과`
-                      : `${formatWon(over[0][1])} 초과`,
-      'set/budget');
-  }
-  /* 3. 적립 진도 — 달 후반인데 덜 보냈을 때만 */
-  if (ctx.trGoal && ctx.elapsed > 60) {
-    const p = (ctx.trDone / ctx.trGoal) * 100;
-    if (p < ctx.elapsed - 15) {
-      push(2, '이번 달 적립이 덜 됐습니다',
-        `기댓값 ${formatWon(ctx.trGoal)} 중 ${p.toFixed(0)}% · ${formatWon(ctx.trGoal - ctx.trDone)} 남음`,
-        'set/saving');
-    }
-  }
-  /* 4. 자산 스냅샷 미입력 */
-  if (typeof snapNeedsInput === 'function' && snapNeedsInput()) {
-    push(2, '이번 달 자산 스냅샷이 비어 있습니다',
-      '기록해야 순자산 추이와 목표 진행률이 이어집니다', 'entry/snapshot');
-  }
-  /* 5. 순자산이 줄었을 때 */
-  if (d.deltaAssets !== null && d.deltaAssets < 0) {
-    push(1, '순자산이 전월보다 줄었습니다',
-      `${formatWon(Math.abs(d.deltaAssets))} 감소${d.deltaPct === null ? '' : ` (${d.deltaPct.toFixed(1)}%)`}`,
-      'report/networth');
-  }
-  /* 6. 고정비가 계속 오르는 항목 */
-  const rise = homeRisingFixed(data.ledger || []);
-  if (rise) {
-    push(2, `${rise.name} 고정비가 3개월째 오릅니다`,
-      `${enComma(rise.first)} → ${enComma(rise.last)}원`, 'lab/fixed');
-  }
-  /* 7. 예산 기준 자체가 없을 때 */
-  if (!ctx.budget) {
-    push(1, '월 지출 예산이 정해져 있지 않습니다',
-      '정해두면 홈과 리포트에서 페이스를 볼 수 있어요', 'set/budget');
-  }
-  /* 8. 이번 분기 목표가 비었을 때 */
-  if (ctx.quarterEmpty) {
-    push(1, '이번 분기 목표가 없습니다',
-      '시기를 적어 두면 홈에서 진행률이 보입니다', 'goals/main');
-  }
-
-  out.sort((a, b) => b.sev - a.sev);
-  return out.slice(0, 3);
+  for (let i = n - 1; i >= 0; i--) out.push(shiftMonthKey(cur, -i));
+  return out;
 }
 
-/* 고정비가 3개월 연속 오른 항목 하나 — 오른 폭이 가장 큰 것 */
-function homeRisingFixed(ledger) {
-  const by = {};
-  ledger.filter(r => r.fixed && r.major.includes('지출')).forEach(r => {
-    const k = r.vendor || r.item || r.minor;
-    const m = ledgerMonthKey(r.date);
-    (by[k] ??= {})[m] = ((by[k][m]) || 0) + netExpenseOf(r);
-  });
-  const cm = thisMonthKey();
-  let best = null;
-  Object.entries(by).forEach(([name, byM]) => {
-    const ms = Object.keys(byM).filter(m => m !== cm).sort().slice(-3);
-    if (ms.length < 3) return;
-    const v = ms.map(m => byM[m]);
-    if (!(v[0] < v[1] && v[1] < v[2])) return;
-    const gap = v[2] - v[0];
-    if (!best || gap > best.gap) best = { name, first: Math.round(v[0]), last: Math.round(v[2]), gap };
-  });
-  return best;
+/* 세 달치 막대 한 장. 숫자를 먼저 읽고, 막대는 크기 비교만 돕는다.
+   goodUp = 늘어나는 게 좋은 항목인지 (투자·비상금은 O, 고정비는 X). */
+function hmTrendCard(title, note, months, values, tone, goodUp) {
+  const max = Math.max(...values.map(v => Math.abs(v)), 1);
+  const last = values[values.length - 1];
+  const prev = values.length > 1 ? values[values.length - 2] : null;
+  const diff = prev === null ? null : last - prev;
+  const good = diff === null || diff === 0 ? null : (diff > 0) === !!goodUp;
+  const rows = months.map((k, i) => {
+    const mo = Number(k.split('-')[1]);
+    const isNow = i === months.length - 1;
+    return `<div class="hm-trw${isNow ? ' now' : ''}">
+      <span class="m">${mo}월${isNow ? '<i>진행 중</i>' : ''}</span>
+      <span class="b"><i class="t-${tone}" style="width:${(Math.abs(values[i]) / max) * 100}%"></i></span>
+      <span class="v mono">${formatKrw(values[i])}</span>
+    </div>`;
+  }).join('');
+  /* 이번 달은 아직 안 끝났으니 '지난달 대비'는 지난 두 달로 비교한다 —
+     반쯤 지난 달을 다 지난 달과 견주면 늘 줄어든 것처럼 보인다. */
+  const cmp = values.length >= 3
+    ? { a: values[values.length - 3], b: values[values.length - 2],
+        la: months[months.length - 3], lb: months[months.length - 2] }
+    : null;
+  let foot = '';
+  if (cmp) {
+    const dv = cmp.b - cmp.a;
+    const g = dv === 0 ? null : (dv > 0) === !!goodUp;
+    foot = `<div class="hm-trd">${Number(cmp.la.split('-')[1])}월 → ${Number(cmp.lb.split('-')[1])}월
+      <b class="${g === null ? '' : g ? 'up' : 'down'}">${dv === 0 ? '동일'
+        : (dv > 0 ? '+' : '−') + formatKrw(Math.abs(dv))}</b></div>`;
+  }
+  return `<section class="hm-box">
+    <div class="hm-hd"><b>${title}</b><span>${note}</span></div>
+    <div class="hm-tr">${rows}</div>
+    ${foot}
+  </section>`;
 }
 
 function renderHomePage(container, data, d) {
   const ledger = data.ledger || [];
-  const mk = thisMonthKey();
-  const cur = ledger.filter(r => ledgerMonthKey(r.date) === mk);
-  const income = cur.filter(r => r.major.includes('수입')).reduce((a, r) => a + r.amount, 0);
-  const expense = cur.filter(r => r.major.includes('지출')).reduce((a, r) => a + netExpenseOf(r), 0);
-  const budget = monthlyExpenseTarget(data, ledger, mk);
-
   const now = new Date();
+  const mk = thisMonthKey();
+  const dayKey = todayDayKey();
+
+  const isIncome  = (r) => r.major.includes('수입');
+  const isExpense = (r) => r.major.includes('지출');
+  const isInvTr   = (r) => r.major.includes('이체') && String(r.minor || '').includes('투자');
+  const isEmgTr   = (r) => r.major.includes('이체') && String(r.minor || '').includes('비상금');
+
+  /* --- 오늘 --- */
+  const today   = ledger.filter(r => ledgerDayKey(r.date) === dayKey);
+  const todayIn  = today.filter(isIncome).reduce((a, r) => a + r.amount, 0);
+  const todayOut = today.filter(isExpense).reduce((a, r) => a + netExpenseOf(r), 0);
+  const todayCnt = today.filter(r => isIncome(r) || isExpense(r)).length;
+  const WD = ['일', '월', '화', '수', '목', '금', '토'];
+
+  /* --- 이번 달 --- */
+  const curM = ledger.filter(r => ledgerMonthKey(r.date) === mk);
+  const mIn  = curM.filter(isIncome).reduce((a, r) => a + r.amount, 0);
+  const mOut = curM.filter(isExpense).reduce((a, r) => a + netExpenseOf(r), 0);
+  const mNet = mIn - mOut;
+  const mRate = mIn > 0 ? (mNet / mIn) * 100 : null;
   const days = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-  const elapsed = (now.getDate() / days) * 100;
-  const used = budget ? (expense / budget.amount) * 100 : null;
-  const remain = budget ? budget.amount - expense : null;
-  const perDay = budget && days - now.getDate() > 0
-    ? Math.max(0, Math.round(remain / (days - now.getDate()))) : null;
 
-  /* 이체 기댓값 — 설정에서 정한 몫을 이번 달에 얼마나 보냈는지 */
-  const isMove = r => r.major.includes('이체') || r.major.includes('자산');
-  const trSet = state.transferGoals || {};
-  const trGoal = Object.values(trSet).reduce((a, b) => a + (Number(b) || 0), 0);
-  const trDone = cur.filter(isMove).reduce((a, r) => a + Math.abs(r.amount), 0);
-  const trPct = trGoal ? (trDone / trGoal) * 100 : null;
+  /* --- 최근 3달 --- */
+  const months = hmRecentMonths(3);
+  const monthSum = (key, pick, val) => ledger
+    .filter(r => ledgerMonthKey(r.date) === key && pick(r))
+    .reduce((a, r) => a + (val ? val(r) : Math.abs(r.amount)), 0);
+  const fixedSeries = months.map(k => monthSum(k, r => r.fixed && isExpense(r), netExpenseOf));
+  const invSeries   = months.map(k => monthSum(k, isInvTr));
+  const emgSeries   = months.map(k => monthSum(k, isEmgTr));
 
-  const debt = totalDebt();
-  const net = d.totalAssets - debt;
-  const up = d.deltaAssets !== null && d.deltaAssets >= 0;
-  const alloc = Object.entries(d.displayAllocation || {}).sort((a, b) => b[1] - a[1]);
-
-  const spentBy = {};
-  cur.filter(r => r.major.includes('지출'))
-     .forEach(r => { const c = r.minor || '기타'; spentBy[c] = (spentBy[c] || 0) + netExpenseOf(r); });
-  const qGoals = homeQuarterGoals(data, d);
-  const focus = homeFocus(data, d, {
-    budget, used, elapsed, spentBy, trGoal, trDone,
-    quarterEmpty: qGoals.indexOf('hm-none') >= 0
-  });
-  const recent = ledger.slice().sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, 6);
-
-  /* 상자는 한 겹만 쓴다. 상자 안에 또 상자를 두지 않고 구분선과 여백으로만 나눈다. */
   container.innerHTML = `
-    ${focus.length ? `<section class="hm-box hm-focus">
-      <div class="hm-hd"><b>지금 신경 쓸 것</b><span>규칙에 걸린 것만 올라옵니다</span></div>
-      <div class="hm-fl">
-        ${focus.map((f, i) => `<button class="hm-fr s${f.sev}" data-go="${f.go}">
-          <span class="n">${i + 1}</span>
-          <span class="tx"><b>${enEsc(f.title)}</b><em>${enEsc(f.why)}</em></span>
-          <span class="go">→</span>
-        </button>`).join('')}
-      </div>
-    </section>` : ''}
-
-    <div class="hm hm3">
-      <section class="hm-box hm-net">
-        <div class="hm-hd"><b>순자산</b><span>${enEsc(d.latestMonth || '')}</span></div>
-        <div class="hm-big mono">${formatWon(net)}</div>
-        <div class="hm-sub">
-          ${d.deltaAssets === null ? '<span>전월 비교 없음</span>' : `
-            <span class="${up ? 'up' : 'down'}">${up ? '▲' : '▼'} ${formatWon(Math.abs(d.deltaAssets))}</span>
-            <span>전월 대비${d.deltaPct === null ? '' : ` ${d.deltaPct.toFixed(1)}%`}</span>`}
-          ${debt ? `<span>부채 ${formatWon(debt)} 차감</span>` : ''}
-        </div>
-        <div class="hm-alloc">
-          ${alloc.map(([k, v]) => `
-            <div class="hm-al">
-              <span class="n">${enEsc(k)}</span>
-              <span class="b"><i style="width:${d.totalAssets ? (v / d.totalAssets) * 100 : 0}%"></i></span>
-              <span class="v mono">${formatWon(v)}</span>
-            </div>`).join('')}
-        </div>
-      </section>
-
-      <section class="hm-box hm-month">
-        <div class="hm-hd"><b>이번 달</b><span>${mk.slice(5)}월 ${now.getDate()}일</span></div>
+    <div class="hm-wrap">
+      <section class="hm-box">
+        <div class="hm-hd"><b>오늘</b>
+          <span>${now.getMonth() + 1}월 ${now.getDate()}일 ${WD[now.getDay()]}요일</span></div>
         <div class="hm-tri">
-          <div><span>수입</span><b class="mono in">${formatWon(income)}</b></div>
-          <div><span>실지출</span><b class="mono out">${formatWon(expense)}</b></div>
-          <div><span>저축률</span><b class="mono">${
-            income > 0 ? (((income - expense) / income) * 100).toFixed(1) + '%' : '—'}</b></div>
+          <div><span>번 돈</span><b class="mono in">${formatKrw(todayIn)}</b></div>
+          <div><span>쓴 돈</span><b class="mono out">${formatKrw(todayOut)}</b></div>
+          <div><span>남은 돈</span><b class="mono" style="color:${todayIn - todayOut >= 0 ? 'var(--net-text)' : 'var(--expense-text)'}">${formatKrw(todayIn - todayOut)}</b></div>
         </div>
-        ${trGoal ? `
-          <div class="hm-pace">
-            <div class="hm-bar">
-              <i class="tr" style="width:${Math.min(100, trPct)}%"></i>
-            </div>
-            <div class="hm-paceL">
-              <span>이체 기댓값 ${formatWon(trGoal)} 중 <b>${trPct.toFixed(0)}%</b></span>
-              <span class="${trPct >= 100 ? 'in' : ''}">${trPct >= 100 ? '이번 달 몫 완료' : `${formatWon(trGoal - trDone)} 남음`}</span>
-            </div>
-          </div>` : ''}
-        ${budget ? `
-          <div class="hm-pace">
-            <div class="hm-bar">
-              <i class="${used > elapsed ? 'over' : ''}" style="width:${Math.min(100, used)}%"></i>
-              <span class="tick" style="left:${Math.min(100, elapsed)}%"></span>
-            </div>
-            <div class="hm-paceL">
-              <span>예산 ${formatWon(budget.amount)} 중 <b>${used.toFixed(0)}%</b></span>
-              <span class="${used > elapsed ? 'out' : 'in'}">${used > elapsed ? '페이스보다 빠름' : '페이스 안쪽'}</span>
-            </div>
-            <div class="hm-paceS">남은 예산 <b class="${remain < 0 ? 'out' : ''}">${formatWon(remain)}</b>${
-              perDay !== null ? ` · 하루 ${formatWon(perDay)}` : ''} · ${enEsc(budget.source)}</div>
-          </div>`
-        : `<div class="hm-paceS" style="margin-top:16px;">예산 기준이 없어요.
-             <button class="hm-lnk" data-go="set/budget">설정 › 예산</button>에서 정하면 페이스가 보입니다.</div>`}
+        <div class="hm-paceS">${todayCnt
+          ? `오늘 기록 <b>${todayCnt}건</b> · <button class="hm-lnk" data-go="entry/ledger">내역 보기</button>`
+          : `아직 오늘 기록이 없어요. <button class="hm-lnk" data-go="entry/ledger">기록하러 가기</button>`}</div>
       </section>
-      <section class="hm-box hm-goals">
-        <div class="hm-hd"><b>이번 분기 목표</b>
-          <button class="hm-lnk" data-go="goals/main">전체 보기</button></div>
-        ${qGoals}
-      </section>
-    </div>
 
-    <section class="hm-box hm-recent">
-      <div class="hm-hd"><b>최근 거래</b>
-        <button class="hm-lnk" data-go="entry/ledger">전체 보기</button></div>
-      ${recent.length ? `<table class="hm-tab"><tbody>${recent.map(r => {
-        const kind = r.major.includes('수입') ? 'in' : r.major.includes('지출') ? 'out'
-                   : r.major.includes('이체') ? 'tr' : 'as';
-        const sign = kind === 'in' ? '+' : kind === 'out' ? '−' : '';
-        return `<tr>
-          <td class="dt mono">${enEsc(String(r.date).slice(5))}</td>
-          <td class="nm">${enEsc(r.vendor || r.item || r.minor || '')}
-            <span>${enEsc([r.item, r.minor].filter(Boolean).join(' › '))}</span></td>
-          <td class="am mono k-${kind}">${sign}${enComma(Math.abs(
-            kind === 'out' ? netExpenseOf(r) : r.amount))}</td>
-        </tr>`;
-      }).join('')}</tbody></table>` : '<div class="hm-none">아직 기록이 없어요.</div>'}
-    </section>`;
+      <section class="hm-box">
+        <div class="hm-hd"><b>이번 달</b>
+          <span>${monthKeyLabel(mk)} · ${now.getDate()}/${days}일</span></div>
+        <div class="hm-tri">
+          <div><span>수입</span><b class="mono in">${formatKrw(mIn)}</b></div>
+          <div><span>지출</span><b class="mono out">${formatKrw(mOut)}</b></div>
+          <div><span>남은 돈</span><b class="mono" style="color:${mNet >= 0 ? 'var(--net-text)' : 'var(--expense-text)'}">${formatKrw(mNet)}</b></div>
+        </div>
+        <div class="hm-paceS">${mRate === null ? '수입 기록이 아직 없어요.'
+          : `저축률 <b>${mRate.toFixed(1)}%</b>`} ·
+          <button class="hm-lnk" data-go="report/monthly">월간 리포트</button></div>
+      </section>
+
+      ${hmTrendCard('고정비', '최근 3달', months, fixedSeries, 'fx', false)}
+      ${hmTrendCard('투자 이체', '최근 3달', months, invSeries, 'inv', true)}
+      ${hmTrendCard('비상금 이체', '최근 3달', months, emgSeries, 'emg', true)}
+    </div>`;
 
   container.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', () => {
     const [p, v] = b.dataset.go.split('/');

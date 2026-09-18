@@ -3631,3 +3631,38 @@ body{padding-left:0;padding-right:0;}
   .rc-btn .l,.rc-btn kbd{display:none;}
   .rc-panel{width:200px;}
 }
+
+/* ---------------- 홈 (재구성) ----------------
+   홈은 읽을 게 다섯 덩이뿐이다. 화면 끝까지 늘리면 눈이 좌우로 왔다갔다 하므로
+   가운데 한 줄로 모아 위에서 아래로만 읽게 한다. */
+.hm-wrap{max-width:660px;margin:0 auto;display:grid;gap:var(--gap);}
+.hm-wrap .hm-box{padding:18px 20px;}
+.hm-wrap .hm-tri b{font-size:var(--fs-2xl);}
+.hm-wrap .hm-paceS{margin-top:16px;padding-top:13px;border-top:1px solid var(--border);}
+.hm-wrap .hm-paceS b{color:var(--text);}
+
+/* 세 달치 막대 */
+.hm-tr{display:grid;gap:11px;}
+.hm-trw{display:grid;grid-template-columns:78px 1fr auto;gap:12px;align-items:center;
+  font-size:var(--fs-sm);}
+.hm-trw .m{color:var(--text-faint);font-family:var(--mono);font-size:var(--fs-xs);
+  display:flex;align-items:baseline;gap:5px;}
+.hm-trw .m i{font-style:normal;font-size:var(--fs-micro);color:var(--text-faint);opacity:.75;}
+.hm-trw .b{height:7px;border-radius:4px;background:var(--bg-2);overflow:hidden;}
+.hm-trw .b i{display:block;height:100%;border-radius:4px;}
+.hm-trw .b i.t-fx{background:var(--expense-fill);}
+.hm-trw .b i.t-inv{background:var(--accent-fill);}
+.hm-trw .b i.t-emg{background:var(--save-fill);}
+.hm-trw .v{font-size:var(--fs-sm);color:var(--text);font-variant-numeric:tabular-nums;}
+.hm-trw.now .v{font-weight:700;}
+.hm-trw.now .b i{opacity:.55;}
+.hm-trd{margin-top:14px;padding-top:12px;border-top:1px solid var(--border);
+  font-size:var(--fs-xs);color:var(--text-faint);}
+.hm-trd b{color:var(--text-dim);}
+.hm-trd b.up{color:var(--income-text);}
+.hm-trd b.down{color:var(--expense-text);}
+
+@media(max-width:820px){
+  .hm-wrap{max-width:none;}
+  .hm-trw{grid-template-columns:66px 1fr auto;gap:9px;}
+}
