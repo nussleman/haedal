@@ -101,7 +101,10 @@ body{
   display:flex;
   align-items:baseline;
   gap:10px;
+  cursor:pointer;
+  user-select:none;
 }
+.brand:focus-visible{outline:2px solid var(--accent-fill);outline-offset:4px;border-radius:var(--r-sm, 6px);}
 .brand .mark{
   font-size:var(--fs-2xl);
   line-height:1;
@@ -3635,7 +3638,15 @@ body{padding-left:0;padding-right:0;}
 /* ---------------- 홈 (재구성) ----------------
    홈은 읽을 게 다섯 덩이뿐이다. 윗줄에 오늘·이번 달, 아랫줄에 세 달 추이 셋을 둔다.
    좁은 화면에서는 한 줄씩 쌓인다. */
-.hm-wrap{max-width:1120px;margin:0 auto;display:grid;gap:var(--gap);}
+.hm-wrap{max-width:1120px;margin:0 auto;display:grid;gap:var(--gap);width:100%;box-sizing:border-box;
+  /* 머리줄 아래 남는 화면 한가운데에 앉힌다 — 위(본문 윗여백)와 같은 만큼 아래에도 비워 둔다 */
+  --hm-pad:12px;   /* #page-content 윗여백과 같은 값 */
+  min-height:calc(100vh - var(--hdr-h, 130px) - var(--hm-pad) * 2);
+  min-height:calc(100dvh - var(--hdr-h, 130px) - var(--hm-pad) * 2);
+  align-content:center;}
+/* 홈은 화면 한 장에 들어가므로 아래쪽 여백·꼬리말 때문에 스크롤이 생기지 않게 한다 */
+#app:has(.hm-wrap){padding-bottom:12px;}
+#app:has(.hm-wrap) .footer{display:none;}
 /* 윗줄: 오늘·이번 달 / 아랫줄: 고정비·투자 이체·비상금 이체 */
 .hm-row{display:grid;gap:var(--gap);align-items:stretch;}
 .hm-row2{grid-template-columns:repeat(2,minmax(0,1fr));}
