@@ -10328,8 +10328,9 @@ function renderHomePage(container, data, d) {
     .filter(r => ledgerMonthKey(r.date) === key && pick(r))
     .reduce((a, r) => a + (val ? val(r) : Math.abs(r.amount)), 0);
   const fixedSeries = months.map(k => monthSum(k, r => r.fixed && isExpense(r), netExpenseOf));
-  const invSeries   = months.map(k => monthSum(k, isInvTr));
-  const emgSeries   = months.map(k => monthSum(k, isEmgTr));
+  /* 이체는 출금(음수)도 섞여 있으므로 부호를 살려 순입금으로 센다 — 리포트 화면들과 같은 숫자 */
+  const invSeries   = months.map(k => monthSum(k, isInvTr, r => r.amount));
+  const emgSeries   = months.map(k => monthSum(k, isEmgTr, r => r.amount));
 
   container.innerHTML = `
     <div class="hm-wrap">
