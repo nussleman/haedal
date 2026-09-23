@@ -2100,7 +2100,7 @@ function renderShell() {
   app.innerHTML = `
     <div class="site-header" id="site-header">
       <div class="topbar">
-        <div class="brand">
+        <div class="brand" id="brand-home" role="link" tabindex="0" title="홈으로">
           <span class="mark">🦦</span>
           <h1>해달</h1>
           <span class="tagline">당신의 자산관리 파트너</span>
@@ -2125,6 +2125,17 @@ function renderShell() {
     </div>
   `;
   document.getElementById('entry-btn').addEventListener('click', () => enOpen());
+  /* 타이틀(아이콘·'해달')을 누르면 어디서든 홈으로 */
+  const brand = document.getElementById('brand-home');
+  const goHome = () => {
+    const ov = document.getElementById('en-ov');
+    if (ov && !ov.hidden) enClose();
+    goTo('home', 'main');
+  };
+  brand.addEventListener('click', goHome);
+  brand.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goHome(); }
+  });
   document.getElementById('signout-btn').addEventListener('click', enSignOut);
   document.getElementById('navbar').addEventListener('click', (e) => {
     const btn = e.target.closest('.nav-btn');
@@ -5326,6 +5337,7 @@ function mgGroupDrop(input, rec, onPick) {
    어느 화면에 있든 자주 가는 메뉴로 한 번에 건너뛴다. F(ㄹ) 로 열고 숫자로 고른다.
    메뉴를 늘리려면 아래 한 줄만 더하면 된다 — [섹션, 하위탭, 이름, 아이콘]. */
 const RC_ITEMS = [
+  ['home',   'main',    '홈',          '🏠'],
   ['report', 'monthly', '월간 리포트', '📅'],
   ['entry',  'ledger',  '입출금 내역', '📒']
 ];
