@@ -3633,9 +3633,13 @@ body{padding-left:0;padding-right:0;}
 }
 
 /* ---------------- 홈 (재구성) ----------------
-   홈은 읽을 게 다섯 덩이뿐이다. 화면 끝까지 늘리면 눈이 좌우로 왔다갔다 하므로
-   가운데 한 줄로 모아 위에서 아래로만 읽게 한다. */
-.hm-wrap{max-width:660px;margin:0 auto;display:grid;gap:var(--gap);}
+   홈은 읽을 게 다섯 덩이뿐이다. 윗줄에 오늘·이번 달, 아랫줄에 세 달 추이 셋을 둔다.
+   좁은 화면에서는 한 줄씩 쌓인다. */
+.hm-wrap{max-width:1120px;margin:0 auto;display:grid;gap:var(--gap);}
+/* 윗줄: 오늘·이번 달 / 아랫줄: 고정비·투자 이체·비상금 이체 */
+.hm-row{display:grid;gap:var(--gap);align-items:stretch;}
+.hm-row2{grid-template-columns:repeat(2,minmax(0,1fr));}
+.hm-row3{grid-template-columns:repeat(3,minmax(0,1fr));}
 .hm-wrap .hm-box{padding:18px 20px;}
 .hm-wrap .hm-tri b{font-size:var(--fs-2xl);}
 .hm-wrap .hm-paceS{margin-top:16px;padding-top:13px;border-top:1px solid var(--border);}
@@ -3662,7 +3666,11 @@ body{padding-left:0;padding-right:0;}
 .hm-trd b.up{color:var(--income-text);}
 .hm-trd b.down{color:var(--expense-text);}
 
+@media(max-width:1000px){
+  .hm-row3{grid-template-columns:minmax(0,1fr);}
+}
 @media(max-width:820px){
   .hm-wrap{max-width:none;}
+  .hm-row2{grid-template-columns:minmax(0,1fr);}
   .hm-trw{grid-template-columns:66px 1fr auto;gap:9px;}
 }

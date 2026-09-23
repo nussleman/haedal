@@ -10321,6 +10321,7 @@ function renderHomePage(container, data, d) {
 
   container.innerHTML = `
     <div class="hm-wrap">
+      <div class="hm-row hm-row2">
       <section class="hm-box">
         <div class="hm-hd"><b>오늘</b>
           <span>${now.getMonth() + 1}월 ${now.getDate()}일 ${WD[now.getDay()]}요일</span></div>
@@ -10346,10 +10347,13 @@ function renderHomePage(container, data, d) {
           : `저축률 <b>${mRate.toFixed(1)}%</b>`} ·
           <button class="hm-lnk" data-go="report/monthly">월간 리포트</button></div>
       </section>
+      </div>
 
+      <div class="hm-row hm-row3">
       ${hmTrendCard('고정비', '최근 3달', months, fixedSeries, 'fx', false)}
       ${hmTrendCard('투자 이체', '최근 3달', months, invSeries, 'inv', true)}
       ${hmTrendCard('비상금 이체', '최근 3달', months, emgSeries, 'emg', true)}
+      </div>
     </div>`;
 
   container.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', () => {
