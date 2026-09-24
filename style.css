@@ -3685,3 +3685,29 @@ body{padding-left:0;padding-right:0;}
   .hm-row2{grid-template-columns:minmax(0,1fr);}
   .hm-trw{grid-template-columns:66px 1fr auto;gap:9px;}
 }
+
+/* ---------- 목표: 목록형 화면 (진행중 · 달성 · 다음 할 것 · 전체 목록 · 카테고리별) ---------- */
+.gv-bar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:14px;}
+.gv-bar #goal-add-btn{margin-left:auto;}
+.gv-counts{display:flex;gap:12px;font-size:var(--fs-sm);color:var(--text-faint);}
+.gv-counts b{font-family:var(--mono);color:var(--text);font-weight:600;margin-left:3px;}
+.gv-counts .active b{color:var(--accent-text);}
+.gv-counts .ok b{color:var(--income-text);}
+.gv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;align-items:start;}
+.gv-grid .gb-card{cursor:default;}
+.gv-cat{margin-bottom:26px;}
+.gv-cathead{display:flex;align-items:center;gap:12px;padding:0 2px 8px;margin-bottom:10px;border-bottom:1px solid var(--border-strong);}
+.gv-cathead b{font-size:var(--fs-lg);font-weight:800;color:var(--text-dim);white-space:nowrap;}
+.gv-cathead span{font-family:var(--mono);font-size:var(--fs-tiny);color:var(--text-faint);white-space:nowrap;}
+.gv-cathead .gb-donut{flex:0 1 160px;margin-left:auto;height:6px;}
+.gv-tblwrap{overflow-x:auto;padding:0;}
+.gv-tbl th{white-space:nowrap;cursor:pointer;user-select:none;}
+.gv-tbl th.on{color:var(--accent-text);}
+.gv-tbl tbody tr{cursor:default;}
+.gv-tbl td.amt{white-space:nowrap;}
+.gv-tbl td.gv-title{font-weight:600;color:var(--text);min-width:160px;}
+.gv-tbl td.gv-memo{color:var(--text-faint);font-size:var(--fs-xs);min-width:160px;}
+@media (max-width:820px){
+  .gv-grid{grid-template-columns:1fr;}
+  .gv-bar #goal-add-btn{margin-left:0;}
+}

@@ -56,7 +56,7 @@ const state = {
   range: 12,
   page: 'home',
   homeMainSub: 'main',
-  entrySub: 'ledger', goalsSub: 'main',
+  entrySub: 'ledger', goalsSub: 'active',
   reportSub: 'monthly', labSub: 'sim', setSub: 'cat',
   entryView: 'list',      // 입출금 보기: list | calendar
   ledgerFilter: { q: '', major: 'all', page: 1, pageSize: 50 },
@@ -1051,7 +1051,7 @@ const NAV_ITEMS = [
   { id: 'home',   label: '홈', solo: true },
   { id: 'entry',  label: '기록' },
   { id: 'invest', label: '투자' },
-  { id: 'goals',  label: '목표', solo: true },
+  { id: 'goals',  label: '목표' },
   { id: 'report', label: '리포트' },
   { id: 'lab',    label: '실험실' },
   { id: 'set',    label: '설정' }
@@ -1066,7 +1066,8 @@ const SECTION_SUBS = {
            ['ovRealized', '실현 수익'], ['ovUnrealized', '평가손익'],
            ['#', '포트폴리오'], ['book', '종목'], ['bench', '벤치마크'], ['tax', '세금'],
            ['#', '규율'], ['rules', '매매원칙'], ['journal', '매매일지']],
-  goals:  [['main', '목표']],
+  goals:  [['#', '상태'], ['active', '진행중'], ['done', '달성'], ['next', '다음 할 것'],
+           ['#', '모아보기'], ['board', '보드'], ['all', '전체 목록'], ['category', '카테고리별']],
   report: [['#', '기간별'], ['monthly', '월간'], ['yearly', '연간'],
            ['#', '자산별'], ['networth', '순자산'], ['pension', '연금'], ['savings', '저축']],
   lab:    [['explore', '돋보기'], ['sim', '시뮬레이션'], ['flowmap', '흐름표'], ['fixed', '고정비 검토']],
@@ -2286,7 +2287,7 @@ function renderPage() {
 
   } else if (section === 'goals') {
     body.innerHTML = '<div id="home-goals"></div>';
-    renderGoalBoard(data, d);
+    renderGoalBoard(data, d, SUB);
 
   } else if (section === 'report') {
     if (SUB === 'yearly') renderYearPage(body, data, d);
@@ -5570,7 +5571,8 @@ function goalPeriodFormatter(goals) {
 }
 
 
-function renderGoalBoard(data, d) {
+function renderGoalBoard(data, d, view) {
+  view = view || 'board';
   const host = document.getElementById('home-goals');
   if (!host) return;
   const allGoals = (data.goals || []).filter(g => pickGoalField(g, 'title'));
@@ -5653,6 +5655,7 @@ function renderGoalBoard(data, d) {
   const done = allGoals.filter(g => goalStatusClass(pickGoalField(g, 'status')) === 'ok').length;
   const active = allGoals.filter(g => goalStatusClass(pickGoalField(g, 'status')) === 'active').length;
 
+  let hideCat = GRP === 'category';
   const card = (g) => {
     const title = pickGoalField(g, 'title');
     const category = pickGoalField(g, 'category');
@@ -5703,7 +5706,7 @@ function renderGoalBoard(data, d) {
       ${metricHtml}
       <div class="gb-foot">
         ${status ? `<span class="gb-status ${vClass}">${status}</span>` : ''}
-        ${GRP !== 'category' && category ? `<span class="gb-tag">${category}</span>` : ''}
+        ${!hideCat && category ? `<span class="gb-tag">${category}</span>` : ''}
         ${doneDate ? `<span class="gb-date">${doneDate}</span>` : ''}
         ${!progress ? '<span class="gb-nolink">수치 미연동</span>' : ''}
         ${pending ? '<span class="gb-pending">시트 반영 대기</span>' : ''}
@@ -5711,6 +5714,14 @@ function renderGoalBoard(data, d) {
       ${memo ? `<div class="gb-memo">${memo}</div>` : ''}
     </div>`;
   };
+
+  /* 보드 말고는 목록형 화면 — 상태별 카드 · 전체 표 · 카테고리별 묶음 */
+  if (view !== 'board') {
+    draggable = false;
+    hideCat = view === 'category';
+    renderGoalViews(host, view, { allGoals, card, d, extra, data, fmtPeriod, periodOf });
+    return;
+  }
 
   host.innerHTML = `
     <div class="g" style="margin-bottom:20px;">
@@ -5895,10 +5906,156 @@ function renderGoalBoard(data, d) {
     if (periodOf(g) === newPeriod) return;
     state.goalMoves[row] = newPeriod;
     pushGoalPeriod(Number(row), newPeriod, pickGoalField(g, 'title'));
-    renderGoalBoard(data, d);
+    renderGoalBoard(data, d, 'board');
   });
 }
 
+
+/* ---------------- 목표: 목록형 화면 (진행중 · 달성 · 다음 할 것 · 전체 목록 · 카테고리별) ----------------
+   상태는 시트 '상태' 칸으로 가른다 — 진행 = 진행중, 완료·달성 = 달성,
+   나머지(대기·예정·보류·지연·비어 있음)는 아직 손대지 않은 '다음 할 것'. */
+const GOAL_VIEW_NOTE = {
+  active: '지금 붙잡고 있는 목표',
+  done: '다 이룬 목표 — 최근에 달성한 순',
+  next: '아직 시작하지 않은 목표 — 시기가 가까운 순',
+  all: '목표 전체를 한 표로 — 머리글을 누르면 정렬, 줄을 더블클릭하면 편집',
+  category: '구분별로 묶어 보기'
+};
+function goalBucketOf(g) {
+  const c = goalStatusClass(pickGoalField(g, 'status'));
+  return c === 'ok' ? 'done' : c === 'active' ? 'active' : 'next';
+}
+
+function renderGoalViews(host, view, ctx) {
+  const { allGoals, card, d, extra, data, fmtPeriod, periodOf } = ctx;
+  const cnt = { active: 0, done: 0, next: 0 };
+  allGoals.forEach(g => { cnt[goalBucketOf(g)]++; });
+
+  /* 시기 → 정렬 키 (없으면 맨 뒤) */
+  const periodKey = (g) => {
+    const p = parseGoalPeriod(periodOf(g));
+    return p ? p.y * 10 + (p.h || 0) : 1e9;
+  };
+  const doneKey = (g) => String(pickGoalField(g, 'doneDate') || '').replace(/[^\d]/g, '');
+  /* 달성률 (0~100+). 수치 연동이 안 된 목표는 null */
+  const pctOf = (g) => {
+    const p = goalProgressOf(g, d, extra);
+    if (!p) return null;
+    return p.invert
+      ? (p.current > 0 ? (p.target / p.current) * 100 : 100)
+      : (p.target > 0 ? (p.current / p.target) * 100 : 0);
+  };
+  const byTitle = (a, b) => String(pickGoalField(a, 'title')).localeCompare(String(pickGoalField(b, 'title')), 'ko');
+
+  const grid = (list, empty) => list.length
+    ? `<div class="gv-grid">${list.map(card).join('')}</div>`
+    : `<div class="empty-state">${empty}</div>`;
+
+  let body = '';
+  if (view === 'active' || view === 'done' || view === 'next') {
+    const list = allGoals.filter(g => goalBucketOf(g) === view);
+    if (view === 'done') list.sort((a, b) => doneKey(b).localeCompare(doneKey(a)) || byTitle(a, b));
+    else if (view === 'next') list.sort((a, b) => periodKey(a) - periodKey(b) || byTitle(a, b));
+    else list.sort((a, b) => (pctOf(b) ?? -1) - (pctOf(a) ?? -1) || periodKey(a) - periodKey(b));
+    body = grid(list, { active: '진행 중인 목표가 없어요.', done: '아직 달성한 목표가 없어요.',
+      next: '다음에 할 목표가 없어요.' }[view]);
+
+  } else if (view === 'category') {
+    const cats = [];
+    allGoals.forEach(g => { const c = pickGoalField(g, 'category') || '기타'; if (!cats.includes(c)) cats.push(c); });
+    const order = { active: 0, next: 1, done: 2 };
+    body = cats.map(c => {
+      const list = allGoals.filter(g => (pickGoalField(g, 'category') || '기타') === c)
+        .sort((a, b) => order[goalBucketOf(a)] - order[goalBucketOf(b)] || periodKey(a) - periodKey(b));
+      const dn = list.filter(g => goalBucketOf(g) === 'done').length;
+      const ac = list.filter(g => goalBucketOf(g) === 'active').length;
+      return `<section class="gv-cat">
+        <div class="gv-cathead"><b>${c}</b>
+          <span>${list.length}개 · 진행 ${ac} · 달성 ${dn}</span>
+          <div class="gb-donut"><i style="width:${(dn / list.length) * 100}%"></i></div>
+        </div>
+        ${grid(list, '')}
+      </section>`;
+    }).join('');
+
+  } else {
+    /* 전체 목록 표 */
+    const COLS = [
+      ['period', '시기', g => periodKey(g)],
+      ['category', '구분', g => pickGoalField(g, 'category') || ''],
+      ['title', '항목', g => pickGoalField(g, 'title') || ''],
+      ['freq', '기간', g => pickGoalField(g, 'freq') || ''],
+      ['target', '목표', g => { const p = goalProgressOf(g, d, extra); return p ? p.target : -Infinity; }],
+      ['current', '현재', g => { const p = goalProgressOf(g, d, extra); return p ? p.current : -Infinity; }],
+      ['pct', '달성률', g => pctOf(g) ?? -1],
+      ['status', '상태', g => ({ active: 0, next: 1, done: 2 })[goalBucketOf(g)]],
+      ['doneDate', '달성한 날', g => doneKey(g)],
+      ['memo', '메모', g => pickGoalField(g, 'memo') || '']
+    ];
+    const srt = state.goalTblSort && COLS.some(c => c[0] === state.goalTblSort.k)
+      ? state.goalTblSort : { k: 'status', dir: 1 };
+    const getter = COLS.find(c => c[0] === srt.k)[2];
+    const rows = allGoals.slice().sort((a, b) => {
+      const x = getter(a), y = getter(b);
+      const c = typeof x === 'number' && typeof y === 'number' ? x - y : String(x).localeCompare(String(y), 'ko');
+      return c * srt.dir || periodKey(a) - periodKey(b) || byTitle(a, b);
+    });
+    const fmtOf = (p, v) => p.isPct ? `${v.toFixed(1)}%` : `${formatCompactWon(v)}원`;
+    body = `<div class="panel gv-tblwrap"><table class="data-table gv-tbl">
+      <thead><tr>${COLS.map(([k, l]) => `<th data-gsort="${k}" class="${k === srt.k ? 'on' : ''}">${l}${
+        k === srt.k ? (srt.dir > 0 ? ' ▲' : ' ▼') : ''}</th>`).join('')}</tr></thead>
+      <tbody>${rows.map(g => {
+        const p = goalProgressOf(g, d, extra);
+        const pct = pctOf(g);
+        const good = p ? (p.invert ? p.current <= p.target : p.current >= p.target) : null;
+        const st = pickGoalField(g, 'status');
+        const vc = goalStatusClass(st) || 'pending';
+        return `<tr data-row="${g.__row}">
+          <td class="c-date">${periodOf(g) || '—'}</td>
+          <td>${pickGoalField(g, 'category') ? `<span class="gb-tag">${pickGoalField(g, 'category')}</span>` : ''}</td>
+          <td class="gv-title">${pickGoalField(g, 'title')}</td>
+          <td>${pickGoalField(g, 'freq') || ''}</td>
+          <td class="amt">${p ? fmtOf(p, p.target) : (pickGoalField(g, 'amount') || '—')}</td>
+          <td class="amt">${p ? fmtOf(p, p.current) : '—'}</td>
+          <td class="amt ${good === null ? '' : good ? 'income' : 'expense'}">${pct === null ? '—' : Math.round(pct) + '%'}</td>
+          <td>${st ? `<span class="gb-status ${vc}">${st}</span>` : ''}</td>
+          <td class="c-date">${pickGoalField(g, 'doneDate') || ''}</td>
+          <td class="gv-memo">${pickGoalField(g, 'memo') || ''}</td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table></div>`;
+  }
+
+  host.innerHTML = `
+    <div class="gv-bar">
+      <div class="gv-counts">
+        <span>전체 <b>${allGoals.length}</b></span>
+        <span class="active">진행중 <b>${cnt.active}</b></span>
+        <span class="ok">달성 <b>${cnt.done}</b></span>
+        <span>다음 <b>${cnt.next}</b></span>
+      </div>
+      <span class="settings-note" style="margin:0;">${GOAL_VIEW_NOTE[view] || ''}${view === 'all' ? '' : ' · 더블클릭 → 편집'}</span>
+      <button class="btn small" id="goal-add-btn">+ 목표 추가</button>
+    </div>
+    <div id="goal-views">${body}</div>`;
+
+  document.getElementById('goal-add-btn').addEventListener('click', () => openGoalEditor(null, data, d, fmtPeriod));
+  const box = document.getElementById('goal-views');
+  box.addEventListener('dblclick', (e) => {
+    const c = e.target.closest('.gb-card, tr[data-row]');
+    if (!c) return;
+    const g = allGoals.find(x => String(x.__row) === c.dataset.row);
+    if (g) openGoalEditor(g, data, d, fmtPeriod);
+  });
+  box.addEventListener('click', (e) => {
+    const th = e.target.closest('th[data-gsort]');
+    if (!th) return;
+    const k = th.dataset.gsort;
+    const cur = state.goalTblSort || { k: 'status', dir: 1 };
+    state.goalTblSort = { k, dir: cur.k === k ? -cur.dir : 1 };
+    renderPage();
+  });
+}
 
 /* ---------------- 추천 목표 (현황을 보고 매번 다시 계산) ---------------- */
 
