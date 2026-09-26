@@ -8487,12 +8487,7 @@ function renderNowPage(container, data, d) {
       return v === null ? null : Math.round(v);
     });
     /* 예산이 있으면 목표선도 (총예산 / 일수 × 경과일) */
-    const budgetTotal = (() => {
-      try {
-        const { groups } = buildBudgetTree(data);
-        return groups.reduce((a, g) => a + g.items.reduce((x, it) => x + budgetOf(g.name, it.name, it.avg), 0), 0);
-      } catch (e) { return 0; }
-    })();
+    const budgetTotal = budgetPaceMonthly(data);
     const budgetLine = budgetTotal > 0 ? days.map(b => Math.round(budgetTotal / M.days * b.day)) : null;
 
     let irun = 0;
@@ -9175,12 +9170,7 @@ function renderYearPage(container, data, d) {
       pnt.push(mode === 'cum' ? cp : p0);
     }
     if (mode === 'pace') {
-      const budgetTotal = (() => {
-        try {
-          const { groups } = buildBudgetTree(data);
-          return groups.reduce((a, g) => a + g.items.reduce((x, it) => x + budgetOf(g.name, it.name, it.avg), 0), 0) * 12;
-        } catch (e) { return 0; }
-      })();
+      const budgetTotal = budgetPaceMonthly(data) * 12;
       let ce2 = 0, cp2 = 0, ci2 = 0, cn2 = 0;
       const curCum = [], prevCum = [], incCum = [], netCum = [], budLine = [];
       let lastLive = 0;
@@ -10828,53 +10818,7 @@ function pivotYearMonth(m) {
   return match ? { year: match[1], month: parseInt(match[2], 10) } : { year: '', month: 0 };
 }
 
-function renderExpenseMonthSection(data, d) {
-  if (state.expenseMonthIdx === undefined || state.expenseMonthIdx === null) {
-    state.expenseMonthIdx = d.latestPivotIdx;
-  }
-  renderBudgetTable(data, d);
-}
-
-function setExpenseMonthIdx(idx, data, d) {
-  state.expenseMonthIdx = idx;
-  renderExpenseMonthSection(data, d);
-}
-
-function renderMonthNavControls(idx, data, d) {
-  const curYM = pivotYearMonth(data.months[idx]);
-  const years = [...new Set(data.months.map(m => pivotYearMonth(m).year))];
-  const monthsInYear = data.months.map((m, i) => ({ i, ...pivotYearMonth(m) })).filter(x => x.year === curYM.year);
-  const yearOptions = years.map(y => `<option value="${y}" ${y === curYM.year ? 'selected' : ''}>${y}</option>`).join('');
-  const monthOptions = monthsInYear.map(x => `<option value="${x.i}" ${x.i === idx ? 'selected' : ''}>${x.month}월</option>`).join('');
-  return `
-    <div class="month-nav">
-      <select id="expense-month-year">${yearOptions}</select>
-      <select id="expense-month-month">${monthOptions}</select>
-      <button class="btn small" id="expense-month-thismonth">이번달</button>
-    </div>
-  `;
-}
-
-function bindMonthNavControls(data, d) {
-  const yearSel = document.getElementById('expense-month-year');
-  const monthSel = document.getElementById('expense-month-month');
-  const thisBtn = document.getElementById('expense-month-thismonth');
-  if (yearSel) yearSel.addEventListener('change', () => {
-    const y = yearSel.value;
-    const firstInYear = data.months.map((m, i) => ({ i, ...pivotYearMonth(m) })).filter(x => x.year === y)[0];
-    if (firstInYear) setExpenseMonthIdx(firstInYear.i, data, d);
-  });
-  if (monthSel) monthSel.addEventListener('change', () => setExpenseMonthIdx(parseInt(monthSel.value, 10), data, d));
-  if (thisBtn) thisBtn.addEventListener('click', () => {
-    const curKey = currentPivotMonthKeyString();
-    let targetIdx = data.months.indexOf(curKey);
-    if (targetIdx === -1) targetIdx = d.latestPivotIdx;
-    setExpenseMonthIdx(targetIdx, data, d);
-  });
-}
-
-/* 세부 카테고리(소분류 › 항목) 단위 예산.
-   기준값 = 최근 12개월 월평균 실지출. 사용자가 고치면 그 값이 예산이 된다. */
+/* 분류 › 세부분류별 최근 12개월 월평균 실지출 — 예산을 안 적었을 때 페이스 선의 기준 */
 function buildBudgetTree(data) {
   const rows = (data.ledger || []).filter(r => r.major.includes('지출'));
   const keys = Array.from(new Set(rows.map(r => ledgerMonthKey(r.date)).filter(Boolean))).sort();
@@ -10898,127 +10842,51 @@ function buildBudgetTree(data) {
   return { groups, months: keys, n };
 }
 
-function budgetKeyOf(minor, item) { return `${minor}|${item}`; }
-function budgetOf(minor, item, fallback) {
-  const v = state.budgets && state.budgets[budgetKeyOf(minor, item)];
-  return (v === undefined || v === null || v === '') ? fallback : Number(v);
-}
-
-/* ---------------- 지출 › 예산 : 예산과 실적을 한 표로 ----------------
-   상위(소분류) 행을 접었다 폈다 하면 예산·실적이 같이 열린다.
-   예산 입력칸은 항목 바로 옆, 그 오른쪽에 실적과 차이. */
-function renderBudgetTable(data, d, forceMonthKey, hostId) {
-  const body = document.getElementById(hostId || 'budget-table-body');
-  if (!body) return;
-  const { groups, months } = buildBudgetTree(data);
-  if (!state.budgetOpen) state.budgetOpen = {};
-
-  let mk;
-  if (forceMonthKey) {
-    mk = forceMonthKey;
-  } else {
-    if (state.expenseMonthIdx === undefined || state.expenseMonthIdx === null) state.expenseMonthIdx = d.latestPivotIdx;
-    const pm = data.months[state.expenseMonthIdx];
-    const ym = pivotYearMonth(pm);
-    mk = ym.year ? `${ym.year}-${String(ym.month).padStart(2, '0')}` : months[months.length - 1];
-  }
-
-  const rows = groups.map(g => {
-    const items = g.items.map(it => {
-      const budget = budgetOf(g.name, it.name, it.avg);
-      const used = it.byMonth[mk] || 0;
-      const custom = !!(state.budgets && state.budgets[budgetKeyOf(g.name, it.name)] !== undefined
-        && state.budgets[budgetKeyOf(g.name, it.name)] !== '');
-      return { name: it.name, avg: it.avg, budget, used, custom };
-    });
-    return {
-      name: g.name,
-      items,
-      budget: items.reduce((a, x) => a + x.budget, 0),
-      used: items.reduce((a, x) => a + x.used, 0)
-    };
-  }).filter(g => g.budget > 0 || g.used > 0)
-    .sort((a, b) => b.budget - a.budget);
-
-  const tB = rows.reduce((a, r) => a + r.budget, 0);
-  const tU = rows.reduce((a, r) => a + r.used, 0);
-  /* 남음 / 초과 — 숫자만으로는 안 읽혀서 사용률 게이지 + 방향 기호를 같이 준다.
-     초과분은 게이지가 100%를 넘어 빨갛게 넘치는 걸로 표현. */
-  const diffCell = (b, u) => {
-    const gap = b - u;
-    const pct = b > 0 ? (u / b) * 100 : (u > 0 ? 200 : 0);
-    const over = gap < 0;
-    return `<div class="bt2-gauge ${over ? 'over' : ''}" title="${b > 0 ? Math.round(pct) + '% 사용' : ''}">
-      <span class="g-track"><i style="width:${Math.min(pct, 100)}%"></i>${over ? `<u style="width:${Math.min(pct - 100, 100)}%"></u>` : ''}</span>
-      <span class="g-txt">${over ? '▲' : '▼'} ${wonComma(Math.round(Math.abs(gap)))}</span>
-    </div>`;
-  };
-
-  body.innerHTML = `
-    <table class="bt2">
-      <colgroup><col class="w-nm"/><col class="w-in"/><col class="w-act"/><col class="w-num"/></colgroup>
-      <thead>
-        <tr>
-          <th class="c-nm">항목</th>
-          <th class="c-in">예산 <em>월 기준</em></th>
-          <th class="c-act">실적 ${forceMonthKey ? `<span class="bt2-mlabel">${monthKeyLabel(mk)}</span>` : '<span id="expense-month-nav-slot"></span>'}</th>
-          <th class="c-num">남음 / 초과</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${rows.map(g => {
-          const open = !!state.budgetOpen[g.name];
-          return `
-          <tr class="bt2-g ${open ? 'open' : ''} ${g.used > g.budget ? 'over' : ''}" data-g="${g.name}">
-            <td class="c-nm"><span class="bt2-caret">${open ? '▾' : '▸'}</span><b>${g.name}</b><em>${g.items.length}</em></td>
-            <td class="c-in">${wonComma(Math.round(g.budget))}</td>
-            <td class="c-act">${wonComma(Math.round(g.used))}</td>
-            <td class="c-num">${diffCell(g.budget, g.used)}</td>
-          </tr>
-          ${open ? g.items.map(it => `
-            <tr class="bt2-i ${it.used > it.budget ? 'over' : ''}">
-              <td class="c-nm"><span class="bt2-ind">└</span>${it.name}${it.custom ? '' : '<i class="bt2-auto" title="최근 12개월 평균">자동</i>'}</td>
-              <td class="c-in"><input type="text" inputmode="numeric" class="bt2-input" data-cat="${g.name}" data-item="${it.name}" value="${wonComma(Math.round(it.budget))}" /></td>
-              <td class="c-act">${wonComma(Math.round(it.used))}</td>
-              <td class="c-num">${diffCell(it.budget, it.used)}</td>
-            </tr>`).join('') : ''}`;
-        }).join('') || '<tr><td colspan="4"><div class="empty-state">지출 데이터가 없어요.</div></td></tr>'}
-      </tbody>
-      <tfoot>
-        <tr class="${tU > tB ? 'over' : ''}">
-          <td class="c-nm"><b>합계</b></td>
-          <td class="c-in">${wonComma(Math.round(tB))}</td>
-          <td class="c-act">${wonComma(Math.round(tU))}</td>
-          <td class="c-num">${diffCell(tB, tU)}</td>
-        </tr>
-      </tfoot>
-    </table>
-  `;
-
-  if (!forceMonthKey) {
-    const navSlot = document.getElementById('expense-month-nav-slot');
-    if (navSlot) {
-      navSlot.innerHTML = renderMonthNavControls(state.expenseMonthIdx, data, d);
-      bindMonthNavControls(data, d);
+/* ---------------- 예산 저장 형식 ----------------
+   app_settings.budget_categories =
+     { 분류: { amount, memo, items: { 세부분류: { amount, memo } } } }
+   세부분류에 금액이 하나라도 있으면 분류 예산 = 세부분류 합계, 없으면 분류에 직접 적은 amount.
+   예전 형식({ 분류: 숫자 }, { "분류|세부분류": 숫자 })도 그대로 읽어 들인다. */
+function budgetNorm(raw) {
+  const out = {};
+  const grp = (c) => out[c] || (out[c] = { amount: 0, memo: '', items: {} });
+  Object.entries(raw || {}).forEach(([k, v]) => {
+    if (k.includes('|')) {
+      const [c, it] = k.split('|');
+      const n = Number(v) || 0;
+      if (n) grp(c).items[it] = { amount: n, memo: '' };
+      return;
     }
-  }
-
-  body.querySelectorAll('.bt2-g').forEach(tr => tr.addEventListener('click', (e) => {
-    if (e.target.closest('input')) return;
-    state.budgetOpen[tr.dataset.g] = !state.budgetOpen[tr.dataset.g];
-    renderBudgetTable(data, d, forceMonthKey, hostId);
-  }));
-  body.querySelectorAll('.bt2-input').forEach(inp => {
-    inp.addEventListener('click', (e) => e.stopPropagation());
-    inp.addEventListener('change', () => {
-      const k = budgetKeyOf(inp.dataset.cat, inp.dataset.item);
-      const raw = inp.value.replace(/[^0-9]/g, '');
-      if (raw === '') delete state.budgets[k];
-      else state.budgets[k] = parseFloat(raw);
-      saveBudgets();
-      renderBudgetTable(data, d, forceMonthKey, hostId);
+    const g = grp(k);
+    if (v === null || typeof v !== 'object') { g.amount = Number(v) || 0; return; }
+    g.amount = Number(v.amount) || 0;
+    g.memo = v.memo || '';
+    Object.entries(v.items || {}).forEach(([n, x]) => {
+      const o = (x && typeof x === 'object') ? x : { amount: x };
+      g.items[n] = { amount: Number(o.amount) || 0, memo: o.memo || '' };
     });
   });
+  return out;
+}
+function budgetItemSum(g) {
+  return Object.values((g && g.items) || {}).reduce((a, x) => a + (Number(x.amount) || 0), 0);
+}
+/* 분류 예산 — 세부분류 합계가 있으면 그것, 없으면 직접 적은 값 */
+function budgetCatAmount(g) {
+  if (!g) return 0;
+  const s = budgetItemSum(g);
+  return s > 0 ? s : (Number(g.amount) || 0);
+}
+function budgetMonthlyTotal(map) {
+  return Object.values(map || state.budgets || {}).reduce((a, g) => a + budgetCatAmount(g), 0);
+}
+/* 예산 페이스 선 — 적어 둔 예산이 있으면 그 합계, 없으면 최근 12개월 평균 */
+function budgetPaceMonthly(data) {
+  const t = budgetMonthlyTotal();
+  if (t > 0) return t;
+  try {
+    return buildBudgetTree(data).groups.reduce((a, g) => a + g.avg, 0);
+  } catch (e) { return 0; }
 }
 
 
@@ -14329,20 +14197,11 @@ async function loadBudgets() {
     const { data } = await sb.from('app_settings').select('key,value')
       .in('key', ['budget_categories', 'transfer_goals']);
     (data || []).forEach(r => {
-      if (r.key === 'budget_categories') state.budgets = r.value || {};
+      if (r.key === 'budget_categories') state.budgets = budgetNorm(r.value);
       if (r.key === 'transfer_goals') state.transferGoals = r.value || {};
     });
   } catch (e) { /* 아직 저장된 값이 없다 */ }
   state.budgetsLoaded = true;
-}
-
-async function saveBudgets() {
-  try {
-    const sb = await enClient();
-    await sb.from('app_settings').upsert(
-      { key: 'budget_categories', value: state.budgets, updated_at: new Date().toISOString() },
-      { onConflict: 'owner_id,key' });
-  } catch (e) {}
 }
 
 /* ================= 현황 › 자산 스냅샷 =================
@@ -15132,36 +14991,104 @@ function dbmRenderFor(host, sub) {
 
 /* ── 설정 › 예산 ──────────────────────────────────────────
    총액은 목표의 "월 지출 N만원" 한 줄이 원본이다. 별도 저장소를 만들면 목표와 예산이
-   따로 놀아 둘 중 뭘 믿을지 모르게 되므로 여기서 목표를 직접 고친다.
-   분류별 금액은 app_settings 에 따로 둔다 — 목표로 두면 목표 화면이 분류 수만큼 지저분해진다. */
+   따로 놀아 둘 중 뭘 믿을지 모르게 되므로 저장할 때 목표도 같이 고친다.
+   분류·세부분류별 금액과 메모는 app_settings 에 둔다 (형식은 budgetNorm 참고).
+
+   화면은 Finder 목록 보기처럼 분류를 누르면 세부분류가 펼쳐진다.
+   세부분류에 금액을 적으면 분류 칸은 그 합계(Σ)로 바뀌고, 세부분류를 비우면 다시 직접 적을 수 있다.
+   고치는 동안은 BUD.draft 에만 쌓아 두고, 저장을 눌러야 DB 에 간다. */
+const BUD = { draft: null, dirty: false, open: {}, memo: {} };
+
 function renderBudgetSettings(container, data, d) {
+  /* 세부분류 목록은 categories 표가 원본 — 아직 안 불러왔으면 받은 뒤 다시 그린다 */
+  if (!EN.loaded) {
+    enEnsureRefs().then(() => { if (container.isConnected && EN.loaded) renderBudgetSettings(container, data, d); })
+      .catch(() => {});
+  }
   const ledger = data.ledger || [];
   const mk = thisMonthKey();
   const cur = monthlyExpenseTarget(data, ledger, mk);
+  if (!BUD.draft || !BUD.dirty) BUD.draft = budgetNorm(JSON.parse(JSON.stringify(state.budgets || {})));
+  const B = BUD.draft;
 
-  /* 분류별 기준선 = 마감된 최근 3개월 실지출 평균 */
-  const avgBy = {}; let avg3 = 0;
-  for (let i = 1; i <= 3; i++) {
-    const k = shiftMonthKey(mk, -i);
-    ledger.filter(r => ledgerMonthKey(r.date) === k && r.major.includes('지출'))
-      .forEach(r => { const c = r.minor || '기타';
-        avgBy[c] = (avgBy[c] || 0) + netExpenseOf(r) / 3; });
-  }
-  Object.values(avgBy).forEach(v => avg3 += v);
-  avg3 = Math.round(avg3);
+  /* 기준선 = 마감된 최근 3개월 실지출 평균, 왼쪽 숫자 = 이번 달 실지출. 키는 '분류' 와 '분류|세부분류' */
+  const avg = {}, spent = {}, tree = {};
+  const bump = (o, c, i, v) => { o[c] = (o[c] || 0) + v; const k = c + '|' + i; o[k] = (o[k] || 0) + v; };
+  const node = (c, i) => { const t = tree[c] || (tree[c] = new Set()); if (i) t.add(i); };
+  const prev = [1, 2, 3].map(i => shiftMonthKey(mk, -i));
+  ledger.forEach(r => {
+    if (!r.major.includes('지출')) return;
+    const k = ledgerMonthKey(r.date);
+    const c = r.minor || '기타', i = r.item || '기타';
+    if (prev.includes(k)) { bump(avg, c, i, netExpenseOf(r) / 3); node(c, i); }
+    else if (k === mk) { bump(spent, c, i, netExpenseOf(r)); node(c, i); }
+  });
+  (EN.cats || []).filter(x => x.kind === '지출').forEach(x => node(x.category, x.subcategory));
+  Object.entries(B).forEach(([c, g]) => { node(c); Object.keys(g.items).forEach(i => node(c, i)); });
 
-  const spentBy = {};
-  ledger.filter(r => ledgerMonthKey(r.date) === mk && r.major.includes('지출'))
-    .forEach(r => { const c = r.minor || '기타';
-      spentBy[c] = (spentBy[c] || 0) + netExpenseOf(r); });
+  const byAvg = (ka, kb, a, b) => (avg[kb] || 0) - (avg[ka] || 0) || a.localeCompare(b, 'ko');
+  const cats = Object.keys(tree).sort((a, b) => byAvg(a, b, a, b));
+  const itemsOf = (c) => [...tree[c]].sort((a, b) => byAvg(c + '|' + a, c + '|' + b, a, b));
+  const grp = (c) => B[c] || (B[c] = { amount: 0, memo: '', items: {} });
+  const esc = enEsc;
+  const won = (n) => n ? enComma(Math.round(n)) : '–';
+  const round1k = (n) => Math.round((n || 0) / 1000) * 1000;
 
-  const cats = [...new Set([...Object.keys(avgBy), ...Object.keys(spentBy)])]
-    .sort((a, b) => (avgBy[b] || 0) - (avgBy[a] || 0));
-  const set = state.budgets || {};
-  const setSum = cats.reduce((a, c) => a + (Number(set[c]) || 0), 0);
+  const barHtml = (used, lim) => {
+    const pct = lim ? (used / lim) * 100 : 0;
+    return `<span class="bt-bar"><i class="${pct > 100 ? 'over' : ''}" style="width:${Math.min(100, pct)}%"></i></span>`;
+  };
+  const memoBtn = (key, memo) => `<button class="bt-mbtn ${memo ? 'has' : ''} ${BUD.memo[key] ? 'on' : ''}"
+      data-memo="${esc(key)}" title="${memo ? esc(memo) : '예산 근거 메모'}" aria-label="메모">✎</button>`;
+  const memoRow = (key, memo, item) => BUD.memo[key] ? `
+      <div class="bt-memo ${item ? 'item' : ''}">
+        <textarea class="bt-mta" data-key="${esc(key)}" rows="2"
+          placeholder="이 금액의 근거 — 예) 주 2회 외식 × 3만원 × 4주">${esc(memo)}</textarea>
+      </div>` : '';
+  /* 분류의 예산 칸 — 세부분류 합계가 있으면 잠긴 Σ, 없으면 입력칸 */
+  const catCell = (c) => {
+    const g = grp(c), s = budgetItemSum(g);
+    if (s > 0) return `<span class="bt-sum mono" title="세부분류 합계 — 세부분류를 모두 비우면 직접 적을 수 있어요">Σ ${enComma(s)}</span>`;
+    return `<input class="bt-in mono" data-c="${esc(c)}" type="text" inputmode="numeric"
+      value="${g.amount ? enComma(g.amount) : ''}" placeholder="${avg[c] ? enComma(round1k(avg[c])) : ''}">`;
+  };
 
+  const rowsHtml = cats.map(c => {
+    const g = grp(c), items = itemsOf(c), open = !!BUD.open[c];
+    const lim = budgetCatAmount(g), used = spent[c] || 0;
+    const head = `
+      <div class="bt-row bt-cat ${open ? 'open' : ''} ${lim && used > lim ? 'over' : ''}" data-c="${esc(c)}">
+        <span class="bt-nm">
+          <span class="bt-caret ${items.length ? '' : 'none'}">▸</span>
+          <span class="bt-tt"><b>${esc(c)}</b>${items.length ? `<em>${items.length}</em>` : ''}
+            ${g.memo ? `<small class="bt-mprev">${esc(g.memo)}</small>` : ''}</span>
+        </span>
+        <span class="bt-now mono">${won(used)}${barHtml(used, lim)}</span>
+        <span class="bt-avg mono">${won(avg[c])}</span>
+        <span class="bt-cell" data-cell="${esc(c)}">${catCell(c)}</span>
+        ${memoBtn(c, g.memo)}
+      </div>${memoRow(c, g.memo)}`;
+    if (!open) return head;
+    return head + items.map(i => {
+      const key = c + '|' + i, it = g.items[i] || { amount: 0, memo: '' };
+      const u = spent[key] || 0;
+      return `
+      <div class="bt-row bt-item ${it.amount && u > it.amount ? 'over' : ''}">
+        <span class="bt-nm"><span class="bt-tt">${esc(i)}
+          ${it.memo ? `<small class="bt-mprev">${esc(it.memo)}</small>` : ''}</span></span>
+        <span class="bt-now mono">${won(u)}${barHtml(u, it.amount)}</span>
+        <span class="bt-avg mono">${won(avg[key])}</span>
+        <span class="bt-cell"><input class="bt-in mono" data-c="${esc(c)}" data-i="${esc(i)}" type="text" inputmode="numeric"
+          value="${it.amount ? enComma(it.amount) : ''}" placeholder="${avg[key] ? enComma(round1k(avg[key])) : ''}"></span>
+        ${memoBtn(key, it.memo)}
+      </div>${memoRow(key, it.memo, true)}`;
+    }).join('');
+  }).join('');
+
+  const total = budgetMonthlyTotal(B);
+  let avg3 = 0; cats.forEach(c => { avg3 += avg[c] || 0; });
   container.innerHTML = `
-    <div class="narrow-page">
+    <div class="narrow-page bt-page">
 
     <div class="bud-card">
       <div class="bud-row">
@@ -15169,73 +15096,119 @@ function renderBudgetSettings(container, data, d) {
           <b>월 지출 총액</b>
           <span>아래 분류별 예산을 더한 값입니다. 따로 적지 않습니다.</span>
         </div>
-        <div class="bud-total mono" id="bud-total">${enComma(setSum)}<small>원</small></div>
+        <div class="bud-total mono" id="bud-total">${enComma(total)}<small>원</small></div>
       </div>
       <div class="bud-note">
         홈과 리포트의 예산 페이스가 이 값을 기준으로 계산됩니다.
-        ${avg3 ? `최근 3개월 실지출 평균은 ${enComma(avg3)}원입니다.` : ''}
-        ${cur && cur.amount !== setSum ? `<br>저장된 기준은 아직 ${enComma(cur.amount)}원입니다 — 아래에서 저장하면 맞춰집니다.` : ''}
+        ${avg3 ? `최근 3개월 실지출 평균은 ${enComma(Math.round(avg3))}원입니다.` : ''}
+        ${cur && cur.amount !== total && !BUD.dirty ? `<br>저장된 기준은 아직 ${enComma(cur.amount)}원입니다 — 아래에서 저장하면 맞춰집니다.` : ''}
       </div>
     </div>
 
-    <div class="bud-card" style="margin-top:var(--gap);">
-      <div class="bud-row" style="margin-bottom:14px;">
+    <div class="bud-card">
+      <div class="bud-row" style="margin-bottom:12px;">
         <div class="bud-lab">
-          <b>지출 분류별 예산</b>
-          <span>비워 두면 최근 3개월 평균을 기준선으로 씁니다</span>
+          <b>분류별 예산</b>
+          <span>분류를 누르면 세부분류가 펼쳐집니다. 세부분류에 적으면 그 합계가 분류 예산이 돼요.</span>
         </div>
-        <button class="nav-act" id="budc-avg">전부 평균으로 채우기</button>
+        <button class="nav-act" id="budc-avg">빈 분류 평균으로 채우기</button>
       </div>
-      <div class="budc">
-        ${cats.length ? cats.map(c => {
-          const base = Math.round(avgBy[c] || 0);
-          const lim = Number(set[c]) || 0;
-          const used = spentBy[c] || 0;
-          const pct = lim ? (used / lim) * 100 : (base ? (used / base) * 100 : 0);
-          return `<div class="budc-row">
-            <span class="c">${enEsc(c)}</span>
-            <span class="bar"><i class="${pct > 100 ? 'over' : ''}" style="width:${Math.min(100, pct)}%"></i></span>
-            <span class="now mono">${enComma(Math.round(used))}</span>
-            <input class="budc-in mono" data-cat="${enEsc(c)}" type="text" inputmode="numeric"
-              value="${lim ? enComma(lim) : ''}" placeholder="${enComma(base)}">
-          </div>`;
-        }).join('') : '<div class="hm-none">지출 기록이 아직 없어요.</div>'}
+      <div class="bt">
+        <div class="bt-row bt-head">
+          <span class="bt-nm">이름</span><span class="bt-now">이번 달</span><span class="bt-avg">3개월 평균</span>
+          <span class="bt-cell">예산</span><span></span>
+        </div>
+        ${rowsHtml || '<div class="hm-none">지출 기록이 아직 없어요.</div>'}
       </div>
-      <div class="bud-note">왼쪽 숫자는 이번 달 실지출입니다. 막대는 예산(없으면 평균) 대비 비율이고요.</div>
-      <div class="bud-acts"><button class="nav-act accent" id="budc-save">분류별 저장</button></div>
+      <div class="bud-note">✎ 를 누르면 그 예산의 근거를 적을 수 있어요. 막대는 이번 달 실지출 ÷ 예산입니다.</div>
+      <div class="bud-acts">
+        <span class="bt-dirty" id="bt-dirty" ${BUD.dirty ? '' : 'hidden'}>저장하지 않은 변경이 있어요</span>
+        <button class="nav-act" id="budc-reset" ${BUD.dirty ? '' : 'hidden'}>되돌리기</button>
+        <button class="nav-act accent" id="budc-save">저장</button>
+      </div>
     </div>
     </div>`;
 
-  /* 총액은 분류별 합계를 그대로 따라간다 — 두 곳에 따로 적으면 반드시 어긋난다 */
-  const syncTotal = () => {
-    let sum = 0;
-    container.querySelectorAll('.budc-in').forEach(el => {
-      sum += Number(el.value.replace(/[^\d]/g, '')) || 0;
-    });
+  const redraw = () => renderBudgetSettings(container, data, d);
+  const markDirty = () => {
+    BUD.dirty = true;
     const t = document.getElementById('bud-total');
-    if (t) t.innerHTML = enComma(sum) + '<small>원</small>';
-    return sum;
+    if (t) t.innerHTML = enComma(budgetMonthlyTotal(B)) + '<small>원</small>';
+    ['bt-dirty', 'budc-reset'].forEach(id => { const el = document.getElementById(id); if (el) el.hidden = false; });
   };
-  const commafy = (el) => el.addEventListener('input', () => {
+  const box = container.querySelector('.bt');
+
+  box.addEventListener('click', (e) => {
+    const mb = e.target.closest('.bt-mbtn');
+    if (mb) {
+      const k = mb.dataset.memo;
+      BUD.memo[k] = !BUD.memo[k];
+      redraw();
+      const ta = container.querySelector(`.bt-mta[data-key="${CSS.escape(k)}"]`);
+      if (ta) { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
+      return;
+    }
+    const row = e.target.closest('.bt-cat');
+    if (!row || e.target.closest('input')) return;
+    if (!tree[row.dataset.c].size) return;
+    BUD.open[row.dataset.c] = !BUD.open[row.dataset.c];
+    redraw();
+  });
+
+  box.addEventListener('input', (e) => {
+    const el = e.target;
+    if (el.classList.contains('bt-mta')) {
+      const [c, i] = el.dataset.key.split('|');
+      const g = grp(c);
+      if (i === undefined) g.memo = el.value;
+      else (g.items[i] = g.items[i] || { amount: 0, memo: '' }).memo = el.value;
+      markDirty();
+      return;
+    }
+    if (!el.classList.contains('bt-in')) return;
     const raw = el.value.replace(/[^\d]/g, '');
     el.value = raw ? enComma(raw) : '';
-    syncTotal();
+    const n = Number(raw) || 0, c = el.dataset.c, g = grp(c);
+    if (el.dataset.i === undefined) g.amount = n;
+    else {
+      (g.items[el.dataset.i] = g.items[el.dataset.i] || { amount: 0, memo: '' }).amount = n;
+      /* 세부분류를 고치면 분류 칸이 Σ 합계 ↔ 입력칸으로 바뀐다 (포커스는 세부분류에 있으니 갈아끼워도 된다) */
+      const cell = box.querySelector(`.bt-cell[data-cell="${CSS.escape(c)}"]`);
+      if (cell) cell.innerHTML = catCell(c);
+    }
+    markDirty();
   });
-  container.querySelectorAll('.budc-in').forEach(commafy);
 
   document.getElementById('budc-avg').addEventListener('click', () => {
-    container.querySelectorAll('.budc-in').forEach(el => { if (!el.value) el.value = el.placeholder; });
-    syncTotal();
-    enToast('저장을 눌러야 반영됩니다');
+    let n = 0;
+    cats.forEach(c => {
+      const g = grp(c);
+      if (!g.amount && !budgetItemSum(g) && avg[c] > 0) { g.amount = round1k(avg[c]); n++; }
+    });
+    if (!n) { enToast('비어 있는 분류가 없어요'); return; }
+    BUD.dirty = true;
+    redraw();
+    enToast(`${n}개 분류를 채웠어요 — 저장을 눌러야 반영됩니다`);
+  });
+  document.getElementById('budc-reset').addEventListener('click', () => {
+    BUD.dirty = false; BUD.draft = null;
+    redraw();
   });
   document.getElementById('budc-save').addEventListener('click', async () => {
-    const v = {};
-    let sum = 0;
-    container.querySelectorAll('.budc-in').forEach(el => {
-      const n = Number(el.value.replace(/[^\d]/g, ''));
-      if (n) { v[el.dataset.cat] = n; sum += n; }
+    /* 빈 칸은 버리고, 세부분류가 있는 분류는 amount 에 합계를 같이 적어 둔다 */
+    const clean = {};
+    Object.entries(B).forEach(([c, g]) => {
+      const items = {};
+      Object.entries(g.items).forEach(([i, x]) => {
+        const memo = (x.memo || '').trim();
+        if (x.amount || memo) items[i] = { amount: x.amount || 0, memo };
+      });
+      const memo = (g.memo || '').trim();
+      const amount = budgetCatAmount({ amount: g.amount, items });
+      if (amount || memo || Object.keys(items).length) clean[c] = { amount, memo, items };
     });
-    await budgetCatSave(v, sum);
+    const ok = await budgetCatSave(clean, budgetMonthlyTotal(clean));
+    if (ok) { BUD.dirty = false; BUD.draft = null; renderPage(); }
   });
 }
 
@@ -15377,12 +15350,14 @@ async function budgetCatSave(map, total) {
     state.budgets = map;
     /* 합계를 목표의 월 지출 상한에도 그대로 반영한다 */
     if (total !== undefined) await budgetSave(String(total), true);
-    enToast(`분류별 예산 ${Object.keys(map).length}건 · 총액 ${enComma(total || 0)}원을 저장했습니다`);
-    renderPage();
+    const n = Object.values(map).filter(g => budgetCatAmount(g) > 0).length;
+    enToast(`분류 ${n}개 · 총액 ${enComma(total || 0)}원을 저장했습니다`);
+    return true;
   } catch (e) {
     enToast('저장하지 못했습니다 — ' + (e.message || e));
+    return false;
   } finally {
-    if (btn) { btn.disabled = false; btn.textContent = '분류별 저장'; }
+    if (btn) { btn.disabled = false; btn.textContent = '저장'; }
   }
 }
 

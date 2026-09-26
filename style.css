@@ -3013,6 +3013,62 @@ body{font-variant-numeric:tabular-nums;}
   .budc-row .now{order:2;}
 }
 
+/* 분류 › 세부분류 예산 트리 — Finder 목록 보기처럼 삼각형을 눌러 펼친다 */
+.bt-page{max-width:760px;}
+.bt{border:1px solid var(--border);border-radius:var(--r-md);overflow:hidden;}
+.bt-row{display:grid;grid-template-columns:minmax(0,1fr) 104px 92px 128px 30px;gap:10px;align-items:center;
+  padding:7px 10px 7px 8px;border-bottom:1px solid var(--border);font-size:var(--fs-sm);}
+.bt-row:last-child{border-bottom:0;}
+.bt-head{background:var(--panel-2);font-size:var(--fs-tiny);color:var(--text-faint);padding-top:6px;padding-bottom:6px;}
+.bt-head .bt-now,.bt-head .bt-avg,.bt-head .bt-cell{text-align:right;}
+.bt-cat{cursor:pointer;background:var(--panel);}
+.bt-cat:hover{background:var(--panel-2);}
+.bt-cat.open{background:var(--accent-bg);}
+.bt-item{background:var(--bg-2);}
+.bt-nm{display:flex;align-items:flex-start;gap:6px;min-width:0;}
+.bt-item .bt-nm{padding-left:28px;color:var(--text-dim);}
+.bt-caret{flex:0 0 14px;font-size:10px;color:var(--text-faint);line-height:20px;transition:transform .12s;text-align:center;}
+.bt-caret.none{visibility:hidden;}
+.bt-cat.open .bt-caret{transform:rotate(90deg);color:var(--accent-text);}
+.bt-tt{min-width:0;line-height:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.bt-tt b{font-weight:600;color:var(--text);}
+.bt-tt em{font-style:normal;font-size:var(--fs-tiny);color:var(--text-faint);margin-left:6px;}
+.bt-mprev{display:block;font-size:var(--fs-tiny);color:var(--text-faint);line-height:1.4;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.bt-now{text-align:right;font-size:var(--fs-xs);color:var(--text-dim);}
+.bt-bar{display:block;height:3px;margin-top:4px;border-radius:2px;background:var(--border);overflow:hidden;}
+.bt-bar i{display:block;height:100%;background:var(--income-fill);}
+.bt-bar i.over{background:var(--expense-fill);}
+.bt-row.over .bt-now{color:var(--expense-text);}
+.bt-avg{text-align:right;font-size:var(--fs-xs);color:var(--text-faint);}
+.bt-cell{text-align:right;}
+.bt-in{width:100%;background:var(--bg);border:1px solid var(--border-strong);border-radius:var(--r-sm);
+  color:var(--text);font-size:var(--fs-sm);font-weight:600;padding:5px 9px;text-align:right;}
+.bt-in:focus{outline:2px solid var(--accent-fill);outline-offset:1px;}
+.bt-in::placeholder{color:var(--text-faint);font-weight:400;opacity:.7;}
+.bt-sum{display:block;padding:5px 9px;font-size:var(--fs-sm);font-weight:700;color:var(--accent-text);
+  border:1px dashed var(--border-strong);border-radius:var(--r-sm);cursor:help;}
+.bt-mbtn{width:28px;height:28px;border-radius:var(--r-sm);border:1px solid transparent;background:transparent;
+  color:var(--text-faint);font-size:14px;line-height:1;padding:0;opacity:.55;}
+.bt-mbtn:hover{opacity:1;border-color:var(--border-strong);}
+.bt-mbtn.has{opacity:1;color:var(--accent-text);}
+.bt-mbtn.on{opacity:1;background:var(--accent-bg);border-color:var(--accent-fill);color:var(--accent-text);}
+.bt-memo{padding:8px 10px 10px 36px;border-bottom:1px solid var(--border);background:var(--panel);}
+.bt-memo.item{padding-left:64px;background:var(--bg-2);}
+.bt-mta{width:100%;min-height:52px;resize:vertical;background:var(--bg);border:1px solid var(--border-strong);
+  border-radius:var(--r-sm);color:var(--text);font-family:var(--sans);font-size:var(--fs-sm);line-height:1.5;padding:7px 9px;}
+.bt-mta:focus{outline:2px solid var(--accent-fill);outline-offset:1px;}
+.bt-dirty{font-size:var(--fs-xs);color:var(--warn-text);align-self:center;margin-right:auto;}
+.bt-page .bud-acts{justify-content:flex-end;align-items:center;}
+@media (max-width:640px){
+  .bt-page .bud-card{padding:16px 12px;}
+  .bt-row{grid-template-columns:minmax(0,1fr) 68px 96px 26px;gap:6px;padding-left:4px;padding-right:4px;}
+  .bt-in,.bt-sum{padding:5px 6px;}
+  .bt-avg{display:none;}
+  .bt-item .bt-nm{padding-left:20px;}
+  .bt-memo{padding-left:10px;} .bt-memo.item{padding-left:24px;}
+}
+
 /* 이체 막대 — 채울수록 좋은 지표라 지출과 색을 달리한다 */
 .hm-bar i.tr{background:var(--net-fill);}
 .budc-row .bar i.tr{background:var(--net-fill);}
