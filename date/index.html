@@ -162,7 +162,6 @@ textarea.in{height:auto;min-height:64px;padding:10px 12px;line-height:1.5;resize
 .gate .mark{font-size:44px;text-align:center;}
 .gate h2{text-align:center;margin:6px 0 4px;font-size:22px;}
 .gate p.sub{text-align:center;color:var(--text-faint);font-size:13px;margin:0 0 22px;}
-.code{font-family:var(--mono);font-size:20px;font-weight:600;letter-spacing:2px;color:var(--accent-text);}
 
 #toast{position:fixed;left:50%;bottom:calc(84px + var(--bot));transform:translateX(-50%) translateY(10px);
   background:var(--panel-2);border:1px solid var(--border-strong);color:var(--text);font-size:13.5px;
@@ -586,7 +585,6 @@ function renderSum(host) {
 /* ---------------- 설정 ---------------- */
 function renderSet(host) {
   const b = S.book;
-  const link = `${location.origin}${location.pathname}?invite=${b.invite_code}`;
   host.innerHTML = `
     <div class="card">
       <h3>통장</h3>
@@ -620,15 +618,6 @@ function renderSet(host) {
         <button class="btn sm" id="s-cat-add">추가</button>
       </div>
       <div class="note">분류를 지워도 이미 적힌 기록의 분류 이름은 그대로 남아요.</div>
-    </div>
-
-    <div class="card">
-      <h3>초대</h3>
-      ${S.members.length < 2 ? `
-        <div class="note" style="margin-top:0;">상대에게 아래 링크를 보내세요. 가입(또는 로그인) 후 바로 이 통장에 들어옵니다. 두 사람이 모이면 코드는 더 쓸 수 없어요.</div>
-        <div style="margin:12px 0 4px;" class="code">${esc(b.invite_code)}</div>
-        <button class="btn ghost" id="s-copy">초대 링크 복사</button>`
-      : '<div class="note" style="margin-top:0;">두 사람 모두 들어와 있어요 💕</div>'}
     </div>
 
     <button class="btn ghost" id="s-out" style="margin-top:18px;">로그아웃</button>`;
@@ -668,11 +657,6 @@ function renderSet(host) {
     if (!v || (b.categories || []).includes(v)) return;
     saveBook({ categories: [...(b.categories || []), v] }, '분류를 추가했어요');
   });
-  const cp = $('#s-copy');
-  if (cp) cp.addEventListener('click', async () => {
-    try { await navigator.clipboard.writeText(link); toast('초대 링크를 복사했어요'); }
-    catch (e) { prompt('이 링크를 복사해서 보내세요', link); }
-  });
   $('#s-out').addEventListener('click', async () => { await (await sb()).auth.signOut(); location.replace(location.pathname); });
 }
 
@@ -682,93 +666,58 @@ function showGate(html) {
   $('#main').innerHTML = `<div class="gate">${html}</div>`;
 }
 
-function showLogin(msg) {
-  let mode = 'in';
-  const draw = () => {
-    showGate(`
-      <div class="mark">💕</div>
-      <h2>데이트 통장</h2>
-      <p class="sub">${esc(msg || '둘이 함께 쓰는 통장 기록')}</p>
-      <div class="seg" style="margin-bottom:16px;">
-        <button data-m="in" class="${mode === 'in' ? 'on' : ''}" style="${mode === 'in' ? 'border-color:var(--accent);color:var(--accent-text);' : ''}">로그인</button>
-        <button data-m="up" class="${mode === 'up' ? 'on' : ''}" style="${mode === 'up' ? 'border-color:var(--accent);color:var(--accent-text);' : ''}">처음이에요</button>
-      </div>
-      <label class="lab">이메일</label>
-      <input class="in" id="lk-em" type="email" autocomplete="username" inputmode="email">
-      <label class="lab">비밀번호 ${mode === 'up' ? '<span style="opacity:.7">(6자 이상)</span>' : ''}</label>
-      <input class="in" id="lk-pw" type="password" autocomplete="${mode === 'up' ? 'new-password' : 'current-password'}">
-      <p class="err" id="lk-err"></p>
-      <button class="btn" id="lk-go">${mode === 'up' ? '가입하기' : '로그인'}</button>`);
-    $$('[data-m]').forEach(b => b.addEventListener('click', () => { mode = b.dataset.m; draw(); }));
-    const go = async () => {
-      const email = $('#lk-em').value.trim(), password = $('#lk-pw').value;
-      const err = $('#lk-err');
-      if (!email || !password) { err.textContent = '이메일과 비밀번호를 입력하세요.'; return; }
-      $('#lk-go').disabled = true; err.textContent = '';
-      const c = await sb();
-      if (mode === 'up') {
-        /* 인증 메일의 링크가 초대 코드를 그대로 달고 돌아오도록 지금 주소를 넘긴다 */
-        const { data, error } = await c.auth.signUp({ email, password, options: { emailRedirectTo: location.href } });
-        $('#lk-go').disabled = false;
-        if (error) { err.textContent = '가입하지 못했어요 — ' + error.message; return; }
-        if (!data.session) {
-          showGate(`<div class="mark">📮</div><h2>메일을 확인하세요</h2>
-            <p class="sub">${esc(email)} 로 보낸 인증 링크를 누르면<br>이 화면으로 돌아와 바로 시작돼요.</p>`);
-          return;
-        }
-        start();
-      } else {
-        const { error } = await c.auth.signInWithPassword({ email, password });
-        $('#lk-go').disabled = false;
-        if (error) { err.textContent = '로그인하지 못했어요. 이메일과 비밀번호를 확인하세요.'; return; }
-        start();
-      }
-    };
-    $('#lk-go').addEventListener('click', go);
-    $('#lk-pw').addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
-  };
-  draw();
-}
+/* 들어올 수 있는 사람은 둘뿐이다. DB 의 date_couple_emails() 와 같은 목록이어야 한다 —
+   여기 목록은 안내용이고, 실제로 막는 건 DB(date_enter · RLS)다. */
+const COUPLE = ['gksxowns@gmail.com', 'min2114@naver.com'];
 
-/* 아직 어느 통장에도 속하지 않았을 때 — 초대 코드로 들어오거나 새로 만든다 */
-function showOnboard() {
-  const code = new URLSearchParams(location.search).get('invite') || '';
+/* 가입 절차 없이 이메일로 온 로그인 링크를 누르면 들어온다. 처음이면 계정도 그때 만들어진다.
+   비밀번호가 있는 계정은 비밀번호로도 들어올 수 있다. */
+function showLogin(msg) {
   showGate(`
     <div class="mark">💕</div>
     <h2>데이트 통장</h2>
-    <p class="sub">${code ? '초대받은 통장에 들어가요' : '함께 쓸 통장을 만들거나, 받은 초대 코드로 들어오세요'}</p>
-    <div class="card">
-      <h3>초대 코드로 들어가기</h3>
-      <label class="lab">초대 코드</label>
-      <input class="in mono" id="j-code" value="${esc(code)}" autocapitalize="off">
-      <label class="lab">내 이름 (상대에게 보일 이름)</label>
-      <input class="in" id="j-nick" placeholder="예) 수달">
-      <p class="err" id="j-err"></p>
-      <button class="btn" id="j-go">들어가기</button>
-    </div>
-    ${code ? '' : `<div class="card">
-      <h3>새 통장 만들기</h3>
-      <label class="lab">통장 이름</label>
-      <input class="in" id="n-name" placeholder="데이트 통장">
-      <label class="lab">내 이름</label>
-      <input class="in" id="n-nick" placeholder="예) 해달">
-      <p class="err" id="n-err"></p>
-      <button class="btn ghost" id="n-go">만들기</button>
-    </div>`}`);
-  $('#j-go').addEventListener('click', async () => {
-    const err = $('#j-err');
-    const { error } = await (await sb()).rpc('join_date_book', { p_code: $('#j-code').value, p_nick: $('#j-nick').value });
-    if (error) { err.textContent = error.message; return; }
-    history.replaceState(null, '', location.pathname);
-    start();
+    <p class="sub">${esc(msg || '이메일로 로그인 링크를 보내 드려요')}</p>
+    <label class="lab">이메일</label>
+    <input class="in" id="lk-em" type="email" autocomplete="username" inputmode="email">
+    <p class="err" id="lk-err"></p>
+    <button class="btn" id="lk-link">로그인 링크 받기</button>
+    <details style="margin-top:14px;">
+      <summary style="font-size:12.5px;color:var(--text-faint);cursor:pointer;">비밀번호로 로그인</summary>
+      <input class="in" id="lk-pw" type="password" autocomplete="current-password" placeholder="비밀번호" style="margin-top:10px;">
+      <button class="btn ghost" id="lk-go">로그인</button>
+    </details>`);
+  const err = $('#lk-err');
+  const email = () => {
+    const v = $('#lk-em').value.trim().toLowerCase();
+    if (!v) { err.textContent = '이메일을 입력하세요.'; return null; }
+    if (!COUPLE.includes(v)) { err.textContent = '이 통장에 등록된 이메일이 아니에요.'; return null; }
+    err.textContent = '';
+    return v;
+  };
+  $('#lk-link').addEventListener('click', async () => {
+    const em = email(); if (!em) return;
+    $('#lk-link').disabled = true;
+    const { error } = await (await sb()).auth.signInWithOtp({
+      email: em, options: { emailRedirectTo: location.origin + location.pathname, shouldCreateUser: true } });
+    $('#lk-link').disabled = false;
+    if (error) { err.textContent = '메일을 보내지 못했어요 — ' + error.message; return; }
+    showGate(`<div class="mark">📮</div><h2>메일을 확인하세요</h2>
+      <p class="sub">${esc(em)} 로 보낸 링크를 누르면<br>바로 들어와요.</p>
+      <button class="btn ghost" id="lk-back">다른 방법으로 로그인</button>`);
+    $('#lk-back').addEventListener('click', () => showLogin());
   });
-  const ng = $('#n-go');
-  if (ng) ng.addEventListener('click', async () => {
-    const { error } = await (await sb()).rpc('create_date_book', { p_name: $('#n-name').value, p_nick: $('#n-nick').value });
-    if (error) { $('#n-err').textContent = error.message; return; }
-    S.tab = 'set';   // 만들자마자 초대 링크를 보여 준다
+  const go = async () => {
+    const em = email(); if (!em) return;
+    const password = $('#lk-pw').value;
+    if (!password) { err.textContent = '비밀번호를 입력하세요.'; return; }
+    $('#lk-go').disabled = true;
+    const { error } = await (await sb()).auth.signInWithPassword({ email: em, password });
+    $('#lk-go').disabled = false;
+    if (error) { err.textContent = '로그인하지 못했어요. 비밀번호를 확인하세요.'; return; }
     start();
-  });
+  };
+  $('#lk-go').addEventListener('click', go);
+  $('#lk-pw').addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
 }
 
 async function start() {
@@ -778,18 +727,15 @@ async function start() {
     const { data: { user } } = await c.auth.getUser();
     if (!user) { showLogin(); return; }
     S.uid = user.id;
-    const { data: mine, error } = await c.from('date_members').select('book_id').eq('user_id', user.id).order('joined_at');
-    if (error) throw new Error(error.message);
-    const invite = new URLSearchParams(location.search).get('invite');
-    if (!mine || !mine.length || invite) {
-      /* 이미 멤버인데 초대 링크로 다시 들어온 경우엔 join 이 그냥 그 통장을 돌려준다 */
-      if (invite && mine && mine.length) {
-        await c.rpc('join_date_book', { p_code: invite, p_nick: '' });
-        history.replaceState(null, '', location.pathname);
-      } else { showOnboard(); return; }
+    if (!COUPLE.includes(String(user.email || '').toLowerCase())) {
+      await c.auth.signOut();
+      showLogin(`${user.email} 은 이 통장에 들어올 수 없는 계정이에요`);
+      return;
     }
-    const { data: again } = await c.from('date_members').select('book_id').eq('user_id', user.id).order('joined_at');
-    S.book = { id: again[0].book_id };
+    /* 처음 들어오면 멤버로 등록되고, 통장이 아직 없으면 그때 만들어진다 */
+    const { data: bookId, error } = await c.rpc('date_enter');
+    if (error) throw new Error(error.message);
+    S.book = { id: bookId };
     await loadAll();
     S.d = null;
     render();
