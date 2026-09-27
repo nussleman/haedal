@@ -190,20 +190,19 @@ button{cursor:pointer;}
 .tbl th{font-size:var(--fs-tiny);font-weight:500;color:var(--text-faint);text-align:left;padding:6px 8px;border-bottom:1px solid var(--border-strong);white-space:nowrap;}
 .tbl td{padding:9px 8px;border-bottom:1px solid var(--border);vertical-align:middle;}
 .tbl tr:last-child td{border-bottom:0;}
-.tbl tr.rw{cursor:pointer;}
-.tbl tr.rw:hover td{background:var(--panel-2);}
+.can-edit .tbl tr.rw{cursor:pointer;}
+.can-edit .tbl tr.rw:hover td{background:var(--panel-2);}
 .tbl tr.day-first td{border-top:1px solid var(--border-strong);}
 .tbl .num{text-align:right;font-family:var(--mono);font-weight:600;white-space:nowrap;}
 .tbl .dt{color:var(--text-faint);white-space:nowrap;font-size:var(--fs-xs);width:92px;}
 .tbl .cat{white-space:nowrap;color:var(--text-dim);}
 .tbl .memo{color:var(--text-faint);max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.tbl .who{color:var(--text-faint);font-size:var(--fs-xs);white-space:nowrap;}
 .tbl .ttl{font-weight:500;}
 .tbl .ttl .mk{margin-left:5px;font-size:12px;}
 .tbl .msub{display:none;font-size:var(--fs-xs);color:var(--text-faint);}
 .em{display:inline-flex;width:24px;height:24px;border-radius:50%;background:var(--bg-2);align-items:center;justify-content:center;font-size:13px;margin-right:7px;vertical-align:middle;}
 @media (max-width:860px){
-  .tbl.tx thead,.tbl.tx .cat,.tbl.tx .memo,.tbl.tx .who{display:none;}
+  .tbl.tx thead,.tbl.tx .cat,.tbl.tx .memo{display:none;}
   .tbl .dt{width:58px;}
   .tbl .msub{display:block;}
   .tbl .em{display:none;}
@@ -314,6 +313,8 @@ textarea.in{height:auto;min-height:74px;padding:9px 12px;line-height:1.5;resize:
 /* ================= 데이트 통장 =================
    해달과 같은 Supabase 를 쓰지만 테이블은 완전히 따로다 (date_books · date_members · date_tx · date_balance_checks).
    두 이메일만 들어온다 — 화면의 COUPLE 과 DB 의 date_couple_emails() 가 같은 목록이어야 한다.
+   기록·수정은 EDITOR 한 계정만 한다(DB 의 date_is_editor() 와 같아야 한다). 다른 한 사람은 보기만 한다.
+   입금자는 계정과 상관없이 PEOPLE 두 사람 이름으로 고정이다.
    해달 본 장부(transactions)는 이 화면에서 한 줄도 읽지 않는다.
 
    화면 구조는 해달 웹을 따른다: 위에 최상위 메뉴(홈·내역·리포트·설정), 왼쪽 레일에 하위 메뉴,
@@ -324,6 +325,8 @@ const SB_URL  = 'https://rjxmrpifrhybucexuvli.supabase.co';
 const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqeG1ycGlmcmh5YnVjZXh1dmxpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU1NjU1OTAsImV4cCI6MjEwMTE0MTU5MH0.xSzE02pjZYqbx9nPLb8RVsQF9w7hJHEx2cO0JDOLLSU';
 /* 들어올 수 있는 사람은 둘뿐이다. 여기 목록은 안내용이고, 실제로 막는 건 DB(date_enter · RLS)다. */
 const COUPLE = ['gksxowns@gmail.com', 'min2114@naver.com'];
+const EDITOR = 'gksxowns@gmail.com';
+const PEOPLE = ['태준', '하랑'];
 
 let SB = null;
 async function sb() {
@@ -360,12 +363,11 @@ const catEmoji = (c) => CAT_EMOJI[c] || '🍃';
 const KIND_SIGN = { '지출': -1, '입금': 1, '수입': 1 };
 
 const S = {
-  uid: null, book: null, members: [], tx: [], checks: [],
+  uid: null, canEdit: false, book: null, members: [], tx: [], checks: [],
   page: 'home', sub: { entry: 'list', report: 'monthly', set: 'book' },
   month: monthOf(todayKey()), filter: 'all', q: '', calDay: null,
   draft: null, form: null
 };
-const nick = (uid) => { const m = S.members.find(x => x.user_id === uid); return m ? m.nickname : ''; };
 
 /* ---------------- 데이터 ---------------- */
 async function loadAll() {
@@ -397,7 +399,8 @@ function totals(rows) {
   t.net = t.in + t.etc - t.out;
   return t;
 }
-const depositOf = (uid, rows) => rows.filter(r => r.kind === '입금' && r.member_id === uid).reduce((a, r) => a + Number(r.amount), 0);
+const depositOf = (who, rows) => rows.filter(r => r.kind === '입금' && r.depositor === who).reduce((a, r) => a + Number(r.amount), 0);
+const depositGoal = (who) => Number((S.book.deposit_goals || {})[who] || 0);
 
 /* ================= 뼈대 · 메뉴 ================= */
 const NAV = [['home', '홈'], ['entry', '내역'], ['report', '리포트'], ['set', '설정']];
@@ -406,9 +409,11 @@ const SUBS = {
   home: [],
   entry: [['list', '입출금 내역'], ['calendar', '캘린더']],
   report: [['#', '기간별'], ['monthly', '월간'], ['trend', '추이'], ['#', '우리 둘'], ['deposit', '입금 현황'], ['balance', '잔액 맞추기']],
-  set: [['book', '통장'], ['members', '우리 둘'], ['cats', '지출 분류']]
+  set: [['book', '통장'], ['goals', '입금 약속'], ['cats', '지출 분류']]
 };
 const subLabel = (p, v) => ((SUBS[p] || []).find(x => x[0] === v) || [])[1];
+/* 보기 전용이면 설정 메뉴를 아예 두지 않는다 */
+const navItems = () => NAV.filter(([p]) => S.canEdit || p !== 'set');
 
 function renderShell() {
   $('#app').innerHTML = `
@@ -419,7 +424,8 @@ function renderShell() {
         </div>
         <div class="acts">
           <span class="bal-pill" id="bal-pill"></span>
-          <button class="nav-act accent" id="add-btn" title="기록 (N)">＋ 기록<kbd>N</kbd></button>
+          ${S.canEdit ? '<button class="nav-act accent" id="add-btn" title="기록 (N)">＋ 기록<kbd>N</kbd></button>'
+            : '<span class="bal-pill" style="display:inline-block;color:var(--text-faint)">보기 전용</span>'}
           <button class="nav-act" id="out-btn">로그아웃</button>
         </div>
       </div>
@@ -431,7 +437,7 @@ function renderShell() {
     </div>`;
   $('#brand').addEventListener('click', () => go('home'));
   $('#brand').addEventListener('keydown', e => { if (e.key === 'Enter') go('home'); });
-  $('#add-btn').addEventListener('click', () => openForm());
+  if (S.canEdit) $('#add-btn').addEventListener('click', () => openForm());
   $('#out-btn').addEventListener('click', async () => { await (await sb()).auth.signOut(); location.replace(location.pathname); });
   $('#navbar').addEventListener('click', e => { const b = e.target.closest('.nav-btn'); if (b) go(b.dataset.p); });
   $('#rail').addEventListener('click', e => { const b = e.target.closest('.sub-btn'); if (b) go(S.page, b.dataset.s); });
@@ -440,6 +446,7 @@ function renderShell() {
 }
 
 function go(page, sub) {
+  if (!navItems().some(([p]) => p === page)) page = 'home';
   S.page = page;
   if (sub) S.sub[page] = sub;
   const h = '#' + page + (SUBS[page].length ? '/' + S.sub[page] : '');
@@ -449,14 +456,14 @@ function go(page, sub) {
 }
 function readHash() {
   const [p, s] = location.hash.replace('#', '').split('/');
-  if (SUBS[p]) { S.page = p; if (s && subLabel(p, s)) S.sub[p] = s; }
+  if (SUBS[p] && navItems().some(([x]) => x === p)) { S.page = p; if (s && subLabel(p, s)) S.sub[p] = s; }
 }
 
 function renderPage() {
   $('#book-name').textContent = S.book.name;
-  $('#tagline').textContent = S.members.map(m => m.nickname).join(' · ') + '의 숲속 통장';
+  $('#tagline').textContent = PEOPLE.join(' · ') + '의 숲속 통장';
   $('#bal-pill').innerHTML = `<small>잔액</small>${comma(ledgerBalance())}원`;
-  $('#navbar').innerHTML = NAV.map(([p, l]) => `<button class="nav-btn ${S.page === p ? 'active' : ''}" data-p="${p}">${l}</button>`).join('');
+  $('#navbar').innerHTML = navItems().map(([p, l]) => `<button class="nav-btn ${S.page === p ? 'active' : ''}" data-p="${p}">${l}</button>`).join('');
   const subs = SUBS[S.page];
   $('#layout').classList.toggle('no-rail', !subs.length);
   $('#rail').innerHTML = subs.map(([v, l]) => v === '#' ? `<div class="sub-cat">${l}</div>`
@@ -469,7 +476,7 @@ function renderPage() {
   if (S.page === 'home') pageHome(host);
   else if (S.page === 'entry') (sub === 'calendar' ? pageCalendar : pageList)(host);
   else if (S.page === 'report') ({ monthly: pageMonthly, trend: pageTrend, deposit: pageDeposit, balance: pageBalance })[sub](host);
-  else ({ book: pageSetBook, members: pageSetMembers, cats: pageSetCats })[sub](host);
+  else ({ book: pageSetBook, goals: pageSetGoals, cats: pageSetCats })[sub](host);
 }
 
 /* ---------------- 공통 조각 ---------------- */
@@ -485,7 +492,7 @@ function triHtml(t) {
     <div><span>지출</span><b class="o">${comma(t.out)}</b></div>
     <div><span>증감</span><b class="a">${signed(t.net)}</b></div></div>`;
 }
-function rowTitle(r) { return r.kind === '입금' ? `${nick(r.member_id) || '?'} 입금` : (r.merchant || r.category || r.kind); }
+function rowTitle(r) { return r.kind === '입금' ? `${r.depositor} 입금` : (r.merchant || r.category || r.kind); }
 function rowAmount(r) {
   const cls = r.kind === '지출' ? 'o' : r.kind === '입금' ? 'i' : 'e';
   return `<span class="${cls}">${KIND_SIGN[r.kind] > 0 ? '+' : '−'}${comma(r.amount)}</span>`;
@@ -494,7 +501,7 @@ function rowAmount(r) {
 function tableHtml(rows, withDate) {
   if (!rows.length) return '<div class="empty">기록이 없어요.</div>';
   let prev = null;
-  return `<table class="tbl tx"><thead><tr>${withDate ? '<th>날짜</th>' : ''}<th>내용</th><th>분류</th><th>메모</th><th>기록</th><th style="text-align:right">금액</th></tr></thead><tbody>
+  return `<table class="tbl tx"><thead><tr>${withDate ? '<th>날짜</th>' : ''}<th>내용</th><th>분류</th><th>메모</th><th style="text-align:right">금액</th></tr></thead><tbody>
     ${rows.map(r => {
       const first = r.date !== prev; prev = r.date;
       const mk = r.good_bad === 'Good' ? '<span class="mk">👍</span>' : r.good_bad === 'Bad' ? '<span class="mk">👎</span>' : '';
@@ -504,11 +511,10 @@ function tableHtml(rows, withDate) {
         <td><span class="em">${r.kind === '입금' ? '💧' : catEmoji(r.category)}</span><span class="ttl">${esc(rowTitle(r))}${mk}</span>${msub ? `<span class="msub">${msub}</span>` : ''}</td>
         <td class="cat">${r.kind === '입금' ? '<span class="pill">입금</span>' : esc(r.category || '')}</td>
         <td class="memo" title="${esc(r.memo || '')}">${esc(r.memo || '')}</td>
-        <td class="who">${esc(nick(r.created_by))}</td>
         <td class="num">${rowAmount(r)}</td></tr>`;
     }).join('')}</tbody></table>`;
 }
-function bindRows(host) { $$('tr.rw', host).forEach(tr => tr.addEventListener('click', () => openForm(Number(tr.dataset.id)))); }
+function bindRows(host) { if (S.canEdit) $$('tr.rw', host).forEach(tr => tr.addEventListener('click', () => openForm(Number(tr.dataset.id)))); }
 
 /* ================= 홈 ================= */
 function pageHome(host) {
@@ -553,19 +559,18 @@ function pageHome(host) {
   bindRows(host);
 }
 function memberBars(rows) {
-  if (!S.members.length) return '<div class="empty">멤버가 없어요.</div>';
-  return S.members.map(mb => {
-    const got = depositOf(mb.user_id, rows);
-    const goal = Number(mb.monthly_deposit || 0);
+  return PEOPLE.map(who => {
+    const got = depositOf(who, rows);
+    const goal = depositGoal(who);
     const pct = goal ? Math.min(100, got / goal * 100) : (got ? 100 : 0);
     return `<div class="brow" style="padding:8px 0;">
-      <div class="kv"><span style="color:var(--text);font-weight:700;">${esc(mb.nickname)}</span>
+      <div class="kv"><span style="color:var(--text);font-weight:700;">${esc(who)}</span>
         <b>${comma(got)}${goal ? ` <span style="color:var(--text-faint);font-weight:400">/ ${comma(goal)}</span>` : ''}</b></div>
       <div class="bar"><i class="in" style="width:${pct}%"></i></div>
       <div class="kv" style="font-size:var(--fs-xs);color:var(--text-faint);padding-top:3px;">
         <span>${goal ? (got >= goal ? '완료 ✓' : `${comma(goal - got)}원 남음`) : '약속 금액 없음'}</span></div>
     </div>`;
-  }).join('') + (S.members.length < 2 ? '<div class="note">상대가 아직 들어오지 않았어요.</div>' : '');
+  }).join('');
 }
 
 /* ================= 내역 › 입출금 내역 ================= */
@@ -574,7 +579,7 @@ function pageList(host) {
   const t = totals(all);
   const q = S.q.trim().toLowerCase();
   const rows = all.filter(r => (S.filter === 'all' || r.kind === S.filter) &&
-    (!q || [r.merchant, r.category, r.memo, nick(r.member_id)].some(v => String(v || '').toLowerCase().includes(q))));
+    (!q || [r.merchant, r.category, r.memo, r.depositor].some(v => String(v || '').toLowerCase().includes(q))));
   host.innerHTML = `
     <div class="box">
       <div class="toolbar">
@@ -594,7 +599,7 @@ function pageList(host) {
     S.q = e.target.value;
     const qq = S.q.trim().toLowerCase();
     const rs = all.filter(r => (S.filter === 'all' || r.kind === S.filter) &&
-      (!qq || [r.merchant, r.category, r.memo, nick(r.member_id)].some(v => String(v || '').toLowerCase().includes(qq))));
+      (!qq || [r.merchant, r.category, r.memo, r.depositor].some(v => String(v || '').toLowerCase().includes(qq))));
     $('#list-body', host).innerHTML = tableHtml(rs, true);
     bindRows(host);
   });
@@ -636,10 +641,10 @@ function pageCalendar(host) {
       </div>
     </div>
     ${S.calDay ? `<div class="box"><div class="hd"><b>${dayLabel(S.calDay)}</b>
-      <button class="lnk" id="cal-add">＋ 이 날 기록</button></div>${tableHtml(byDay[S.calDay] || [], false)}</div>` : ''}`;
+      ${S.canEdit ? '<button class="lnk" id="cal-add">＋ 이 날 기록</button>' : ''}</div>${tableHtml(byDay[S.calDay] || [], false)}</div>` : ''}`;
   bindMnav(host);
   $$('.cell[data-d]', host).forEach(b => b.addEventListener('click', () => { S.calDay = S.calDay === b.dataset.d ? null : b.dataset.d; renderPage(); }));
-  const ca = $('#cal-add', host);
+  const ca = S.canEdit && $('#cal-add', host);
   if (ca) ca.addEventListener('click', () => openForm(null, S.calDay));
   bindRows(host);
 }
@@ -705,26 +710,26 @@ function pageDeposit(host) {
   const rows = monthRows(S.month);
   const six = [...Array(6)].map((_, i) => shiftMonth(S.month, -i));
   let gapHtml = '';
-  if (S.members.length === 2) {
-    const [a, b] = S.members;
-    const gap = depositOf(a.user_id, S.tx) - depositOf(b.user_id, S.tx);
+  {
+    const [a, b] = PEOPLE;
+    const gap = depositOf(a, S.tx) - depositOf(b, S.tx);
     gapHtml = Math.abs(gap) >= 1
-      ? `지금까지 <b>${esc(gap > 0 ? a.nickname : b.nickname)}</b> 쪽이 <b class="a">${comma(Math.abs(gap))}원</b> 더 넣었어요.`
+      ? `지금까지 <b>${esc(gap > 0 ? a : b)}</b> 쪽이 <b class="a">${comma(Math.abs(gap))}원</b> 더 넣었어요.`
       : '지금까지 두 사람이 똑같이 넣었어요 🌿';
   }
   host.innerHTML = `
     <div class="toolbar">${mnavHtml()}</div>
     <div class="grid2">
-      <div class="box"><div class="hd"><b>${monthLabel(S.month)}</b><span>약속 금액은 설정 › 우리 둘</span></div>${memberBars(rows)}</div>
+      <div class="box"><div class="hd"><b>${monthLabel(S.month)}</b><span>${S.canEdit ? '약속 금액은 설정 › 입금 약속' : ''}</span></div>${memberBars(rows)}</div>
       <div class="box"><div class="hd"><b>누적</b></div>
-        ${S.members.map(m => `<div class="kv"><span>${esc(m.nickname)}</span><b>${comma(depositOf(m.user_id, S.tx))}</b></div>`).join('')}
+        ${PEOPLE.map(who => `<div class="kv"><span>${esc(who)}</span><b>${comma(depositOf(who, S.tx))}</b></div>`).join('')}
         ${gapHtml ? `<div class="note">${gapHtml}</div>` : ''}</div>
     </div>
     <div class="box">
       <div class="hd"><b>최근 6개월</b></div>
-      <table class="tbl"><thead><tr><th>월</th>${S.members.map(m => `<th style="text-align:right">${esc(m.nickname)}</th>`).join('')}</tr></thead>
-      <tbody>${six.map(k => `<tr><td class="mono" style="white-space:nowrap">${monthLabel(k)}</td>${S.members.map(m => {
-        const v = depositOf(m.user_id, monthRows(k)), g = Number(m.monthly_deposit || 0);
+      <table class="tbl"><thead><tr><th>월</th>${PEOPLE.map(who => `<th style="text-align:right">${esc(who)}</th>`).join('')}</tr></thead>
+      <tbody>${six.map(k => `<tr><td class="mono" style="white-space:nowrap">${monthLabel(k)}</td>${PEOPLE.map(who => {
+        const v = depositOf(who, monthRows(k)), g = depositGoal(who);
         return `<td class="num">${comma(v)} ${g ? (v >= g ? '<span class="i">✓</span>' : '<span style="color:var(--text-faint)">·</span>') : ''}</td>`;
       }).join('')}</tr>`).join('')}</tbody></table>
     </div>`;
@@ -739,7 +744,7 @@ function pageBalance(host) {
         <div class="hd"><b>장부 잔액</b><span>시작 잔액 + 입금·수입 − 지출</span></div>
         <div class="big">${comma(bal)}<small>원</small></div>
         <div class="note">통장 앱에 찍힌 실제 잔액을 적어 두면, 빠뜨린 기록이 있는지 바로 보여요.</div>
-        <div class="sep">
+        <div class="sep" ${S.canEdit ? '' : 'hidden'}>
           <label class="lab">실제 잔액 · 확인한 날</label>
           <div class="row"><input class="in mono" id="ck-amt" inputmode="numeric" placeholder="0"><input class="in" id="ck-date" type="date" value="${todayKey()}" style="max-width:160px;"></div>
           <div class="acts-row"><button class="btn" id="ck-save">맞춰보기</button></div>
@@ -751,7 +756,7 @@ function pageBalance(host) {
           ${S.checks.map(c => { const l = ledgerBalance(c.on_date), d = Number(c.amount) - l;
             return `<tr><td class="mono" style="white-space:nowrap">${shortDay(c.on_date)}</td><td class="num">${comma(c.amount)}</td><td class="num">${comma(l)}</td>
               <td class="num ${Math.abs(d) < 1 ? 'i' : 'o'}">${Math.abs(d) < 1 ? '✓' : signed(d)}</td>
-              <td style="text-align:right"><button class="lnk" data-del="${c.id}">삭제</button></td></tr>`; }).join('')}
+              <td style="text-align:right">${S.canEdit ? `<button class="lnk" data-del="${c.id}">삭제</button>` : ''}</td></tr>`; }).join('')}
           </tbody></table>
           <div class="note">차이가 +면 입금 기록이 빠졌거나 지출이 두 번 적혔을 수 있고, −면 지출 기록이 빠졌을 수 있어요.</div>`
           : '<div class="empty">아직 없어요.</div>'}
@@ -804,29 +809,20 @@ function pageSetBook(host) {
   }));
 }
 
-function pageSetMembers(host) {
+function pageSetGoals(host) {
   host.innerHTML = `
     <div class="box narrow">
-      ${S.members.map(m => `
-        <label class="lab">${m.user_id === S.uid ? '나' : '상대'} — 이름 · 매달 넣기로 한 금액</label>
-        <div class="row">
-          <input class="in" data-nick="${m.user_id}" value="${esc(m.nickname)}" placeholder="이름">
-          <input class="in mono" data-dep="${m.user_id}" inputmode="numeric" value="${m.monthly_deposit ? comma(m.monthly_deposit) : ''}" placeholder="월 입금액">
-        </div>`).join('')}
-      ${S.members.length < 2 ? '<div class="note">상대가 아직 들어오지 않았어요. 이 주소에서 이메일 로그인 링크로 한 번 들어오면 여기 나타나요.</div>' : ''}
+      ${PEOPLE.map(who => `
+        <label class="lab">${esc(who)} — 매달 넣기로 한 금액</label>
+        <input class="in mono" data-goal="${esc(who)}" inputmode="numeric" value="${depositGoal(who) ? comma(depositGoal(who)) : ''}" placeholder="0">`).join('')}
+      <div class="note">홈과 리포트 › 입금 현황에서 이 금액 대비 얼마나 넣었는지 보여 줘요.</div>
       <div class="acts-row"><button class="btn" id="s-save">저장</button></div>
     </div>`;
-  $$('[data-dep]', host).forEach(moneyInput);
-  $('#s-save', host).addEventListener('click', async () => {
-    const c = await sb();
-    for (const m of S.members) {
-      const { error } = await c.from('date_members').update({
-        nickname: $(`[data-nick="${m.user_id}"]`, host).value.trim() || m.nickname,
-        monthly_deposit: Number(digits($(`[data-dep="${m.user_id}"]`, host).value)) || 0
-      }).eq('book_id', S.book.id).eq('user_id', m.user_id);
-      if (error) { toast('저장하지 못했어요 — ' + error.message); return; }
-    }
-    toast('저장했어요'); await loadAll(); renderPage();
+  $$('[data-goal]', host).forEach(moneyInput);
+  $('#s-save', host).addEventListener('click', () => {
+    const goals = {};
+    PEOPLE.forEach(who => { goals[who] = Number(digits($(`[data-goal="${who}"]`, host).value)) || 0; });
+    saveBook({ deposit_goals: goals });
   });
 }
 
@@ -858,14 +854,15 @@ function pageSetCats(host) {
 /* ================= 기록 창 (새로 · 수정) ================= */
 function freshDraft(keep) {
   return { id: null, kind: (keep && keep.kind) || '지출', amount: '', category: null, merchant: '', memo: '',
-           good: null, member: S.uid, date: (keep && keep.date) || todayKey() };
+           good: null, depositor: (keep && keep.depositor) || PEOPLE[0], date: (keep && keep.date) || todayKey() };
 }
 function openForm(id, date) {
+  if (!S.canEdit) return;
   if (id) {
     const r = S.tx.find(x => x.id === id);
     if (!r) return;
     S.form = { id, kind: r.kind, amount: String(Math.round(r.amount)), category: r.category, merchant: r.merchant || '',
-               memo: r.memo || '', good: r.good_bad, member: r.member_id || S.uid, date: r.date };
+               memo: r.memo || '', good: r.good_bad, depositor: r.depositor || PEOPLE[0], date: r.date };
   } else {
     if (!S.draft) S.draft = freshDraft();
     if (date) S.draft.date = date;
@@ -893,7 +890,7 @@ function drawForm(focus) {
           <input class="amt" id="f-amt" inputmode="numeric" placeholder="0" value="${d.amount ? comma(d.amount) : ''}" autocomplete="off">
           ${d.kind === '입금' ? `
             <label class="lab">누가 넣었나요</label>
-            <div class="chips" id="f-who">${S.members.map(m => `<button class="chip ${d.member === m.user_id ? 'on' : ''}" data-u="${m.user_id}">${esc(m.nickname)}</button>`).join('')}</div>
+            <div class="chips" id="f-who">${PEOPLE.map(who => `<button class="chip ${d.depositor === who ? 'on' : ''}" data-u="${esc(who)}">${esc(who)}</button>`).join('')}</div>
           ` : `
             <label class="lab">분류</label>
             <div class="chips" id="f-cat">${cats.map(c => `<button class="chip ${d.category === c ? 'on' : ''}" data-c="${esc(c)}">${catEmoji(c)} ${esc(c)}</button>`).join('')}</div>
@@ -921,7 +918,7 @@ function drawForm(focus) {
         </div>
       </div><p class="err" id="f-err"></p></div>
       <div class="modal-ft">
-        <span class="meta">${r && r.created_by ? `${esc(nick(r.created_by))} 기록 · ${esc(String(r.created_at).slice(0, 10))}` : 'Enter 로 저장 · Esc 로 닫기'}</span>
+        <span class="meta">${r ? `${esc(String(r.created_at).slice(0, 10))} 기록` : 'Enter 로 저장 · Esc 로 닫기'}</span>
         ${isEdit ? '<button class="btn danger" id="f-del">삭제</button>' : ''}
         <button class="btn" id="f-save">${isEdit ? '수정 저장' : '기록'}</button>
       </div>
@@ -944,7 +941,7 @@ function drawForm(focus) {
   const amt = $('#f-amt');
   moneyInput(amt);
   $$('#f-cat .chip').forEach(b => b.addEventListener('click', () => { sync(); d.category = d.category === b.dataset.c ? null : b.dataset.c; drawForm(false); }));
-  $$('#f-who .chip').forEach(b => b.addEventListener('click', () => { sync(); d.member = b.dataset.u; drawForm(false); }));
+  $$('#f-who .chip').forEach(b => b.addEventListener('click', () => { sync(); d.depositor = b.dataset.u; drawForm(false); }));
   $$('[data-day]').forEach(b => b.addEventListener('click', () => { sync(); d.date = shiftDay(todayKey(), Number(b.dataset.day)); drawForm(false); }));
   const gb = (sel, v) => { const el = $(sel); if (el) el.addEventListener('click', () => { sync(); d.good = d.good === v ? null : v; drawForm(false); }); };
   gb('#f-good', 'Good'); gb('#f-bad', 'Bad');
@@ -955,7 +952,7 @@ function drawForm(focus) {
     const n = Number(d.amount || 0);
     if (!n) { err.textContent = '금액을 넣으세요.'; amt.focus(); return; }
     if (d.kind === '지출' && !d.category) { err.textContent = '분류를 고르세요.'; return; }
-    if (d.kind === '입금' && !d.member) { err.textContent = '누가 넣었는지 고르세요.'; return; }
+    if (d.kind === '입금' && !PEOPLE.includes(d.depositor)) { err.textContent = '누가 넣었는지 고르세요.'; return; }
     const btn = $('#f-save'); btn.disabled = true;
     const payload = {
       kind: d.kind, amount: n, date: d.date,
@@ -963,7 +960,7 @@ function drawForm(focus) {
       merchant: d.kind === '입금' ? null : (d.merchant.trim() || null),
       memo: d.memo.trim() || null,
       good_bad: d.kind === '지출' ? d.good : null,
-      member_id: d.kind === '입금' ? d.member : null
+      depositor: d.kind === '입금' ? d.depositor : null
     };
     const c = await sb();
     const { error } = isEdit
@@ -993,7 +990,7 @@ document.addEventListener('keydown', (e) => {
   if (!S.book) return;
   if (e.key === 'Escape' && !$('#ov').hidden) { closeForm(); return; }
   const typing = /INPUT|TEXTAREA|SELECT/.test((e.target && e.target.tagName) || '');
-  if (!typing && $('#ov').hidden && (e.key === 'n' || e.key === 'N' || e.key === 'ㅜ') && !e.metaKey && !e.ctrlKey && !e.altKey) {
+  if (S.canEdit && !typing && $('#ov').hidden && (e.key === 'n' || e.key === 'N' || e.key === 'ㅜ') && !e.metaKey && !e.ctrlKey && !e.altKey) {
     e.preventDefault(); openForm();
   }
 });
@@ -1058,6 +1055,8 @@ async function start() {
     const { data: { user } } = await c.auth.getUser();
     if (!user) { showLogin(); return; }
     S.uid = user.id;
+    S.canEdit = String(user.email || '').toLowerCase() === EDITOR;
+    document.body.classList.toggle('can-edit', S.canEdit);
     if (!COUPLE.includes(String(user.email || '').toLowerCase())) {
       await c.auth.signOut();
       showLogin(`${user.email} 은 이 통장에 들어올 수 없는 계정이에요`);
