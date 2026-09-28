@@ -25,23 +25,6 @@ create policy "own rows" on public.categories as permissive for all to authentic
 create policy "own rows" on public.characters as permissive for all to public
   using ((( SELECT auth.uid() AS uid) = owner_id))
   with check ((( SELECT auth.uid() AS uid) = owner_id));
-create policy "own rows" on public.circle_media as permissive for all to public
-  using ((EXISTS ( SELECT 1
-   FROM circles c
-  WHERE ((c.id = circle_media.circle_id) AND (c.owner_id = ( SELECT auth.uid() AS uid))))))
-  with check ((EXISTS ( SELECT 1
-   FROM circles c
-  WHERE ((c.id = circle_media.circle_id) AND (c.owner_id = ( SELECT auth.uid() AS uid))))));
-create policy "own rows" on public.circle_memories as permissive for all to public
-  using ((EXISTS ( SELECT 1
-   FROM circles c
-  WHERE ((c.id = circle_memories.circle_id) AND (c.owner_id = ( SELECT auth.uid() AS uid))))))
-  with check ((EXISTS ( SELECT 1
-   FROM circles c
-  WHERE ((c.id = circle_memories.circle_id) AND (c.owner_id = ( SELECT auth.uid() AS uid))))));
-create policy "own rows" on public.circles as permissive for all to public
-  using ((( SELECT auth.uid() AS uid) = owner_id))
-  with check ((( SELECT auth.uid() AS uid) = owner_id));
 create policy "own rows" on public.countries as permissive for all to public
   using ((( SELECT auth.uid() AS uid) = owner_id))
   with check ((( SELECT auth.uid() AS uid) = owner_id));
@@ -70,41 +53,7 @@ create policy "editor write" on public.date_tx as permissive for insert to authe
   with check ((is_date_member(book_id) AND date_is_editor()));
 create policy "members read" on public.date_tx as permissive for select to authenticated
   using (is_date_member(book_id));
-create policy debts_owner_all on public.debts as permissive for all to public
-  using ((owner_id = ( SELECT auth.uid() AS uid)))
-  with check ((owner_id = ( SELECT auth.uid() AS uid)));
-create policy "own rows" on public.drawing_memories as permissive for all to public
-  using ((EXISTS ( SELECT 1
-   FROM drawings p
-  WHERE ((p.id = drawing_memories.drawing_id) AND (p.owner_id = ( SELECT auth.uid() AS uid))))))
-  with check ((EXISTS ( SELECT 1
-   FROM drawings p
-  WHERE ((p.id = drawing_memories.drawing_id) AND (p.owner_id = ( SELECT auth.uid() AS uid))))));
-create policy "own rows" on public.drawing_tags as permissive for all to public
-  using ((EXISTS ( SELECT 1
-   FROM drawings p
-  WHERE ((p.id = drawing_tags.drawing_id) AND (p.owner_id = ( SELECT auth.uid() AS uid))))))
-  with check ((EXISTS ( SELECT 1
-   FROM drawings p
-  WHERE ((p.id = drawing_tags.drawing_id) AND (p.owner_id = ( SELECT auth.uid() AS uid))))));
 create policy "own rows" on public.drawings as permissive for all to public
-  using ((( SELECT auth.uid() AS uid) = owner_id))
-  with check ((( SELECT auth.uid() AS uid) = owner_id));
-create policy "own rows" on public.event_media as permissive for all to public
-  using ((EXISTS ( SELECT 1
-   FROM events p
-  WHERE ((p.id = event_media.event_id) AND (p.owner_id = ( SELECT auth.uid() AS uid))))))
-  with check ((EXISTS ( SELECT 1
-   FROM events p
-  WHERE ((p.id = event_media.event_id) AND (p.owner_id = ( SELECT auth.uid() AS uid))))));
-create policy "own rows" on public.event_memories as permissive for all to public
-  using ((EXISTS ( SELECT 1
-   FROM events p
-  WHERE ((p.id = event_memories.event_id) AND (p.owner_id = ( SELECT auth.uid() AS uid))))))
-  with check ((EXISTS ( SELECT 1
-   FROM events p
-  WHERE ((p.id = event_memories.event_id) AND (p.owner_id = ( SELECT auth.uid() AS uid))))));
-create policy "own rows" on public.events as permissive for all to public
   using ((( SELECT auth.uid() AS uid) = owner_id))
   with check ((( SELECT auth.uid() AS uid) = owner_id));
 create policy "own rows" on public.goal_files as permissive for all to public
@@ -198,12 +147,6 @@ create policy "own rows" on public.media_tags as permissive for all to public
   with check ((EXISTS ( SELECT 1
    FROM media_items p
   WHERE ((p.id = media_tags.media_id) AND (p.owner_id = ( SELECT auth.uid() AS uid))))));
-create policy "own rows" on public.memories as permissive for all to public
-  using ((( SELECT auth.uid() AS uid) = owner_id))
-  with check ((( SELECT auth.uid() AS uid) = owner_id));
-create policy "own rows" on public.memory_photos as permissive for all to public
-  using ((( SELECT auth.uid() AS uid) = owner_id))
-  with check ((( SELECT auth.uid() AS uid) = owner_id));
 create policy "own rows" on public.merchant_groups as permissive for all to authenticated
   using ((( SELECT auth.uid() AS uid) = owner_id))
   with check ((( SELECT auth.uid() AS uid) = owner_id));
@@ -222,9 +165,6 @@ create policy "own rows" on public.routine_spans as permissive for all to public
 create policy "own rows" on public.routines as permissive for all to public
   using ((( SELECT auth.uid() AS uid) = owner_id))
   with check ((( SELECT auth.uid() AS uid) = owner_id));
-create policy "own rows" on public.savings_log as permissive for all to public
-  using ((( SELECT auth.uid() AS uid) = owner_id))
-  with check ((( SELECT auth.uid() AS uid) = owner_id));
 create policy "own rows" on public.stocks as permissive for all to public
   using ((( SELECT auth.uid() AS uid) = owner_id))
   with check ((( SELECT auth.uid() AS uid) = owner_id));
@@ -235,9 +175,6 @@ create policy "own rows" on public.tags as permissive for all to public
   using ((( SELECT auth.uid() AS uid) = owner_id))
   with check ((( SELECT auth.uid() AS uid) = owner_id));
 create policy "own rows" on public.themes as permissive for all to public
-  using ((( SELECT auth.uid() AS uid) = owner_id))
-  with check ((( SELECT auth.uid() AS uid) = owner_id));
-create policy "own rows" on public.thesis as permissive for all to authenticated
   using ((( SELECT auth.uid() AS uid) = owner_id))
   with check ((( SELECT auth.uid() AS uid) = owner_id));
 create policy "own rows" on public.trade_log as permissive for all to public
