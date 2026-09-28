@@ -114,28 +114,6 @@ const state = {
   bookCcy: 'won'           // 내 종목 표시 통화: won | local
 };
 
-/* ---------------- 로컬 저장소 shim ----------------
-   GitHub Pages에는 window.storage가 없어서 예산·체크리스트가 저장되지 않고 있었다.
-   localStorage로 같은 인터페이스를 채운다. */
-if (!window.storage) {
-  const P = 'haedal:';
-  window.storage = {
-    async get(k) { const v = localStorage.getItem(P + k); if (v === null) throw new Error('not found: ' + k); return { key: k, value: v, shared: false }; },
-    async set(k, v) { localStorage.setItem(P + k, v); return { key: k, value: v, shared: false }; },
-    async delete(k) { localStorage.removeItem(P + k); return { key: k, deleted: true, shared: false }; },
-    async list(prefix) {
-      const keys = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const kk = localStorage.key(i);
-        if (!kk || kk.indexOf(P) !== 0) continue;
-        const k = kk.slice(P.length);
-        if (!prefix || k.indexOf(prefix) === 0) keys.push(k);
-      }
-      return { keys, prefix, shared: false };
-    }
-  };
-}
-
 /* ---------------- 사용자 설정 (목표 배분·부채·미운용 계좌·흐름표) ---------------- */
 const SETTINGS_KEY = 'haedal-settings';
 const ALLOC_CATS = ['현금 자산', '저축 자산', '투자 자산', '연금 자산'];
@@ -150,14 +128,14 @@ const DEFAULT_SETTINGS = {
 };
 state.settings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
 
+/* 대시보드 설정은 Supabase app_settings('dashboard_settings') 에 둔다 — 폰·PC 가 같은 값을 본다.
+   예전에 브라우저(localStorage)에만 저장된 값이 있으면 처음 한 번 DB 로 올린다. */
 async function loadSettings() {
-  try {
-    const res = await window.storage.get(SETTINGS_KEY, false);
-    if (res && res.value) state.settings = Object.assign({}, DEFAULT_SETTINGS, JSON.parse(res.value));
-  } catch (e) { /* 아직 저장된 설정 없음 */ }
+  const v = await appSettingLoad('dashboard_settings', 'haedal:' + SETTINGS_KEY);
+  if (v && typeof v === 'object') state.settings = Object.assign({}, DEFAULT_SETTINGS, v);
 }
 async function saveSettings() {
-  try { await window.storage.set(SETTINGS_KEY, JSON.stringify(state.settings), false); } catch (e) {}
+  await appSettingSave('dashboard_settings', state.settings);
 }
 function totalDebt() {
   return (state.settings.debts || []).reduce((a, x) => a + (Number(x.balance) || 0), 0);

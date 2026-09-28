@@ -160,18 +160,8 @@ function applySuggestedGoals(data) {
   state.goals.emergencyFundTarget = sug.suggestedEmergency;
 }
 
-async function clearInsightCaches() {
-  try {
-    const res = await window.storage.list('weekly-insights', false);
-    if (res && res.keys) {
-      await Promise.all(res.keys.map(k => window.storage.delete(k, false).catch(() => {})));
-    }
-  } catch (e) { /* nothing cached yet */ }
-}
-
 async function fetchLive(manual) {
   setSyncState('loading');
-  if (manual) await clearInsightCaches();
   try {
     const data = await fetchAllTabsAndMerge();
     state.data = data;

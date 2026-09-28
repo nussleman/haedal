@@ -13,6 +13,39 @@ async function enClient() {
   EN.sb = await haedalSupabase();
   return EN.sb;
 }
+/* app_settings 한 줄(key → json)을 읽고 쓴다.
+   legacyKey 를 주면: DB 에 아직 값이 없고 브라우저에 예전 값이 있을 때 그 값을 DB 로 옮긴다(한 번). */
+async function appSettingLoad(key, legacyKey) {
+  try {
+    const sb = await enClient();
+    const { data, error } = await sb.from('app_settings').select('value').eq('key', key).maybeSingle();
+    if (error) throw error;
+    if (data && data.value != null) return data.value;
+    if (legacyKey) {
+      let raw = null;
+      try { raw = localStorage.getItem(legacyKey); } catch (e) {}
+      if (raw) {
+        const v = JSON.parse(raw);
+        await appSettingSave(key, v, true);
+        return v;
+      }
+    }
+  } catch (e) { console.error('설정을 불러오지 못함', key, e); }
+  return null;
+}
+async function appSettingSave(key, value, quiet) {
+  try {
+    const sb = await enClient();
+    const { error } = await sb.from('app_settings')
+      .upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict: 'owner_id,key' });
+    if (error) throw error;
+    return true;
+  } catch (e) {
+    if (!quiet) enToast('설정을 저장하지 못했습니다 — ' + (e.message || e));
+    return false;
+  }
+}
+
 const enQS = (sel) => document.querySelector(sel);
 const enComma = (n) => Number(n).toLocaleString('ko-KR');
 const enEsc = (v) => String(v == null ? '' : v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));

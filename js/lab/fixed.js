@@ -18,14 +18,13 @@ function fxShiftMonth(k, n) {
   return String(Math.floor(t / 12)).padStart(4, '0') + '-' + String(t % 12 + 1).padStart(2, '0');
 }
 
+/* 고정비 판정(그대로·줄일 후보·끊기)은 app_settings('fixed_review') 에 둔다 */
 async function fxLoadVerdict() {
-  try {
-    const r = await window.storage.get(FX_KEY, false);
-    FX.verdict = r && r.value ? JSON.parse(r.value) : {};
-  } catch (e) { FX.verdict = {}; }
+  const v = await appSettingLoad('fixed_review', 'haedal:' + FX_KEY);
+  FX.verdict = v && typeof v === 'object' ? v : {};
 }
 async function fxSaveVerdict() {
-  try { await window.storage.set(FX_KEY, JSON.stringify(FX.verdict), false); } catch (e) {}
+  await appSettingSave('fixed_review', FX.verdict);
 }
 
 async function fxLoad() {
