@@ -95,8 +95,16 @@ function renderHomePage(container, data, d) {
   const invSeries   = months.map(k => monthSum(k, isInvTr, r => r.amount));
   const emgSeries   = months.map(k => monthSum(k, isEmgTr, r => r.amount));
 
+  const checks = hmChecks(data);
+  const sig = checks.map(c => c.text).join('|');
+  let hidden = '';
+  try { hidden = localStorage.getItem('haedal:checks-hidden') || ''; } catch (e) {}
+  const showChecks = checks.length && hidden !== sig;
   container.innerHTML = `
     <div class="hm-wrap">
+      ${showChecks ? `<div class="hm-checks"><b>확인할 것</b>${checks.map(c =>
+        `<button class="hm-chk" data-go="${c.go}">${c.text}</button>`).join('')}
+        <button class="hm-chkx" id="hm-chkx" title="이 내용이 바뀔 때까지 숨기기">숨기기</button></div>` : ''}
       <section class="hm-box hm-main">
         <div class="hm-hd"><b>이번 달 더 쓸 수 있는 돈</b>
           <span>${monthKeyLabel(mk)} · ${daysLeft}일 남음</span></div>
@@ -119,6 +127,11 @@ function renderHomePage(container, data, d) {
       </div>
     </div>`;
 
+  const hx = container.querySelector('#hm-chkx');
+  if (hx) hx.addEventListener('click', () => {
+    try { localStorage.setItem('haedal:checks-hidden', sig); } catch (e) {}
+    hx.parentElement.remove();
+  });
   container.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', () => {
     const [p, v] = b.dataset.go.split('/');
     goTo(p, v);
@@ -361,4 +374,36 @@ function budgetPaceMonthly(data) {
   try {
     return buildBudgetTree(data).groups.reduce((a, g) => a + g.avg, 0);
   } catch (e) { return 0; }
+}
+
+/* ---------------- 데이터 점검 ----------------
+   숫자가 틀리면 나머지 화면이 다 틀린다. 홈 맨 위에 '고칠 것'만 한 줄로 세운다. */
+function hmChecks(data) {
+  const out = [];
+  const ledger = data.ledger || [];
+  const now = new Date();
+  /* 1) 분류 없는 거래 (최근 90일) */
+  const since = new Date(now.getTime() - 90 * 864e5).toISOString().slice(0, 10);
+  const noCat = ledger.filter(r => r.dayKey >= since && !r.catId).length;
+  if (noCat) out.push({ text: `분류 없는 기록 ${noCat}건`, go: 'entry/ledger' });
+  /* 2) 같은 날 · 같은 금액 · 같은 사용처가 두 번 (최근 60일) — 중복 입력 의심 */
+  const since2 = new Date(now.getTime() - 60 * 864e5).toISOString().slice(0, 10);
+  const seen = {}; let dup = 0;
+  ledger.filter(r => r.dayKey >= since2 && r.merch).forEach(r => {
+    const k = `${r.dayKey}|${r.amount}|${r.merch}`;
+    if (seen[k]) dup++; else seen[k] = 1;
+  });
+  if (dup) out.push({ text: `중복 의심 ${dup}건`, go: 'entry/ledger' });
+  /* 3) 지난달 월말 결산(스냅샷)을 아직 안 적었다 — 매달 1~10일 사이에만 알린다 */
+  const pm = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const pNum = pm.getFullYear() * 100 + pm.getMonth() + 1;
+  const hasPrev = (data.assetRows || []).some(r => assetMonthKey(String(r.date || '')) === pNum);
+  if (now.getDate() <= 10 && !hasPrev) out.push({ text: `${pm.getMonth() + 1}월 결산 안 함`, go: 'entry/snapshot' });
+  /* 4) 토스 수집이 하루 넘게 멈췄다 */
+  const s = data.toss && data.toss.summary;
+  if (s) {
+    const f = tossFreshness(s.asOf);
+    if (f.mins != null && f.mins > 24 * 60) out.push({ text: `토스 수집 멈춤 (${f.text})`, go: 'invest/book' });
+  }
+  return out;
 }

@@ -52,6 +52,9 @@ const GOAL_METRIC_DEFS = [
   /* --- 자산 (스톡) --- */
   { key: 'emergency', name: '비상금', cat: /자산|저축/, item: /비상금/, unit: 'won', dir: 'up', type: 'accumulation',
     current: (d) => d.emergencyFund },
+  /* 가용자산 = 총자산 − 연금 자산 (연금은 은퇴 전에는 꺼내 쓸 수 없는 돈이라 뺀다) */
+  { key: 'availAssets', name: '가용자산', cat: /자산/, item: /가용/, unit: 'won', dir: 'up', type: 'accumulation',
+    current: (d) => (d.totalAssets || 0) - ((d.allocation || {})['연금 자산'] || 0) },
   { key: 'totalAssets', name: '총자산', cat: /자산/, item: /총\s*자산|전체\s*자산/, unit: 'won', dir: 'up', type: 'accumulation',
     current: (d) => d.totalAssets },
   { key: 'netWorth', name: '순자산', cat: /자산/, item: /순\s*자산/, unit: 'won', dir: 'up', type: 'accumulation',
@@ -69,6 +72,10 @@ const GOAL_METRIC_DEFS = [
   { key: 'cashPct', name: '현금 비율', cat: null, item: /현금\s*비[중율]/, unit: 'pct', dir: 'up', type: 'ratio',
     current: (d) => d.totalAssets ? (d.emergencyFund / d.totalAssets) * 100 : 0 },
 
+  /* 토스 보유 종목 중 가장 큰 한 종목의 비중 — 낮을수록 좋다 */
+  { key: 'maxPosition', name: '단일종목 최대 비중', cat: /투자|자산/, item: /최대\s*비중|단일\s*종목/, unit: 'pct', dir: 'down', type: 'cap',
+    current: (d, e) => e.maxPositionPct },
+
   /* --- 지출 (플로우) --- */
   { key: 'fixed', name: '고정비', cat: /지출/, item: /고정비/, unit: 'won', dir: 'down', type: 'cap',
     current: (d, e, f) => f === '연' ? e.sumFixed12 : e.avgFixed12 },
@@ -80,6 +87,9 @@ const GOAL_METRIC_DEFS = [
   /* --- 수입 (플로우) --- */
   { key: 'invIncome', name: '투자 수익', cat: /수입/, item: /투자\s*수익/, unit: 'won', dir: 'up', type: 'accumulation',
     current: (d, e, f) => f === '월' ? e.avgInvIncome12 : e.sumInvIncome12 },
+  /* 금융소득 = 투자 수익(판매수익·배당·계좌 이자) + 저축 수익(예적금 이자) */
+  { key: 'finIncome', name: '금융소득', cat: /수입/, item: /금융\s*소득/, unit: 'won', dir: 'up', type: 'accumulation',
+    current: (d, e, f) => f === '월' ? e.avgFinIncome12 : e.sumFinIncome12 },
   { key: 'laborIncome', name: '근로소득', cat: /수입/, item: /근로|급여|월급/, unit: 'won', dir: 'up', type: 'accumulation',
     current: (d, e, f) => f === '연' ? e.sumLabor12 : e.avgLabor12 },
   { key: 'income', name: '총수입', cat: /수입/, item: /수입/, unit: 'won', dir: 'up', type: 'accumulation',
@@ -94,6 +104,12 @@ const GOAL_METRIC_DEFS = [
     current: (d, e) => e.passivePct12 }
 ];
 
+/* goals.metric_source → 위 지표 key. 'asset_class' 처럼 항목에 따라 달라지는 것은 이름으로 짐작한다 */
+const GOAL_SOURCE_KEY = {
+  total_asset: 'totalAssets', available_asset: 'availAssets', net_worth: 'netWorth',
+  invest_income: 'invIncome', financial_income: 'finIncome', position_max_ratio: 'maxPosition',
+  fixed_cost: 'fixed', monthly_expense: 'expense', savings_rate: 'savingsRate'
+};
 function findGoalMetric(category, item) {
   const c = String(category || ''), t = String(item || '');
   if (!t) return null;
@@ -122,6 +138,11 @@ function goalMetricExtra(data, d) {
   const tail = (arr) => (arr || []).slice(Math.max(0, i - 11), i + 1).map(v => v || 0);
   const invInc12 = tail(data.incomeCategories && data.incomeCategories['투자 수익']);
   const labor12 = tail(data.incomeCategories && data.incomeCategories['근로소득']);
+  const savInc12 = tail(data.incomeCategories && data.incomeCategories['저축 수익']);
+  const fin12 = invInc12.map((v, k) => v + (savInc12[k] || 0));
+  const hold = (data.toss && data.toss.holdings) || [];
+  const holdTotal = hold.reduce((a, h) => a + (h.value || 0), 0);
+  const maxPositionPct = holdTotal > 0 ? Math.max(...hold.map(h => h.value || 0)) / holdTotal * 100 : 0;
 
   /* 후회 소비 월별 */
   const rgByMonth = {};
@@ -142,6 +163,8 @@ function goalMetricExtra(data, d) {
     avgIncome12: avg(inc12), sumIncome12: sumInc,
     avgLabor12: avg(labor12), sumLabor12: sumLabor,
     avgInvIncome12: avg(invInc12), sumInvIncome12: sum(invInc12),
+    avgFinIncome12: avg(fin12), sumFinIncome12: sum(fin12),
+    maxPositionPct,
     avgRegret12: avg(rg12), sumRegret12: sum(rg12),
     avgNetSavings12: avg(net12), sumNetSavings12: sum(net12),
     savingsRate12: sumInc > 0 ? ((sumInc - sumExp) / sumInc) * 100 : 0,
@@ -177,9 +200,11 @@ function goalProgressOf(g, d, extra) {
   const forceKey = (state.goalMetric || {})[g.__row] || null;
   const manual = (state.goalTarget || {})[g.__row];
 
+  /* 1순위 수동 지정, 2순위 DB 에 적어 둔 계산 기준(goals.metric_source), 3순위 이름으로 짐작 */
+  const dbKey = GOAL_SOURCE_KEY[g.__metric];
   const metric = forceKey
     ? GOAL_METRIC_DEFS.find(m => m.key === forceKey)
-    : findGoalMetric(category, item);
+    : (dbKey ? GOAL_METRIC_DEFS.find(m => m.key === dbKey) : null) || findGoalMetric(category, item);
   if (!metric) return null;
 
   let target = parseGoalAmount(pickGoalField(g, 'amount'));

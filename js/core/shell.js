@@ -126,7 +126,7 @@ const NAV_ITEMS = [
 const SECTION_SUBS = {
   home:   [['main', '홈']],
   entry:  [['#', '입출금'], ['ledger', '입출금 내역'], ['calendar', '캘린더'],
-           ['#', '자산'], ['snapshot', '자산 스냅샷']],
+           ['#', '월말'], ['snapshot', '월말 결산']],
   invest: [['overview', '요약'], ['book', '종목'], ['rules', '매매원칙']],
   goals:  [['list', '목록']],
   report: [['monthly', '월간'], ['yearly', '연간'], ['networth', '순자산']],

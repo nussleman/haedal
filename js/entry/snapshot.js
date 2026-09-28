@@ -117,18 +117,34 @@ async function renderSnapshotPage(body) {
   const total = snapMonthTotal(mk), prevTotal = snapMonthTotal(prevKey);
   const diff = filled && prevTotal ? total - prevTotal : null;
 
+  /* 월말 결산: 그 달의 흐름(가계부)과 쌓인 결과(스냅샷)를 한 화면에서 본다 */
+  const mLedger = ((state.data && state.data.ledger) || []).filter(r => ledgerMonthKey(r.date) === mk);
+  const fIn = mLedger.filter(r => r.major.includes('수입')).reduce((a, r) => a + r.amount, 0);
+  const fOut = mLedger.filter(r => r.major.includes('지출')).reduce((a, r) => a + netExpenseOf(r), 0);
+  const fInv = mLedger.filter(r => r.major.includes('이체') && String(r.minor || '').includes('투자')).reduce((a, r) => a + r.amount, 0);
+  const fEmg = mLedger.filter(r => r.major.includes('이체') && String(r.minor || '').includes('비상금')).reduce((a, r) => a + r.amount, 0);
+  const fRate = fIn > 0 ? ((fIn - fOut) / fIn) * 100 : null;
+  const fBudget = budgetPaceMonthly(state.data || {});
+
   const byCls = {};
   accounts.forEach(a => { (byCls[a.cls] = byCls[a.cls] || []).push(a); });
   const clsOrder = [...CAT_ORDER.filter(c => byCls[c]), ...Object.keys(byCls).filter(c => !CAT_ORDER.includes(c))];
 
+  /* 증권 계좌(설정 › 계좌에서 고른 것)는 토스 수집 값으로 미리 채운다 — 그 달 마지막 수집 기준 */
+  const broker = (state.settings && state.settings.brokerAccount) || '';
+  const tossDaily = (state.data && state.data.toss && state.data.toss.daily) || [];
+  const tossAt = tossDaily.filter(x => x.date.slice(0, 7) === mk).pop() || null;
   const rowHtml = (a) => {
     const c = cur[a.account], p = prev[a.account];
+    const auto = !c && tossAt && sameAcct(a.account, broker);
     const dv = c && p ? c.amount - p.amount : null;
     return `<div class="sn-row">
       <span class="ac">${enEsc(a.account)}</span>
       <span class="pv">${p ? wonComma(p.amount) : '—'}</span>
       <input class="en-in sn-in" inputmode="numeric" data-acct="${enEsc(a.account)}" data-cls="${enEsc(a.cls)}"
-             value="${c ? wonComma(c.amount) : ''}" placeholder="미입력">
+             value="${c ? wonComma(c.amount) : auto ? wonComma(tossAt.total) : ''}" placeholder="미입력"
+             ${auto ? `title="토스 자동 (${tossAt.date.slice(5).replace('-', '/')} 기준) — 저장하면 기록돼요"` : ''}
+             ${auto ? 'data-auto="1"' : ''}>
       <span class="dl ${dv > 0 ? 'up' : dv < 0 ? 'down' : ''}">${dv === null ? '' : (dv > 0 ? '+' : '') + wonComma(dv)}</span>
       <button class="sn-x" data-acct="${enEsc(a.account)}" title="이 달 값 비우기">×</button>
     </div>`;
@@ -144,11 +160,20 @@ async function renderSnapshotPage(body) {
           </select>
           <button class="sn-nav" id="sn-next" aria-label="다음 달">›</button>
           <span class="sn-badge ${filled ? 'ok' : 'new'}">${filled ? `${filled}개 계좌 기록됨` : '미입력'}</span>
+          ${tossAt && broker && !cur[broker] ? `<span class="sn-auto">증권 계좌는 토스 값(${tossAt.date.slice(5).replace('-', '/')})으로 채워 뒀어요</span>` : ''}
         </div>
         <div class="sn-acts">
           <button class="lg-reset" id="sn-fill">전월 값 채우기</button>
           <button class="bk-add" id="sn-save">저장</button>
         </div>
+      </div>
+
+      <div class="sn-flow">
+        <div><span class="k">수입</span><b class="in">${formatKrw(fIn)}</b></div>
+        <div><span class="k">지출</span><b class="out">${formatKrw(fOut)}</b>${fBudget > 0 ? `<em class="${fOut > fBudget ? 'down' : 'up'}">예산 ${fOut > fBudget ? '초과' : '안'} (${formatKrw(fBudget)})</em>` : ''}</div>
+        <div><span class="k">저축률</span><b>${fRate === null ? '—' : fRate.toFixed(1) + '%'}</b></div>
+        <div><span class="k">투자 이체</span><b>${formatKrw(fInv)}</b></div>
+        <div><span class="k">비상금 이체</span><b>${formatKrw(fEmg)}</b></div>
       </div>
 
       <div class="sn-sum">

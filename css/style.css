@@ -3329,3 +3329,23 @@ body.qe-on #en-toast.on{transform:translate(-50%,0);}
 
 /* 홈 화면 앱(상태바 겹침)에서도 머리가 노치 아래로 들어가지 않게 */
 @media (max-width:640px){ .site-header{padding-top:calc(8px + env(safe-area-inset-top,0px));} }
+
+/* 스냅샷: 토스에서 자동으로 채운 칸 */
+.sn-in[data-auto]{border-color:var(--accent-text);color:var(--accent-text);}
+.sn-auto{font-size:var(--fs-xs);color:var(--accent-text);}
+.sn-flow{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin:12px 0 10px;}
+.sn-flow > div{background:var(--panel);border:1px solid var(--border);border-radius:var(--r-md);padding:10px 12px;
+  display:flex;flex-direction:column;gap:3px;min-width:0;}
+.sn-flow .k{font-size:var(--fs-xs);color:var(--text-faint);}
+.sn-flow b{font-family:var(--mono);font-size:var(--fs-md);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sn-flow b.in{color:var(--income-text);} .sn-flow b.out{color:var(--expense-text);}
+.sn-flow em{font-style:normal;font-size:var(--fs-tiny);color:var(--text-faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sn-flow em.down{color:var(--expense-text);}
+@media (max-width:640px){ .sn-flow{grid-template-columns:repeat(2,minmax(0,1fr));} }
+.hm-checks{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:var(--gap);
+  padding:10px 14px;border-radius:var(--r-lg);border:1px solid rgba(224,138,130,.35);background:var(--expense-bg);}
+.hm-checks b{font-size:var(--fs-sm);color:var(--expense-text);margin-right:4px;}
+.hm-chk{background:transparent;border:1px solid rgba(224,138,130,.4);border-radius:999px;padding:4px 11px;
+  color:var(--text);font-size:var(--fs-sm);font-family:var(--sans);cursor:pointer;white-space:nowrap;}
+.hm-chk:hover{border-color:var(--expense-text);}
+.hm-chkx{margin-left:auto;background:none;border:0;color:var(--text-faint);font-size:var(--fs-xs);font-family:var(--sans);cursor:pointer;padding:4px 6px;}
