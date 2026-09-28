@@ -1,14 +1,9 @@
 /* =========================================================
    MY 자산 통장 — 대시보드 로직
-   데이터 원본: Supabase (가계부·자산 스냅샷·종목). 목표·지수·토스는 아직 시트 → 옮기는 중
+   데이터 원본: Supabase 하나뿐 (가계부·자산 스냅샷·종목·목표·지수·토스·종목 팩트).
+   구글 시트는 2026-09-28 부로 읽지 않는다.
    ========================================================= */
 
-const SPREADSHEET_ID = '1tT7p4brwpOZyGojQfxyUb1WHNiDXn-6uH4I7B4oUMPA';
-
-/* 토스 탭은 수집기가 자동 생성하므로 gid를 미리 알 수 없다.
-   gviz는 sheet= 파라미터로 탭 이름 조회도 지원하니 그걸 쓴다. */
-const csvUrlForSheet = (name) => `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(name)}`;
-const TOSS_TABS = { summary: '토스_계좌요약', holdings: '토스_보유종목', daily: '토스_일별' };
 
 const CAT_COLORS = {
   '현금 자산': '#c9a227',

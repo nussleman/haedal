@@ -1,101 +1,40 @@
 /* ---------------- 토스증권 실시간 데이터 ---------------- */
-/* 맥북의 수집기가 15분마다 채워주는 토스_* 탭을 읽는다.
-   탭이 없거나 수집기가 안 돌고 있으면 조용히 null을 돌려주고,
-   대시보드의 나머지 기능은 그대로 동작해야 한다. */
+/* 맥북의 수집기(toss_collector.py)가 15분마다 Supabase 에 채운다.
+   toss_summary(요약 한 줄) · toss_holdings(보유 종목) · toss_daily(날짜별).
+   수집기가 안 돌고 있으면 조용히 null 을 돌려주고, 나머지 화면은 그대로 동작해야 한다.
+   손익률은 DB 에 소수(0.1678)로 있고, 화면은 퍼센트 숫자(16.78)로 쓴다 — 여기서 ×100. */
+const tossPct = (v) => (+v || 0) * 100;
 
-function tossRowsToObjects(rows) {
-  if (!rows || rows.length < 2) return [];
-  const header = (rows[0] || []).map(h => String(h || '').trim());
-  const out = [];
-  for (let r = 1; r < rows.length; r++) {
-    const row = rows[r] || [];
-    if (!row.some(c => String(c || '').trim())) continue;
-    const o = {};
-    header.forEach((h, i) => { if (h) o[h] = row[i]; });
-    out.push(o);
-  }
-  return out;
-}
-
-function tossNum(v) {
-  const n = parseWon(v);
-  return n === null ? 0 : n;
-}
-
-/* 손익률·비중은 소수(0.0895)나 퍼센트 문자열('8.95%') 둘 다 올 수 있다.
-   parseWon은 소수점을 살리지만 %는 못 읽으므로 따로 처리한다. */
-function tossRate(v) {
-  const s = String(v === null || v === undefined ? '' : v).trim();
-  if (!s) return 0;
-  const pct = s.includes('%');
-  const n = parseFloat(s.replace(/[^\d.-]/g, ''));
-  if (isNaN(n)) return 0;
-  return pct ? n / 100 : n;
-}
-
-function parseTossSummary(rows) {
-  const o = tossRowsToObjects(rows)[0];
-  if (!o || !o['기준시각']) return null;
-  return {
-    asOf: String(o['기준시각']).trim(),
-    value: tossNum(o['주식평가액']),
-    cost: tossNum(o['주식매입액']),
-    pl: tossNum(o['평가손익']),
-    plRate: tossRate(o['손익률']),
-    cash: tossNum(o['예수금']),
-    total: tossNum(o['계좌총액']),
-    fx: tossRate(o['환율']),
-    count: tossNum(o['종목수']),
-    daily: tossNum(o['당일손익'])
-  };
-}
-
-function parseTossHoldings(rows) {
-  return tossRowsToObjects(rows).map(o => ({
-    name: String(o['종목명'] || '').trim(),
-    symbol: String(o['티커'] || '').trim(),
-    country: String(o['국가'] || '').trim(),
-    currency: String(o['통화'] || '').trim(),
-    qty: tossRate(o['수량']),
-    avg: tossRate(o['평단가']),
-    last: tossRate(o['현재가']),
-    value: tossNum(o['평가액원화']),
-    cost: tossNum(o['매입액원화']),
-    pl: tossNum(o['평가손익원화']),
-    plRate: tossRate(o['손익률'])
-  })).filter(h => h.name && h.value > 0);
-}
-
-function parseTossDaily(rows) {
-  return tossRowsToObjects(rows).map(o => ({
-    date: String(o['날짜'] || '').trim().slice(0, 10),
-    total: tossNum(o['계좌총액']),
-    value: tossNum(o['주식평가액']),
-    cost: tossNum(o['주식매입액']),
-    pl: tossNum(o['평가손익']),
-    plRate: tossRate(o['손익률'])
-  })).filter(d => /^\d{4}-\d{2}-\d{2}$/.test(d.date))
-    .sort((a, b) => a.date.localeCompare(b.date));
+/* timestamptz → '2026-09-28 21:44' (한국 시각) — tossFreshness 가 읽는 모양 */
+function tossStamp(ts) {
+  const t = new Date(ts);
+  if (isNaN(t)) return '';
+  const k = new Date(t.getTime() + 9 * 3600e3).toISOString();
+  return k.slice(0, 10) + ' ' + k.slice(11, 16);
 }
 
 async function fetchTossData() {
-  const names = [TOSS_TABS.summary, TOSS_TABS.holdings, TOSS_TABS.daily];
-  const res = await Promise.allSettled(names.map(async (n) => {
-    const r = await fetch(csvUrlForSheet(n), { cache: 'no-store' });
-    if (!r.ok) throw new Error(`HTTP ${r.status}`);
-    let text = await r.text();
-    if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
-    if (text.trim().startsWith('<')) throw new Error('탭 접근 불가');
-    return Papa.parse(text, { skipEmptyLines: false }).data
-      .map(row => row.map(c => (c === null || c === undefined) ? '' : String(c)));
+  const sb = await haedalSupabase();
+  const [s, h, d] = await Promise.all([
+    sb.from('toss_summary').select('*').maybeSingle(),
+    sb.from('toss_holdings').select('*'),
+    sb.from('toss_daily').select('date,total,value,cost,pl,pl_rate').order('date')
+  ]);
+  const summary = s.data ? {
+    asOf: tossStamp(s.data.as_of),
+    value: +s.data.value || 0, cost: +s.data.cost || 0, pl: +s.data.pl || 0, plRate: tossPct(s.data.pl_rate),
+    cash: +s.data.cash || 0, total: +s.data.total || 0, fx: +s.data.fx || 0,
+    count: +s.data.count || 0, daily: +s.data.daily || 0
+  } : null;
+  const holdings = (h.data || []).map(o => ({
+    name: o.name, symbol: o.symbol || '', country: o.country || '', currency: o.currency || '',
+    qty: +o.qty || 0, avg: +o.avg || 0, last: +o.last || 0,
+    value: +o.value_krw || 0, cost: +o.cost_krw || 0, pl: +o.pl_krw || 0, plRate: tossPct(o.pl_rate)
+  })).filter(x => x.name && x.value > 0);
+  const daily = (d.data || []).map(o => ({
+    date: String(o.date).slice(0, 10), total: +o.total || 0, value: +o.value || 0,
+    cost: +o.cost || 0, pl: +o.pl || 0, plRate: tossPct(o.pl_rate)
   }));
-
-  const get = (i) => res[i].status === 'fulfilled' ? res[i].value : null;
-  let summary = null, holdings = [], daily = [];
-  try { if (get(0)) summary = parseTossSummary(get(0)); } catch (e) {}
-  try { if (get(1)) holdings = parseTossHoldings(get(1)); } catch (e) {}
-  try { if (get(2)) daily = parseTossDaily(get(2)); } catch (e) {}
-
   if (!summary && !holdings.length) return null;
   return { summary, holdings, daily };
 }

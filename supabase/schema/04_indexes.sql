@@ -58,3 +58,8 @@ CREATE INDEX trade_log_owner_date_idx ON public.trade_log USING btree (owner_id,
 CREATE INDEX tx_category_idx ON public.transactions USING btree (category_id);
 CREATE INDEX tx_merchant_idx ON public.transactions USING btree (owner_id, merchant);
 CREATE INDEX tx_owner_date_idx ON public.transactions USING btree (owner_id, date DESC);
+
+-- 코알라 앱 변경 반영 (2026-09-28)
+CREATE INDEX drawing_eras_owner_idx ON public.drawing_eras USING btree (owner_id);
+CREATE INDEX drawings_owner_idx ON public.drawings USING btree (owner_id);
+CREATE INDEX routine_logs_media_idx ON public.routine_logs USING btree (media_id) WHERE (media_id IS NOT NULL);

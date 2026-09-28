@@ -47,3 +47,11 @@ alter table public.tags enable row level security;
 alter table public.themes enable row level security;
 alter table public.trade_log enable row level security;
 alter table public.transactions enable row level security;
+
+
+-- 2026-09-28 토스·종목 팩트 (migrations/20260928000006)
+alter table public.toss_summary enable row level security;
+alter table public.toss_holdings enable row level security;
+alter table public.toss_daily enable row level security;
+alter table public.stock_facts enable row level security;
+alter table public.drawing_eras enable row level security;

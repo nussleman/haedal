@@ -183,3 +183,17 @@ create policy "own rows" on public.trade_log as permissive for all to public
 create policy "own rows" on public.transactions as permissive for all to authenticated
   using ((( SELECT auth.uid() AS uid) = owner_id))
   with check ((( SELECT auth.uid() AS uid) = owner_id));
+
+
+-- 2026-09-28 토스·종목 팩트 (migrations/20260928000006)
+create policy "own rows" on public.toss_summary as permissive for all to public
+  using ((( SELECT auth.uid() AS uid) = owner_id)) with check ((( SELECT auth.uid() AS uid) = owner_id));
+create policy "own rows" on public.toss_holdings as permissive for all to public
+  using ((( SELECT auth.uid() AS uid) = owner_id)) with check ((( SELECT auth.uid() AS uid) = owner_id));
+create policy "own rows" on public.toss_daily as permissive for all to public
+  using ((( SELECT auth.uid() AS uid) = owner_id)) with check ((( SELECT auth.uid() AS uid) = owner_id));
+create policy "own rows" on public.stock_facts as permissive for all to public
+  using ((( SELECT auth.uid() AS uid) = owner_id)) with check ((( SELECT auth.uid() AS uid) = owner_id));
+create policy "own rows" on public.drawing_eras as permissive for all to public
+  using ((( SELECT auth.uid() AS uid) = owner_id))
+  with check ((( SELECT auth.uid() AS uid) = owner_id));

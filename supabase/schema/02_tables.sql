@@ -168,6 +168,17 @@ create table public.date_tx (
   depositor text
 );
 
+create table public.drawing_eras (
+  id bigint generated always as identity not null,
+  owner_id uuid default auth.uid() not null,
+  name text not null,
+  started_on date not null,
+  ended_on date,
+  color text,
+  note text,
+  created_at timestamp with time zone default now() not null
+);
+
 create table public.drawings (
   id uuid default gen_random_uuid() not null,
   owner_id uuid default auth.uid() not null,
@@ -183,7 +194,10 @@ create table public.drawings (
   width integer,
   height integer,
   byte_size bigint,
-  created_at timestamp with time zone default now() not null
+  created_at timestamp with time zone default now() not null,
+  tags text[] default '{}'::text[] not null,
+  medium text,
+  date_prec text default 'day'::text not null
 );
 
 create table public.goal_files (
@@ -447,7 +461,8 @@ create table public.routine_logs (
   count integer default 1 not null,
   amount numeric,
   note text,
-  created_at timestamp with time zone default now() not null
+  created_at timestamp with time zone default now() not null,
+  media_id uuid
 );
 
 create table public.routine_spans (
@@ -478,7 +493,8 @@ create table public.routines (
   note text,
   "position" numeric default 0 not null,
   created_at timestamp with time zone default now() not null,
-  time_slot text
+  time_slot text,
+  media_kinds text[] default '{}'::text[] not null
 );
 
 create table public.stocks (
@@ -588,4 +604,55 @@ create table public.transactions (
   is_fixed boolean default false not null,
   created_at timestamp with time zone default now() not null,
   updated_at timestamp with time zone default now() not null
+);
+
+
+-- 2026-09-28 토스·종목 팩트 (migrations/20260928000006)
+create table public.toss_summary (
+  owner_id uuid default auth.uid() not null,
+  as_of timestamptz not null,
+  value bigint, cost bigint, pl bigint, pl_rate double precision,
+  cash bigint, total bigint, fx double precision, count integer, daily bigint,
+  updated_at timestamptz default now() not null
+);
+
+create table public.toss_holdings (
+  owner_id uuid default auth.uid() not null,
+  symbol text not null,
+  name text not null,
+  country text, currency text,
+  qty double precision, avg double precision, last double precision,
+  value_krw bigint, cost_krw bigint, pl_krw bigint, pl_rate double precision,
+  as_of timestamptz not null
+);
+
+create table public.toss_daily (
+  owner_id uuid default auth.uid() not null,
+  date date not null,
+  total bigint, value bigint, cost bigint, pl bigint, pl_rate double precision,
+  cash bigint, count integer,
+  last_at timestamptz
+);
+
+create table public.stock_facts (
+  id bigint generated always as identity not null,
+  owner_id uuid default auth.uid() not null,
+  name text not null,
+  ticker text,
+  type_ko text,
+  price text,
+  checks jsonb default '{}'::jsonb not null,
+  nums jsonb default '{}'::jsonb not null,
+  stop_rule text, take_rule text, target_weight text, memo text,
+  updated_at timestamptz default now() not null
+);
+
+-- 수집기 비밀값(해시) — API 로 노출되지 않는 private 스키마
+create schema if not exists private;
+revoke all on schema private from public, anon, authenticated;
+create table private.ingest_keys (
+  key_hash text primary key,
+  owner_id uuid not null,
+  label text,
+  created_at timestamptz default now() not null
 );

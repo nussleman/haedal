@@ -25,10 +25,8 @@ async function shoot(browser, dir, tag) {
       return fs.existsSync(f) ? r.fulfill({ path: f }) : r.fulfill({ status: 404, body: '' });
     }
     if (u.includes('chart.umd')) return r.fulfill({ path: nm('chart.js/dist/chart.umd.min.js'), contentType: 'application/javascript' });
-    if (u.includes('papaparse')) return r.fulfill({ path: nm('papaparse/papaparse.min.js'), contentType: 'application/javascript' });
     /* 예전 코드가 esm.sh 에서 직접 받던 supabase-js 도 가짜로 돌려준다 (기준 커밋 비교용) */
     if (u.includes('esm.sh/@supabase/supabase-js')) return r.fulfill({ contentType: 'application/javascript', body: 'export const createClient = (...a) => window.__SB_MOD.createClient(...a);' });
-    if (u.includes('docs.google.com')) return r.fulfill({ status: 403, body: '<html>' });
     return r.abort();
   });
   const page = await ctx.newPage(); const errs = [];

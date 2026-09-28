@@ -19,12 +19,10 @@ async function route(ctx) {
       return fs.existsSync(f) ? r.fulfill({ path: f }) : r.fulfill({ status: 404, body: '' });
     }
     if (u.includes('chart.umd')) return r.fulfill({ path: nm('chart.js/dist/chart.umd.min.js'), contentType: 'application/javascript' });
-    if (u.includes('papaparse')) return r.fulfill({ path: nm('papaparse/papaparse.min.js'), contentType: 'application/javascript' });
     if (u.includes('supabase-js')) {
       if (u.includes('esm.sh')) return r.fulfill({ contentType: 'application/javascript', body: 'export const createClient=(...a)=>window.__SB_MOD.createClient(...a);' });
       return r.fulfill({ contentType: 'application/javascript', body: 'window.supabase={createClient:(...a)=>window.__SB_MOD.createClient(...a)};' });
     }
-    if (u.includes('docs.google.com')) return r.fulfill({ status: 403, body: '<html>' });
     return r.abort();
   });
 }

@@ -1,8 +1,7 @@
-/* ---------------- 종목_팩트 시트 → 스터디 카드 자동 생성 ----------------
-   시트가 단일 진실 공급원. 내가 배치로 채워두면 대시보드가 읽어서
+/* ---------------- 종목_팩트 (DB stock_facts) → 스터디 카드 자동 생성 ----------------
+   예전 시트 '종목_팩트' 탭을 옮긴 표. 배치로 채워두면 대시보드가 읽어서
    유형·5단계·적정가를 자동 계산한다. 로컬 카드가 있으면 그쪽이 우선(수동 오버라이드). */
 
-const FACTS_TAB = '종목_팩트';
 const FACT_TYPE_KO = {
   '성장형': 'growth', '안정형': 'stable', '사이클형': 'cyclical',
   '턴어라운드형': 'turnaround', '옵션형': 'option', '자산형': 'asset'
@@ -19,42 +18,36 @@ const FACT_STAGE_KO = {
 const FACT_NUM_KEYS = ['eps', 'g', 'per', 'dy', 'bps', 'pbrLow', 'pbrAvg', 'pbrHigh', 'neps', 'prob', 'nav', 'disc', 'mcap', 'revT', 'psr', 'years'];
 
 async function fetchStockFacts() {
-  const r = await fetch(csvUrlForSheet(FACTS_TAB), { cache: 'no-store' });
-  if (!r.ok) throw new Error(`HTTP ${r.status}`);
-  let text = await r.text();
-  if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
-  if (text.trim().startsWith('<')) throw new Error('탭 접근 불가');
-  const rows = Papa.parse(text, { skipEmptyLines: true }).data
-    .map(row => row.map(c => (c === null || c === undefined) ? '' : String(c).trim()));
-  return parseStockFacts(rows);
+  const sb = await haedalSupabase();
+  const { data, error } = await sb.from('stock_facts').select('*');
+  if (error) throw error;
+  return parseStockFacts(data || []);
 }
 
+/* stock_facts 한 줄 → 화면이 쓰는 팩트 모양 (시트 시절과 같은 모양) */
 function parseStockFacts(rows) {
-  if (!rows || !rows.length) return {};
-  /* 헤더 이름 기반 조회 — 컬럼이 밀려도 안 깨진다 */
-  const hdr = rows[0].map(h => h.replace(/\s/g, ''));
-  const at = (r, name) => { const i = hdr.indexOf(name); return i === -1 ? '' : (r[i] || ''); };
   const out = {};
-  rows.slice(1).forEach(r => {
-    const name = at(r, '종목명');
+  (rows || []).forEach(r => {
+    const name = String(r.name || '').trim();
     if (!name) return;
-    const tyKo = at(r, '유형');
+    const tyKo = r.type_ko || '';
     const type = FACT_TYPE_KO[tyKo] || null;
     const nonEquity = FACT_NONEQUITY[tyKo] || null;
+    const ck = r.checks || {};
     const chk = {};
     [['1출처', 'src'], ['2질', 'quality'], ['3생존', 'survive'], ['4해자', 'moat'], ['5가격', 'price']]
       .forEach(([col, id]) => {
-        const v = at(r, col);
-        const mapped = (FACT_STAGE_KO[id] || {})[v];
+        const mapped = (FACT_STAGE_KO[id] || {})[ck[col]];
         if (mapped) chk[id] = mapped;
       });
+    const nums = r.nums || {};
     const val = {};
-    FACT_NUM_KEYS.forEach(k => { const v = at(r, k); if (v) val[k] = v; });
+    FACT_NUM_KEYS.forEach(k => { if (nums[k] !== undefined && nums[k] !== '') val[k] = String(nums[k]); });
     out[name] = {
-      id: 'sheet:' + name, name, type, nonEquity, tyKo, chk, val,
-      price: at(r, '현재가'), stop: at(r, '손절조건'), take: at(r, '익절조건'),
-      weight: at(r, '목표비중'), memo: at(r, '메모') ? { sheet: at(r, '메모') } : {},
-      crit: [], source: 'sheet'
+      id: 'fact:' + name, name, type, nonEquity, tyKo, chk, val,
+      price: r.price || '', stop: r.stop_rule || '', take: r.take_rule || '',
+      weight: r.target_weight || '', memo: r.memo ? { sheet: r.memo } : {},
+      crit: [], source: 'db'
     };
   });
   return out;

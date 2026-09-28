@@ -214,11 +214,8 @@ function goalSanityFlag(p) {
 
 
 
-/* 가계부(M) 피벗 탭은 Google Sheets 병합 셀이 gviz CSV export에서
-   깨져 나오는 문제가 있어(월 헤더 행이 빈 문자열로 export됨),
-   parsePivotFromRows가 못 찾을 때가 있다. 이미 정상 파싱되는
-   가계부(D) 일별 원장(ledger)에서 동일한 모양의 요약을 직접
-   집계해서 그 자리를 대체한다. */
+/* 가계부 원장(ledger)에서 월별 카테고리 요약(피벗)을 직접 집계한다.
+   (예전엔 시트의 피벗 탭을 읽었지만 지금은 원장 하나에서 모두 계산) */
 function buildPivotFromLedger(ledger) {
   if (!ledger || !ledger.length) return null;
 

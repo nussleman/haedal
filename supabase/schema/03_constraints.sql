@@ -139,3 +139,17 @@ alter table public.routine_spans add constraint routine_spans_routine_id_fkey FO
 alter table public.routines add constraint routines_goal_id_fkey FOREIGN KEY (goal_id) REFERENCES goals(id) ON DELETE SET NULL;
 alter table public.tags add constraint tags_owner_id_fkey FOREIGN KEY (owner_id) REFERENCES auth.users(id) ON DELETE CASCADE;
 alter table public.transactions add constraint transactions_category_id_fkey FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE RESTRICT;
+
+
+-- 2026-09-28 토스·종목 팩트 (migrations/20260928000006)
+alter table public.toss_summary add constraint toss_summary_pkey PRIMARY KEY (owner_id);
+alter table public.toss_holdings add constraint toss_holdings_pkey PRIMARY KEY (owner_id, symbol);
+alter table public.toss_daily add constraint toss_daily_pkey PRIMARY KEY (owner_id, date);
+alter table public.stock_facts add constraint stock_facts_pkey PRIMARY KEY (id);
+alter table public.stock_facts add constraint stock_facts_owner_id_name_key UNIQUE (owner_id, name);
+
+-- 코알라 앱 변경 반영 (2026-09-28)
+alter table public.drawing_eras add constraint drawing_eras_pkey PRIMARY KEY (id);
+alter table public.drawings add constraint drawings_date_prec_check CHECK ((date_prec = ANY (ARRAY['day'::text, 'month'::text, 'season'::text, 'year'::text])));
+alter table public.drawing_eras add constraint drawing_eras_owner_id_fkey FOREIGN KEY (owner_id) REFERENCES auth.users(id) ON DELETE CASCADE;
+alter table public.routine_logs add constraint routine_logs_media_id_fkey FOREIGN KEY (media_id) REFERENCES media_items(id) ON DELETE CASCADE;
