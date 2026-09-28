@@ -193,8 +193,6 @@ function renderPage() {
   } else if (section === 'report') {
     if (SUB === 'yearly') renderYearPage(body, data, d);
     else if (SUB === 'networth') renderAssetsPage(body, data, d);
-    else if (SUB === 'pension') renderSavingsPage(body, data, d, 'pension');
-    else if (SUB === 'savings') renderSavingsPage(body, data, d, 'saving');
     else renderNowPage(body, data, d);
 
   } else {

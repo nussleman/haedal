@@ -367,6 +367,13 @@ function renderYearPage(container, data, d) {
     state.yearMode = b.dataset.m;
     renderPage();
   });
+  /* 해외주식 양도소득세 — 예전 '투자 › 세금' 화면. 연간 결산에 같이 본다 */
+  const cgt = document.createElement('div');
+  cgt.className = 'g';
+  cgt.innerHTML = '<div class="panel s12" id="panel-cgt"></div>';
+  container.appendChild(cgt);
+  renderCapitalGainsPanel('panel-cgt', data.ledger);
+  if (!document.getElementById('panel-cgt').innerHTML.trim()) cgt.remove();
   const setYear = (y) => { state.yearKey = y; renderPage(); };
   document.getElementById('yr-select').addEventListener('change', (e) => setYear(e.target.value));
   document.getElementById('yr-prev').addEventListener('click', () => { const i = years.indexOf(Y); if (i > 0) setYear(years[i - 1]); });

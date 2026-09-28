@@ -3266,3 +3266,7 @@ body{padding-left:0;padding-right:0;}
   .lg-tg::after,.lg-dayadd::after,.dbm-x::after,.sn-x::after,.gb-rec-x::after,.hm-lnk::after{
     content:'';position:absolute;inset:-8px -4px;}
 }
+
+/* 순자산 › 계좌별 상세 (연금·저축) */
+.nw-detail-hd{display:flex;align-items:center;gap:12px;margin:28px 0 12px;}
+.nw-detail-hd b{font-size:var(--fs-md);font-weight:700;}

@@ -129,8 +129,7 @@ const SECTION_SUBS = {
            ['#', '자산'], ['snapshot', '자산 스냅샷']],
   invest: [['overview', '요약'], ['book', '종목'], ['rules', '매매원칙']],
   goals:  [['list', '목록']],
-  report: [['#', '기간별'], ['monthly', '월간'], ['yearly', '연간'],
-           ['#', '자산별'], ['networth', '순자산'], ['pension', '연금'], ['savings', '저축']],
+  report: [['monthly', '월간'], ['yearly', '연간'], ['networth', '순자산']],
   set:    [['#', '가계부'], ['cat', '분류'], ['merch', '사용처'], ['fixedm', '고정비'],
            ['#', '계획'], ['budget', '예산'], ['saving', '적립'],
            ['#', '자산·투자'], ['acct', '계좌'], ['stock', '종목']]
@@ -177,8 +176,8 @@ const LEGACY_ROUTE = {
   'assets/investment': 'invest/overview', 'invest/main': 'invest/overview',
   'invest/perf': 'invest/overview',
   /* 2026-09-28 벤치마크·매매일지 폐지, 세금은 연간 리포트로 */
-  'invest/bench': 'invest/overview', 'invest/journal': 'invest/rules', 'invest/tax': 'report/yearly', 'assets/pension': 'report/pension',
-  'assets/savings': 'report/savings',
+  'invest/bench': 'invest/overview', 'invest/journal': 'invest/rules', 'invest/tax': 'report/yearly', 'assets/pension': 'report/networth',
+  'assets/savings': 'report/networth',
   'todo': 'goals/list', 'todo/goals': 'goals/list',
   'todo/fixed': 'set/fixedm', 'todo/structure': 'home/main',
   /* 2026-09-28 실험실 폐지 */
@@ -199,6 +198,8 @@ const LEGACY_SUB = {
   'goals/all': ['goals/list', { goalFilter: 'all', goalDisplay: 'table' }],
   'goals/main': ['goals/list', {}],
   'goals/board': ['goals/list', {}],
+  'report/pension': ['report/networth', { nwDetail: 'pension' }],
+  'report/savings': ['report/networth', { nwDetail: 'saving' }],
   'goals/category': ['goals/list', {}]
 };
 

@@ -137,11 +137,27 @@ function renderAssetsPage(container, data, d) {
       <div class="panel s5" id="panel-allocation"></div>
       <div class="panel s7" id="panel-accounts"></div>
     </div>
+    <div class="nw-detail-hd">
+      <b>계좌별 상세</b>
+      <div class="range-toggle" id="nw-detail-toggle">
+        <button data-sc="pension" class="${state.nwDetail !== 'saving' ? 'active' : ''}">연금</button>
+        <button data-sc="saving" class="${state.nwDetail === 'saving' ? 'active' : ''}">저축</button>
+      </div>
+    </div>
+    <div id="nw-detail"></div>
   `;
   renderAssetStats(data, d);
   renderAccountsPanel(data, d);
   renderTrend(data, d);
   renderAllocation(d);
+  /* 예전 '리포트 › 연금 / 저축' 화면을 순자산 아래로 합쳤다 */
+  renderSavingsPage(document.getElementById('nw-detail'), data, d, state.nwDetail === 'saving' ? 'saving' : 'pension');
+  document.getElementById('nw-detail-toggle').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-sc]');
+    if (!b) return;
+    state.nwDetail = b.dataset.sc;
+    renderPage();
+  });
 }
 
 function renderAssetStats(data, d) {
