@@ -97,6 +97,7 @@ function enShowLock(msg) {
   enQS('#lk-em').focus();
 }
 async function enSignOut() {
+  cacheClear();
   await (await enClient()).auth.signOut();
   location.reload();
 }

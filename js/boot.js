@@ -9,8 +9,8 @@
   }
   try {
     const { data } = await sb.auth.getSession();
-    if (data.session) init(); else enShowLock();
-    sb.auth.onAuthStateChange((evt) => { if (evt === 'SIGNED_OUT') location.reload(); });
+    if (data.session) init(data.session.user && data.session.user.id); else { cacheClear(); enShowLock(); }
+    sb.auth.onAuthStateChange((evt) => { if (evt === 'SIGNED_OUT') { cacheClear(); location.reload(); } });
   } catch (e) {
     enShowLock('로그인 상태를 확인하지 못했습니다. 다시 로그인하세요.');
   }

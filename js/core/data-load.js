@@ -47,18 +47,32 @@ function maybeRefreshIndex(prices) {
 /* 가계부 원장은 Supabase 가 유일한 원본이다.
    전체 내역에서 고치거나 새로 넣은 것이 흐름·현황·목표까지 그대로 흘러가야 하므로,
    시트의 가계부(D) 탭은 더 이상 읽지 않는다. (자산·목표·지수는 아직 시트) */
-async function fetchLedgerFromDB() {
+/* 1000행씩 끊어 주는 PostgREST 를 전부 읽는다.
+   첫 쪽을 받으면서 전체 개수를 알아내고, 나머지 쪽은 한꺼번에(병렬로) 요청한다. */
+async function sbFetchAll(table, columns, orderCol, label) {
   const sb = await enClient();
-  const raw = [];
-  for (let from = 0; from < 60000; from += 1000) {
-    const { data, error } = await sb.from('v_transactions')
-      .select('id,category_id,date,kind,category,subcategory,emoji_category,amount,merchant_group,merchant,note,good_bad,company_paid,is_fixed')
-      .order('date', { ascending: true }).range(from, from + 999);
-    if (error) throw new Error('가계부를 불러오지 못했습니다: ' + error.message);
-    if (!data || !data.length) break;
-    raw.push(...data);
-    if (data.length < 1000) break;
+  const PAGE = 1000;
+  const q = (from) => sb.from(table).select(columns, from === 0 ? { count: 'exact' } : undefined)
+    .order(orderCol, { ascending: true }).order('id', { ascending: true }).range(from, from + PAGE - 1);
+  const first = await q(0);
+  if (first.error) throw new Error(label + '를 불러오지 못했습니다: ' + first.error.message);
+  const rows = [...(first.data || [])];
+  const total = typeof first.count === 'number' ? first.count : rows.length;
+  if (rows.length >= PAGE && total > PAGE) {
+    const rest = [];
+    for (let from = PAGE; from < total; from += PAGE) rest.push(q(from));
+    for (const r of await Promise.all(rest)) {
+      if (r.error) throw new Error(label + '를 불러오지 못했습니다: ' + r.error.message);
+      rows.push(...(r.data || []));
+    }
   }
+  return rows;
+}
+
+async function fetchLedgerFromDB() {
+  const raw = await sbFetchAll('v_transactions',
+    'id,category_id,date,kind,category,subcategory,emoji_category,amount,merchant_group,merchant,note,good_bad,company_paid,is_fixed',
+    'date', '가계부');
   /* 시트 파서가 내주던 모양 그대로 맞춘다 — 아래 집계 코드를 건드리지 않기 위해서 */
   return raw.map(r => {
     const d = String(r.date).split('-');
@@ -87,26 +101,15 @@ async function fetchLedgerFromDB() {
    현황 › 자산 스냅샷에서 넣은 값이 자산·흐름·목표 화면까지 그대로 흘러가야 하므로,
    시트의 '자산 스냅샷' 탭은 DB를 못 읽었을 때의 예비로만 남긴다. */
 async function fetchAssetsFromDB() {
-  const sb = await enClient();
-  const raw = [];
-  for (let from = 0; from < 20000; from += 1000) {
-    const { data, error } = await sb.from('asset_snapshots')
-      .select('id,month,asset_class,account,amount')
-      .order('month', { ascending: true }).range(from, from + 999);
-    if (error) throw new Error('자산 스냅샷을 불러오지 못했습니다: ' + error.message);
-    if (!data || !data.length) break;
-    raw.push(...data);
-    if (data.length < 1000) break;
-  }
+  const raw = await sbFetchAll('asset_snapshots', 'id,month,asset_class,account,amount', 'month', '자산 스냅샷');
   /* 시트 파서가 내주던 모양 그대로 맞춘다 — 아래 집계 코드를 건드리지 않기 위해서 */
   return raw.map(snapRowToAssetRow);
 }
 
 async function fetchAllTabsAndMerge() {
   /* 토스 탭 조회는 실패해도 대시보드 전체를 막지 않도록 병렬로 따로 돌린다. */
-  const [tossResult, factsResult, dbLedger, dbAssets, dbStocks, dbGoals, dbIndex] = await Promise.all([
-    fetchTossData().catch(() => null),
-    fetchStockFacts().catch(() => null),
+  /* 토스·종목_팩트(아직 시트)는 느려서 여기서 기다리지 않는다 — loadSheetExtras() 가 나중에 채운다 */
+  const [dbLedger, dbAssets, dbStocks, dbGoals, dbIndex] = await Promise.all([
     fetchLedgerFromDB().catch((e) => { console.error('ledger from DB failed', e); return null; }),
     fetchAssetsFromDB().catch((e) => { console.error('assets from DB failed', e); return null; }),
     fetchStocksFromDB().catch((e) => { console.error('stocks from DB failed', e); return null; }),
@@ -143,8 +146,8 @@ async function fetchAllTabsAndMerge() {
     months: pivot.months, incomeTotal: pivot.incomeTotal, expenseTotal: pivot.expenseTotal,
     expenseCategories: pivot.expenseCategories, incomeCategories: pivot.incomeCategories, transferCategories: pivot.transferCategories,
     assetRows, assetSource, ledger, ledgerSource, investmentTags, goals, stockCategoryMap, stocks: dbStocks || [],
-    toss: tossResult,
-    stockFacts: factsResult || {},
+    toss: (state.data && state.data.toss) || null,
+    stockFacts: (state.data && state.data.stockFacts) || {},
     indexPrices,
     indexSource: 'db'
   };
@@ -160,16 +163,46 @@ function applySuggestedGoals(data) {
   state.goals.emergencyFundTarget = sug.suggestedEmergency;
 }
 
-async function fetchLive(manual) {
+/* 마지막으로 받은 데이터를 이 브라우저에 보관해 두고, 다음에 열 때 먼저 보여준다.
+   로그아웃하면 지운다. 개인 기기 전용 — 공용 PC 에서는 로그아웃할 것. */
+const DATA_CACHE_KEY = 'haedal:data-cache:v1';
+function cacheSave(data, uid) {
+  try {
+    const { _partialWarning, ...rest } = data;
+    localStorage.setItem(DATA_CACHE_KEY, JSON.stringify({ uid, at: Date.now(), data: rest }));
+  } catch (e) { /* 용량 초과 등 — 캐시 없이 동작 */ }
+}
+function cacheLoad(uid) {
+  try {
+    const c = JSON.parse(localStorage.getItem(DATA_CACHE_KEY) || 'null');
+    if (c && c.uid === uid && c.data && Array.isArray(c.data.ledger)) return c;
+  } catch (e) {}
+  return null;
+}
+function cacheClear() { try { localStorage.removeItem(DATA_CACHE_KEY); } catch (e) {} }
+
+/* 토스·종목_팩트는 따로 받아서, 오면 끼워 넣고 투자 화면이면 다시 그린다 */
+async function loadSheetExtras() {
+  const [toss, facts] = await Promise.all([fetchTossData().catch(() => null), fetchStockFacts().catch(() => null)]);
+  if (!state.data) return;
+  if (toss) state.data.toss = toss;
+  if (facts) state.data.stockFacts = facts;
+  if (state.page === 'invest') renderPage();
+  cacheSave(state.data, state.uid);
+}
+
+async function fetchLive(manual, ready) {
   setSyncState('loading');
   try {
-    const data = await fetchAllTabsAndMerge();
+    const [data] = await Promise.all([fetchAllTabsAndMerge(), ready]);
     state.data = data;
     state.source = 'live';
     state.lastError = data._partialWarning || null;
     state.lastSync = new Date();
     applySuggestedGoals(state.data);
     renderAll();
+    cacheSave(state.data, state.uid);
+    loadSheetExtras();
   } catch (e) {
     console.error('live sync failed', e);
     state.lastError = e.message || String(e);
@@ -177,12 +210,25 @@ async function fetchLive(manual) {
   }
 }
 
-async function init() {
+async function init(uid) {
+  state.uid = uid || null;
   routeApply();          /* 주소에 적힌 화면이 있으면 거기서 시작한다 */
   renderShell();
-  renderAll();                 /* 데이터 오기 전: '불러오는 중' 자리만 */
-  await Promise.all([loadBudgets(), loadSettings(), sdxLoad(true)]);
+  /* 설정·예산·스터디 카드와 가계부·자산을 동시에 받는다 (예전엔 설정을 다 받은 뒤에야 가계부를 요청했다) */
+  const ready = Promise.all([loadBudgets(), loadSettings(), sdxLoad(true)]);
+  const cached = cacheLoad(state.uid);
+  if (cached) {
+    ready.then(() => {
+      if (state.source === 'live') return;          /* 그새 새 데이터가 먼저 왔으면 그대로 둔다 */
+      state.data = cached.data;
+      state.source = 'cache';
+      applySuggestedGoals(state.data);
+      renderAll();
+    });
+  } else {
+    renderAll();                 /* 데이터 오기 전: '불러오는 중' 자리만 */
+  }
   /* 분류 표(순서·이름)는 화면 곳곳에서 쓰므로 미리 받아 둔다 */
   enEnsureRefs().catch(() => {});
-  fetchLive(false);
+  fetchLive(false, ready);
 }

@@ -5,8 +5,9 @@
 ## 구조
 
 ```
-index.html          대시보드 (js/ 파일을 순서대로 불러온다)
-css/style.css       대시보드 스타일
+index.html          대시보드 (dist/ 의 묶음 파일을 불러온다)
+css/style.css       대시보드 스타일 (원본)
+dist/               배포용 묶음 — js/·css/ 를 합쳐 줄인 것. 직접 고치지 말고 npm run build
 js/
   core/             설정·상태, 계산, 화면 틀, Supabase 연결, 데이터 로딩
   entry/            기록 — 입출금 입력, 전체 내역, 사용처, 캘린더, 자산 스냅샷
@@ -25,7 +26,8 @@ supabase/           DB 변경 기록(migrations)과 Edge Function 소스
 tests/              화면 회귀 검사
 ```
 
-`js/` 파일은 모듈이 아닌 일반 스크립트라서 전역을 공유한다. `index.html`의 불러오는 순서를 바꾸지 말 것.
+`js/` 파일은 모듈이 아닌 일반 스크립트라서 전역을 공유한다. 불러오는 순서는 `js/order.txt` 에 있고, 바꾸지 말 것.
+고친 뒤에는 `npm run build` 로 `dist/` 를 다시 만들어 함께 커밋한다 (`npm test` 가 최신인지 확인한다).
 
 ## 데이터
 
