@@ -4,13 +4,15 @@
   "description": "해달 — 개인 자산관리 대시보드 (정적 사이트 + Supabase)",
   "scripts": {
     "check": "for f in js/*.js js/*/*.js; do node --check \"$f\" || exit 1; done",
-    "test": "npm run check && node tests/visual.js"
+    "test": "npm run check && node tests/visual.js",
+    "test:schema": "node tests/schema.mjs"
   },
   "devDependencies": {
     "chart.js": "4.5.0",
     "papaparse": "5.4.1",
     "pixelmatch": "^5.3.0",
     "playwright-core": "^1.47.0",
-    "pngjs": "^7.0.0"
+    "pngjs": "^7.0.0",
+    "@electric-sql/pglite": "^0.2.0"
   }
 }

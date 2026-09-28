@@ -36,5 +36,6 @@ tests/              화면 회귀 검사
 
 ```
 npm install
-npm test     # 문법 검사 + 대시보드 전 메뉴·모바일 앱 2개 첫 화면을 HEAD 와 픽셀 비교
+npm test             # 문법 검사 + 대시보드 전 메뉴·모바일 앱 2개 첫 화면을 HEAD 와 픽셀 비교
+npm run test:schema  # supabase/schema 로 빈 DB 를 만들어 실제 DB 와 구조가 같은지 확인
 ```
