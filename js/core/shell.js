@@ -117,7 +117,7 @@ const NAV_ITEMS = [
   { id: 'home',   label: '홈', solo: true },
   { id: 'entry',  label: '기록' },
   { id: 'invest', label: '투자' },
-  { id: 'goals',  label: '목표' },
+  { id: 'goals',  label: '목표', solo: true },
   { id: 'report', label: '리포트' },
   { id: 'set',    label: '설정' }
 ];
@@ -128,7 +128,7 @@ const SECTION_SUBS = {
   entry:  [['#', '입출금'], ['ledger', '입출금 내역'], ['calendar', '캘린더'],
            ['#', '자산'], ['snapshot', '자산 스냅샷']],
   invest: [['overview', '요약'], ['book', '종목'], ['rules', '매매원칙']],
-  goals:  [['list', '목록'], ['board', '보드'], ['category', '카테고리별']],
+  goals:  [['list', '목록']],
   report: [['#', '기간별'], ['monthly', '월간'], ['yearly', '연간'],
            ['#', '자산별'], ['networth', '순자산'], ['pension', '연금'], ['savings', '저축']],
   set:    [['#', '가계부'], ['cat', '분류'], ['merch', '사용처'], ['fixedm', '고정비'],
@@ -197,7 +197,9 @@ const LEGACY_SUB = {
   'goals/done': ['goals/list', { goalFilter: 'done' }],
   'goals/next': ['goals/list', { goalFilter: 'next' }],
   'goals/all': ['goals/list', { goalFilter: 'all', goalDisplay: 'table' }],
-  'goals/main': ['goals/list', {}]
+  'goals/main': ['goals/list', {}],
+  'goals/board': ['goals/list', {}],
+  'goals/category': ['goals/list', {}]
 };
 
 function routeRead() {

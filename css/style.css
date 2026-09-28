@@ -3097,6 +3097,11 @@ body{padding-left:0;padding-right:0;}
 .hm-row{display:grid;gap:var(--gap);align-items:stretch;}
 .hm-row2{grid-template-columns:repeat(2,minmax(0,1fr));}
 .hm-row3{grid-template-columns:repeat(3,minmax(0,1fr));}
+.hm-budbar{position:relative;height:8px;border-radius:4px;background:var(--panel-2);margin:14px 0 4px;overflow:visible;}
+.hm-budbar i{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:var(--net-fill,#7aa2d8);}
+.hm-budbar i.over{background:var(--expense-fill);}
+.hm-budbar em{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--text-faint);border-radius:1px;}
+.hm-main .hm-paceS{line-height:1.7;}
 .hm-wrap .hm-box{padding:18px 20px;}
 .hm-wrap .hm-tri b{font-size:var(--fs-2xl);}
 .hm-wrap .hm-paceS{margin-top:16px;padding-top:13px;border-top:1px solid var(--border);}

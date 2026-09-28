@@ -38,7 +38,6 @@ function goalPeriodFormatter(goals) {
 
 
 function renderGoalBoard(data, d, view) {
-  view = view || 'board';
   const host = document.getElementById('home-goals');
   if (!host) return;
   const allGoals = (data.goals || []).filter(g => pickGoalField(g, 'title'));
@@ -59,68 +58,7 @@ function renderGoalBoard(data, d, view) {
     ? state.goalMoves[g.__row]
     : (pickGoalField(g, 'period') || '');
 
-  /* 그룹 기준: 구분(기본) · 시기 · 상태.
-     시트가 정량 구조로 바뀌면서 '시기'가 비어 있는 목표가 많아 기본값을 '구분'으로 둔다. */
-  const GROUP_OPTS = [['period', '시기'], ['category', '구분'], ['status', '상태']];
-  const GRP = GROUP_OPTS.some(x => x[0] === state.goalGroup) ? state.goalGroup : 'period';
-  const nowY = new Date().getFullYear();
-  const curHalf = (new Date().getMonth() < 6) ? 1 : 2;
-
-  let buckets = [], byBucket = {}, curKey = null, draggable = false;
-  if (GRP === 'period') {
-    draggable = true;
-    const years = new Set();
-    allGoals.forEach(g => { const p = parseGoalPeriod(periodOf(g)); if (p) years.add(p.y); });
-    years.add(nowY); years.add(nowY + 1);
-    [...years].sort((a, b) => a - b).forEach(y => {
-      buckets.push({ key: `${y}-1`, label: `${y} 상반기` });
-      buckets.push({ key: `${y}-2`, label: `${y} 하반기` });
-    });
-    buckets.push({ key: 'none', label: '시기 미정' });
-    buckets.forEach(b => { byBucket[b.key] = []; });
-    allGoals.forEach(g => {
-      const p = parseGoalPeriod(periodOf(g));
-      let k = p ? (p.h ? `${p.y}-${p.h}` : `${p.y}-1`) : 'none';
-      if (!byBucket[k]) k = 'none';
-      byBucket[k].push(g);
-    });
-    curKey = `${nowY}-${curHalf}`;
-  } else if (GRP === 'status') {
-    const order = ['진행중', '대기', '달성/완료', '완료', '보류'];
-    const seen = [];
-    allGoals.forEach(g => { const st = pickGoalField(g, 'status') || '미지정'; if (!seen.includes(st)) seen.push(st); });
-    seen.sort((a, b) => {
-      const ia = order.findIndex(o => a.includes(o)), ib = order.findIndex(o => b.includes(o));
-      return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
-    });
-    seen.forEach(st => { buckets.push({ key: st, label: st }); byBucket[st] = []; });
-    allGoals.forEach(g => byBucket[pickGoalField(g, 'status') || '미지정'].push(g));
-    curKey = seen.find(x => /진행/.test(x)) || null;
-  } else {
-    const seen = [];
-    allGoals.forEach(g => { const c = pickGoalField(g, 'category') || '기타'; if (!seen.includes(c)) seen.push(c); });
-    seen.forEach(c => { buckets.push({ key: c, label: c }); byBucket[c] = []; });
-    allGoals.forEach(g => byBucket[pickGoalField(g, 'category') || '기타'].push(g));
-  }
-  /* 각 칸 안에서는 '미달 → 달성' 순, 그 안에서 목표값 오름차순 */
-  const sortKeyOf = (g) => {
-    const p = goalProgressOf(g, d, extra);
-    if (!p) return [2, 0];
-    const good = p.invert ? p.current <= p.target : p.current >= p.target;
-    return [good ? 1 : 0, p.target];
-  };
-  Object.keys(byBucket).forEach(k => {
-    byBucket[k].sort((a, b) => {
-      const [ga, ta] = sortKeyOf(a), [gb, tb] = sortKeyOf(b);
-      return ga - gb || ta - tb;
-    });
-  });
-
-  const total = allGoals.length;
-  const done = allGoals.filter(g => goalStatusClass(pickGoalField(g, 'status')) === 'ok').length;
-  const active = allGoals.filter(g => goalStatusClass(pickGoalField(g, 'status')) === 'active').length;
-
-  let hideCat = GRP === 'category';
+  const hideCat = false, draggable = false;
   const card = (g) => {
     const title = pickGoalField(g, 'title');
     const category = pickGoalField(g, 'category');
@@ -180,205 +118,18 @@ function renderGoalBoard(data, d, view) {
     </div>`;
   };
 
-  /* 보드 말고는 목록형 화면 — 상태별 카드 · 전체 표 · 카테고리별 묶음 */
-  if (view !== 'board') {
-    draggable = false;
-    hideCat = view === 'category';
-    renderGoalViews(host, view, { allGoals, card, d, extra, data, fmtPeriod, periodOf });
-    return;
-  }
-
-  host.innerHTML = `
-    <div class="g" style="margin-bottom:20px;">
-    </div>
-    <div class="g">
-      <div class="panel s2" id="panel-goal-side"></div>
-      <div class="s10" id="goal-board-wrap">
-        <div class="gb-boardbar">
-          <div class="range-toggle" id="goal-group-toggle">
-            ${GROUP_OPTS.map(([v, l]) => `<button data-grp="${v}" class="${v === GRP ? 'active' : ''}">${l}</button>`).join('')}
-          </div>
-          <span class="settings-note" style="margin:0;">${draggable ? '카드 드래그 → 시기 이동 · ' : ''}더블클릭 → 편집</span>
-          <button class="btn small" id="goal-add-btn">+ 목표 추가</button>
-        </div>
-        <div class="gb-board" id="goal-board">
-          ${buckets.map(b => `
-            <div class="gb-col ${b.key === curKey ? 'now' : ''} ${b.key === 'none' ? 'undated' : ''}" data-bucket="${b.key}">
-              <div class="gb-colhead">
-                <b>${b.label}</b>
-                <span>${byBucket[b.key].length}</span>
-              </div>
-              <div class="gb-lane" data-bucket="${b.key}">
-                ${byBucket[b.key].map(card).join('') || '<div class="gb-empty">여기로 끌어다 놓기</div>'}
-              </div>
-            </div>`).join('')}
-        </div>
-      </div>
-    </div>
-  `;
-
-  /* --- 사이드: 상태 요약 --- */
-  const byStatus = {};
-  allGoals.forEach(g => {
-    const st = pickGoalField(g, 'status') || '미지정';
-    byStatus[st] = (byStatus[st] || 0) + 1;
-  });
-  const byCat = {};
-  allGoals.forEach(g => {
-    const c = pickGoalField(g, 'category') || '기타';
-    byCat[c] = (byCat[c] || 0) + 1;
-  });
-  const recs = buildGoalRecommendations(data, d, extra, allGoals);
-  document.getElementById('panel-goal-side').innerHTML = `
-    <div class="panel-title"><div>요약</div><span class="ptag">${total}개</span></div>
-    <div class="gb-donut"><i style="width:${total ? (done / total) * 100 : 0}%"></i></div>
-    <div class="gb-figs" style="margin-bottom:12px;"><span>완료 ${done} · 진행 ${active}</span><span>${total ? Math.round((done / total) * 100) : 0}%</span></div>
-    ${Object.entries(byStatus).sort((a, b) => b[1] - a[1]).map(([k, v]) =>
-      `<div class="now-kv"><span>${k}</span><b>${v}</b></div>`).join('')}
-
-    <div class="subhead" style="margin-top:16px;">추천 목표</div>
-    <div class="gb-recs">
-      ${recs.length ? recs.map((r, i) => `
-        <div class="gb-rec" data-rec="${i}">
-          <button class="gb-rec-x" data-rec-hide="${i}" title="이 추천 안 보기">×</button>
-          <div class="gb-rec-title">${r.title}</div>
-          <div class="gb-rec-why">${r.why}</div>
-          <button class="btn small" data-rec-add="${i}">+ 추가</button>
-        </div>`).join('') : '<div class="empty-state" style="padding:14px 0;">지금 제안할 목표가 없어요.</div>'}
-      ${(state.settings.hiddenRecs || []).length ? `<button class="btn small" id="rec-reset" style="margin-top:8px;">숨긴 추천 ${(state.settings.hiddenRecs || []).length}개 되살리기</button>` : ''}
-    </div>
-  `;
-
-  document.getElementById('panel-goal-side').addEventListener('click', async (e) => {
-    const hide = e.target.closest('button[data-rec-hide]');
-    if (hide) {
-      const r = recs[Number(hide.dataset.recHide)];
-      if (!r) return;
-      state.settings.hiddenRecs = [...new Set([...(state.settings.hiddenRecs || []), r.metricKey])];
-      await saveSettings();
-      renderPage();
-      return;
-    }
-    if (e.target.closest('#rec-reset')) {
-      state.settings.hiddenRecs = [];
-      await saveSettings();
-      renderPage();
-      return;
-    }
-    const btn = e.target.closest('button[data-rec-add]');
-    if (!btn) return;
-    const r = recs[Number(btn.dataset.recAdd)];
-    if (!r) return;
-    const rows = (state.data.goals || []).map(x => x.__row || 0);
-    const newRow = (rows.length ? Math.max(...rows) : 1) + 1;
-    const payload = {
-      title: r.item, category: r.category, freq: r.freq || '',
-      amount: String(r.amount), period: '', status: '진행중', memo: r.why
-    };
-    const obj = { __row: newRow, __local: true };
-    Object.keys(payload).forEach(f => { obj[goalFieldKeyFor(null, f)] = payload[f]; });
-    state.data.goals = (state.data.goals || []).concat([obj]);
-    pushGoalOp({ action: 'addGoal', tempRow: newRow, ...payload });
-    renderPage();
-  });
-
-  /* --- 편집 / 추가 / 삭제 --- */
-  document.getElementById('goal-add-btn').addEventListener('click', () => openGoalEditor(null, data, d, fmtPeriod));
-  document.getElementById('goal-board').addEventListener('dblclick', (e) => {
-    const c = e.target.closest('.gb-card');
-    if (!c) return;
-    const g = allGoals.find(x => String(x.__row) === c.dataset.row);
-    if (g) openGoalEditor(g, data, d, fmtPeriod);
-  });
-
-
-  const grpBox = document.getElementById('goal-group-toggle');
-  if (grpBox) grpBox.addEventListener('click', (e) => {
-    const b = e.target.closest('button');
-    if (!b) return;
-    state.goalGroup = b.dataset.grp;
-    renderPage();
-  });
-
-  /* --- 드래그 앤 드롭 --- */
-  const board = document.getElementById('goal-board');
-  let dragRow = null;
-
-  /* 현재 반기 컬럼이 보이도록 초기 스크롤 */
-  const nowCol = board.querySelector('.gb-col.now');
-  if (nowCol) board.scrollLeft = Math.max(0, nowCol.offsetLeft - board.offsetLeft - 12);
-
-  /* 드래그 중 좌우 끝에 가까이 가면 자동 스크롤 */
-  let autoTimer = null;
-  const stopAuto = () => { if (autoTimer) { clearInterval(autoTimer); autoTimer = null; } };
-  const autoScroll = (clientX) => {
-    const r = board.getBoundingClientRect();
-    const edge = 70;
-    let dir = 0;
-    if (clientX < r.left + edge) dir = -1;
-    else if (clientX > r.right - edge) dir = 1;
-    if (!dir) { stopAuto(); return; }
-    if (autoTimer) return;
-    autoTimer = setInterval(() => { board.scrollLeft += dir * 18; }, 16);
-  };
-  board.addEventListener('dragstart', (e) => {
-    const c = e.target.closest('.gb-card');
-    if (!c) return;
-    dragRow = c.dataset.row;
-    c.classList.add('dragging');
-    e.dataTransfer.effectAllowed = 'move';
-    try { e.dataTransfer.setData('text/plain', dragRow); } catch (err) {}
-  });
-  board.addEventListener('dragend', () => {
-    stopAuto();
-    board.querySelectorAll('.dragging').forEach(x => x.classList.remove('dragging'));
-    board.querySelectorAll('.over').forEach(x => x.classList.remove('over'));
-  });
-  board.addEventListener('dragover', (e) => {
-    autoScroll(e.clientX);
-    const lane = e.target.closest('.gb-lane');
-    if (!lane) return;
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    board.querySelectorAll('.gb-lane.over').forEach(x => { if (x !== lane) x.classList.remove('over'); });
-    lane.classList.add('over');
-  });
-  board.addEventListener('dragleave', (e) => {
-    const lane = e.target.closest('.gb-lane');
-    if (lane) lane.classList.remove('over');
-  });
-  board.addEventListener('drop', (e) => {
-    const lane = e.target.closest('.gb-lane');
-    if (!lane) return;
-    e.preventDefault();
-    lane.classList.remove('over');
-    stopAuto();
-    const row = dragRow || e.dataTransfer.getData('text/plain');
-    if (!row) return;
-    const bk = lane.dataset.bucket;
-    const newPeriod = bk === 'none' ? '' : (() => {
-      const [y, h] = bk.split('-').map(Number);
-      return fmtPeriod(y, h);
-    })();
-    const g = allGoals.find(x => String(x.__row) === String(row));
-    if (!g) return;
-    if (periodOf(g) === newPeriod) return;
-    state.goalMoves[row] = newPeriod;
-    pushGoalPeriod(Number(row), newPeriod);
-    renderGoalBoard(data, d, 'board');
-  });
+  renderGoalViews(host, 'list', { allGoals, card, d, extra, data, fmtPeriod, periodOf });
 }
 
 
-/* ---------------- 목표: 목록형 화면 (목록 · 카테고리별) ----------------
+/* ---------------- 목표: 목록 ----------------
    상태는 시트 '상태' 칸으로 가른다 — 진행 = 진행중, 완료·달성 = 달성,
    나머지(대기·예정·보류·지연·비어 있음)는 아직 손대지 않은 '다음 할 것'. */
 const GOAL_VIEW_NOTE = {
   active: '지금 붙잡고 있는 목표',
   done: '다 이룬 목표 — 최근에 달성한 순',
   next: '아직 시작하지 않은 목표 — 시기가 가까운 순',
-  all: '머리글을 누르면 정렬, 줄을 더블클릭하면 편집',
-  category: '구분별로 묶어 보기'
+  all: '머리글을 누르면 정렬, 줄을 더블클릭하면 편집'
 };
 function goalBucketOf(g) {
   const c = goalStatusClass(pickGoalField(g, 'status'));
@@ -418,7 +169,7 @@ function renderGoalViews(host, view, ctx) {
     next: '다음에 할 목표가 없어요.' };
 
   let body = '';
-  if (view !== 'category' && DSP === 'card') {
+  if (DSP === 'card') {
     const list = allGoals.filter(inF);
     const bo = { active: 0, next: 1, done: 2 };
     if (F === 'done') list.sort((a, b) => doneKey(b).localeCompare(doneKey(a)) || byTitle(a, b));
@@ -426,24 +177,6 @@ function renderGoalViews(host, view, ctx) {
     else list.sort((a, b) => bo[goalBucketOf(a)] - bo[goalBucketOf(b)]
       || (pctOf(b) ?? -1) - (pctOf(a) ?? -1) || periodKey(a) - periodKey(b));
     body = grid(list, EMPTY[F]);
-
-  } else if (view === 'category') {
-    const cats = [];
-    allGoals.forEach(g => { const c = pickGoalField(g, 'category') || '기타'; if (!cats.includes(c)) cats.push(c); });
-    const order = { active: 0, next: 1, done: 2 };
-    body = cats.map(c => {
-      const list = allGoals.filter(g => (pickGoalField(g, 'category') || '기타') === c)
-        .sort((a, b) => order[goalBucketOf(a)] - order[goalBucketOf(b)] || periodKey(a) - periodKey(b));
-      const dn = list.filter(g => goalBucketOf(g) === 'done').length;
-      const ac = list.filter(g => goalBucketOf(g) === 'active').length;
-      return `<section class="gv-cat">
-        <div class="gv-cathead"><b>${c}</b>
-          <span>${list.length}개 · 진행 ${ac} · 달성 ${dn}</span>
-          <div class="gb-donut"><i style="width:${(dn / list.length) * 100}%"></i></div>
-        </div>
-        ${grid(list, '')}
-      </section>`;
-    }).join('');
 
   } else {
     /* 전체 목록 표 */
@@ -495,19 +228,13 @@ function renderGoalViews(host, view, ctx) {
 
   host.innerHTML = `
     <div class="gv-bar">
-      ${view === 'category' ? `<div class="gv-counts">
-        <span>전체 <b>${allGoals.length}</b></span>
-        <span class="active">진행중 <b>${cnt.active}</b></span>
-        <span class="ok">달성 <b>${cnt.done}</b></span>
-        <span>다음 <b>${cnt.next}</b></span>
-      </div>` : `<div class="gv-filter" id="goal-filter">${[['active', '진행중'], ['next', '다음'], ['done', '달성'], ['all', '전체']]
+      <div class="gv-filter" id="goal-filter">${[['active', '진행중'], ['next', '다음'], ['done', '달성'], ['all', '전체']]
         .map(([k, l]) => `<button data-gf="${k}" class="${k === F ? 'on' : ''} ${k === 'done' ? 'ok' : k}">${l}<b>${k === 'all' ? allGoals.length : cnt[k]}</b></button>`).join('')}</div>
       <div class="range-toggle" id="goal-display">
         <button data-gd="card" class="${DSP === 'card' ? 'active' : ''}">카드</button>
         <button data-gd="table" class="${DSP === 'table' ? 'active' : ''}">표</button>
-      </div>`}
-      <span class="settings-note gv-note" style="margin:0;">${view === 'category' ? GOAL_VIEW_NOTE.category
-        : DSP === 'table' ? GOAL_VIEW_NOTE.all : (F === 'all' ? '진행중 → 다음 → 달성 순' : GOAL_VIEW_NOTE[F]) + ' · 더블클릭 → 편집'}</span>
+      </div>
+      <span class="settings-note gv-note" style="margin:0;">${DSP === 'table' ? GOAL_VIEW_NOTE.all : (F === 'all' ? '진행중 → 다음 → 달성 순' : GOAL_VIEW_NOTE[F]) + ' · 더블클릭 → 편집'}</span>
       <button class="btn small" id="goal-add-btn">+ 목표 추가</button>
     </div>
     <div id="goal-views">${body}</div>`;
@@ -530,107 +257,6 @@ function renderGoalViews(host, view, ctx) {
     state.goalTblSort = { k, dir: cur.k === k ? -cur.dir : 1 };
     renderPage();
   });
-}
-
-/* ---------------- 추천 목표 (현황을 보고 매번 다시 계산) ---------------- */
-
-/* 만원 단위 반올림 (목표 문구용) */
-function roundManwon(v, step) {
-  const st = (step || 10) * 10000;
-  return Math.max(st, Math.round(v / st) * st);
-}
-function manwonText(v) { return `${Math.round(v / 10000).toLocaleString('ko-KR')}만원`; }
-
-function buildGoalRecommendations(data, d, extra, existingGoals) {
-  /* 이미 같은 (구분+항목) 목표가 있으면 추천하지 않는다 */
-  const taken = new Set((existingGoals || []).map(g => {
-    const m = findGoalMetric(pickGoalField(g, 'category') || '', pickGoalField(g, 'title') || '');
-    return m ? m.key : null;
-  }).filter(Boolean));
-  const hidden = new Set(state.settings.hiddenRecs || []);
-  const out = [];
-  const push = (key, o) => { if (!taken.has(key) && !hidden.has(key)) out.push({ metricKey: key, ...o }); };
-
-  const monthlyExp = extra.avgExpense12 || 0;
-  const avgIncome = extra.avgIncome12 || 0;
-
-  /* 1. 비상금 — 월 지출 N개월치 */
-  const months = state.settings.emergencyMonths || 6;
-  const emgTarget = roundManwon(monthlyExp * months, 50);
-  if (monthlyExp > 0 && d.emergencyFund < emgTarget) {
-    push('emergency', {
-      category: '🏦자산', item: '비상금', freq: '', amount: emgTarget,
-      title: `비상금 ${manwonText(emgTarget)}`,
-      why: `현재 ${formatCompactWon(d.emergencyFund)}원 · 생활비 ${(d.emergencyFund / monthlyExp).toFixed(1)}개월치 (목표 ${months}개월)`
-    });
-  }
-
-  /* 2. 월 고정비 — 최근 12개월 평균에서 10% 절감 */
-  const avgFixed = extra.avgFixed12 || 0;
-  if (avgFixed > 0) {
-    const t = roundManwon(avgFixed * 0.9, 5);
-    push('fixed', {
-      category: '💳지출', item: '고정비', freq: '월', amount: t,
-      title: `월 고정비 ${manwonText(t)}`,
-      why: `최근 12개월 평균 ${formatCompactWon(avgFixed)}원 → 10% 절감`
-    });
-  }
-
-  /* 3. 월 지출 — 목표 저축률을 맞추는 상한 */
-  const rateTarget = state.goals.savingsRateTarget || 40;
-  const expCap = avgIncome * (1 - rateTarget / 100);
-  if (avgIncome > 0 && monthlyExp > expCap) {
-    const t = roundManwon(expCap, 10);
-    push('expense', {
-      category: '💳지출', item: '지출', freq: '월', amount: t,
-      title: `월 지출 ${manwonText(t)}`,
-      why: `저축률 ${rateTarget}% 기준 상한 · 현재 평균 ${formatCompactWon(monthlyExp)}원`
-    });
-  }
-
-  /* 4. 아낄 수 있었던 소비(Bad) — 최근 12개월 평균의 절반 */
-  const avgRegret = extra.avgRegret12 || 0;
-  if (avgRegret > 30000) {
-    const t = roundManwon(avgRegret * 0.5, 5);
-    push('regret', {
-      category: '💳지출', item: '아낄 수 있었던 소비', freq: '월', amount: t,
-      title: `월 아낄 수 있었던 소비 ${manwonText(t)}`,
-      why: `최근 12개월 평균 ${formatCompactWon(avgRegret)}원 → 절반으로`
-    });
-  }
-
-  /* 5. 저축률 */
-  if (extra.savingsRate12 > 0 && extra.savingsRate12 < rateTarget) {
-    push('savingsRate', {
-      category: '👌수입', item: '저축률', freq: '연', amount: rateTarget,
-      title: `저축률 ${rateTarget}%`,
-      why: `최근 12개월 ${extra.savingsRate12.toFixed(1)}% · 목표까지 ${(rateTarget - extra.savingsRate12).toFixed(1)}%p`
-    });
-  }
-
-  /* 6. 순자산 다음 마일스톤 (5천만 단위) */
-  const nw = d.totalAssets - totalDebt();
-  if (nw > 0) {
-    const step = 50000000;
-    const next = Math.ceil((nw + 1) / step) * step;
-    push('netWorth', {
-      category: '🏦자산', item: '순 자산', freq: '', amount: next,
-      title: `순자산 ${(next / 100000000).toFixed(1)}억`,
-      why: `현재 ${formatCompactWon(nw)}원 · ${formatCompactWon(next - nw)}원 남음`
-    });
-  }
-
-  /* 7. 연금 세액공제 한도 */
-  const annPension = (data.transferCategories['연금 자산'] || []).slice(-12).reduce((a, v) => a + (v || 0), 0);
-  if (annPension < PENSION_LIMIT) {
-    push('pensionAssets', {
-      category: '🏦자산', item: '연금 납입', freq: '연', amount: PENSION_LIMIT,
-      title: `연금 납입 ${manwonText(PENSION_LIMIT)}`,
-      why: `최근 12개월 ${formatCompactWon(Math.max(annPension, 0))}원 · 한도까지 ${formatCompactWon(PENSION_LIMIT - Math.max(annPension, 0))}원`
-    });
-  }
-
-  return out.slice(0, 4);
 }
 
 /* ---------------- 목표 편집기 (더블클릭 / 추가) ---------------- */
@@ -862,21 +488,6 @@ async function pushGoalOp(payload) {
     showToast('목표를 저장했어요.', 'good');
   } catch (e) {
     showToast('목표 저장 실패 — ' + (e.message || e), 'warn');
-  }
-}
-
-/* 카드를 다른 시기로 옮겼을 때 */
-async function pushGoalPeriod(row, period) {
-  const g = (state.data.goals || []).find(x => x.__row === row);
-  if (g) g[goalFieldKeyFor(g, 'period')] = period;
-  if (state.goalMoves) delete state.goalMoves[row];
-  try {
-    const sb = await enClient();
-    const { error } = await sb.from('goals').update({ period: period || null }).eq('id', row);
-    if (error) throw error;
-    showToast(`시기를 옮겼어요 · ${period || '시기 미정'}`, 'good');
-  } catch (e) {
-    showToast('시기 저장 실패 — ' + (e.message || e), 'warn');
   }
 }
 

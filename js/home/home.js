@@ -9,7 +9,7 @@
    이번 분기가 포함되는지로 판단한다. 시기가 비어 있는 목표는 홈에 올리지 않는다. */
 /* ---------------- 홈 ----------------
    홈은 '지금 어떤가'만 본다. 판단·목표·거래내역은 각자의 화면이 있으니 여기서 겹치지 않는다.
-   오늘 → 이번 달 → 최근 3달 추이 순으로, 가운데 한 줄로만 쌓는다. */
+   이번 달 더 쓸 수 있는 돈 → 최근 3달 추이 순으로, 가운데 한 줄로만 쌓는다. */
 
 /* 이번 달을 마지막에 두는 최근 N개월 키 */
 function hmRecentMonths(n) {
@@ -68,13 +68,6 @@ function renderHomePage(container, data, d) {
   const isInvTr   = (r) => r.major.includes('이체') && String(r.minor || '').includes('투자');
   const isEmgTr   = (r) => r.major.includes('이체') && String(r.minor || '').includes('비상금');
 
-  /* --- 오늘 --- */
-  const today   = ledger.filter(r => ledgerDayKey(r.date) === dayKey);
-  const todayIn  = today.filter(isIncome).reduce((a, r) => a + r.amount, 0);
-  const todayOut = today.filter(isExpense).reduce((a, r) => a + netExpenseOf(r), 0);
-  const todayCnt = today.filter(r => isIncome(r) || isExpense(r)).length;
-  const WD = ['일', '월', '화', '수', '목', '금', '토'];
-
   /* --- 이번 달 --- */
   const curM = ledger.filter(r => ledgerMonthKey(r.date) === mk);
   const mIn  = curM.filter(isIncome).reduce((a, r) => a + r.amount, 0);
@@ -82,6 +75,15 @@ function renderHomePage(container, data, d) {
   const mNet = mIn - mOut;
   const mRate = mIn > 0 ? (mNet / mIn) * 100 : null;
   const days = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  /* 더 써도 되는 돈 = 이번 달 예산 − 쓴 돈. 예산을 안 적었으면 최근 12개월 평균 지출을 예산으로 본다 */
+  const hasBudget = budgetMonthlyTotal() > 0;
+  const budget = budgetPaceMonthly(data);
+  const left = budget - mOut;
+  const daysLeft = days - now.getDate() + 1;
+  const perDay = left > 0 ? left / daysLeft : 0;
+  const usedPct = budget > 0 ? Math.min(100, (mOut / budget) * 100) : 0;
+  const dayPct = (now.getDate() / days) * 100;
+  const todayOut = ledger.filter(r => ledgerDayKey(r.date) === dayKey && isExpense(r)).reduce((a, r) => a + netExpenseOf(r), 0);
 
   /* --- 최근 3달 --- */
   const months = hmRecentMonths(3);
@@ -95,33 +97,20 @@ function renderHomePage(container, data, d) {
 
   container.innerHTML = `
     <div class="hm-wrap">
-      <div class="hm-row hm-row2">
-      <section class="hm-box">
-        <div class="hm-hd"><b>오늘</b>
-          <span>${now.getMonth() + 1}월 ${now.getDate()}일 ${WD[now.getDay()]}요일</span></div>
+      <section class="hm-box hm-main">
+        <div class="hm-hd"><b>이번 달 더 쓸 수 있는 돈</b>
+          <span>${monthKeyLabel(mk)} · ${daysLeft}일 남음</span></div>
         <div class="hm-tri">
-          <div><span>번 돈</span><b class="mono in">${formatKrw(todayIn)}</b></div>
-          <div><span>쓴 돈</span><b class="mono out">${formatKrw(todayOut)}</b></div>
-          <div><span>남은 돈</span><b class="mono" style="color:${todayIn - todayOut >= 0 ? 'var(--net-text)' : 'var(--expense-text)'}">${formatKrw(todayIn - todayOut)}</b></div>
+          <div><span>남은 예산</span><b class="mono" style="color:${left >= 0 ? 'var(--net-text)' : 'var(--expense-text)'}">${left >= 0 ? '' : '−'}${formatKrw(Math.abs(left))}</b></div>
+          <div><span>하루에</span><b class="mono">${left > 0 ? formatKrw(perDay) : '0원'}</b></div>
+          <div><span>쓴 돈</span><b class="mono out">${formatKrw(mOut)}</b></div>
         </div>
-        <div class="hm-paceS">${todayCnt
-          ? `오늘 기록 <b>${todayCnt}건</b> · <button class="hm-lnk" data-go="entry/ledger">내역 보기</button>`
-          : `아직 오늘 기록이 없어요. <button class="hm-lnk" data-go="entry/ledger">기록하러 가기</button>`}</div>
+        ${budget > 0 ? `<div class="hm-budbar" title="예산 ${formatKrw(budget)} 중 ${usedPct.toFixed(0)}% 사용 · 달의 ${dayPct.toFixed(0)}% 지남">
+          <i class="${mOut > budget * dayPct / 100 ? 'over' : ''}" style="width:${usedPct}%"></i><em style="left:${dayPct}%"></em></div>` : ''}
+        <div class="hm-paceS">${left < 0 ? `예산보다 <b class="out">${formatKrw(-left)}</b> 더 썼어요 · ` : ''}예산 ${formatKrw(budget)}${hasBudget ? '' : ' (최근 12개월 평균)'}
+          · 오늘 ${formatKrw(todayOut)} 씀 · 수입 ${formatKrw(mIn)}${mRate === null ? '' : ` · 저축률 <b>${mRate.toFixed(1)}%</b>`} ·
+          <button class="hm-lnk" data-go="${hasBudget ? 'report/monthly' : 'set/budget'}">${hasBudget ? '월간 리포트' : '예산 정하기'}</button></div>
       </section>
-
-      <section class="hm-box">
-        <div class="hm-hd"><b>이번 달</b>
-          <span>${monthKeyLabel(mk)} · ${now.getDate()}/${days}일</span></div>
-        <div class="hm-tri">
-          <div><span>수입</span><b class="mono in">${formatKrw(mIn)}</b></div>
-          <div><span>지출</span><b class="mono out">${formatKrw(mOut)}</b></div>
-          <div><span>남은 돈</span><b class="mono" style="color:${mNet >= 0 ? 'var(--net-text)' : 'var(--expense-text)'}">${formatKrw(mNet)}</b></div>
-        </div>
-        <div class="hm-paceS">${mRate === null ? '수입 기록이 아직 없어요.'
-          : `저축률 <b>${mRate.toFixed(1)}%</b>`} ·
-          <button class="hm-lnk" data-go="report/monthly">월간 리포트</button></div>
-      </section>
-      </div>
 
       <div class="hm-row hm-row3">
       ${hmTrendCard('고정비', '최근 3달', months, fixedSeries, 'fx', false)}
