@@ -220,3 +220,18 @@ function renderBudgetSettings(container, data, d) {
     if (ok) { BUD.dirty = false; BUD.draft = null; renderPage(); }
   });
 }
+
+/* 분류별 예산은 예전에 window.storage 에 넣었는데, GitHub Pages 에는 그 API 가 없어
+   실제로는 한 번도 저장되지 않았다. Supabase app_settings 로 옮긴다. */
+async function loadBudgets() {
+  try {
+    const sb = await enClient();
+    const { data } = await sb.from('app_settings').select('key,value')
+      .in('key', ['budget_categories', 'transfer_goals']);
+    (data || []).forEach(r => {
+      if (r.key === 'budget_categories') state.budgets = budgetNorm(r.value);
+      if (r.key === 'transfer_goals') state.transferGoals = r.value || {};
+    });
+  } catch (e) { /* 아직 저장된 값이 없다 */ }
+  state.budgetsLoaded = true;
+}

@@ -232,8 +232,6 @@ function openDebtEditor() {
   });
 }
 
-
-
 /* ---------------- 운용 점검 (연금·미운용 계좌) ---------------- */
 function computeIdleAccounts(data, d, cats) {
   const names = state.settings.idleAccounts || [];
@@ -371,71 +369,6 @@ function openIdleAccountPicker(data, d) {
       await saveSettings();
       back.remove();
       renderPage();
-    }
-  });
-}
-
-
-/* ---------------- 매매 규율 ---------------- */
-function renderDisciplinePanel(hostId, data) {
-  const host = document.getElementById(hostId);
-  if (!host) return;
-  const sales = (data.ledger || []).filter(r => r.major.includes('수입') && (r.item || '').includes('판매수익'));
-  if (!sales.length) { host.innerHTML = ''; host.style.display = 'none'; return; }
-  const byMonth = {};
-  sales.forEach(r => {
-    const k = ledgerMonthKey(r.date);
-    if (!k) return;
-    if (!byMonth[k]) byMonth[k] = { cnt: 0, names: new Set(), win: 0, sum: 0 };
-    byMonth[k].cnt++;
-    byMonth[k].sum += r.amount;
-    if (r.amount > 0) byMonth[k].win++;
-    byMonth[k].names.add((r.vendor || '').split('›').pop().trim());
-  });
-  const keys = Object.keys(byMonth).sort();
-  const series = keys.slice(-12);
-  const mk = thisMonthKey();
-  const closed = series.filter(k => k !== mk);
-  const avgCnt = closed.length ? closed.reduce((a, k) => a + byMonth[k].cnt, 0) / closed.length : 0;
-  const cur = byMonth[mk] || { cnt: 0, names: new Set(), win: 0, sum: 0 };
-  const allWin = sales.filter(r => r.amount > 0).length;
-  const winRate = (allWin / sales.length) * 100;
-
-  host.innerHTML = `
-    <div class="panel-title"><div>매매 규율</div><span class="ptag">실현 매도 기준</span></div>
-    <div class="stat-grid" style="grid-template-columns:repeat(3,1fr);gap:8px;">
-      <div class="stat-card">
-        <div class="label">이번 달 매도</div>
-        <div class="value" style="color:${cur.cnt > avgCnt * 1.5 ? 'var(--expense-text)' : 'var(--text)'}">${cur.cnt}건</div>
-        <div class="sub">마감월 평균 ${avgCnt.toFixed(1)}건</div>
-      </div>
-      <div class="stat-card">
-        <div class="label">이번 달 종목 수</div>
-        <div class="value">${cur.names.size}개</div>
-        <div class="sub">매도한 서로 다른 종목</div>
-      </div>
-      <div class="stat-card">
-        <div class="label">누적 익절 비율</div>
-        <div class="value" style="color:${winRate >= 50 ? 'var(--income-text)' : 'var(--expense-text)'}">${winRate.toFixed(0)}%</div>
-        <div class="sub">${sales.length}건 중 ${allWin}건 플러스</div>
-      </div>
-    </div>
-    <div class="chart-wrap" style="min-height:170px;margin-top:8px;"><canvas id="chart-disc"></canvas></div>
-    <div class="settings-note">매수 기록이 가계부에 없어 <b>평균 보유기간</b>은 계산할 수 없어요. 매도 빈도가 평소보다 튀는 달이 "원칙이 흔들린 달"입니다.</div>
-  `;
-  if (state.charts.disc) state.charts.disc.destroy();
-  const ctx = document.getElementById('chart-disc');
-  if (!ctx) return;
-  state.charts.disc = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: series.map(monthKeyLabel),
-      datasets: [{ label: '매도 건수', data: series.map(k => byMonth[k].cnt), backgroundColor: series.map(k => byMonth[k].cnt > avgCnt * 1.5 ? 'rgba(193,72,63,.8)' : 'rgba(154,163,182,.55)'), borderRadius: 3, labelColor: '#c9cede' }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false, layout: { padding: { top: 16 } },
-      plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` 매도 ${c.raw}건` } } },
-      scales: { x: { ticks: MONO_TICK, grid: { display: false } }, y: { ticks: MONO_TICK, grid: GRID_FAINT } }
     }
   });
 }

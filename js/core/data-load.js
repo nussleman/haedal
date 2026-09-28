@@ -22,27 +22,6 @@ async function fetchGoalsFromDB() {
   return (data || []).map(goalRowToSheetShape);
 }
 
-/* 벤치마크 지수(S&P500 월말 종가). index_prices 는 공용 시장 데이터 테이블이다. */
-async function fetchIndexFromDB() {
-  const sb = await enClient();
-  const { data, error } = await sb.from('index_prices').select('month,close')
-    .eq('symbol', 'SPX').order('month');
-  if (error) throw new Error(error.message);
-  const out = {};
-  (data || []).forEach(r => { out[String(r.month).slice(0, 7)] = Number(r.close); });
-  return out;
-}
-/* 지난달 종가가 아직 없으면 index-refresh 함수로 채운다 (하루 한 번만 시도). 결과는 다음 로딩부터 반영. */
-function maybeRefreshIndex(prices) {
-  const now = new Date();
-  const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-  const need = `${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, '0')}`;
-  if (prices && prices[need]) return;
-  const key = 'haedal:index-refresh-tried';
-  const today = now.toISOString().slice(0, 10);
-  try { if (localStorage.getItem(key) === today) return; localStorage.setItem(key, today); } catch (e) {}
-  enClient().then(sb => sb.functions.invoke('index-refresh', { body: {} })).catch(() => {});
-}
 
 /* 가계부 원장은 Supabase 가 유일한 원본이다.
    전체 내역에서 고치거나 새로 넣은 것이 흐름·현황·목표까지 그대로 흘러가야 하므로,
@@ -108,19 +87,16 @@ async function fetchAssetsFromDB() {
 
 async function fetchAllTabsAndMerge() {
   /* 토스 탭 조회는 실패해도 대시보드 전체를 막지 않도록 병렬로 따로 돌린다. */
-  /* 전부 Supabase — 한꺼번에 병렬로 부른다. 토스·종목 팩트는 없어도 나머지 화면은 돈다 */
-  const [dbLedger, dbAssets, dbStocks, dbGoals, dbIndex, dbToss, dbFacts] = await Promise.all([
+  /* 전부 Supabase — 한꺼번에 병렬로 부른다. 토스는 없어도 나머지 화면은 돈다 */
+  const [dbLedger, dbAssets, dbStocks, dbGoals, dbToss] = await Promise.all([
     fetchLedgerFromDB().catch((e) => { console.error('ledger from DB failed', e); return null; }),
     fetchAssetsFromDB().catch((e) => { console.error('assets from DB failed', e); return null; }),
     fetchStocksFromDB().catch((e) => { console.error('stocks from DB failed', e); return null; }),
     fetchGoalsFromDB().catch((e) => { console.error('goals from DB failed', e); return null; }),
-    fetchIndexFromDB().catch((e) => { console.error('index from DB failed', e); return null; }),
-    fetchTossData().catch((e) => { console.error('toss from DB failed', e); return null; }),
-    fetchStockFacts().catch((e) => { console.error('stock facts from DB failed', e); return null; })
+    fetchTossData().catch((e) => { console.error('toss from DB failed', e); return null; })
   ]);
   const warn = [];
   if (!dbGoals) warn.push('목표');
-  if (!dbIndex) warn.push('지수');
 
   /* 가계부·자산 스냅샷은 Supabase 가 유일한 원본 — 못 읽으면 예비 없이 실패로 알린다 */
   if (!dbLedger) throw new Error('가계부를 불러오지 못했습니다');
@@ -129,7 +105,6 @@ async function fetchAllTabsAndMerge() {
   const ledgerSource = 'db';
   const assetSource = 'db';
   const goals = dbGoals || [];
-  const indexPrices = dbIndex || {};
   /* 종목 → 테마 문자열. stocks.themes 가 원본 (예전 시트 '분류' 탭의 주식_카테고리를 옮겨 둠) */
   const stockCategoryMap = {};
   (dbStocks || []).forEach(x => {
@@ -148,13 +123,9 @@ async function fetchAllTabsAndMerge() {
     months: pivot.months, incomeTotal: pivot.incomeTotal, expenseTotal: pivot.expenseTotal,
     expenseCategories: pivot.expenseCategories, incomeCategories: pivot.incomeCategories, transferCategories: pivot.transferCategories,
     assetRows, assetSource, ledger, ledgerSource, investmentTags, goals, stockCategoryMap, stocks: dbStocks || [],
-    toss: dbToss,
-    stockFacts: dbFacts || {},
-    indexPrices,
-    indexSource: 'db'
+    toss: dbToss
   };
   if (warn.length) data._partialWarning = `${warn.join('·')} 데이터를 못 불러왔지만, 나머지로 표시 중이에요.`;
-  maybeRefreshIndex(indexPrices);
   return data;
 }
 
@@ -183,7 +154,6 @@ function cacheLoad(uid) {
 }
 function cacheClear() { try { localStorage.removeItem(DATA_CACHE_KEY); } catch (e) {} }
 
-/* 토스·종목_팩트는 따로 받아서, 오면 끼워 넣고 투자 화면이면 다시 그린다 */
 async function fetchLive(manual, ready) {
   setSyncState('loading');
   try {
@@ -207,7 +177,7 @@ async function init(uid) {
   routeApply();          /* 주소에 적힌 화면이 있으면 거기서 시작한다 */
   renderShell();
   /* 설정·예산·스터디 카드와 가계부·자산을 동시에 받는다 (예전엔 설정을 다 받은 뒤에야 가계부를 요청했다) */
-  const ready = Promise.all([loadBudgets(), loadSettings(), sdxLoad(true)]);
+  const ready = Promise.all([loadBudgets(), loadSettings()]);
   const cached = cacheLoad(state.uid);
   if (cached) {
     ready.then(() => {

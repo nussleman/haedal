@@ -25,7 +25,8 @@ const nm = p => path.join(ROOT, 'node_modules', p);
     for (const k of subs) {
       const n0 = errs.length;
       const [s, sub] = k.split('/');
-      await page.evaluate(([s, sub]) => goTo(s, sub), [s, sub]); await page.waitForTimeout(300);
+      try { await page.evaluate(([s, sub]) => goTo(s, sub), [s, sub]); } catch (e) { errs.push(e.message.split('\n')[0]); }
+      await page.waitForTimeout(300);
       /* 화면 안의 버튼(보기 전환)도 한 번씩 눌러 본다 */
       await page.evaluate(() => document.querySelectorAll('#page-content .range-toggle button, #page-content [data-view], #page-content [data-gf], #page-content [data-gd]').forEach((b, i) => { if (i < 12) try { b.click(); } catch (e) {} }));
       await page.waitForTimeout(200);

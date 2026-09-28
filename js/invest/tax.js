@@ -40,3 +40,68 @@ function analyzeCapitalGainsTax(ledger) {
   const totalGain = Object.values(gain).reduce((a, b) => a + b, 0);
   return { rows, paid, paidRows, totalPaid, totalGain };
 }
+
+function renderCapitalGainsPanel(hostId, ledger) {
+  const host = document.getElementById(hostId);
+  if (!host) return;
+  const t = analyzeCapitalGainsTax(ledger);
+  if (!t.rows.length) { host.innerHTML = ''; return; }
+
+  const pending = t.rows.filter(r => !r.settled);
+  const upcoming = pending.length ? pending[pending.length - 1] : null;
+  const settledRows = t.rows.filter(r => r.settled);
+  const accuracy = settledRows.length
+    ? avgOf(settledRows.map(r => (r.est > 0 ? (r.actual / r.est) * 100 : 100)))
+    : null;
+
+  host.innerHTML = `
+    <div class="panel-title"><div>양도소득세 · 세후 실현수익</div></div>
+    <div class="stat-grid" style="grid-template-columns:repeat(auto-fit,minmax(122px,1fr));margin-bottom:10px;">
+      <div class="stat-card">
+        <div class="label">지금까지 낸 양도세</div>
+        <div class="value" style="color:var(--expense-text)">${formatCompactWon(t.totalPaid)}원</div>
+        <div class="sub">누적 실현손익 ${formatCompactWon(t.totalGain)}원</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">${upcoming ? `${upcoming.payYear}년 5월 예상 납부액` : '미납 예정 세액'}</div>
+        <div class="value" style="color:var(--accent-text)">${upcoming ? formatCompactWon(Math.round(upcoming.est)) + '원' : '없음'}</div>
+        <div class="sub">${upcoming ? `${upcoming.year}년 실현손익 ${formatCompactWon(upcoming.gain)}원 기준` : '모두 정산 완료'}</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">누적 세후 실현수익</div>
+        <div class="value" style="color:var(--income-text)">${formatCompactWon(t.rows.reduce((a, r) => a + r.net, 0))}원</div>
+        <div class="sub">배당 제외, 판매수익 기준</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">추정 정확도</div>
+        <div class="value">${accuracy === null ? '—' : accuracy.toFixed(0) + '%'}</div>
+        <div class="sub">실제 납부 ÷ 22% 추정</div>
+      </div>
+    </div>
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead><tr>
+          <th>과세연도</th><th style="text-align:right">실현손익</th><th style="text-align:right">과세표준</th>
+          <th style="text-align:right">추정 세액</th><th style="text-align:right">실제 납부</th>
+          <th style="text-align:right">세후 실현수익</th><th style="text-align:right">실효세율</th><th>상태</th>
+        </tr></thead>
+        <tbody>
+          ${t.rows.slice().reverse().map(r => `<tr>
+            <td>${r.year}년</td>
+            <td class="amt income">${formatWon(r.gain)}</td>
+            <td class="amt">${formatWon(Math.max(0, r.gain - CGT_DEDUCTION))}</td>
+            <td class="amt">${formatWon(Math.round(r.est))}</td>
+            <td class="amt expense">${r.settled ? formatWon(r.actual) : '—'}</td>
+            <td class="amt" style="color:var(--income-text)">${formatWon(Math.round(r.net))}</td>
+            <td class="amt">${r.rate.toFixed(1)}%</td>
+            <td style="color:${r.settled ? 'var(--text-faint)' : 'var(--accent-text)'}">${r.settled ? `${r.payYear}.05 납부` : `${r.payYear}.05 예정`}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+    <details class="mininote"><summary>계산 기준</summary>
+      추정 세액 = (실현손익 − 250만원) × 22% · 국내 상장주식 비과세분 제외 전이라 <b>상한선</b>.
+      가계부에는 지출 › 기타로 잡히지만 성격은 투자 비용.
+    </details>
+  `;
+}

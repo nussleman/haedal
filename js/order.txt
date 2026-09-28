@@ -17,11 +17,11 @@ js/report/yearly.js
 js/entry/calendar.js
 js/home/home.js
 js/invest/tax.js
-js/invest/benchmark.js
 js/invest/toss.js
-js/invest/study.js
 js/invest/book.js
-js/invest/journal.js
+js/invest/rules.js
+js/invest/overview.js
+js/report/savings.js
 js/entry/snapshot.js
 js/settings/lists.js
 js/settings/budget.js
