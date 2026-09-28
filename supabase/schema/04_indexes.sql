@@ -54,7 +54,6 @@ CREATE INDEX stocks_owner_idx ON public.stocks USING btree (owner_id, name);
 CREATE INDEX study_cards_watch_level_idx ON public.study_cards USING btree (owner_id, watch_level);
 CREATE UNIQUE INDEX tags_notion_key ON public.tags USING btree (owner_id, notion_id) WHERE (notion_id IS NOT NULL);
 CREATE INDEX themes_owner_idx ON public.themes USING btree (owner_id, sort_order);
-CREATE INDEX trade_log_owner_date_idx ON public.trade_log USING btree (owner_id, traded_on DESC, id DESC);
 CREATE INDEX tx_category_idx ON public.transactions USING btree (category_id);
 CREATE INDEX tx_merchant_idx ON public.transactions USING btree (owner_id, merchant);
 CREATE INDEX tx_owner_date_idx ON public.transactions USING btree (owner_id, date DESC);

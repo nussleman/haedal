@@ -10,24 +10,29 @@ css/style.css       대시보드 스타일 (원본)
 dist/               배포용 묶음 — js/·css/ 를 합쳐 줄인 것. 직접 고치지 말고 npm run build
 js/
   core/             설정·상태, 계산, 화면 틀, Supabase 연결, 데이터 로딩
-  entry/            기록 — 입출금 입력, 전체 내역, 사용처, 캘린더, 자산 스냅샷
-  home/             홈
-  goals/            목표 — 지표 정의, 보드·목록·편집기
-  report/           리포트 — 월간, 연간
-  invest/           투자 — 종목 표, 스터디, 벤치마크, 세금, 토스, 매매일지
-  lab/              실험실 — 돋보기, 흐름표, 구조 시뮬레이션, 고정비 검토
+  entry/            기록 — 입력(PC 창 · 폰 빠른 기록), 전체 내역, 사용처, 캘린더, 월말 결산
+  home/             홈 — 이번 달 더 쓸 수 있는 돈, 확인할 것, 최근 3달 추이 · 순자산
+  goals/            목표 — 지표 정의, 목록·편집기
+  report/           리포트 — 월간, 연간(+세금), 순자산(+연금·저축 상세)
+  invest/           투자 — 요약, 종목 표, 매매원칙, 토스 데이터
   settings/         설정 — 분류·사용처·계좌·종목 목록, 예산, 적립
-  panels/           여러 화면에 끼워 쓰는 패널 (자산배분, 부채, 운용 점검)
+  panels/           여러 화면에 끼워 쓰는 패널 (자산배분, 부채, 방치 계좌 점검)
   boot.js           로그인 확인 후 시작 — 항상 마지막에 불러온다
-shared/supabase.js  세 화면 공용 Supabase 연결 (키 · 라이브러리 버전 고정)
+shared/supabase.js  대시보드·데이트 통장 공용 Supabase 연결 (키 · 라이브러리 버전 고정)
 gagyebu.html        예전 폰 가계부 앱 주소 → index.html#quick 으로 넘김 (설치된 아이콘 유지용)
 date/               데이트 통장 앱 (PWA)
-supabase/           DB 변경 기록(migrations)과 Edge Function 소스
-tests/              화면 회귀 검사
+supabase/           DB 구조 스냅샷(schema)과 변경 기록(migrations)
+collector/          토스 수집기 사본 (실제로는 맥에서 15분마다 돈다)
+tests/              화면 회귀·글자 깨짐·오류·DB 구조 검사
 ```
 
 `js/` 파일은 모듈이 아닌 일반 스크립트라서 전역을 공유한다. 불러오는 순서는 `js/order.txt` 에 있고, 바꾸지 말 것.
 고친 뒤에는 `npm run build` 로 `dist/` 를 다시 만들어 함께 커밋한다 (`npm test` 가 최신인지 확인한다).
+
+## 메뉴 (2026-09-28 정리)
+
+홈 · 기록(입출금 내역 · 캘린더 · 월말 결산) · 투자(요약 · 종목 · 매매원칙) · 목표 · 리포트(월간 · 연간 · 순자산) · 설정.
+돈 관리의 본질(기록 → 이번 달 → 저축·투자 흐름 → 순자산·목표)에 닿지 않는 화면은 지웠다.
 
 ## 데이터
 
@@ -38,7 +43,8 @@ tests/              화면 회귀 검사
 
 ```
 npm install
-npm test             # 문법 검사 + 대시보드 전 메뉴·모바일 앱 2개 첫 화면을 HEAD 와 픽셀 비교
+npm test             # 문법 검사 + 전 메뉴 픽셀 비교(HEAD 대비) + 글자 깨짐
+node tests/errors.js # 전 메뉴를 PC·폰으로 열어 자바스크립트 오류가 없는지
 npm run test:layout  # 글자 깨짐(세로 쪼개짐·잘림·겹침·화면 밖) 검사 — 기준보다 늘면 실패
 npm run test:schema  # supabase/schema 로 빈 DB 를 만들어 실제 DB 와 구조가 같은지 확인
 ```

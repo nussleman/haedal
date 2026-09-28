@@ -19,7 +19,6 @@ alter table public.goal_files enable row level security;
 alter table public.goal_links enable row level security;
 alter table public.goals enable row level security;
 alter table public.holdings enable row level security;
-alter table public.index_prices enable row level security;
 alter table public.job_applications enable row level security;
 alter table public.life_event_people enable row level security;
 alter table public.life_events enable row level security;
@@ -45,7 +44,6 @@ alter table public.stocks enable row level security;
 alter table public.study_cards enable row level security;
 alter table public.tags enable row level security;
 alter table public.themes enable row level security;
-alter table public.trade_log enable row level security;
 alter table public.transactions enable row level security;
 
 
@@ -53,5 +51,4 @@ alter table public.transactions enable row level security;
 alter table public.toss_summary enable row level security;
 alter table public.toss_holdings enable row level security;
 alter table public.toss_daily enable row level security;
-alter table public.stock_facts enable row level security;
 alter table public.drawing_eras enable row level security;

@@ -68,8 +68,6 @@ create policy "own rows" on public.goals as permissive for all to authenticated
 create policy "own rows" on public.holdings as permissive for all to authenticated
   using ((( SELECT auth.uid() AS uid) = owner_id))
   with check ((( SELECT auth.uid() AS uid) = owner_id));
-create policy "signed-in read" on public.index_prices as permissive for select to authenticated
-  using (true);
 create policy "own rows" on public.job_applications as permissive for all to public
   using ((( SELECT auth.uid() AS uid) = owner_id))
   with check ((( SELECT auth.uid() AS uid) = owner_id));
@@ -177,9 +175,6 @@ create policy "own rows" on public.tags as permissive for all to public
 create policy "own rows" on public.themes as permissive for all to public
   using ((( SELECT auth.uid() AS uid) = owner_id))
   with check ((( SELECT auth.uid() AS uid) = owner_id));
-create policy "own rows" on public.trade_log as permissive for all to public
-  using ((( SELECT auth.uid() AS uid) = owner_id))
-  with check ((( SELECT auth.uid() AS uid) = owner_id));
 create policy "own rows" on public.transactions as permissive for all to authenticated
   using ((( SELECT auth.uid() AS uid) = owner_id))
   with check ((( SELECT auth.uid() AS uid) = owner_id));
@@ -191,8 +186,6 @@ create policy "own rows" on public.toss_summary as permissive for all to public
 create policy "own rows" on public.toss_holdings as permissive for all to public
   using ((( SELECT auth.uid() AS uid) = owner_id)) with check ((( SELECT auth.uid() AS uid) = owner_id));
 create policy "own rows" on public.toss_daily as permissive for all to public
-  using ((( SELECT auth.uid() AS uid) = owner_id)) with check ((( SELECT auth.uid() AS uid) = owner_id));
-create policy "own rows" on public.stock_facts as permissive for all to public
   using ((( SELECT auth.uid() AS uid) = owner_id)) with check ((( SELECT auth.uid() AS uid) = owner_id));
 create policy "own rows" on public.drawing_eras as permissive for all to public
   using ((( SELECT auth.uid() AS uid) = owner_id))

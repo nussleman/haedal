@@ -19,7 +19,6 @@ alter table public.goal_files add constraint goal_files_pkey PRIMARY KEY (id);
 alter table public.goal_links add constraint goal_links_pkey PRIMARY KEY (id);
 alter table public.goals add constraint goals_pkey PRIMARY KEY (id);
 alter table public.holdings add constraint holdings_pkey PRIMARY KEY (id);
-alter table public.index_prices add constraint index_prices_pkey PRIMARY KEY (symbol, month);
 alter table public.job_applications add constraint job_applications_pkey PRIMARY KEY (id);
 alter table public.life_event_people add constraint life_event_people_pkey PRIMARY KEY (event_id, person_id);
 alter table public.life_events add constraint life_events_pkey PRIMARY KEY (id);
@@ -45,7 +44,6 @@ alter table public.stocks add constraint stocks_pkey PRIMARY KEY (id);
 alter table public.study_cards add constraint study_cards_pkey PRIMARY KEY (id);
 alter table public.tags add constraint tags_pkey PRIMARY KEY (id);
 alter table public.themes add constraint themes_pkey PRIMARY KEY (id);
-alter table public.trade_log add constraint trade_log_pkey PRIMARY KEY (id);
 alter table public.transactions add constraint transactions_pkey PRIMARY KEY (id);
 alter table public.accounts add constraint accounts_owner_id_name_key UNIQUE (owner_id, name);
 alter table public.asset_snapshots add constraint asset_snapshots_owner_id_month_account_key UNIQUE (owner_id, month, account);
@@ -145,8 +143,6 @@ alter table public.transactions add constraint transactions_category_id_fkey FOR
 alter table public.toss_summary add constraint toss_summary_pkey PRIMARY KEY (owner_id);
 alter table public.toss_holdings add constraint toss_holdings_pkey PRIMARY KEY (owner_id, symbol);
 alter table public.toss_daily add constraint toss_daily_pkey PRIMARY KEY (owner_id, date);
-alter table public.stock_facts add constraint stock_facts_pkey PRIMARY KEY (id);
-alter table public.stock_facts add constraint stock_facts_owner_id_name_key UNIQUE (owner_id, name);
 
 -- 코알라 앱 변경 반영 (2026-09-28)
 alter table public.drawing_eras add constraint drawing_eras_pkey PRIMARY KEY (id);

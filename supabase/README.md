@@ -4,7 +4,7 @@
 
 ## schema/ — 전체 구조 스냅샷 (2026-09-28, 토스·종목 팩트 이전 후)
 
-`public` 스키마의 테이블 51개·제약·인덱스·함수·뷰·트리거·RLS 정책 전부. (+ `private.ingest_keys`)
+`public` 스키마의 테이블 48개·제약·인덱스·함수·뷰·트리거·RLS 정책 전부. (+ `private.ingest_keys`)
 새 Supabase 프로젝트에 번호 순서대로 실행하면 같은 구조가 만들어진다 (데이터는 없음).
 
 ```
@@ -24,4 +24,4 @@ DB 를 바꿀 때마다 `YYYYMMDDHHMMSS_설명.sql` 로 남긴다. 스냅샷을 
 
 ## functions/ — Edge Function 소스
 
-- `index-refresh` — S&P500 월말 종가를 `index_prices` 에 채움. 대시보드가 지난달 값이 없을 때 호출
+- (없음) 예전 `index-refresh`(S&P500 종가)는 벤치마크 화면과 함께 폐지. Supabase 대시보드에 배포본이 남아 있으면 지워도 된다.

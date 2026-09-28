@@ -124,13 +124,6 @@ begin
   return new;
 end $function$
 ;
-CREATE OR REPLACE FUNCTION public.trade_log_touch()
- RETURNS trigger
- LANGUAGE plpgsql
- SET search_path TO ''
-AS $function$
-begin new.updated_at = now(); return new; end $function$
-;
 
 
 -- 2026-09-28 토스·종목 팩트 (migrations/20260928000006)
