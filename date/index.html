@@ -309,23 +309,20 @@ textarea.in{height:auto;min-height:74px;padding:9px 12px;line-height:1.5;resize:
 <div id="ov" hidden></div>
 <div id="toast" role="status"></div>
 
-<script src="../shared/supabase.js?v=20260928e"></script>
+<script src="../shared/supabase.js?v=20260928g"></script>
 <script>
 /* ================= 데이트 통장 =================
    해달과 같은 Supabase 를 쓰지만 테이블은 완전히 따로다 (date_books · date_members · date_tx · date_balance_checks).
-   두 이메일만 들어온다 — 화면의 COUPLE 과 DB 의 date_couple_emails() 가 같은 목록이어야 한다.
-   기록·수정은 EDITOR 한 계정만 한다(DB 의 date_is_editor() 와 같아야 한다). 다른 한 사람은 보기만 한다.
-   입금자는 계정과 상관없이 PEOPLE 두 사람 이름으로 고정이다.
+   누가 들어오고(allowed_emails), 누가 고칠 수 있고(editor_emails), 입금자 이름이 무엇인지(people)는
+   모두 DB 의 date_books 에 있다 — 코드에는 개인 정보를 두지 않는다. 막는 건 DB(date_enter · RLS)가 한다.
    해달 본 장부(transactions)는 이 화면에서 한 줄도 읽지 않는다.
 
    화면 구조는 해달 웹을 따른다: 위에 최상위 메뉴(홈·내역·리포트·설정), 왼쪽 레일에 하위 메뉴,
    오른쪽 위 '＋ 기록'(단축키 N)이 어디서든 기록 창을 띄운다.
    종류 : 지출(카드·계좌에서 나간 돈) · 입금(둘 중 한 사람이 넣은 돈) · 수입(이자·환불 등) */
 
-/* 들어올 수 있는 사람은 둘뿐이다. 여기 목록은 안내용이고, 실제로 막는 건 DB(date_enter · RLS)다. */
-const COUPLE = ['gksxowns@gmail.com', 'min2114@naver.com'];
-const EDITOR = 'gksxowns@gmail.com';
-const PEOPLE = ['태준', '하랑'];
+/* 입금자 이름 — 통장을 불러오면 date_books.people 로 채운다 */
+let PEOPLE = [];
 
 let SB = null;
 async function sb() {
@@ -380,7 +377,7 @@ async function loadAll() {
   S.tx = tx.data || [];
   S.checks = ck.data || [];
   S.members = mem.data || [];
-  if (bk.data) S.book = bk.data;
+  if (bk.data) { S.book = bk.data; PEOPLE = Array.isArray(bk.data.people) ? bk.data.people : []; }
 }
 
 /* 장부 잔액 = 시작 잔액 + 입금·수입 − 지출. 기준일 이전 기록은 이미 시작 잔액에 들어 있다고 본다. */
@@ -1013,15 +1010,17 @@ function showLogin(msg) {
       <button class="btn ghost full" id="lk-go" style="margin-top:8px;">로그인</button>
     </details>`);
   const err = $('#lk-err');
-  const email = () => {
+  const email = async () => {
     const v = $('#lk-em').value.trim().toLowerCase();
     if (!v) { err.textContent = '이메일을 입력하세요.'; return null; }
-    if (!COUPLE.includes(v)) { err.textContent = '이 통장에 등록된 이메일이 아니에요.'; return null; }
+    const { data: ok, error } = await (await sb()).rpc('date_email_allowed', { em: v });
+    if (error) { err.textContent = '확인하지 못했어요 — ' + error.message; return null; }
+    if (!ok) { err.textContent = '이 통장에 등록된 이메일이 아니에요.'; return null; }
     err.textContent = '';
     return v;
   };
   $('#lk-link').addEventListener('click', async () => {
-    const em = email(); if (!em) return;
+    const em = await email(); if (!em) return;
     $('#lk-link').disabled = true;
     const { error } = await (await sb()).auth.signInWithOtp({
       email: em, options: { emailRedirectTo: location.origin + location.pathname, shouldCreateUser: true } });
@@ -1033,7 +1032,7 @@ function showLogin(msg) {
     $('#lk-back').addEventListener('click', () => showLogin());
   });
   const go = async () => {
-    const em = email(); if (!em) return;
+    const em = await email(); if (!em) return;
     const password = $('#lk-pw').value;
     if (!password) { err.textContent = '비밀번호를 입력하세요.'; return; }
     $('#lk-go').disabled = true;
@@ -1053,16 +1052,17 @@ async function start() {
     const { data: { user } } = await c.auth.getUser();
     if (!user) { showLogin(); return; }
     S.uid = user.id;
-    S.canEdit = String(user.email || '').toLowerCase() === EDITOR;
-    document.body.classList.toggle('can-edit', S.canEdit);
-    if (!COUPLE.includes(String(user.email || '').toLowerCase())) {
+    /* 처음 들어오면 멤버로 등록되고, 통장이 아직 없으면 그때 만들어진다.
+       등록된 이메일이 아니면 DB 가 거절한다. */
+    const { data: bookId, error } = await c.rpc('date_enter');
+    if (error) {
       await c.auth.signOut();
       showLogin(`${user.email} 은 이 통장에 들어올 수 없는 계정이에요`);
       return;
     }
-    /* 처음 들어오면 멤버로 등록되고, 통장이 아직 없으면 그때 만들어진다 */
-    const { data: bookId, error } = await c.rpc('date_enter');
-    if (error) throw new Error(error.message);
+    const { data: canEdit } = await c.rpc('date_is_editor');
+    S.canEdit = !!canEdit;
+    document.body.classList.toggle('can-edit', S.canEdit);
     S.book = { id: bookId };
     await loadAll();
     readHash();

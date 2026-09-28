@@ -50,7 +50,7 @@ function goalStatusClass(status) {
    freq('월'|'연'|'')은 흐름형 지표에서 월평균/연합계 중 무엇과 비교할지를 정한다. */
 const GOAL_METRIC_DEFS = [
   /* --- 자산 (스톡) --- */
-  { key: 'emergency', name: '비상금 (NH-CMA)', cat: /자산|저축/, item: /비상금/, unit: 'won', dir: 'up', type: 'accumulation',
+  { key: 'emergency', name: '비상금', cat: /자산|저축/, item: /비상금/, unit: 'won', dir: 'up', type: 'accumulation',
     current: (d) => d.emergencyFund },
   { key: 'totalAssets', name: '총자산', cat: /자산/, item: /총\s*자산|전체\s*자산/, unit: 'won', dir: 'up', type: 'accumulation',
     current: (d) => d.totalAssets },

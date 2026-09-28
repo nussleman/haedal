@@ -1,6 +1,6 @@
 /* ── 설정 › 적립 ──────────────────────────────────────────
    예산이 "이만큼 넘지 마라"면 적립은 "이만큼은 보내라"다. 방향만 반대고 구조는 같다.
-   이체 대상은 세부분류(토스 증권·NH(CMA) 같은 계좌 이름)가 들고 있다. */
+   이체 대상은 세부분류(증권 계좌·CMA 같은 계좌 이름)가 들고 있다. */
 function renderSavingPlanSettings(container, data, d) {
   const ledger = data.ledger || [];
   const mk = thisMonthKey();

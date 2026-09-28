@@ -161,7 +161,13 @@ function renderAssetStats(data, d) {
   const accSum = (pred) => data.assetRows
     .filter(r => r.date === latestMonth && r.amount !== null && pred(r.account, r.category))
     .reduce((a, r) => a + r.amount, 0);
-  const toss = accSum((name) => /토스/.test(name));
+  /* 대표 증권 계좌: 설정값, 없으면 이번 달 가장 큰 투자 자산 계좌 */
+  const invRows = data.assetRows.filter(r => r.date === latestMonth && r.category === '투자 자산' && r.amount !== null);
+  const brokerName = (state.settings.brokerAccount && invRows.some(r => sameAcct(r.account, state.settings.brokerAccount)))
+    ? state.settings.brokerAccount
+    : ((invRows.slice().sort((a, b) => b.amount - a.amount)[0] || {}).account || '');
+  const toss = brokerName ? accSum((name) => sameAcct(name, brokerName)) : 0;
+  const emgAcctName = state.settings.emergencyAccount || '';
   const pension = (d.allocation && d.allocation['연금 자산']) || 0;
   const emgTarget = state.goals.emergencyFundTarget || 0;
   const emgPct = emgTarget > 0 ? Math.min((d.emergencyFund / emgTarget) * 100, 999) : null;
@@ -187,7 +193,7 @@ function renderAssetStats(data, d) {
         </div>
       </div>
       <div class="stat-card">
-        <div class="label">비상금 (NH-CMA)</div>
+        <div class="label">비상금${emgAcctName ? ` (${enEsc(emgAcctName)})` : ''}</div>
         <div class="value" style="color:${emgDone ? 'var(--income-text)' : 'var(--accent-text)'}">${formatCompactWon(d.emergencyFund)}원</div>
         <div class="sub ${emgPct === null ? '' : emgPct >= 100 ? 'good' : emgPct >= 60 ? 'warn' : 'bad'}">목표 ${formatCompactWon(emgTarget)}원 · 달성 ${emgPct === null ? '—' : emgPct.toFixed(0) + '%'}</div>
         <div class="allow-track" style="margin-top:7px;height:7px;">
@@ -197,7 +203,7 @@ function renderAssetStats(data, d) {
         <div class="sub ${emgMonths !== null && emgMonths >= emgMonthTarget ? 'good' : 'warn'}">${emgMonths === null ? '월 지출 데이터 부족' : `생활비 <b>${emgMonths.toFixed(1)}개월치</b> · 목표 ${emgMonthTarget}개월 (월 ${formatCompactWon(Math.round(livingCost))})`}</div>
       </div>
       <div class="stat-card">
-        <div class="label">토스 증권</div>
+        <div class="label">${brokerName ? enEsc(brokerName) : '대표 증권 계좌'}</div>
         <div class="value">${formatCompactWon(toss)}원</div>
         <div class="sub">총자산의 ${pct(toss)}</div>
       </div>

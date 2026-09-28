@@ -160,7 +160,10 @@ create table public.date_books (
   categories text[] default '{식사,카페,술,문화·여가,여행,교통,선물,생활,기타}'::text[] not null,
   created_by uuid default auth.uid() not null,
   created_at timestamp with time zone default now() not null,
-  deposit_goals jsonb default '{}'::jsonb not null
+  deposit_goals jsonb default '{}'::jsonb not null,
+  allowed_emails text[] default '{}'::text[] not null,
+  editor_emails text[] default '{}'::text[] not null,
+  people text[] default '{}'::text[] not null
 );
 
 create table public.date_members (

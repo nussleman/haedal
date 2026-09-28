@@ -26,9 +26,10 @@ function computeDerived(data) {
   });
 
   const cashLike = (allocation['현금 자산'] || 0) + (allocation['저축 자산'] || 0);
-  const normAcct = s => (s || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
-  const cmaRow = data.assetRows.find(r => r.date === latestMonth && normAcct(r.account) === 'NHCMA');
-  const emergencyFund = cmaRow ? cmaRow.amount : 0;
+  const emgAcct = (state.settings && state.settings.emergencyAccount) || '';
+  const emergencyFund = data.assetRows
+    .filter(r => r.date === latestMonth && sameAcct(r.account, emgAcct))
+    .reduce((a, r) => a + (r.amount || 0), 0);
 
   const displayAllocation = {};
   Object.entries(allocation).forEach(([cat, amt]) => {

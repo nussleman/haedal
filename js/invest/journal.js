@@ -764,12 +764,13 @@ function renderSavingsPage(container, data, d, scopeKey) {
   /* 저축: 비상금 목표 / 연금: 세액공제 한도 */
   let gaugeHtml = '';
   if (scopeKey === 'saving') {
-    const cma = accounts['NH-CMA'] !== undefined ? accounts['NH-CMA'] : (accounts['NH(CMA)'] || 0);
+    const emgName = state.settings.emergencyAccount || '';
+    const cma = Object.entries(accounts).filter(([n]) => sameAcct(n, emgName)).reduce((a, [, v]) => a + v, 0);
     const tgt = state.goals.emergencyFundTarget || 0;
     const pct = tgt ? Math.min((cma / tgt) * 100, 100) : 0;
     gaugeHtml = `
       <div class="stat-card">
-        <div class="label">비상금 (NH-CMA)</div>
+        <div class="label">비상금${emgName ? ` (${enEsc(emgName)})` : ''}</div>
         <div class="value" style="color:${tgt && cma >= tgt ? 'var(--income-text)' : 'var(--accent-text)'}">${formatCompactWon(cma)}원</div>
         <div class="allow-track" style="margin-top:8px;height:7px;"><div class="allow-fill" style="width:${pct}%;${tgt && cma >= tgt ? '' : 'background:linear-gradient(90deg,var(--gold),var(--gold-soft));'}"></div></div>
         <div class="allow-legend"><span>목표 ${formatCompactWon(tgt)}원</span><span>${tgt ? Math.round((cma / tgt) * 100) : 0}%</span></div>

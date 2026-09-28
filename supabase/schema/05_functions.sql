@@ -34,9 +34,16 @@ $function$
 CREATE OR REPLACE FUNCTION public.date_couple_emails()
  RETURNS text[]
  LANGUAGE sql
- IMMUTABLE
+ STABLE SECURITY DEFINER
  SET search_path TO ''
-AS $function$ select array['gksxowns@gmail.com', 'min2114@naver.com'] $function$
+AS $function$ select coalesce(array_agg(distinct lower(e)), '{}') from public.date_books b, unnest(b.allowed_emails) e $function$
+;
+CREATE OR REPLACE FUNCTION public.date_email_allowed(em text)
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO ''
+AS $function$ select lower(trim(coalesce(em, ''))) = any (public.date_couple_emails()) $function$
 ;
 CREATE OR REPLACE FUNCTION public.date_enter()
  RETURNS bigint
@@ -63,9 +70,24 @@ end $function$
 CREATE OR REPLACE FUNCTION public.date_is_editor()
  RETURNS boolean
  LANGUAGE sql
- STABLE
+ STABLE SECURITY DEFINER
  SET search_path TO ''
-AS $function$ select lower(coalesce(auth.jwt() ->> 'email', '')) = 'gksxowns@gmail.com' $function$
+AS $function$ select exists (select 1 from public.date_books b
+                     where lower(coalesce(auth.jwt() ->> 'email', '')) = any (b.editor_emails)) $function$
+;
+CREATE OR REPLACE FUNCTION public.date_tx_check_depositor()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+begin
+  if new.depositor is not null and not exists (
+       select 1 from public.date_books b where b.id = new.book_id and new.depositor = any (b.people)) then
+    raise exception '통장에 등록된 사람이 아닙니다: %', new.depositor;
+  end if;
+  return new;
+end $function$
 ;
 CREATE OR REPLACE FUNCTION public.is_date_member(b bigint)
  RETURNS boolean

@@ -85,7 +85,6 @@ alter table public.braindump_blocks add constraint braindump_only_task_done CHEC
 alter table public.braindump_blocks add constraint braindump_priority_range CHECK (((priority >= 0) AND (priority <= 3)));
 alter table public.categories add constraint categories_kind_check CHECK ((kind = ANY (ARRAY['수입'::text, '지출'::text, '이체'::text, '자산'::text])));
 alter table public.date_tx add constraint date_tx_amount_check CHECK ((amount > (0)::numeric));
-alter table public.date_tx add constraint date_tx_depositor_check CHECK ((depositor = ANY (ARRAY['태준'::text, '하랑'::text])));
 alter table public.date_tx add constraint date_tx_depositor_on_deposit CHECK (((kind = '입금'::text) = (depositor IS NOT NULL)));
 alter table public.date_tx add constraint date_tx_good_bad_check CHECK ((good_bad = ANY (ARRAY['Good'::text, 'Bad'::text])));
 alter table public.date_tx add constraint date_tx_kind_check CHECK ((kind = ANY (ARRAY['지출'::text, '입금'::text, '수입'::text])));

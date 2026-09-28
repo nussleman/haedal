@@ -121,7 +121,9 @@ const DEFAULT_SETTINGS = {
   targetAlloc: null,        // { '투자 자산': 55, ... } · null = 미설정
   debts: [],                // { id, name, balance, monthly, rate, memo }
   emergencyMonths: 6,       // 비상금 목표 = 월 지출 × N개월
-  idleAccounts: ['NH-연금저축펀드', 'NH-퇴직연금(개인IRP)', '하나-확정기여형(DC)', '신한 증권'],
+  idleAccounts: [],         // 운용 점검할 계좌 이름들 (설정 › 계좌에서 고른다)
+  emergencyAccount: '',     // 비상금으로 볼 계좌 이름
+  brokerAccount: '',        // 홈에 따로 보여줄 대표 증권 계좌 (비우면 가장 큰 투자 계좌)
   idleCheck: {},            // { 계좌명: 'YYYY-MM' } 마지막 운용 점검 월
   hiddenRecs: [],           // 안 보고 싶은 추천 목표 지표 키
   flowmap: null             // { income:[], expense:[], asset:[], liability:[] }
@@ -135,8 +137,12 @@ async function loadSettings() {
   if (v && typeof v === 'object') state.settings = Object.assign({}, DEFAULT_SETTINGS, v);
 }
 async function saveSettings() {
-  await appSettingSave('dashboard_settings', state.settings);
+  return await appSettingSave('dashboard_settings', state.settings);
 }
+/* 계좌 이름 비교: 기호·공백 무시 ("NH-CMA" = "NH(CMA)") */
+function acctKey(s) { return String(s || '').replace(/[^0-9A-Za-z가-힣]/g, '').toUpperCase(); }
+function sameAcct(a, b) { return !!a && !!b && acctKey(a) === acctKey(b); }
+
 function totalDebt() {
   return (state.settings.debts || []).reduce((a, x) => a + (Number(x.balance) || 0), 0);
 }

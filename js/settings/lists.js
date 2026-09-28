@@ -295,4 +295,32 @@ function dbmRenderFor(host, sub) {
   DBM.tab = tab;
   if (view) DBM.view[tab] = view;
   dbmRender(host);
+  if (tab === 'acct') renderAccountRoles(host);
+}
+
+/* 설정 › 계좌 위에 붙는 "계좌 역할" — 비상금 계좌, 대표 증권 계좌 */
+function renderAccountRoles(host) {
+  const el = host || document.getElementById('page-content');
+  if (!el || !state.data) return;
+  const names = [...new Set((state.data.assetRows || []).map(r => r.account).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'ko'));
+  const opt = (cur) => ['<option value="">— 지정 안 함 —</option>']
+    .concat(names.map(n => `<option value="${enEsc(n)}" ${sameAcct(n, cur) ? 'selected' : ''}>${enEsc(n)}</option>`)).join('');
+  const box = document.createElement('div');
+  box.className = 'panel';
+  box.id = 'acct-roles';
+  box.style.marginBottom = '14px';
+  box.innerHTML = `<div class="panel-title"><div>계좌 역할</div></div>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end;">
+      <label class="fld"><span>비상금 계좌</span><select id="ar-emg">${opt(state.settings.emergencyAccount)}</select></label>
+      <label class="fld"><span>대표 증권 계좌 (홈에 따로 표시)</span><select id="ar-broker">${opt(state.settings.brokerAccount)}</select></label>
+    </div>
+    <div class="settings-note">바꾸면 바로 저장돼요. 대표 증권 계좌를 비우면 가장 큰 투자 계좌를 보여줘요.</div>`;
+  el.prepend(box);
+  const save = async () => {
+    state.settings.emergencyAccount = box.querySelector('#ar-emg').value;
+    state.settings.brokerAccount = box.querySelector('#ar-broker').value;
+    if (await saveSettings() !== false) enToast('계좌 역할을 저장했습니다');
+  };
+  box.querySelector('#ar-emg').addEventListener('change', save);
+  box.querySelector('#ar-broker').addEventListener('change', save);
 }

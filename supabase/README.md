@@ -14,7 +14,8 @@
 
 - 이 DB 에는 해달 외에 브레인덤프·미디어·라이프 기록 앱의 테이블도 함께 있다.
 - `verify.sql` 을 돌려 나온 값이 `expected.md5` 와 같으면 스냅샷 = 실제 DB.
-- 판매용 새 DB 를 만들 때는 `05_functions.sql` 의 데이트 통장 이메일(date_couple_emails, date_is_editor)을 바꿔야 한다.
+- 구조만 담는다(데이터·권한 부여 GRANT 제외). 개인 정보는 들어 있지 않다.
+- 데이트 통장은 `date_books` 한 줄에 `allowed_emails`(들어올 사람) · `editor_emails`(고칠 사람) · `people`(입금자 이름)을 넣어야 쓸 수 있다.
 
 ## migrations/ — 스냅샷 이후 변경
 
