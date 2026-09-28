@@ -321,6 +321,7 @@ details.more[open] summary::after{content:' ▴';}
 <div class="sheet" id="sheet" hidden></div>
 <div id="toast"></div>
 
+<script src="shared/supabase.js?v=20260928e"></script>
 <script>
 /* ================= 해달 가계부 (모바일) =================
    해달 대시보드와 같은 Supabase 를 쓴다. 기록·수정·삭제가 바로 DB 에 반영되고,
@@ -331,14 +332,11 @@ details.more[open] summary::after{content:' ▴';}
      ☰ 전체메뉴로 들어가면 하단이 '← 뒤로 · 사용처 · 분류 · 계좌'로 바뀐다(토스증권 방식).
    기록 화면 위쪽에서 지출·수입·이체를 고른다. */
 
-const SB_URL  = 'https://rjxmrpifrhybucexuvli.supabase.co';
-const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqeG1ycGlmcmh5YnVjZXh1dmxpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU1NjU1OTAsImV4cCI6MjEwMTE0MTU5MH0.xSzE02pjZYqbx9nPLb8RVsQF9w7hJHEx2cO0JDOLLSU';
 
 let SB = null;
 async function sb() {
   if (SB) return SB;
-  const mod = await import('https://esm.sh/@supabase/supabase-js@2');
-  SB = mod.createClient(SB_URL, SB_ANON);
+  SB = await haedalSupabase();   /* shared/supabase.js */
   return SB;
 }
 

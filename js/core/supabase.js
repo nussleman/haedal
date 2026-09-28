@@ -1,6 +1,4 @@
 /* ================= Supabase : 로그인 · 가계부 기록 · 전체 내역 ================= */
-const SB_URL  = 'https://rjxmrpifrhybucexuvli.supabase.co';
-const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqeG1ycGlmcmh5YnVjZXh1dmxpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU1NjU1OTAsImV4cCI6MjEwMTE0MTU5MH0.xSzE02pjZYqbx9nPLb8RVsQF9w7hJHEx2cO0JDOLLSU';
 
 const EN = {
   sb: null, cats: [], catById: {}, freq: {}, merchants: [], merchCat: {}, merchFixed: {},
@@ -12,9 +10,7 @@ const EN_WD = ['일', '월', '화', '수', '목', '금', '토'];
 
 async function enClient() {
   if (EN.sb) return EN.sb;
-  if (window.__SB_MOD) { EN.sb = window.__SB_MOD.createClient(SB_URL, SB_ANON); return EN.sb; }
-  const mod = await import('https://esm.sh/@supabase/supabase-js@2');
-  EN.sb = mod.createClient(SB_URL, SB_ANON);
+  EN.sb = await haedalSupabase();
   return EN.sb;
 }
 const enQS = (sel) => document.querySelector(sel);

@@ -309,6 +309,7 @@ textarea.in{height:auto;min-height:74px;padding:9px 12px;line-height:1.5;resize:
 <div id="ov" hidden></div>
 <div id="toast" role="status"></div>
 
+<script src="../shared/supabase.js?v=20260928e"></script>
 <script>
 /* ================= 데이트 통장 =================
    해달과 같은 Supabase 를 쓰지만 테이블은 완전히 따로다 (date_books · date_members · date_tx · date_balance_checks).
@@ -321,8 +322,6 @@ textarea.in{height:auto;min-height:74px;padding:9px 12px;line-height:1.5;resize:
    오른쪽 위 '＋ 기록'(단축키 N)이 어디서든 기록 창을 띄운다.
    종류 : 지출(카드·계좌에서 나간 돈) · 입금(둘 중 한 사람이 넣은 돈) · 수입(이자·환불 등) */
 
-const SB_URL  = 'https://rjxmrpifrhybucexuvli.supabase.co';
-const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqeG1ycGlmcmh5YnVjZXh1dmxpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU1NjU1OTAsImV4cCI6MjEwMTE0MTU5MH0.xSzE02pjZYqbx9nPLb8RVsQF9w7hJHEx2cO0JDOLLSU';
 /* 들어올 수 있는 사람은 둘뿐이다. 여기 목록은 안내용이고, 실제로 막는 건 DB(date_enter · RLS)다. */
 const COUPLE = ['gksxowns@gmail.com', 'min2114@naver.com'];
 const EDITOR = 'gksxowns@gmail.com';
@@ -331,8 +330,7 @@ const PEOPLE = ['태준', '하랑'];
 let SB = null;
 async function sb() {
   if (SB) return SB;
-  const mod = await import('https://esm.sh/@supabase/supabase-js@2');
-  SB = mod.createClient(SB_URL, SB_ANON);
+  SB = await haedalSupabase();   /* shared/supabase.js */
   return SB;
 }
 

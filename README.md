@@ -18,6 +18,7 @@ js/
   settings/         설정 — 분류·사용처·계좌·종목 목록, 예산, 적립
   panels/           여러 화면에 끼워 쓰는 패널 (자산배분, 부채, 운용 점검)
   boot.js           로그인 확인 후 시작 — 항상 마지막에 불러온다
+shared/supabase.js  세 화면 공용 Supabase 연결 (키 · 라이브러리 버전 고정)
 gagyebu.html        모바일 가계부 입력 앱 (PWA)
 date/               데이트 통장 앱 (PWA)
 supabase/           DB 변경 기록(migrations)과 Edge Function 소스
@@ -35,5 +36,5 @@ tests/              화면 회귀 검사
 
 ```
 npm install
-npm test     # 문법 검사 + 모든 메뉴 화면을 HEAD 와 픽셀 비교
+npm test     # 문법 검사 + 대시보드 전 메뉴·모바일 앱 2개 첫 화면을 HEAD 와 픽셀 비교
 ```

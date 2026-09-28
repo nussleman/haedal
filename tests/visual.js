@@ -26,6 +26,8 @@ async function shoot(browser, dir, tag) {
     }
     if (u.includes('chart.umd')) return r.fulfill({ path: nm('chart.js/dist/chart.umd.min.js'), contentType: 'application/javascript' });
     if (u.includes('papaparse')) return r.fulfill({ path: nm('papaparse/papaparse.min.js'), contentType: 'application/javascript' });
+    /* 예전 코드가 esm.sh 에서 직접 받던 supabase-js 도 가짜로 돌려준다 (기준 커밋 비교용) */
+    if (u.includes('esm.sh/@supabase/supabase-js')) return r.fulfill({ contentType: 'application/javascript', body: 'export const createClient = (...a) => window.__SB_MOD.createClient(...a);' });
     if (u.includes('docs.google.com')) return r.fulfill({ status: 403, body: '<html>' });
     return r.abort();
   });
@@ -40,6 +42,15 @@ async function shoot(browser, dir, tag) {
     await page.evaluate(([s, sub]) => goTo(s, sub), [s, sub]); await page.waitForTimeout(350);
     shots[k] = await page.screenshot({ fullPage: true, animations: 'disabled' });
     fs.writeFileSync(path.join(OUT, tag, k.replace('/', '_') + '.png'), shots[k]);
+  }
+  /* 모바일 앱 두 개는 첫 화면만 비교한다 */
+  for (const [k, url] of [['app/gagyebu', 'gagyebu.html'], ['app/date', 'date/index.html']]) {
+    const p2 = await ctx.newPage(); p2.on('pageerror', (e) => errs.push(k + ': ' + e.message));
+    await p2.setViewportSize({ width: 420, height: 860 });
+    await p2.goto('https://app.test/' + url); await p2.waitForTimeout(1500);
+    shots[k] = await p2.screenshot({ fullPage: true, animations: 'disabled' });
+    fs.writeFileSync(path.join(OUT, tag, k.replace('/', '_') + '.png'), shots[k]);
+    await p2.close();
   }
   await ctx.close();
   return { shots, errs };
