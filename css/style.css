@@ -3139,6 +3139,20 @@ body{padding-left:0;padding-right:0;}
 .gv-counts b{font-family:var(--mono);color:var(--text);font-weight:600;margin-left:3px;}
 .gv-counts .active b{color:var(--accent-text);}
 .gv-counts .ok b{color:var(--income-text);}
+.gv-filter{display:flex;gap:6px;flex-wrap:wrap;}
+.gv-filter button{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;cursor:pointer;
+  background:var(--panel-2);border:1px solid var(--border);border-radius:var(--r-xl);
+  padding:5px 12px;font-family:var(--sans);font-size:var(--fs-sm);color:var(--text-dim);}
+.gv-filter button b{font-family:var(--mono);font-size:var(--fs-xs);font-weight:600;color:var(--text-faint);}
+.gv-filter button:hover{border-color:var(--border-strong);color:var(--text);}
+.gv-filter button.on{background:var(--accent-bg);border-color:var(--accent-text);color:var(--accent-text);font-weight:700;}
+.gv-filter button.on b{color:var(--accent-text);}
+.gv-filter button.ok:not(.on) b{color:var(--income-text);}
+.gv-note{flex:1 1 200px;min-width:0;}
+/* 투자 요약 — 차트 보기 고르기 */
+.inv-viewhd{display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-width:0;}
+.inv-views button{white-space:nowrap;}
+.inv-viewnote{font-size:var(--fs-tiny);color:var(--text-faint);font-weight:400;}
 .gv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;align-items:start;}
 .gv-grid .gb-card{cursor:default;}
 .gv-cat{margin-bottom:26px;}

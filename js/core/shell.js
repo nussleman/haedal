@@ -7,6 +7,15 @@ const valueLabelPlugin = {
   afterDatasetsDraw(chart) {
     const { ctx } = chart;
     const horizontal = chart.options && chart.options.indexAxis === 'y';
+    /* 좁은 화면에서 라벨끼리 겹치면 읽을 수 없다 — 이미 그린 라벨과 겹치는 건 건너뛴다 (최근 값 우선) */
+    const boxes = [];
+    const fits = (x, y, w, h, align, base) => {
+      const l = align === 'center' ? x - w / 2 : align === 'right' ? x - w : x;
+      const t = base === 'middle' ? y - h / 2 : y - h;
+      const r = { l: l - 2, t: t - 1, r: l + w + 2, b: t + h + 1 };
+      if (boxes.some(o => r.l < o.r && r.r > o.l && r.t < o.b && r.b > o.t)) return false;
+      boxes.push(r); return true;
+    };
     chart.data.datasets.forEach((dataset, dsIndex) => {
       if (dataset.hideLabel) return;
       const meta = chart.getDatasetMeta(dsIndex);
@@ -14,10 +23,11 @@ const valueLabelPlugin = {
       /* 점이 많으면 라벨이 서로 겹치므로 간격을 띄워 그린다 */
       const n = meta.data.length;
       const step = dataset.labelStep || (n > 30 ? Math.ceil(n / 8) : n > 16 ? Math.ceil(n / 10) : 1);
-      meta.data.forEach((element, index) => {
+      for (let index = meta.data.length - 1; index >= 0; index--) {
+        const element = meta.data[index];
         const value = dataset.data[index];
-        if (value === null || value === undefined || value === 0) return;
-        if (step > 1 && (n - 1 - index) % step !== 0) return;
+        if (value === null || value === undefined || value === 0) continue;
+        if (step > 1 && (n - 1 - index) % step !== 0) continue;
         const pos = element.tooltipPosition ? element.tooltipPosition() : element;
         ctx.save();
         ctx.font = dataset.labelFont || "600 10px 'IBM Plex Mono', monospace";
@@ -27,15 +37,17 @@ const valueLabelPlugin = {
           ctx.textAlign = value >= 0 ? 'left' : 'right';
           ctx.textBaseline = 'middle';
           const offsetX = dataset.labelOffset !== undefined ? dataset.labelOffset : (value >= 0 ? 6 : -6);
-          ctx.fillText(fmtLabel(value, index), pos.x + offsetX, pos.y);
+          const txt = fmtLabel(value, index);
+          if (fits(pos.x + offsetX, pos.y, ctx.measureText(txt).width, 11, ctx.textAlign, 'middle')) ctx.fillText(txt, pos.x + offsetX, pos.y);
         } else {
           ctx.textAlign = 'center';
           const isLine = chart.config.type === 'line' || dataset.type === 'line';
           const offset = dataset.labelOffset !== undefined ? dataset.labelOffset : (isLine ? -8 : (value >= 0 ? -6 : 14));
-          ctx.fillText(fmtLabel(value, index), pos.x, pos.y + offset);
+          const txt = fmtLabel(value, index);
+          if (fits(pos.x, pos.y + offset, ctx.measureText(txt).width, 11, 'center', 'alphabetic')) ctx.fillText(txt, pos.x, pos.y + offset);
         }
         ctx.restore();
-      });
+      }
     });
   }
 };
@@ -46,7 +58,8 @@ const stackTotalLabelPlugin = {
     const { ctx, data } = chart;
     const meta0 = chart.getDatasetMeta(0);
     if (!meta0) return;
-    data.labels.forEach((_, i) => {
+    let lastL = Infinity;   /* 오른쪽(최근)부터 그리며 앞 라벨과 겹치면 건너뛴다 */
+    for (let i = data.labels.length - 1; i >= 0; i--) {
       let sum = 0, topY = null;
       data.datasets.forEach((ds, dsIdx) => {
         const meta = chart.getDatasetMeta(dsIdx);
@@ -59,17 +72,18 @@ const stackTotalLabelPlugin = {
           if (topY === null || pos.y < topY) topY = pos.y;
         }
       });
-      if (!sum || topY === null) return;
+      if (!sum || topY === null) continue;
       const xEl = meta0.data[i];
-      if (!xEl) return;
+      if (!xEl) continue;
       const xPos = xEl.tooltipPosition ? xEl.tooltipPosition() : xEl;
       ctx.save();
       ctx.font = "600 10px 'IBM Plex Mono', monospace";
       ctx.fillStyle = '#c7cddb';
       ctx.textAlign = 'center';
-      ctx.fillText(formatCompactWon(sum), xPos.x, topY - 6);
+      const txt = formatCompactWon(sum), w = ctx.measureText(txt).width;
+      if (xPos.x + w / 2 + 3 <= lastL) { ctx.fillText(txt, xPos.x, topY - 6); lastL = xPos.x - w / 2; }
       ctx.restore();
-    });
+    }
   }
 };
 
@@ -114,12 +128,10 @@ const SECTION_SUBS = {
   home:   [['main', '홈']],
   entry:  [['#', '입출금'], ['ledger', '입출금 내역'], ['calendar', '캘린더'],
            ['#', '자산'], ['snapshot', '자산 스냅샷']],
-  invest: [['#', '요약'], ['ovGrowth', '자산 성장률'], ['ovTransfer', '투자 이체'],
-           ['ovRealized', '실현 수익'], ['ovUnrealized', '평가손익'],
+  invest: [['overview', '요약'],
            ['#', '포트폴리오'], ['book', '종목'], ['bench', '벤치마크'], ['tax', '세금'],
            ['#', '규율'], ['rules', '매매원칙'], ['journal', '매매일지']],
-  goals:  [['#', '상태'], ['active', '진행중'], ['done', '달성'], ['next', '다음 할 것'],
-           ['#', '모아보기'], ['board', '보드'], ['all', '전체 목록'], ['category', '카테고리별']],
+  goals:  [['list', '목록'], ['board', '보드'], ['category', '카테고리별']],
   report: [['#', '기간별'], ['monthly', '월간'], ['yearly', '연간'],
            ['#', '자산별'], ['networth', '순자산'], ['pension', '연금'], ['savings', '저축']],
   lab:    [['explore', '돋보기'], ['sim', '시뮬레이션'], ['flowmap', '흐름표'], ['fixed', '고정비 검토']],
@@ -160,22 +172,33 @@ function routeWrite(section, sub) {
    기존 북마크·뒤로가기 이력이 깨지지 않게 하기 위한 것. */
 const LEGACY_ROUTE = {
   /* 옛 메뉴(흐름·자산·할 일·데이터)로 저장된 북마크와 뒤로가기를 새 자리로 넘긴다. */
-  'status': 'goals/main', 'status/goals': 'goals/main',
+  'status': 'goals/list', 'status/goals': 'goals/list',
   'status/structure': 'lab/sim',
   'flow': 'report/monthly', 'flow/today': 'home/main',
   'flow/now': 'report/monthly', 'flow/year': 'report/yearly',
   'flow/calendar': 'entry/calendar', 'flow/flowmap': 'lab/flowmap',
   'assets': 'report/networth', 'assets/overview': 'report/networth',
-  'assets/investment': 'invest/ovGrowth', 'invest/main': 'invest/ovGrowth',
-  'invest/overview': 'invest/ovGrowth',
+  'assets/investment': 'invest/overview', 'invest/main': 'invest/overview',
   'invest/perf': 'invest/bench', 'assets/pension': 'report/pension',
   'assets/savings': 'report/savings',
-  'todo': 'goals/main', 'todo/goals': 'goals/main',
+  'todo': 'goals/list', 'todo/goals': 'goals/list',
   'todo/fixed': 'lab/fixed', 'todo/structure': 'lab/sim',
   'data': 'entry/ledger', 'data/ledger': 'entry/ledger',
   'data/snapshot': 'entry/snapshot', 'data/dbm': 'set/cat'
 };
 
+/* 합쳐진 화면(투자 요약 4개, 목표 목록 4개)의 옛 주소 → 새 화면 + 그 안의 보기 */
+const LEGACY_SUB = {
+  'invest/ovGrowth': ['invest/overview', { invView: 'ovGrowth' }],
+  'invest/ovTransfer': ['invest/overview', { invView: 'ovTransfer' }],
+  'invest/ovRealized': ['invest/overview', { invView: 'ovRealized' }],
+  'invest/ovUnrealized': ['invest/overview', { invView: 'ovUnrealized' }],
+  'goals/active': ['goals/list', { goalFilter: 'active' }],
+  'goals/done': ['goals/list', { goalFilter: 'done' }],
+  'goals/next': ['goals/list', { goalFilter: 'next' }],
+  'goals/all': ['goals/list', { goalFilter: 'all', goalDisplay: 'table' }],
+  'goals/main': ['goals/list', {}]
+};
 
 function routeRead() {
   let raw = String(location.hash || '').replace(/^#/, '');
@@ -183,6 +206,7 @@ function routeRead() {
   raw = raw.trim();
   if (!raw) return null;
   if (LEGACY_ROUTE[raw]) raw = LEGACY_ROUTE[raw];
+  if (LEGACY_SUB[raw]) { Object.assign(state, LEGACY_SUB[raw][1]); raw = LEGACY_SUB[raw][0]; }
   const [sec, sub] = raw.split('/');
   if (!NAV_ITEMS.some(n => n.id === sec)) return null;
   const subs = SECTION_SUBS[sec] || [];

@@ -35,7 +35,7 @@ const state = {
   range: 12,
   page: 'home',
   homeMainSub: 'main',
-  entrySub: 'ledger', goalsSub: 'active',
+  entrySub: 'ledger', goalsSub: 'list',
   reportSub: 'monthly', labSub: 'sim', setSub: 'cat',
   entryView: 'list',      // 입출금 보기: list | calendar
   ledgerFilter: { q: '', major: 'all', page: 1, pageSize: 50 },
@@ -98,7 +98,8 @@ const state = {
   calMode: 'all',
   calHeat: false,         // 지출 진하기(히트맵) — 기본 끔
   calSelDay: null,         // 캘린더에서 선택한 날 (YYYY-MM-DD)
-  invSub: 'ovGrowth',      // 투자 하위: ovGrowth | ovTransfer | ovRealized | ovUnrealized | book | bench | tax
+  invSub: 'overview',      // 투자 하위: overview | book | bench | tax | rules | journal
+  invView: 'ovGrowth',     // 투자 요약 차트 보기: ovGrowth | ovTransfer | ovRealized | ovUnrealized
   /* 요약을 4개 차트 화면으로 쪼갰다. 화면마다 기본으로 켜 둘 계열이 다르고,
      체크박스를 만지면 그 화면에만 남는다.
      누적 원금이 세 화면에 겹쳐 나오는 건 중복이 아니라 공통 기준선이다. */

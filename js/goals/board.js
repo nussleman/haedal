@@ -370,14 +370,14 @@ function renderGoalBoard(data, d, view) {
 }
 
 
-/* ---------------- 목표: 목록형 화면 (진행중 · 달성 · 다음 할 것 · 전체 목록 · 카테고리별) ----------------
+/* ---------------- 목표: 목록형 화면 (목록 · 카테고리별) ----------------
    상태는 시트 '상태' 칸으로 가른다 — 진행 = 진행중, 완료·달성 = 달성,
    나머지(대기·예정·보류·지연·비어 있음)는 아직 손대지 않은 '다음 할 것'. */
 const GOAL_VIEW_NOTE = {
   active: '지금 붙잡고 있는 목표',
   done: '다 이룬 목표 — 최근에 달성한 순',
   next: '아직 시작하지 않은 목표 — 시기가 가까운 순',
-  all: '목표 전체를 한 표로 — 머리글을 누르면 정렬, 줄을 더블클릭하면 편집',
+  all: '머리글을 누르면 정렬, 줄을 더블클릭하면 편집',
   category: '구분별로 묶어 보기'
 };
 function goalBucketOf(g) {
@@ -410,14 +410,22 @@ function renderGoalViews(host, view, ctx) {
     ? `<div class="gv-grid">${list.map(card).join('')}</div>`
     : `<div class="empty-state">${empty}</div>`;
 
+  /* 목록: 예전 진행중·달성·다음·전체 4개 화면을 하나로 — 위 칩으로 거르고, 카드/표로 바꿔 본다 */
+  const F = ['all', 'active', 'done', 'next'].includes(state.goalFilter) ? state.goalFilter : 'active';
+  const DSP = state.goalDisplay === 'table' ? 'table' : 'card';
+  const inF = (g) => F === 'all' || goalBucketOf(g) === F;
+  const EMPTY = { all: '목표가 없어요.', active: '진행 중인 목표가 없어요.', done: '아직 달성한 목표가 없어요.',
+    next: '다음에 할 목표가 없어요.' };
+
   let body = '';
-  if (view === 'active' || view === 'done' || view === 'next') {
-    const list = allGoals.filter(g => goalBucketOf(g) === view);
-    if (view === 'done') list.sort((a, b) => doneKey(b).localeCompare(doneKey(a)) || byTitle(a, b));
-    else if (view === 'next') list.sort((a, b) => periodKey(a) - periodKey(b) || byTitle(a, b));
-    else list.sort((a, b) => (pctOf(b) ?? -1) - (pctOf(a) ?? -1) || periodKey(a) - periodKey(b));
-    body = grid(list, { active: '진행 중인 목표가 없어요.', done: '아직 달성한 목표가 없어요.',
-      next: '다음에 할 목표가 없어요.' }[view]);
+  if (view !== 'category' && DSP === 'card') {
+    const list = allGoals.filter(inF);
+    const bo = { active: 0, next: 1, done: 2 };
+    if (F === 'done') list.sort((a, b) => doneKey(b).localeCompare(doneKey(a)) || byTitle(a, b));
+    else if (F === 'next') list.sort((a, b) => periodKey(a) - periodKey(b) || byTitle(a, b));
+    else list.sort((a, b) => bo[goalBucketOf(a)] - bo[goalBucketOf(b)]
+      || (pctOf(b) ?? -1) - (pctOf(a) ?? -1) || periodKey(a) - periodKey(b));
+    body = grid(list, EMPTY[F]);
 
   } else if (view === 'category') {
     const cats = [];
@@ -454,13 +462,13 @@ function renderGoalViews(host, view, ctx) {
     const srt = state.goalTblSort && COLS.some(c => c[0] === state.goalTblSort.k)
       ? state.goalTblSort : { k: 'status', dir: 1 };
     const getter = COLS.find(c => c[0] === srt.k)[2];
-    const rows = allGoals.slice().sort((a, b) => {
+    const rows = allGoals.filter(inF).sort((a, b) => {
       const x = getter(a), y = getter(b);
       const c = typeof x === 'number' && typeof y === 'number' ? x - y : String(x).localeCompare(String(y), 'ko');
       return c * srt.dir || periodKey(a) - periodKey(b) || byTitle(a, b);
     });
     const fmtOf = (p, v) => p.isPct ? `${v.toFixed(1)}%` : `${formatCompactWon(v)}원`;
-    body = `<div class="panel gv-tblwrap"><table class="data-table gv-tbl">
+    body = !rows.length ? `<div class="empty-state">${EMPTY[F]}</div>` : `<div class="panel gv-tblwrap"><table class="data-table gv-tbl">
       <thead><tr>${COLS.map(([k, l]) => `<th data-gsort="${k}" class="${k === srt.k ? 'on' : ''}">${l}${
         k === srt.k ? (srt.dir > 0 ? ' ▲' : ' ▼') : ''}</th>`).join('')}</tr></thead>
       <tbody>${rows.map(g => {
@@ -487,13 +495,19 @@ function renderGoalViews(host, view, ctx) {
 
   host.innerHTML = `
     <div class="gv-bar">
-      <div class="gv-counts">
+      ${view === 'category' ? `<div class="gv-counts">
         <span>전체 <b>${allGoals.length}</b></span>
         <span class="active">진행중 <b>${cnt.active}</b></span>
         <span class="ok">달성 <b>${cnt.done}</b></span>
         <span>다음 <b>${cnt.next}</b></span>
-      </div>
-      <span class="settings-note" style="margin:0;">${GOAL_VIEW_NOTE[view] || ''}${view === 'all' ? '' : ' · 더블클릭 → 편집'}</span>
+      </div>` : `<div class="gv-filter" id="goal-filter">${[['active', '진행중'], ['next', '다음'], ['done', '달성'], ['all', '전체']]
+        .map(([k, l]) => `<button data-gf="${k}" class="${k === F ? 'on' : ''} ${k === 'done' ? 'ok' : k}">${l}<b>${k === 'all' ? allGoals.length : cnt[k]}</b></button>`).join('')}</div>
+      <div class="range-toggle" id="goal-display">
+        <button data-gd="card" class="${DSP === 'card' ? 'active' : ''}">카드</button>
+        <button data-gd="table" class="${DSP === 'table' ? 'active' : ''}">표</button>
+      </div>`}
+      <span class="settings-note gv-note" style="margin:0;">${view === 'category' ? GOAL_VIEW_NOTE.category
+        : DSP === 'table' ? GOAL_VIEW_NOTE.all : (F === 'all' ? '진행중 → 다음 → 달성 순' : GOAL_VIEW_NOTE[F]) + ' · 더블클릭 → 편집'}</span>
       <button class="btn small" id="goal-add-btn">+ 목표 추가</button>
     </div>
     <div id="goal-views">${body}</div>`;
@@ -506,6 +520,8 @@ function renderGoalViews(host, view, ctx) {
     const g = allGoals.find(x => String(x.__row) === c.dataset.row);
     if (g) openGoalEditor(g, data, d, fmtPeriod);
   });
+  host.querySelectorAll('[data-gf]').forEach(b => b.addEventListener('click', () => { state.goalFilter = b.dataset.gf; renderPage(); }));
+  host.querySelectorAll('[data-gd]').forEach(b => b.addEventListener('click', () => { state.goalDisplay = b.dataset.gd; renderPage(); }));
   box.addEventListener('click', (e) => {
     const th = e.target.closest('th[data-gsort]');
     if (!th) return;

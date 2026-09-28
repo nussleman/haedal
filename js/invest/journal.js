@@ -414,10 +414,7 @@ const INV_VIEWS = {
 };
 
 const INV_SUBS = [
-  ['ovGrowth', '자산 성장률'],
-  ['ovTransfer', '투자 이체'],
-  ['ovRealized', '실현 수익'],
-  ['ovUnrealized', '평가손익'],
+  ['overview', '요약'],
   ['book', '종목'],
   ['bench', '벤치마크'],
   ['tax', '세금'],
@@ -425,14 +422,16 @@ const INV_SUBS = [
   ['journal', '매매일지']
 ];
 
+/* 투자 요약: 예전 4개 화면(성장률·이체·실현·평가손익)은 같은 차트의 다른 보기일 뿐이라
+   한 화면으로 합치고 차트 머리의 보기 버튼으로 고른다. */
 function renderInvestmentPage(container, data, d) {
-  const SUB = INV_SUBS.some(s => s[0] === state.invSub) ? state.invSub : 'ovGrowth';
-  const VIEW = INV_VIEWS[SUB] || null;
-  if (VIEW && !state.invSeriesBySub[SUB]) state.invSeriesBySub[SUB] = { ...state.invSeries };
-  const SER = VIEW ? state.invSeriesBySub[SUB] : state.invSeries;
+  if (INV_VIEWS[state.invSub]) { state.invView = state.invSub; state.invSub = 'overview'; }
+  const SUB = INV_SUBS.some(s => s[0] === state.invSub) ? state.invSub : 'overview';
+  const VKEY = SUB === 'overview' ? (INV_VIEWS[state.invView] ? state.invView : 'ovGrowth') : null;
+  const VIEW = VKEY ? INV_VIEWS[VKEY] : null;
+  if (VIEW && !state.invSeriesBySub[VKEY]) state.invSeriesBySub[VKEY] = { ...state.invSeries };
+  const SER = VIEW ? state.invSeriesBySub[VKEY] : state.invSeries;
   const subnav = '';
-  const _unusedInvSubs = `${INV_SUBS.map(([v, l]) =>
-    `<button data-sub="${v}" class="${v === SUB ? 'active' : ''}">${l}</button>`).join('')}</div>`;
   const invCategories = ['투자 자산'];
   const byMonthCat = {};
   data.assetRows.forEach(r => {
@@ -540,7 +539,11 @@ function renderInvestmentPage(container, data, d) {
     <div class="g">
       <div class="panel s12">
         <div class="panel-title">
-          <div>${VIEW ? VIEW.label : '투자 추이'}${VIEW ? `<span style="margin-left:9px;font-size:var(--fs-tiny);color:var(--text-faint);font-weight:400;">${VIEW.note}</span>` : ''}</div>
+          <div class="inv-viewhd">
+            <div class="range-toggle inv-views" id="inv-view-toggle">${Object.entries(INV_VIEWS).map(([k, v]) =>
+              `<button data-view="${k}" class="${k === VKEY ? 'active' : ''}">${v.label}</button>`).join('')}</div>
+            <span class="inv-viewnote">${VIEW ? VIEW.note : ''}</span>
+          </div>
           <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
             <div class="range-toggle" id="inv-period-toggle">
               <button data-period="month" class="${(state.invPeriod || 'month') === 'month' ? 'active' : ''}">월</button>
@@ -589,6 +592,12 @@ function renderInvestmentPage(container, data, d) {
   if (SUB === 'book') renderBookPage('panel-book', data, d);
   if (SUB === 'rules') renderRulesPage('panel-rules');
   if (SUB === 'journal') renderJournalPage('panel-journal');
+
+  const vt = document.getElementById('inv-view-toggle');
+  if (vt) vt.querySelectorAll('button[data-view]').forEach(b => b.addEventListener('click', () => {
+    state.invView = b.dataset.view;
+    renderPage();
+  }));
 
   if (VIEW) {
 
