@@ -188,7 +188,7 @@ end;
 $$;
 
 revoke all on function public.toss_ingest(text, jsonb, jsonb) from public;
-grant execute on function public.toss_ingest(text, jsonb, jsonb) to anon, authenticated;
+grant execute on function public.toss_ingest(text, jsonb, jsonb) to anon;
 
 -- 코알라 앱 변경 반영 (2026-09-28)
 CREATE OR REPLACE FUNCTION public.media_routine_trg()
