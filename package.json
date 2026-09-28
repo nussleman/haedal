@@ -4,8 +4,9 @@
   "description": "해달 — 개인 자산관리 대시보드 (정적 사이트 + Supabase)",
   "scripts": {
     "check": "for f in js/*.js js/*/*.js; do node --check \"$f\" || exit 1; done",
-    "test": "npm run check && node tests/visual.js",
-    "test:schema": "node tests/schema.mjs"
+    "test": "npm run check && node tests/visual.js && node tests/layout.js",
+    "test:schema": "node tests/schema.mjs",
+    "test:layout": "node tests/layout.js"
   },
   "devDependencies": {
     "chart.js": "4.5.0",

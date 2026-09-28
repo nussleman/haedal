@@ -1,17 +1,17 @@
 (function(){
-const cats=[['지출','식비','외식'],['지출','식비','식료품'],['지출','주거','관리비/공과금'],['지출','교통/차량','택시'],['지출','문화생활','공연'],['수입','근로소득','월급'],['수입','투자 수익','배당금'],['이체','투자 자산','증권 계좌'],['이체','연금 자산','연금저축']];
+const cats=[['지출','식비','외식','🍜'],['지출','식비','식료품','🍜'],['지출','주거','관리비/공과금','🏠'],['지출','교통/차량','택시','🚖'],['지출','문화생활','공연','🎫'],['수입','근로소득','월급','💰'],['수입','투자 수익','배당금','💸'],['이체','투자 자산','증권 계좌','📈'],['이체','연금 자산','연금저축','🧓']];
 const tx=[];let id=1;
 for(let m=0;m<15;m++){const d=new Date(2025,6+m,1);const y=d.getFullYear(),mo=d.getMonth()+1;
  for(let k=0;k<22;k++){const c=cats[(k*7+m)%cats.length];const day=1+((k*3+m)%27);
   const amt=c[0]==='수입'?(c[2]==='월급'?3200000:12000+k*100):c[0]==='이체'?300000:8000+((k*13+m*7)%40)*1000;
-  tx.push({id:id++,category_id:(k%9)+1,date:`${y}-${String(mo).padStart(2,'0')}-${String(day).padStart(2,'0')}`,kind:c[0],category:c[1],subcategory:c[2],emoji_category:c[1],amount:amt,merchant_group:k%4?'':'마트',merchant:'가게'+(k%6),note:k%5?'':'메모',good_bad:k%9===0?'Bad':k%11===0?'Good':null,company_paid:false,is_fixed:c[1]==='주거'});}}
+  tx.push({id:id++,category_id:(k%9)+1,date:`${y}-${String(mo).padStart(2,'0')}-${String(day).padStart(2,'0')}`,kind:c[0],category:c[1],subcategory:c[2],emoji_category:c[3],amount:amt,merchant_group:k%4?'':'마트',merchant:'가게'+(k%6),note:k%5?'':'메모',good_bad:k%9===0?'Bad':k%11===0?'Good':null,company_paid:false,is_fixed:c[1]==='주거'});}}
 const snaps=[];let sid=1;for(let m=0;m<15;m++){const d=new Date(2025,6+m,1);const mm=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-01`;
  [['현금 자산','월급 통장',2000000+m*50000],['투자 자산','증권 계좌',60000000+m*800000],['저축 자산','CMA',9000000+m*100000],['연금 자산','퇴직연금',13000000+m*200000]].forEach(([c,a,v])=>snaps.push({id:sid++,month:mm,asset_class:c,account:a,amount:v}));}
 const idx=[];for(let m=0;m<20;m++){const d=new Date(2025,1+m,1);idx.push({month:`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-01`,close:6000+m*80});}
 const fx={v_transactions:tx,asset_snapshots:snaps,index_prices:idx,
  goals:[{id:1,period:'2026 하반기',kind:'자산',item:'비상금',frequency:null,target_amount:10000000,target_ratio:null,status:'진행중',achieved_on:null,note:null,metric_source:'asset_class',position:1},{id:2,period:'2026 하반기',kind:'지출',item:'고정비',frequency:'월',target_amount:400000,target_ratio:null,status:'진행중',achieved_on:null,note:null,position:2},{id:4,period:'2027 상반기',kind:'자산',item:'총 자산',frequency:null,target_amount:150000000,target_ratio:null,status:'대기',achieved_on:null,note:null,position:3}],
  stocks:[{id:1,name:'로켓 랩',ticker:'RKLB',market:'US',category:null,themes:['우주'],is_active:true},{id:2,name:'삼성전자',ticker:'005930',market:'KR',category:null,themes:['반도체'],is_active:true}],
- categories:cats.map((c,i)=>({id:i+1,kind:c[0],category:c[1],subcategory:c[2],emoji_category:c[1],sort_order:i,is_active:true})),
+ categories:cats.map((c,i)=>({id:i+1,kind:c[0],category:c[1],subcategory:c[2],emoji_category:c[3],sort_order:i,is_active:true})),
  accounts:[{id:1,name:'월급 통장',asset_class:'현금 자산',sort_order:0,is_active:true},{id:2,name:'증권 계좌',asset_class:'투자 자산',sort_order:1,is_active:true}],
  merchants:[],app_settings:[{key:'dashboard_settings',value:{emergencyAccount:'CMA',brokerAccount:'증권 계좌',idleAccounts:['퇴직연금']}}],study_cards:[],trade_log:[],merchant_groups:[]};
 function q(table){let res={data:fx[table]||[],error:null};
