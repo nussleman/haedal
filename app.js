@@ -1,15 +1,13 @@
 /* =========================================================
    MY 자산 통장 — 대시보드 로직
-   데이터 원본: 사용자 가계부 Google Sheet (실시간 CSV 동기화)
+   데이터 원본: Supabase (가계부·자산 스냅샷·종목). 목표·지수·토스는 아직 시트 → 옮기는 중
    ========================================================= */
 
 const SPREADSHEET_ID = '1tT7p4brwpOZyGojQfxyUb1WHNiDXn-6uH4I7B4oUMPA';
-const GID_LEDGER_D = '1990449957';   // 가계부(D) - raw daily transaction ledger
-const GID_ASSETS = '1458451221';     // 자산 스냅샷 - monthly asset balances
 const GID_GOALS = '384376571';       // 목표 - goals / roadmap
 const GID_CLASSIFY = '701072426';    // 분류 - 사용처/종목 분류표 (주식_카테고리 매핑 포함)
 const GID_INDEX = '772931342';       // 지수_S&P500 - 월별 지수 종가 (벤치마크 반사실 계산용)
-const TAB_GIDS = [GID_LEDGER_D, GID_ASSETS, GID_GOALS, GID_CLASSIFY, GID_INDEX];
+const TAB_GIDS = [GID_GOALS, GID_CLASSIFY, GID_INDEX];
 
 /* 지수_S&P500 탭을 못 불러왔을 때만 쓰는 씨앗 데이터.
    시트가 단일 소스이고, 이 상수는 오프라인/권한오류 시 패널이 빈 화면이
@@ -32,7 +30,6 @@ const csvUrlFor = (gid) => `https://docs.google.com/spreadsheets/d/${SPREADSHEET
    gviz는 sheet= 파라미터로 탭 이름 조회도 지원하니 그걸 쓴다. */
 const csvUrlForSheet = (name) => `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(name)}`;
 const TOSS_TABS = { summary: '토스_계좌요약', holdings: '토스_보유종목', daily: '토스_일별' };
-const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/edit?gid=${GID_LEDGER_D}#gid=${GID_LEDGER_D}`;
 
 const CAT_COLORS = {
   '현금 자산': '#c9a227',
@@ -49,7 +46,7 @@ const CAT_PIE_PALETTE_INV = ['#c9a227', '#4c8c6b', '#c2749b', '#7b7fd0', '#c1483
 
 const state = {
   data: null,
-  source: null,        // 'live' | 'snapshot'
+  source: null,        // 'live' | null(아직 못 불러옴)
   lastSync: null,
   lastError: null,
   goals: { savingsRateTarget: 40, emergencyFundTarget: 5000000 },
@@ -278,28 +275,6 @@ function ledgerDateKey(s) {
 
 /* ---------------- CSV parsing (live sync) ---------------- */
 
-function parseAssetsFromRows(rows) {
-  const dateRe = /^\d{2}년\s*\d{2}월$/;
-  const assetRows = [];
-  for (let r = 0; r < rows.length; r++) {
-    const row = rows[r];
-    for (let j = 0; j < row.length; j++) {
-      const cell = (row[j] || '').trim();
-      if (dateRe.test(cell)) {
-        if (j + 3 < row.length) {
-          const cat = cleanLabel(row[j + 1] || '');
-          const acct = (row[j + 2] || '').trim();
-          const amt = parseWon(row[j + 3]);
-          if (cat && amt !== null) {
-            assetRows.push({ date: cell, category: cat, account: acct, amount: amt });
-          }
-        }
-        break;
-      }
-    }
-  }
-  return assetRows;
-}
 
 /* 지수_S&P500 탭: 년월 / 종가 두 컬럼.
    구글 시트가 "2023-03"을 날짜로 해석해버리므로 gviz/tq CSV에서는
@@ -581,88 +556,7 @@ function goalSanityFlag(p) {
 
 
 
-/* 시트의 체크 칸(회사 환급=🏢 · 고정비=📌 등)은 이모지로 들어온다.
-   변이 셀렉터(U+FE0F)까지 붙어 오므로 '비어 있지 않고 명시적 거짓이 아니면 체크'로 본다. */
-function isCheckMark(v) {
-  const t = String(v === null || v === undefined ? '' : v).replace(/\uFE0F/g, '').trim();
-  if (!t) return false;
-  if (/^(false|0|n|no|아니오|-|—|x)$/i.test(t)) return false;
-  return true;
-}
 
-function parseLedgerFromRows(rows) {
-  let r0 = -1, c0 = -1, header = null;
-  for (let r = 0; r < rows.length; r++) {
-    const row = rows[r] || [];
-    for (let c = 0; c < row.length - 3; c++) {
-      if ((row[c] || '').trim() === '날짜' && (row[c + 1] || '').trim() === '대분류'
-        && (row[c + 2] || '').trim() === '소분류' && (row[c + 3] || '').trim() === '항목') {
-        r0 = r; c0 = c; header = row; break;
-      }
-    }
-    if (r0 !== -1) break;
-  }
-  if (r0 === -1) return [];
-
-  /* 열 위치를 고정 오프셋이 아니라 헤더 이름으로 찾는다.
-     (기존에는 고정비를 c0+9에서 읽었는데 시트에 '후회하는 소비'·'회사 환급' 열이
-      추가되면서 실제 고정비는 c0+10으로 밀려 있었고, 그 결과 고정비가 항상 false였다.) */
-  const norm = (s) => String(s || '').replace(/\s+/g, '').trim();
-  const findCol = (matchers, fallback) => {
-    for (const m of matchers) {
-      for (let c = c0; c < header.length; c++) {
-        const h = norm(header[c]);
-        if (!h) continue;
-        if (typeof m === 'string' ? h === m : m.test(h)) return c;
-      }
-    }
-    return fallback;
-  };
-  const COL = {
-    amount: findCol(['금액'], c0 + 5),
-    vendor: findCol([/^사용처/, /브랜드/], c0 + 6),
-    memo: findCol(['내용', '메모'], c0 + 7),
-    gb: findCol([/^good\/?bad$/i, /^후회/], -1),
-    refund: findCol([/^회사환급/, /^환급/], -1),
-    fixed: findCol([/^고정비/], -1)
-  };
-
-  const dateRe = /^\d{4}\.\s*\d{1,2}\.\s*\d{1,2}$/;
-  const ledger = [];
-  let missStreak = 0;
-  for (let r = r0 + 1; r < rows.length; r++) {
-    const row = rows[r] || [];
-    const dateCell = (row[c0] || '').trim();
-    if (!dateRe.test(dateCell)) {
-      missStreak++;
-      if (missStreak > 25) break;
-      continue;
-    }
-    missStreak = 0;
-    const major = cleanLabel(row[c0 + 1] || '');
-    const minor = cleanLabel(row[c0 + 2] || '');
-    const item = (row[c0 + 3] || '').trim();
-    const amount = parseWon(row[COL.amount]);
-    const vendor = cleanLabel(row[COL.vendor] || '');
-    const memo = (row[COL.memo] || '').trim();
-    const fixed = COL.fixed >= 0 ? isCheckMark(row[COL.fixed]) : false;   /* 📌 등 아무 표시나 체크로 */
-    /* Good/Bad 열: 'Good'=잘한소비, 'Bad'=아낄 수 있었던 소비.
-       (예전 방식대로 ✔️ 체크만 있으면 Bad로 간주 — 과거 데이터 호환) */
-    const gbRaw = COL.gb >= 0 ? String(row[COL.gb] === null || row[COL.gb] === undefined ? '' : row[COL.gb]).trim() : '';
-    const good = /good/i.test(gbRaw);
-    const regret = /bad/i.test(gbRaw) || (!good && isCheckMark(gbRaw));
-    /* 회사 환급 칸은 금액일 수도, 체크(=전액 환급)일 수도 있다 */
-    let refund = 0;
-    if (COL.refund >= 0) {
-      const raw = row[COL.refund];
-      const asWon = parseWon(raw);
-      refund = (asWon !== null && asWon !== 0) ? asWon : (isCheckMark(raw) && amount !== null ? amount : 0);
-    }
-    if (amount === null || amount === 0) continue;
-    ledger.push({ date: dateCell, major, minor, item, amount, vendor, memo, fixed, regret, good, refund });
-  }
-  return ledger;
-}
 
 /* 가계부(M) 피벗 탭은 Google Sheets 병합 셀이 gviz CSV export에서
    깨져 나오는 문제가 있어(월 헤더 행이 빈 문자열로 export됨),
@@ -1041,8 +935,8 @@ function setSyncState(status) {
   dot.className = 'sync-dot' + (status === 'live' ? ' live' : status === 'err' ? ' err' : status === 'loading' ? ' loading' : '');
   if (status === 'loading') label.textContent = '실시간 데이터 불러오는 중…';
   else if (status === 'live') label.textContent = `실시간 연동됨 · ${new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })} 갱신`;
-  else if (status === 'err') label.textContent = `실시간 연동 실패 · ${state.source === 'snapshot' ? '최근 스냅샷 표시 중' : ''}`;
-  else label.textContent = '스냅샷 데이터';
+  else if (status === 'err') label.textContent = '불러오기 실패';
+  else label.textContent = '';
 }
 
 /* 최상단 4탭 = 사용 빈도순 (매일 → 주/월 → 월 → 분기)
@@ -2156,22 +2050,10 @@ function renderShell() {
 function renderBanner() {
   const slot = document.getElementById('banner-slot');
   if (!slot) return;
-  const tabLabels = { [GID_LEDGER_D]: '가계부(D)', [GID_ASSETS]: '자산 스냅샷', [GID_GOALS]: '목표', [GID_CLASSIFY]: '분류', [GID_INDEX]: '지수_S&P500' };
-  const testLinks = TAB_GIDS.map(g => `<a href="${csvUrlFor(g)}" target="_blank" rel="noopener" style="color:var(--accent-text);">${tabLabels[g]}</a>`).join(' · ');
-
-  if (state.source === 'snapshot' && state.lastError) {
-    const isNetworkFail = /failed to fetch|시트 접근/i.test(state.lastError);
+  if (!state.data && state.lastError) {
     slot.innerHTML = `
       <div class="banner err" style="align-items:flex-start;">
-        <span>
-          ⚠ 실시간 데이터를 불러오지 못해 저장된 스냅샷을 보여주고 있어요. (${state.lastError})
-          ${isNetworkFail ? `
-          <div style="margin-top:8px;font-size:12px;line-height:1.7;">
-            1) 4개 탭 모두 <b>공유</b> → 일반 액세스를 <b>"링크가 있는 모든 사용자"</b> + 권한 <b>"뷰어"</b>로 설정 (탭마다 따로 안 해도 문서 전체 공유 설정 하나면 돼요)<br/>
-            2) 시크릿 창(로그인 안 한 상태)에서 아래 탭별 링크가 로그인 없이 CSV로 열리는지 확인: ${testLinks}<br/>
-            로그인 화면이 뜨는 탭이 있으면 그게 원인이에요.
-          </div>` : `<div style="margin-top:6px;font-size:12px;">탭별 확인: ${testLinks}</div>`}
-        </span>
+        <span>⚠ 데이터를 불러오지 못했어요. (${enEsc(state.lastError)})</span>
         <button class="btn small" id="retry-btn" style="margin-left:auto;flex-shrink:0;">다시 시도</button>
       </div>`;
     document.getElementById('retry-btn').addEventListener('click', () => fetchLive(true));
@@ -2245,6 +2127,15 @@ function navSectionDot(sec) {
 }
 
 function renderPage() {
+  if (!state.data) {
+    /* 첫 로딩이 끝나기 전(또는 실패)에는 옛 숫자 대신 빈 자리만 보여준다 */
+    const body0 = document.getElementById('page-content');
+    renderNav();
+    if (body0) body0.innerHTML = state.lastError
+      ? '<div class="empty-state" style="padding:48px 0;text-align:center;opacity:.7;">데이터를 불러오지 못했어요. 위의 ‘다시 시도’를 눌러 주세요.</div>'
+      : '<div class="empty-state" style="padding:48px 0;text-align:center;opacity:.7;">불러오는 중…</div>';
+    return;
+  }
   const _now = new Date();
   const _nowKey = _now.getFullYear() * 100 + (_now.getMonth() + 1);
   const raw = state.data;
@@ -5450,7 +5341,7 @@ function lgTouched() {
 
 function renderAll() {
   renderBanner();
-  setSyncState(state.source === 'live' ? 'live' : state.lastError ? 'err' : 'snapshot');
+  setSyncState(state.source === 'live' ? (state.lastError ? 'err' : 'live') : state.lastError ? 'err' : 'loading');
   renderPage();
 }
 
@@ -16121,32 +16012,19 @@ async function fetchAllTabsAndMerge() {
   ]);
   const failures = results.filter(r => r.status === 'rejected');
   const rowSets = results.filter(r => r.status === 'fulfilled').map(r => r.value);
-  if (rowSets.length === 0) {
-    throw new Error(failures[0] ? failures[0].reason.message : '탭을 하나도 불러오지 못했어요');
-  }
+  /* 시트(목표·분류·지수)는 못 읽어도 가계부·자산 화면은 뜨게 한다 */
 
-  let assetRows = (dbAssets && dbAssets.length) ? dbAssets : [], ledger = dbLedger || [], investmentTags = [], goals = [], stockCategoryMap = {}, indexPrices = {};
-  const ledgerSource = dbLedger ? 'db' : 'sheet';
-  const assetSource = assetRows.length ? 'db' : 'sheet';
+  /* 가계부·자산 스냅샷은 Supabase 가 유일한 원본 — 못 읽으면 예비 없이 실패로 알린다 */
+  if (!dbLedger) throw new Error('가계부를 불러오지 못했습니다');
+  if (!dbAssets || !dbAssets.length) throw new Error('자산 스냅샷을 불러오지 못했습니다');
+  let assetRows = dbAssets, ledger = dbLedger, investmentTags = [], goals = [], stockCategoryMap = {}, indexPrices = {};
+  const ledgerSource = 'db';
+  const assetSource = 'db';
   for (const rows of rowSets) {
     try {
       const ip = parseIndexFromRows(rows);
       if (Object.keys(ip).length > Object.keys(indexPrices).length) indexPrices = ip;
     } catch (e) {}
-    if (assetSource !== 'db') {
-      /* DB를 못 읽었을 때만 시트를 예비로 쓴다 */
-      try {
-        const ar = parseAssetsFromRows(rows);
-        if (ar.length > assetRows.length) assetRows = ar;
-      } catch (e) {}
-    }
-    if (!dbLedger) {
-      /* DB를 못 읽었을 때만 시트를 예비로 쓴다 */
-      try {
-        const lg = parseLedgerFromRows(rows);
-        if (lg.length > ledger.length) ledger = lg;
-      } catch (e) {}
-    }
     try {
       const tags = parseInvestmentTagsFromRows(rows);
       if (tags.length > investmentTags.length) investmentTags = tags;
@@ -16164,12 +16042,7 @@ async function fetchAllTabsAndMerge() {
   // 가계부(M) 피벗 탭은 폐기되어, 정상 파싱된 가계부(D) 원장에서 월별 카테고리 요약을 직접 집계한다.
   const pivot = buildPivotFromLedger(ledger);
 
-  const fetchFailNote = failures.length
-    ? ` (${failures.length}개 탭 fetch 실패: ${failures.map(f => f.reason.message).join(', ')})`
-    : ' (탭은 모두 불러왔지만 그 안에서 못 찾음)';
-
-  if (!pivot) throw new Error('가계부 원장에서 카테고리 요약을 계산하지 못했습니다' + fetchFailNote);
-  if (assetRows.length < 5) throw new Error('자산 현황표를 찾지 못했습니다' + fetchFailNote);
+  if (!pivot) throw new Error('가계부 원장에서 카테고리 요약을 계산하지 못했습니다');
 
   const data = {
     months: pivot.months, incomeTotal: pivot.incomeTotal, expenseTotal: pivot.expenseTotal,
@@ -16220,10 +16093,6 @@ async function fetchLive(manual) {
   } catch (e) {
     console.error('live sync failed', e);
     state.lastError = e.message || String(e);
-    if (!state.data) {
-      state.data = SNAPSHOT_DATA;
-      state.source = 'snapshot';
-    }
     renderAll();
   }
 }
@@ -16231,11 +16100,8 @@ async function fetchLive(manual) {
 async function init() {
   routeApply();          /* 주소에 적힌 화면이 있으면 거기서 시작한다 */
   renderShell();
+  renderAll();                 /* 데이터 오기 전: '불러오는 중' 자리만 */
   await Promise.all([loadBudgets(), loadSettings(), sdxLoad(true)]);
-  state.data = SNAPSHOT_DATA;
-  state.source = 'snapshot';
-  applySuggestedGoals(state.data);
-  renderAll();
   /* 분류 표(순서·이름)는 화면 곳곳에서 쓰므로 미리 받아 둔다 */
   enEnsureRefs().catch(() => {});
   fetchLive(false);
