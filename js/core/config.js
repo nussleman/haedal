@@ -31,7 +31,7 @@ const state = {
   page: 'home',
   homeMainSub: 'main',
   entrySub: 'ledger', goalsSub: 'list',
-  reportSub: 'monthly', labSub: 'sim', setSub: 'cat',
+  reportSub: 'monthly', setSub: 'cat',
   entryView: 'list',      // 입출금 보기: list | calendar
   ledgerFilter: { q: '', major: 'all', page: 1, pageSize: 50 },
   charts: {},
@@ -229,3 +229,6 @@ function assetMonthYear(s) {
   const m = (s || '').match(/(\d{2})년/);
   return m ? String(2000 + parseInt(m[1])) : '';
 }
+
+/* 연금저축+IRP 합산 세액공제 납입 한도 */
+const PENSION_LIMIT = 9000000;

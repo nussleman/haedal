@@ -119,7 +119,6 @@ const NAV_ITEMS = [
   { id: 'invest', label: '투자' },
   { id: 'goals',  label: '목표' },
   { id: 'report', label: '리포트' },
-  { id: 'lab',    label: '실험실' },
   { id: 'set',    label: '설정' }
 ];
 
@@ -134,14 +133,13 @@ const SECTION_SUBS = {
   goals:  [['list', '목록'], ['board', '보드'], ['category', '카테고리별']],
   report: [['#', '기간별'], ['monthly', '월간'], ['yearly', '연간'],
            ['#', '자산별'], ['networth', '순자산'], ['pension', '연금'], ['savings', '저축']],
-  lab:    [['explore', '돋보기'], ['sim', '시뮬레이션'], ['flowmap', '흐름표'], ['fixed', '고정비 검토']],
   set:    [['#', '가계부'], ['cat', '분류'], ['merch', '사용처'], ['fixedm', '고정비'],
            ['#', '계획'], ['budget', '예산'], ['saving', '적립'],
            ['#', '자산·투자'], ['acct', '계좌'], ['stock', '종목']]
 };
 
 const SECTION_STATE_KEY = { home: 'homeMainSub', entry: 'entrySub', invest: 'invSub',
-  goals: 'goalsSub', report: 'reportSub', lab: 'labSub', set: 'setSub' };
+  goals: 'goalsSub', report: 'reportSub', set: 'setSub' };
 
 function currentSub(section) {
   const subs = (SECTION_SUBS[section] || []).filter(x => x[0] !== '#');
@@ -173,16 +171,18 @@ function routeWrite(section, sub) {
 const LEGACY_ROUTE = {
   /* 옛 메뉴(흐름·자산·할 일·데이터)로 저장된 북마크와 뒤로가기를 새 자리로 넘긴다. */
   'status': 'goals/list', 'status/goals': 'goals/list',
-  'status/structure': 'lab/sim',
+  'status/structure': 'home/main',
   'flow': 'report/monthly', 'flow/today': 'home/main',
   'flow/now': 'report/monthly', 'flow/year': 'report/yearly',
-  'flow/calendar': 'entry/calendar', 'flow/flowmap': 'lab/flowmap',
+  'flow/calendar': 'entry/calendar', 'flow/flowmap': 'report/monthly',
   'assets': 'report/networth', 'assets/overview': 'report/networth',
   'assets/investment': 'invest/overview', 'invest/main': 'invest/overview',
   'invest/perf': 'invest/bench', 'assets/pension': 'report/pension',
   'assets/savings': 'report/savings',
   'todo': 'goals/list', 'todo/goals': 'goals/list',
-  'todo/fixed': 'lab/fixed', 'todo/structure': 'lab/sim',
+  'todo/fixed': 'set/fixedm', 'todo/structure': 'home/main',
+  /* 2026-09-28 실험실 폐지 */
+  'lab': 'home/main', 'lab/explore': 'entry/ledger', 'lab/sim': 'home/main', 'lab/flowmap': 'report/monthly', 'lab/fixed': 'set/fixedm',
   'data': 'entry/ledger', 'data/ledger': 'entry/ledger',
   'data/snapshot': 'entry/snapshot', 'data/dbm': 'set/cat'
 };

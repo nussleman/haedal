@@ -3,7 +3,7 @@ js/goals/fields.js
 js/core/derived.js
 js/core/shell.js
 js/panels/extras.js
-js/lab/flowmap.js
+js/core/page.js
 js/core/supabase.js
 js/entry/overlay.js
 js/entry/ledger.js
@@ -15,7 +15,6 @@ js/report/monthly.js
 js/core/dates.js
 js/report/yearly.js
 js/entry/calendar.js
-js/lab/structure.js
 js/home/home.js
 js/invest/tax.js
 js/invest/benchmark.js
@@ -24,10 +23,8 @@ js/invest/study.js
 js/invest/book.js
 js/invest/journal.js
 js/entry/snapshot.js
-js/lab/fixed.js
 js/settings/lists.js
 js/settings/budget.js
 js/settings/saving.js
 js/core/data-load.js
-js/lab/explore.js
 js/boot.js
