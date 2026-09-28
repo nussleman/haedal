@@ -8,10 +8,14 @@ const DETAIL_GROUPS = [
 
 
 /* 캘린더 셀: 축약하지 않고 전체 금액을 콤마 표기로 보여준다. */
+/* 캘린더 칸 금액: 전체 금액과 줄인 금액을 같이 넣고, 화면 폭에 맞는 쪽을 CSS 가 보여준다.
+   PC 에서도 100만 원이 넘으면 칸을 넘치므로 줄인 금액을 쓴다. */
 function formatCalWon(n) {
   const neg = n < 0;
   const abs = Math.round(Math.abs(n));
-  return (neg ? '-' : '') + abs.toLocaleString('ko-KR');
+  const short = formatCompactWon(n);
+  if (abs >= 1000000) return `<b>${short}</b>`;
+  return `<b class="full">${(neg ? '-' : '') + abs.toLocaleString('ko-KR')}</b><b class="short">${short}</b>`;
 }
 
 function calHeatColor(mode, ratio) {

@@ -28,10 +28,11 @@ window.__layoutProbe = function (rootSel) {
     if (!rects.length) continue;
     const br = range.getBoundingClientRect();
     /* 스크롤 칸 안에서 스크롤해야 보이는 글자는 '깨짐'이 아니다 — 지금 보이는 영역 밖이면 건너뛴다 */
-    let hiddenByScroll = false, fixed = false;
+    let hiddenByScroll = false, fixed = false, inScroller = false;
     for (let p = el; p && p !== document.body; p = p.parentElement) {
       const ps = getComputedStyle(p);
       if (ps.position === 'fixed') fixed = true;
+      if (/(auto|scroll)/.test(ps.overflowX)) inScroller = true;
       if (/(auto|scroll)/.test(ps.overflowY) || /(auto|scroll)/.test(ps.overflowX)) {
         const pr = p.getBoundingClientRect();
         if (br.bottom <= pr.top + 1 || br.top >= pr.bottom - 1 || br.right <= pr.left + 1 || br.left >= pr.right - 1) { hiddenByScroll = true; break; }
@@ -50,9 +51,9 @@ window.__layoutProbe = function (rootSel) {
       if (br.right > c.right + 1.5 || br.left < c.left - 1.5) out.clipped.push(label);
     }
     /* 화면 밖 (가로 스크롤 칸 안은 괜찮음) */
-    const scroller = cb && /(auto|scroll)/.test(cb.s.overflowX);
+    const scroller = inScroller;
     if (!scroller && br.right > vw + 1) out.offscreen.push(label);
-    if (!fixed) items.push({ r: br, label, el });   /* 떠 있는 버튼(리모컨 등)은 겹침 검사에서 뺀다 */
+    if (!fixed) items.push({ r: br, rs: rects, label, el });   /* 떠 있는 버튼(리모컨 등)은 겹침 검사에서 뺀다 */
   }
   /* 겹침: 같은 칸끼리는 제외, 2px 넘게 겹치는 서로 다른 글자 */
   for (let i = 0; i < items.length && i < 1500; i++) {
@@ -60,9 +61,10 @@ window.__layoutProbe = function (rootSel) {
     for (let j = i + 1; j < items.length && j < 1500; j++) {
       const b = items[j].r;
       if (items[i].el === items[j].el || items[i].el.contains(items[j].el) || items[j].el.contains(items[i].el)) continue;
-      const ox = Math.min(a.right, b.right) - Math.max(a.left, b.left);
-      const oy = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
-      if (ox > 2 && oy > 2) out.overlap.push(items[i].label + ' ↔ ' + items[j].label);
+      const hit = (p, q) => Math.min(p.right, q.right) - Math.max(p.left, q.left) > 2 && Math.min(p.bottom, q.bottom) - Math.max(p.top, q.top) > 2;
+      if (!hit(a, b)) continue;
+      /* 여러 줄로 감긴 글자는 전체 상자가 아니라 줄마다 비교한다 (문단 속 굵은 글씨끼리 오탐 방지) */
+      if (items[i].rs.some(p => items[j].rs.some(q => hit(p, q)))) out.overlap.push(items[i].label + ' ↔ ' + items[j].label);
     }
   }
   for (const k in out) out[k] = [...new Set(out[k])];

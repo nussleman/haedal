@@ -155,7 +155,7 @@ function fxPaint(body) {
 
   body.innerHTML = `
     <div class="lg-wrap">
-      <div class="stat-grid" style="grid-template-columns:repeat(4,1fr);gap:8px;">
+      <div class="stat-grid" style="gap:8px;">
         <div class="stat-card">
           <div class="label">월 고정비</div>
           <div class="value">${formatKrw(moTotal)}</div>

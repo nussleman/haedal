@@ -1502,11 +1502,11 @@ body{font-variant-numeric:tabular-nums;}
 .acct-col-head b{font-size:var(--fs-sm);font-weight:700;color:var(--text);}
 .acct-col-head span{font-family:var(--mono);font-size:var(--fs-sm);color:var(--text-dim);}
 .acct-col-head em{font-style:normal;font-size:var(--fs-tiny);color:var(--text-faint);margin-left:5px;}
-.acct-cell{display:grid;grid-template-columns:1fr auto;gap:3px 8px;
+.acct-cell{display:flex;flex-wrap:wrap;align-items:baseline;gap:3px 8px;
   border:1px solid var(--border);border-radius:var(--r-md);background:var(--panel-2);padding:8px 10px;}
-.acct-nm{font-size:var(--fs-sm);color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.acct-val{font-family:var(--mono);font-size:var(--fs-sm);color:var(--text);white-space:nowrap;text-align:right;}
-.acct-bar{grid-column:1 / -1;height:3px;border-radius:var(--r-xs);background:rgba(255,255,255,.06);overflow:hidden;}
+.acct-nm{flex:1 1 auto;min-width:0;max-width:100%;font-size:var(--fs-sm);color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.acct-val{margin-left:auto;font-family:var(--mono);font-size:var(--fs-sm);color:var(--text);white-space:nowrap;text-align:right;}
+.acct-bar{flex:1 1 100%;height:3px;border-radius:var(--r-xs);background:rgba(255,255,255,.06);overflow:hidden;}
 .acct-bar i{display:block;height:100%;border-radius:var(--r-xs);background:var(--catc);opacity:.75;}
 
 /* 차트 시리즈 체크박스 */
@@ -2795,7 +2795,7 @@ body{padding-left:0;padding-right:0;}
 .xp-row .ca:hover,.xp-row .mc:hover{color:var(--accent-text);text-decoration:underline;}
 .xp-row .nt{font-size:var(--fs-xs);color:var(--text-faint);}
 .xp-row .fl{display:flex;align-items:center;justify-content:center;gap:3px;font-size:var(--fs-xs);}
-.xp-row .fl b{font-family:var(--mono);font-size:var(--fs-micro);font-weight:700;border-radius:3px;padding:1px 3px;}
+.xp-row .fl b{display:inline-block;font-family:var(--mono);font-size:var(--fs-micro);font-weight:700;border-radius:3px;padding:1px 3px;}
 .xp-row .fl b.g{background:var(--income-bg);color:var(--income-text);}
 .xp-row .fl b.b{background:var(--expense-bg);color:var(--expense-text);}
 .xp-row .am{text-align:right;font-family:var(--mono);font-size:var(--fs-sm);
@@ -2945,6 +2945,7 @@ body{padding-left:0;padding-right:0;}
 .rl-size > div{padding:16px;border-radius:var(--r-md);background:var(--panel-2);
   display:flex;flex-direction:column;gap:7px;}
 .rl-size > div.wide{grid-column:1/-1;flex-direction:row;align-items:center;gap:16px;}
+.rl-size > div.wide .n{white-space:nowrap;flex:0 0 auto;}
 .rl-size .n{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--accent-text);}
 .rl-size .l{font-size:var(--fs-xs);color:var(--text-dim);line-height:1.7;}
 .rl-size .l i{color:var(--text-faint);font-style:normal;font-size:var(--fs-micro);}
@@ -3155,4 +3156,75 @@ body{padding-left:0;padding-right:0;}
 @media (max-width:820px){
   .gv-grid{grid-template-columns:1fr;}
   .gv-bar #goal-add-btn{margin-left:0;}
+}
+
+/* 캘린더 금액: 넓은 화면은 전체 금액, 칸이 좁으면(폰) 줄인 금액 */
+.mcal-line .short{display:none;}
+.mcal-line b{font-weight:inherit;}
+
+/* ═══════════════════════════════════════════════════════════════
+   폰 화면 (≤640px) — 2026-09-28 사용성 점검에서 정리
+   이 블록은 파일 맨 끝에 두어 앞의 규칙보다 우선한다.
+   ═══════════════════════════════════════════════════════════════ */
+@media (max-width:640px){
+  /* 상단: 메뉴를 한 줄로(옆으로 밀어서), 여백을 줄여 내용이 빨리 보이게 */
+  .site-header{padding-top:8px;padding-left:14px;padding-right:14px;}
+  .topbar{gap:8px;}
+  .sync-box kbd{display:none;}
+  .navrow{gap:0;}
+  .navrow .navbar,.navbar{flex-wrap:nowrap;overflow-x:auto;margin:8px 0 0;gap:2px;scrollbar-width:none;}
+  .navbar .nav-btn,.navrow .nav-btn{flex:0 0 auto;white-space:nowrap;padding:8px 11px;font-size:var(--fs-base);}
+  .railnav{padding:8px 14px 10px;gap:6px;}
+  .page-head{font-size:var(--fs-xl);padding-top:14px;}
+  .page-head + #page-content{padding-top:10px;}
+
+  /* 입출금 내역: 한 건을 두 줄 카드로
+     1줄: 사용처 ········ 금액
+     2줄: 분류 › 세부    🏢📌 ×   (종류는 왼쪽 색 띠, GOOD/BAD·메모 칸은 숨김) */
+  .lg-cols{display:none;}
+  .lg-card .lg-line{display:grid;grid-template-columns:20px minmax(0,1fr) auto auto;
+    grid-template-areas:"e n v v" "e c f x";column-gap:8px;row-gap:1px;height:auto;min-height:52px;padding:7px 10px 7px 14px;align-items:center;}
+  .lg-card .lg-line .k,.lg-card .lg-line .g,.lg-card .lg-line .mm{display:none;}
+  .lg-card .lg-line .e{grid-area:e;align-self:center;}
+  .lg-card .lg-line .n{grid-area:n;display:block;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:var(--fs-base);}
+  .lg-card .lg-line .c{grid-area:c;display:block;min-width:0;flex:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .lg-card .lg-line .c .ct{overflow:hidden;text-overflow:ellipsis;}
+  .lg-card .lg-line .v{grid-area:v;flex:none;text-align:right;white-space:nowrap;font-size:var(--fs-base);}
+  .lg-card .lg-line .f{grid-area:f;flex:none;display:flex;gap:2px;justify-content:flex-end;}
+  .lg-card .lg-line .x{grid-area:x;flex:none;color:var(--text-faint);width:28px;height:28px;}
+  .lg-card .lg-line .lg-mg{max-width:40%;overflow:hidden;text-overflow:ellipsis;vertical-align:bottom;}
+
+  /* 캘린더: 금액은 줄여 쓰고(1.9만), 기록 없는 날은 비워 둔다 */
+  .mcal-grid{gap:3px;}
+  .mcal-cell{min-height:64px;padding:5px 3px;}
+  .mcal-daynum{font-size:var(--fs-base);margin-bottom:2px;}
+  .mcal-line{font-size:var(--fs-tiny);justify-content:center;}
+  .mcal-line i{display:none;}
+  .mcal-line .full{display:none;}
+  .mcal-line .short{display:inline;}
+  .mcal-none{display:none;}
+}
+@media (max-width:640px){
+  /* 탐색 내역: 7칸 표 → 두 줄 카드 (사용처·금액 / 날짜·분류·표시) */
+  .xp-cols{display:none;}
+  .xp-row{grid-template-columns:auto minmax(0,1fr) auto;
+    grid-template-areas:"k m a" "d c f";column-gap:8px;row-gap:2px;
+    height:auto;min-height:48px;padding:6px 10px 6px 12px;}
+  .xp-row .kd{grid-area:k;} .xp-row .mc{grid-area:m;font-weight:600;}
+  .xp-row .am{grid-area:a;} .xp-row .dt{grid-area:d;}
+  .xp-row .ca{grid-area:c;} .xp-row .fl{grid-area:f;justify-content:flex-end;}
+  .xp-row .nt{display:none;}
+  .xp-row .am,.xp-row .dt{white-space:nowrap;}
+}
+@media (max-width:640px){
+  /* 종목 표: '기본'·'판단' 덩어리를 옆으로 두지 않고 위아래로 쌓는다 (종목명이 0칸으로 눌리던 문제) */
+  .bk-groups{display:none;}
+  .bk-cols,.bk-row{flex-wrap:wrap;gap:0;}
+  .bk-cols .g1,.bk-row .g1,.bk-cols .g2,.bk-row .g2{flex:1 1 100%;}
+  .bk-cols .grp{height:26px;}
+  .bk-row .g1{height:36px;} .bk-row .g2{height:30px;}
+  .bk-row .g1{box-shadow:none;}
+  .bk-cols .gd,.bk-row .gd{flex:1 1 auto;min-width:0;}
+  .bk-cols .vd,.bk-row .vd{flex:0 0 auto;}
+  .bk-row .gd em{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
 }
