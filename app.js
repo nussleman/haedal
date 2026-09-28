@@ -4,28 +4,7 @@
    ========================================================= */
 
 const SPREADSHEET_ID = '1tT7p4brwpOZyGojQfxyUb1WHNiDXn-6uH4I7B4oUMPA';
-const GID_GOALS = '384376571';       // 목표 - goals / roadmap
-const GID_CLASSIFY = '701072426';    // 분류 - 사용처/종목 분류표 (주식_카테고리 매핑 포함)
-const GID_INDEX = '772931342';       // 지수_S&P500 - 월별 지수 종가 (벤치마크 반사실 계산용)
-const TAB_GIDS = [GID_GOALS, GID_CLASSIFY, GID_INDEX];
 
-/* 지수_S&P500 탭을 못 불러왔을 때만 쓰는 씨앗 데이터.
-   시트가 단일 소스이고, 이 상수는 오프라인/권한오류 시 패널이 빈 화면이
-   되지 않게 하는 백업일 뿐이다. 시트에 값이 있으면 항상 시트가 이긴다. */
-const INDEX_SEED = {
-  '2023-03': 3968.56, '2023-04': 4121.47, '2023-05': 4146.17, '2023-06': 4345.37,
-  '2023-07': 4508.08, '2023-08': 4426.24, '2023-09': 4409.10, '2023-10': 4258.98,
-  '2023-11': 4460.06, '2023-12': 4685.05, '2024-01': 4804.49, '2024-02': 5011.96,
-  '2024-03': 5170.57, '2024-04': 5095.46, '2024-05': 5235.23, '2024-06': 5415.14,
-  '2024-07': 5542.89, '2024-08': 5502.17, '2024-09': 5626.12, '2024-10': 5792.32,
-  '2024-11': 5929.92, '2024-12': 6010.91, '2025-01': 5979.52, '2025-02': 6038.69,
-  '2025-03': 5683.98, '2025-04': 5369.50, '2025-05': 5810.92, '2025-06': 6029.95,
-  '2025-07': 6296.50, '2025-08': 6408.95, '2025-09': 6584.02, '2025-10': 6735.69,
-  '2025-11': 6740.89, '2025-12': 6853.03, '2026-01': 6929.12, '2026-02': 6893.81,
-  '2026-03': 6654.42, '2026-04': 6957.01, '2026-05': 7412.55, '2026-06': 7450.03,
-  '2026-07': 7513.50, '2026-08': 7851.30
-};
-const csvUrlFor = (gid) => `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&gid=${gid}`;
 /* 토스 탭은 수집기가 자동 생성하므로 gid를 미리 알 수 없다.
    gviz는 sheet= 파라미터로 탭 이름 조회도 지원하니 그걸 쓴다. */
 const csvUrlForSheet = (name) => `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(name)}`;
@@ -99,7 +78,7 @@ const state = {
   yearAxis: 'expense',
   yearOpts: { budget: true, prevYear: true },
   yearSeries: { expense: true, budget: true, prevExpense: true, income: false, net: false },
-  goalMoves: {},           // 드래그로 옮긴 목표 시기 (시트 반영 전 로컬 오버라이드)
+  goalMoves: {},           // 드래그로 옮긴 목표 시기 (저장 전 로컬 오버라이드)
   goalMetric: {},          // 목표 행별 수동 연동 지표 key
   goalTarget: {},          // 목표 행별 수동 목표값 (문구 대신 이 값을 씀)
   simLevers: {},           // 증식 구조 시뮬레이터 레버 입력
@@ -276,73 +255,8 @@ function ledgerDateKey(s) {
 /* ---------------- CSV parsing (live sync) ---------------- */
 
 
-/* 지수_S&P500 탭: 년월 / 종가 두 컬럼.
-   구글 시트가 "2023-03"을 날짜로 해석해버리므로 gviz/tq CSV에서는
-   "2023. 3. 1" 형태로 내려온다. 원문 문자열/날짜/한글표기 모두 받는다.
-   컬럼은 항상 헤더명으로 찾는다 — 컬럼이 추가돼도 안 깨지게. */
-function normIndexMonthKey(raw) {
-  const s = String(raw || '').trim();
-  if (!s) return null;
-  let m = s.match(/^(\d{4})[.\-/년]\s*(\d{1,2})/);          // 2023-03 / 2023. 3. 1 / 2023년 3월
-  if (m) return `${m[1]}-${String(parseInt(m[2], 10)).padStart(2, '0')}`;
-  m = s.match(/^(\d{2})년\s*(\d{1,2})월/);                   // 23년 03월
-  if (m) return `${2000 + parseInt(m[1], 10)}-${String(parseInt(m[2], 10)).padStart(2, '0')}`;
-  return null;
-}
 
-function parseIndexFromRows(rows) {
-  let headerRowIdx = -1, monthCol = -1, closeCol = -1;
-  for (let r = 0; r < rows.length && r < 30; r++) {
-    const row = (rows[r] || []).map(c => cleanLabel(c || ''));
-    const mi = row.findIndex(c => c === '년월' || c === '월' || c === '기준월');
-    const ci = row.findIndex(c => c === '종가' || c === '지수' || c === '가격');
-    if (mi !== -1 && ci !== -1) { headerRowIdx = r; monthCol = mi; closeCol = ci; break; }
-  }
-  if (headerRowIdx === -1) return {};
 
-  const out = {};
-  for (let r = headerRowIdx + 1; r < rows.length; r++) {
-    const row = rows[r] || [];
-    const key = normIndexMonthKey(row[monthCol]);
-    if (!key) continue;
-    const v = parseFloat(String(row[closeCol] || '').replace(/[^0-9.\-]/g, ''));
-    if (!isFinite(v) || v <= 0) continue;
-    out[key] = v;
-  }
-  return out;
-}
-
-/* 목표 탭: 시기 / 구분 / 목표 / 상태 / 달성한 날 / 메모 컬럼 구조.
-   "시기"와 "상태"가 함께 있는 행만 헤더로 인정한다 — 가계부(D)의
-   헤더(날짜,대분류,소분류,항목,사용처,금액,메모,Good/Bad,회사 환급,고정비)에는
-   이 두 단어가 없어서, 다른 탭을 잘못 목표로 오인할 위험이 없다. */
-function parseGoalsFromRows(rows) {
-  let headerRowIdx = -1, headerCols = [];
-  for (let r = 0; r < rows.length; r++) {
-    const row = (rows[r] || []).map(c => cleanLabel(c || ''));
-    if (row.includes('시기') && row.includes('상태')) { headerRowIdx = r; headerCols = row; break; }
-  }
-  if (headerRowIdx === -1) return [];
-
-  const colIdxs = [];
-  headerCols.forEach((name, i) => { if (name) colIdxs.push({ name, i }); });
-
-  const goals = [];
-  for (let r = headerRowIdx + 1; r < rows.length && r < headerRowIdx + 500; r++) {
-    const row = rows[r] || [];
-    const obj = {};
-    let hasAny = false;
-    colIdxs.forEach(({ name, i }) => {
-      const v = (row[i] || '').trim();
-      if (v) hasAny = true;
-      obj[name] = v;
-    });
-    if (!hasAny) continue;
-    obj.__row = r + 1;   /* 시트 실제 행 번호 (쓰기 반영용) */
-    goals.push(obj);
-  }
-  return goals;
-}
 
 const GOAL_FIELD_ALIASES = {
   period: ['시기', '연도', '일정', '분기', '목표시기'],
@@ -606,65 +520,7 @@ function buildPivotFromLedger(ledger) {
   return { months, incomeTotal, expenseTotal, expenseCategories, incomeCategories, transferCategories };
 }
 
-/* 분류 탭: 구분,이름,,주식_카테고리,고정비 여부,수입,지출 같은 넓은 분류표.
-   "이름"과 "주식_카테고리" 컬럼이 함께 있는 행을 찾아 종목명 → 주식 카테고리 매핑을 만든다. */
-function parseStockCategoryFromRows(rows) {
-  let headerRowIdx = -1, headerCols = [];
-  for (let r = 0; r < rows.length; r++) {
-    const row = (rows[r] || []).map(c => cleanLabel(c || ''));
-    if (row.includes('이름') && row.includes('주식_카테고리')) { headerRowIdx = r; headerCols = row; break; }
-  }
-  if (headerRowIdx === -1) return {};
-  const nameIdx = headerCols.indexOf('이름');
-  const catIdx = headerCols.indexOf('주식_카테고리');
-  const map = {};
-  for (let r = headerRowIdx + 1; r < rows.length; r++) {
-    const row = rows[r] || [];
-    const name = (row[nameIdx] || '').trim();
-    const cat = (row[catIdx] || '').trim();
-    if (name && cat) map[name] = cat;
-  }
-  return map;
-}
 
-function parseInvestmentTagsFromRows(rows) {
-  let r0 = -1, c0 = -1;
-  for (let r = 0; r < rows.length; r++) {
-    const row = rows[r];
-    for (let c = 0; c < row.length - 6; c++) {
-      if (row[c] === '국내/해외' && row[c + 1] === '태그' && row[c + 2] === '종목' && row[c + 3] === '판매수익') {
-        r0 = r; c0 = c; break;
-      }
-    }
-    if (r0 !== -1) break;
-  }
-  if (r0 === -1) return [];
-  const out = [];
-  let missStreak = 0;
-  for (let r = r0 + 1; r < rows.length && r < r0 + 500; r++) {
-    const row = rows[r] || [];
-    const stock = (row[c0 + 2] || '').trim();
-    const total = parseWon(row[c0 + 6]);
-    const pctCell = (row[c0 + 7] || '').trim();
-    const looksValid = stock && total !== null && (pctCell === '' || /%$/.test(pctCell));
-    if (!looksValid) {
-      missStreak++;
-      if (missStreak > 15) break;
-      continue;
-    }
-    missStreak = 0;
-    const tagRaw = cleanLabel(row[c0 + 1] || '');
-    const tags = tagRaw ? tagRaw.split(',').map(t => t.trim()).filter(Boolean) : [];
-    let stockName = cleanLabel(stock);
-    if (stockName.includes('›')) stockName = stockName.split('›').pop().trim();
-    out.push({
-      stock: stockName, tags,
-      sale: parseWon(row[c0 + 3]) || 0, dividend: parseWon(row[c0 + 4]) || 0, interest: parseWon(row[c0 + 5]) || 0,
-      total
-    });
-  }
-  return out;
-}
 
 function aggregateByTag(tagRows) {
   const map = {};
@@ -5350,84 +5206,6 @@ function renderAll() {
 
 /* ---------------- 목표 보드 (연도/반기 그리드 · 드래그 이동) ---------------- */
 
-/* Apps Script 웹앱 URL. 배포 후 여기에 붙여넣으면 드래그 결과가 시트에 반영된다.
-   비워두면 화면에서만 바뀌고 '시트 미반영' 배지가 뜬다. */
-/* Apps Script 웹앱 URL — 설정 모달에서 입력하면 localStorage에 저장된다 */
-let GOALS_WEBAPP_URL = '';
-function loadGoalsWebapp() {
-  try { GOALS_WEBAPP_URL = localStorage.getItem('haedal:goals-webapp') || ''; } catch (e) { GOALS_WEBAPP_URL = ''; }
-  return GOALS_WEBAPP_URL;
-}
-function saveGoalsWebapp(url) {
-  GOALS_WEBAPP_URL = (url || '').trim();
-  try {
-    if (GOALS_WEBAPP_URL) localStorage.setItem('haedal:goals-webapp', GOALS_WEBAPP_URL);
-    else localStorage.removeItem('haedal:goals-webapp');
-  } catch (e) {}
-}
-loadGoalsWebapp();
-
-function openGoalsSyncSettings() {
-  const back = document.createElement('div');
-  back.className = 'modal-back';
-  back.innerHTML = `
-    <div class="modal">
-      <div class="modal-head"><b>시트 자동 반영 설정</b><button class="btn small" data-act="close">닫기</button></div>
-      <div class="modal-body">
-        <label class="fld"><span>Apps Script 웹앱 URL</span>
-          <input type="text" id="gw-url" value="${GOALS_WEBAPP_URL.replace(/"/g, '&quot;')}" placeholder="https://script.google.com/macros/s/..../exec" />
-        </label>
-        <div class="settings-note" style="line-height:1.8;">
-          비워두면 변경 내용이 화면에만 남고 새로고침하면 사라집니다.<br/>
-          스프레드시트 → 확장 프로그램 → Apps Script에 아래 코드를 붙여넣고
-          <b>배포 → 새 배포 → 웹 앱 → 액세스: 모든 사용자</b>로 배포한 뒤 나오는 <b>/exec</b> URL을 넣으세요.
-        </div>
-        <pre class="gw-code">function doPost(e) {
-  var p = JSON.parse(e.postData.contents);
-  var sh = SpreadsheetApp.getActive().getSheetByName('목표');
-  var head = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0];
-  var col = function (name) { return head.indexOf(name) + 1; };
-  var MAP = { period: '시기', category: '구분', title: '항목', freq: '기간',
-              amount: '금액 or 비율', status: '상태', memo: '메모' };
-  if (p.action === 'addGoal') {
-    var row = sh.getLastRow() + 1;
-    Object.keys(MAP).forEach(function (k) {
-      var c = col(MAP[k]);
-      if (c > 0 && p[k] !== undefined) sh.getRange(row, c).setValue(p[k]);
-    });
-  } else if (p.action === 'updateGoal') {
-    Object.keys(MAP).forEach(function (k) {
-      var c = col(MAP[k]);
-      if (c > 0 && p[k] !== undefined) sh.getRange(p.row, c).setValue(p[k]);
-    });
-  } else if (p.action === 'deleteGoal') {
-    sh.deleteRow(p.row);
-  }
-  return ContentService.createTextOutput('ok');
-}</pre>
-      </div>
-      <div class="modal-foot"><span></span>
-        <div style="display:flex;gap:8px;">
-          <button class="btn small" data-act="close">취소</button>
-          <button class="btn small primary" data-act="save">저장</button>
-        </div>
-      </div>
-    </div>`;
-  document.body.appendChild(back);
-  back.addEventListener('click', (e) => {
-    if (e.target === back) { back.remove(); return; }
-    const act = e.target.closest('[data-act]');
-    if (!act) return;
-    if (act.dataset.act === 'close') back.remove();
-    if (act.dataset.act === 'save') {
-      saveGoalsWebapp(back.querySelector('#gw-url').value);
-      back.remove();
-      showToast(GOALS_WEBAPP_URL ? '시트 자동 반영을 켰어요.' : '시트 자동 반영을 껐어요.', 'good');
-      renderPage();
-    }
-  });
-}
-
 /* "2026 상반기" / "26년 하반기" / "2026 H1" / "2026 3분기" / "2026" 등을 {y, h}로 */
 function parseGoalPeriod(raw) {
   const s0 = String(raw || '').trim();
@@ -5470,8 +5248,7 @@ function renderGoalBoard(data, d, view) {
   if (!allGoals.length) {
     host.innerHTML = `<div class="g"><div class="panel s8">
       <div class="panel-title"><div>목표</div></div>
-      <div class="empty-state">목표 탭에서 목표 데이터를 찾지 못했어요.
-      <a href="${csvUrlFor(GID_GOALS)}" target="_blank" rel="noopener" style="color:var(--accent-text);">불러오는 값 확인</a></div>
+      <div class="empty-state">아직 자산관리 목표가 없어요.</div>
     </div></div>`;
     return;
   }
@@ -5600,7 +5377,7 @@ function renderGoalBoard(data, d, view) {
         ${!hideCat && category ? `<span class="gb-tag">${category}</span>` : ''}
         ${doneDate ? `<span class="gb-date">${doneDate}</span>` : ''}
         ${!progress ? '<span class="gb-nolink">수치 미연동</span>' : ''}
-        ${pending ? '<span class="gb-pending">시트 반영 대기</span>' : ''}
+        ${pending ? '<span class="gb-pending">저장 중</span>' : ''}
       </div>
       ${memo ? `<div class="gb-memo">${memo}</div>` : ''}
     </div>`;
@@ -5673,10 +5450,6 @@ function renderGoalBoard(data, d, view) {
         </div>`).join('') : '<div class="empty-state" style="padding:14px 0;">지금 제안할 목표가 없어요.</div>'}
       ${(state.settings.hiddenRecs || []).length ? `<button class="btn small" id="rec-reset" style="margin-top:8px;">숨긴 추천 ${(state.settings.hiddenRecs || []).length}개 되살리기</button>` : ''}
     </div>
-    <div class="settings-note" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-      <button class="btn small" id="goal-sync-btn">시트 반영 ${GOALS_WEBAPP_URL ? '켜짐' : '꺼짐'}</button>
-      <span>${GOALS_WEBAPP_URL ? '변경하면 시트에 바로 씁니다.' : '지금은 화면에만 반영돼요.'}</span>
-    </div>
   `;
 
   document.getElementById('panel-goal-side').addEventListener('click', async (e) => {
@@ -5708,7 +5481,7 @@ function renderGoalBoard(data, d, view) {
     const obj = { __row: newRow, __local: true };
     Object.keys(payload).forEach(f => { obj[goalFieldKeyFor(null, f)] = payload[f]; });
     state.data.goals = (state.data.goals || []).concat([obj]);
-    pushGoalOp({ action: 'addGoal', ...payload });
+    pushGoalOp({ action: 'addGoal', tempRow: newRow, ...payload });
     renderPage();
   });
 
@@ -5721,8 +5494,6 @@ function renderGoalBoard(data, d, view) {
     if (g) openGoalEditor(g, data, d, fmtPeriod);
   });
 
-  const syncBtn = document.getElementById('goal-sync-btn');
-  if (syncBtn) syncBtn.addEventListener('click', openGoalsSyncSettings);
 
   const grpBox = document.getElementById('goal-group-toggle');
   if (grpBox) grpBox.addEventListener('click', (e) => {
@@ -5796,7 +5567,7 @@ function renderGoalBoard(data, d, view) {
     if (!g) return;
     if (periodOf(g) === newPeriod) return;
     state.goalMoves[row] = newPeriod;
-    pushGoalPeriod(Number(row), newPeriod, pickGoalField(g, 'title'));
+    pushGoalPeriod(Number(row), newPeriod);
     renderGoalBoard(data, d, 'board');
   });
 }
@@ -6186,7 +5957,7 @@ function openGoalEditor(goal, data, d, fmtPeriod) {
     const act = btn.dataset.act;
     if (act === 'close') return close();
     if (act === 'delete') {
-      if (!window.confirm('이 목표를 시트에서 삭제할까요?')) return;
+      if (!window.confirm('이 목표를 삭제할까요?')) return;
       pushGoalOp({ action: 'deleteGoal', row: g.__row, title: cur.title });
       state.data.goals = (state.data.goals || []).filter(x => x.__row !== g.__row);
       close(); renderPage();
@@ -6214,7 +5985,7 @@ function openGoalEditor(goal, data, d, fmtPeriod) {
         FIELDS.forEach(f => { obj[goalFieldKeyFor(null, f)] = patch[f]; });
         state.data.goals = (state.data.goals || []).concat([obj]);
         if ($('ge-metric').value) state.goalMetric[newRow] = $('ge-metric').value;
-        pushGoalOp({ action: 'addGoal', ...patch });
+        pushGoalOp({ action: 'addGoal', tempRow: newRow, ...patch });
       } else {
         FIELDS.forEach(f => { g[goalFieldKeyFor(g, f)] = patch[f]; });
         if (state.goalMoves) delete state.goalMoves[g.__row];
@@ -6228,47 +5999,71 @@ function openGoalEditor(goal, data, d, fmtPeriod) {
   });
 }
 
-/* 시트 반영 공통 — Apps Script 웹앱으로 POST */
-async function pushGoalOp(payload) {
-  if (!GOALS_WEBAPP_URL) {
-    showToast('시트 쓰기 엔드포인트가 없어 화면에만 반영됐어요.', 'warn');
-    return;
+/* 목표 저장 — goals 테이블에 바로 쓴다. 화면 상태는 호출한 쪽이 먼저 바꿔 둔다. */
+function goalPatchToRow(p) {
+  const row = {};
+  if (p.title !== undefined) row.item = p.title;
+  if (p.category !== undefined) row.kind = cleanLabel(p.category) || null;
+  if (p.freq !== undefined) row.frequency = p.freq || null;
+  if (p.period !== undefined) row.period = p.period || null;
+  if (p.status !== undefined) row.status = p.status || null;
+  if (p.memo !== undefined) row.note = p.memo || null;
+  if (p.amount !== undefined) {
+    const t = String(p.amount || '').trim();
+    const v = parseGoalAmount(t);
+    if (/%$/.test(t)) { row.target_ratio = v; row.target_amount = null; }
+    else { row.target_amount = v; row.target_ratio = null; }
   }
+  return row;
+}
+async function pushGoalOp(payload) {
   try {
-    await fetch(GOALS_WEBAPP_URL, {
-      method: 'POST', mode: 'no-cors',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(payload)
-    });
-    showToast('시트에 반영했어요.', 'good');
+    const sb = await enClient();
+    if (payload.action === 'addGoal') {
+      const row = { ...goalPatchToRow(payload), categories: [GOAL_CATEGORY] };
+      if (/(완료|달성)/.test(payload.status || '')) row.achieved_on = enToday();
+      const { data, error } = await sb.from('goals').insert(row).select('id').single();
+      if (error) throw error;
+      /* 화면에서 임시 번호로 붙여 둔 카드를 진짜 id 로 바꾼다 */
+      const g = (state.data.goals || []).find(x => x.__row === payload.tempRow && x.__local);
+      if (g) { g.__row = data.id; delete g.__local; }
+      if (state.goalMetric && state.goalMetric[payload.tempRow] !== undefined) {
+        state.goalMetric[data.id] = state.goalMetric[payload.tempRow];
+        delete state.goalMetric[payload.tempRow];
+      }
+    } else if (payload.action === 'updateGoal') {
+      const row = goalPatchToRow(payload);
+      /* 달성일: 완료로 바뀌는 순간만 오늘로 찍고, 이미 있으면 그대로 둔다 */
+      if (payload.status !== undefined) {
+        const g = (state.data.goals || []).find(x => x.__row === payload.row);
+        const done = /(완료|달성)/.test(payload.status || '');
+        if (!done) { row.achieved_on = null; if (g) g['달성한 날'] = ''; }
+        else if (g && !g['달성한 날']) { row.achieved_on = enToday(); g['달성한 날'] = row.achieved_on; }
+      }
+      const { error } = await sb.from('goals').update(row).eq('id', payload.row);
+      if (error) throw error;
+    } else if (payload.action === 'deleteGoal') {
+      const { error } = await sb.from('goals').delete().eq('id', payload.row);
+      if (error) throw error;
+    }
+    showToast('목표를 저장했어요.', 'good');
   } catch (e) {
-    showToast('시트 반영 실패 — 화면에만 적용됐어요.', 'warn');
+    showToast('목표 저장 실패 — ' + (e.message || e), 'warn');
   }
 }
 
-/* 시트 반영 — Apps Script 웹앱으로 POST. 실패해도 화면 상태는 유지된다. */
-/* 카드를 다른 시기로 옮겼을 때.
-   Apps Script는 updateGoal만 알아듣는다(예전 setGoalPeriod는 무시돼서 시트에 안 써졌음).
-   화면 상태(state.data.goals)도 같이 갱신해야 새로고침 전까지 되돌아가지 않는다. */
-async function pushGoalPeriod(row, period, title) {
+/* 카드를 다른 시기로 옮겼을 때 */
+async function pushGoalPeriod(row, period) {
   const g = (state.data.goals || []).find(x => x.__row === row);
   if (g) g[goalFieldKeyFor(g, 'period')] = period;
   if (state.goalMoves) delete state.goalMoves[row];
-
-  if (!GOALS_WEBAPP_URL) {
-    showToast('시트 쓰기 엔드포인트가 없어 화면에만 반영됐어요.', 'warn');
-    return;
-  }
   try {
-    await fetch(GOALS_WEBAPP_URL, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'updateGoal', row, period, title })
-    });
-    showToast(`시트에 반영했어요 · ${period || '시기 미정'}`, 'good');
+    const sb = await enClient();
+    const { error } = await sb.from('goals').update({ period: period || null }).eq('id', row);
+    if (error) throw error;
+    showToast(`시기를 옮겼어요 · ${period || '시기 미정'}`, 'good');
   } catch (e) {
-    showToast('시트 반영 실패 — 화면에만 적용됐어요.', 'warn');
+    showToast('시기 저장 실패 — ' + (e.message || e), 'warn');
   }
 }
 
@@ -10837,8 +10632,7 @@ function analyzeCapitalGainsTax(ledger) {
    실제 평가액(자산 스냅샷의 투자 자산)과 같은 시점에서 뺀 값이 초과수익.
    이 패널이 있어야 "이겼다/졌다"를 기억이 아니라 숫자로 판정할 수 있다. */
 function analyzeBenchmark(data, d) {
-  const hasSheetPrices = data.indexPrices && Object.keys(data.indexPrices).length > 0;
-  const prices = hasSheetPrices ? data.indexPrices : INDEX_SEED;
+  const prices = data.indexPrices || {};
   if (!Object.keys(prices).length) return null;
 
   const sortedPriceKeys = Object.keys(prices).sort();
@@ -10957,7 +10751,7 @@ function analyzeBenchmark(data, d) {
 
   return {
     rows, last, best, worst, wins, total: rows.length, missing,
-    source: hasSheetPrices ? (data.indexSource || 'sheet') : 'seed',
+    source: data.indexSource || 'db',
     accounts: Array.from(trackedAccounts), excluded: Array.from(excluded), useLedger
   };
 }
@@ -10969,9 +10763,7 @@ function renderBenchmarkPanel(hostId, data, d) {
   if (!b) {
     host.innerHTML = `
       <div class="panel-title"><div>지수 대비 초과수익</div></div>
-      <div class="empty-state">지수 데이터를 찾지 못했어요. 시트의 <b>지수_S&amp;P500</b> 탭에
-        <b>년월 / 종가</b> 두 컬럼이 있는지 확인해주세요.
-        <a href="${csvUrlFor(GID_INDEX)}" target="_blank" rel="noopener" style="color:var(--accent-text);">불러오는 값 확인</a></div>`;
+      <div class="empty-state">지수 데이터를 불러오지 못했어요. 잠시 뒤 새로고침해 주세요.</div>`;
     return;
   }
 
@@ -11043,7 +10835,7 @@ function renderBenchmarkPanel(hostId, data, d) {
       ${b.excluded.length ? `<br>제외 계좌: <b>${b.excluded.join(', ')}</b> (이체 기록 없음)` : ''}
       ${!b.useLedger ? `<br><b style="color:var(--accent-text)">원장이 얕아 월별 피벗 기준 · 계좌 분리 없음</b>` : ''}
       ${b.missing ? `<br><b style="color:var(--expense-text)">${b.missing}개 달 지수 결측 → 이전 달 종가 대체</b>` : ''}
-      ${b.source === 'seed' ? `<br><b style="color:var(--accent-text)">지수_S&amp;P500 탭 미수신 → 내장 백업값 사용</b>` : ''}
+
     </details>
   `;
 
@@ -15218,7 +15010,7 @@ async function budgetSave(raw, quiet) {
       await sb.from('goals').update({ target_amount: Number(v), status: '진행중' }).eq('id', row.id);
       if (!quiet) enToast('예산을 저장했습니다');
     } else {
-      await sb.from('goals').insert({ item: '월 지출 상한', kind: '금융',
+      await sb.from('goals').insert({ item: '지출', kind: '지출', frequency: '월', categories: [GOAL_CATEGORY],
         metric_source: 'monthly_expense', target_amount: Number(v), status: '진행중' });
       if (!quiet) enToast('예산을 저장했습니다');
     }
@@ -15932,14 +15724,48 @@ async function fetchStocksFromDB() {
 
 /* ---------------- fetch & init ---------------- */
 
-async function fetchCsvRows(gid) {
-  const res = await fetch(csvUrlFor(gid), { cache: 'no-store' });
-  if (!res.ok) throw new Error(`HTTP ${res.status} (gid ${gid})`);
-  let text = await res.text();
-  if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1); // gviz/tq 응답 맨 앞의 UTF-8 BOM 제거
-  if (text.trim().startsWith('<')) throw new Error(`시트 접근 권한이 없어요 (gid ${gid})`);
-  const parsed = Papa.parse(text, { skipEmptyLines: false });
-  return parsed.data.map(r => r.map(c => (c === null || c === undefined) ? '' : String(c).replace(/^\uFEFF/, '')));
+/* 목표: goals 테이블 중 '자산관리' 카테고리 + 구분(kind)이 있는 것만 대시보드 목표로 쓴다.
+   (같은 테이블에 노션에서 온 인생 목표도 있다.) 화면 코드가 시트 시절 모양
+   {시기, 구분, 항목, …, __row} 을 기대하므로 그 모양으로 맞추고, __row 에는 goals.id 를 넣는다. */
+const GOAL_CATEGORY = '자산관리';
+function goalRowToSheetShape(r) {
+  const amt = r.target_ratio != null ? `${r.target_ratio}%` : (r.target_amount != null ? String(r.target_amount) : '');
+  return {
+    '시기': r.period || '', '구분': r.kind || '', '항목': r.item || '', '기간': r.frequency || '',
+    '금액 or 비율': amt, '상태': r.status || '', '달성한 날': r.achieved_on || '', '메모': r.note || '',
+    __row: r.id, __metric: r.metric_source || null
+  };
+}
+async function fetchGoalsFromDB() {
+  const sb = await enClient();
+  const { data, error } = await sb.from('goals')
+    .select('id,period,kind,item,frequency,target_amount,target_ratio,status,achieved_on,note,metric_source,position')
+    .contains('categories', [GOAL_CATEGORY]).not('kind', 'is', null)
+    .order('position', { ascending: true, nullsFirst: false }).order('id');
+  if (error) throw new Error(error.message);
+  return (data || []).map(goalRowToSheetShape);
+}
+
+/* 벤치마크 지수(S&P500 월말 종가). index_prices 는 공용 시장 데이터 테이블이다. */
+async function fetchIndexFromDB() {
+  const sb = await enClient();
+  const { data, error } = await sb.from('index_prices').select('month,close')
+    .eq('symbol', 'SPX').order('month');
+  if (error) throw new Error(error.message);
+  const out = {};
+  (data || []).forEach(r => { out[String(r.month).slice(0, 7)] = Number(r.close); });
+  return out;
+}
+/* 지난달 종가가 아직 없으면 index-refresh 함수로 채운다 (하루 한 번만 시도). 결과는 다음 로딩부터 반영. */
+function maybeRefreshIndex(prices) {
+  const now = new Date();
+  const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const need = `${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, '0')}`;
+  if (prices && prices[need]) return;
+  const key = 'haedal:index-refresh-tried';
+  const today = now.toISOString().slice(0, 10);
+  try { if (localStorage.getItem(key) === today) return; localStorage.setItem(key, today); } catch (e) {}
+  enClient().then(sb => sb.functions.invoke('index-refresh', { body: {} })).catch(() => {});
 }
 
 /* 가계부 원장은 Supabase 가 유일한 원본이다.
@@ -16002,42 +15828,35 @@ async function fetchAssetsFromDB() {
 
 async function fetchAllTabsAndMerge() {
   /* 토스 탭 조회는 실패해도 대시보드 전체를 막지 않도록 병렬로 따로 돌린다. */
-  const [results, tossResult, factsResult, dbLedger, dbAssets, dbStocks] = await Promise.all([
-    Promise.allSettled(TAB_GIDS.map(fetchCsvRows)),
+  const [tossResult, factsResult, dbLedger, dbAssets, dbStocks, dbGoals, dbIndex] = await Promise.all([
     fetchTossData().catch(() => null),
     fetchStockFacts().catch(() => null),
     fetchLedgerFromDB().catch((e) => { console.error('ledger from DB failed', e); return null; }),
     fetchAssetsFromDB().catch((e) => { console.error('assets from DB failed', e); return null; }),
-    fetchStocksFromDB().catch((e) => { console.error('stocks from DB failed', e); return null; })
+    fetchStocksFromDB().catch((e) => { console.error('stocks from DB failed', e); return null; }),
+    fetchGoalsFromDB().catch((e) => { console.error('goals from DB failed', e); return null; }),
+    fetchIndexFromDB().catch((e) => { console.error('index from DB failed', e); return null; })
   ]);
-  const failures = results.filter(r => r.status === 'rejected');
-  const rowSets = results.filter(r => r.status === 'fulfilled').map(r => r.value);
-  /* 시트(목표·분류·지수)는 못 읽어도 가계부·자산 화면은 뜨게 한다 */
+  const warn = [];
+  if (!dbGoals) warn.push('목표');
+  if (!dbIndex) warn.push('지수');
 
   /* 가계부·자산 스냅샷은 Supabase 가 유일한 원본 — 못 읽으면 예비 없이 실패로 알린다 */
   if (!dbLedger) throw new Error('가계부를 불러오지 못했습니다');
   if (!dbAssets || !dbAssets.length) throw new Error('자산 스냅샷을 불러오지 못했습니다');
-  let assetRows = dbAssets, ledger = dbLedger, investmentTags = [], goals = [], stockCategoryMap = {}, indexPrices = {};
+  const assetRows = dbAssets, ledger = dbLedger;
   const ledgerSource = 'db';
   const assetSource = 'db';
-  for (const rows of rowSets) {
-    try {
-      const ip = parseIndexFromRows(rows);
-      if (Object.keys(ip).length > Object.keys(indexPrices).length) indexPrices = ip;
-    } catch (e) {}
-    try {
-      const tags = parseInvestmentTagsFromRows(rows);
-      if (tags.length > investmentTags.length) investmentTags = tags;
-    } catch (e) {}
-    try {
-      const gl = parseGoalsFromRows(rows);
-      if (gl.length > goals.length) goals = gl;
-    } catch (e) {}
-    try {
-      const scm = parseStockCategoryFromRows(rows);
-      if (Object.keys(scm).length > Object.keys(stockCategoryMap).length) stockCategoryMap = scm;
-    } catch (e) {}
-  }
+  const goals = dbGoals || [];
+  const indexPrices = dbIndex || {};
+  /* 종목 → 테마 문자열. stocks.themes 가 원본 (예전 시트 '분류' 탭의 주식_카테고리를 옮겨 둠) */
+  const stockCategoryMap = {};
+  (dbStocks || []).forEach(x => {
+    const th = Array.isArray(x.themes) ? x.themes.filter(Boolean) : [];
+    if (th.length) stockCategoryMap[x.name] = th.join(', ');
+    else if (x.category) stockCategoryMap[x.name] = x.category;
+  });
+  const investmentTags = [];   /* 시트 '분류' 탭의 종목별 판매수익 표 — 비어 있어 폐기 */
 
   // 가계부(M) 피벗 탭은 폐기되어, 정상 파싱된 가계부(D) 원장에서 월별 카테고리 요약을 직접 집계한다.
   const pivot = buildPivotFromLedger(ledger);
@@ -16050,16 +15869,11 @@ async function fetchAllTabsAndMerge() {
     assetRows, assetSource, ledger, ledgerSource, investmentTags, goals, stockCategoryMap, stocks: dbStocks || [],
     toss: tossResult,
     stockFacts: factsResult || {},
-    indexPrices: Object.keys(indexPrices).length ? indexPrices : INDEX_SEED,
-    indexSource: Object.keys(indexPrices).length ? 'sheet' : 'seed'
+    indexPrices,
+    indexSource: 'db'
   };
-
-  /* 종목 테마는 Supabase(stocks)가 원본 — 시트 값 위에 덮어쓴다 */
-  applyStocksToData(data, dbStocks || []);
-
-  if (failures.length) {
-    data._partialWarning = `${failures.length}개 탭을 못 불러왔지만(${failures.map(f => f.reason.message).join(', ')}), 나머지 데이터로 표시 중이에요.`;
-  }
+  if (warn.length) data._partialWarning = `${warn.join('·')} 데이터를 못 불러왔지만, 나머지로 표시 중이에요.`;
+  maybeRefreshIndex(indexPrices);
   return data;
 }
 
