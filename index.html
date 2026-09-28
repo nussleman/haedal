@@ -2,7 +2,13 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<!-- 폰 홈 화면에 추가하면 앱처럼 열린다 (예전 가계부 앱 아이콘도 여기로 들어온다) -->
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="해달" />
+<meta name="theme-color" content="#0e121a" />
 <title>해달 — 당신의 자산관리 파트너</title>
 <!-- 탭·북마크 아이콘. 이모지 하나를 SVG 로 그려 파일 하나로 끝낸다 (별도 .ico 파일 없음).
      바꾸려면 아래 %F0%9F%A6%A6(🦦) 자리만 다른 이모지의 UTF-8 퍼센트 인코딩으로 갈아끼우면 된다.
@@ -13,13 +19,13 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.5.0/chart.umd.min.js"></script>
-<link rel="stylesheet" href="dist/style.css?v=102a7b3caa">
+<link rel="stylesheet" href="dist/style.css?v=ff85ffa504">
 </head>
 <body>
 <div id="app"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
-<script src="shared/supabase.js?v=25889b0aa6"></script>
+<script src="shared/supabase.js?v=e5e29da45d"></script>
 <!-- 앱 코드: js/ 파일들을 js/order.txt 순서로 묶어 줄인 것 — 고칠 땐 js/ 를 고치고 npm run build -->
-<script src="dist/app.js?v=78a7a2c517"></script>
+<script src="dist/app.js?v=8515337cff"></script>
 </body>
 </html>

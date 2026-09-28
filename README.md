@@ -20,7 +20,7 @@ js/
   panels/           여러 화면에 끼워 쓰는 패널 (자산배분, 부채, 운용 점검)
   boot.js           로그인 확인 후 시작 — 항상 마지막에 불러온다
 shared/supabase.js  세 화면 공용 Supabase 연결 (키 · 라이브러리 버전 고정)
-gagyebu.html        모바일 가계부 입력 앱 (PWA)
+gagyebu.html        예전 폰 가계부 앱 주소 → index.html#quick 으로 넘김 (설치된 아이콘 유지용)
 date/               데이트 통장 앱 (PWA)
 supabase/           DB 변경 기록(migrations)과 Edge Function 소스
 tests/              화면 회귀 검사

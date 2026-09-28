@@ -3270,3 +3270,62 @@ body{padding-left:0;padding-right:0;}
 /* 순자산 › 계좌별 상세 (연금·저축) */
 .nw-detail-hd{display:flex;align-items:center;gap:12px;margin:28px 0 12px;}
 .nw-detail-hd b{font-size:var(--fs-md);font-weight:700;}
+
+/* ================= 빠른 기록 (폰) — js/entry/quick.js =================
+   예전 폰 앱(gagyebu.html)의 모양을 그대로 옮겼다. 화면을 통째로 덮고, 손은 아래 도크에서만 움직인다. */
+body.qe-on{overflow:hidden;}
+#qe{position:fixed;left:0;right:0;top:0;height:100dvh;z-index:200;background:var(--bg);
+  display:flex;flex-direction:column;overscroll-behavior:none;}
+#qe[hidden]{display:none;}
+#qe .qe-top{flex:0 0 auto;display:flex;align-items:center;gap:8px;padding:10px 14px;
+  padding-top:calc(10px + env(safe-area-inset-top,0px));border-bottom:1px solid var(--border);}
+#qe .qe-top b{font-size:17px;font-weight:700;}
+#qe .qe-top .sp{margin-left:auto;}
+#qe .qe-x{height:34px;padding:0 14px;border-radius:var(--r-md);border:1px solid var(--border);background:transparent;
+  color:var(--text-dim);font-size:14px;font-family:var(--sans);}
+#qe .qe-main{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:6px 16px 16px;}
+#qe .qe-dock{flex:0 0 auto;border-top:1px solid var(--border);padding:8px 14px calc(10px + env(safe-area-inset-bottom,0px));background:var(--bg);}
+#qe .qe-empty{text-align:center;color:var(--text-faint);font-size:14px;padding:60px 0;}
+#qe .qe-row{display:flex;align-items:baseline;gap:14px;width:100%;background:none;border:0;border-bottom:1px solid var(--border);
+  padding:15px 2px;text-align:left;color:var(--text);font-family:var(--sans);}
+#qe .qe-row:last-child{border-bottom:0;}
+#qe .qe-row .k{flex:0 0 46px;font-size:12px;color:var(--text-faint);}
+#qe .qe-row .v{flex:1;min-width:0;font-size:17px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#qe .qe-row .v.num{font-family:var(--mono);}
+#qe .qe-row .v.ph{color:var(--text-faint);}
+#qe .qe-row.cur .k,#qe .qe-row.cur .v{color:var(--accent-text);}
+#qe .qe-err{color:var(--expense-text);font-size:13px;margin:6px 2px 0;}
+#qe .qe-err:empty{display:none;}
+#qe .qe-note{color:var(--text-faint);font-size:13px;margin:10px 2px 0;}
+#qe .qe-sugs{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;scrollbar-width:none;}
+#qe .qe-sugs::-webkit-scrollbar{display:none;}
+#qe .qe-sugs button{flex:0 0 auto;height:38px;padding:0 14px;border-radius:999px;border:1px solid var(--border);
+  background:transparent;color:var(--text-dim);font-size:14px;white-space:nowrap;font-family:var(--sans);}
+#qe .qe-sugs button.on{border-color:var(--accent-text);color:var(--accent-text);}
+#qe .qe-sugs button.mut{color:var(--text-faint);}
+#qe .qe-sugs.v{flex-direction:column;overflow:visible;gap:0;padding-bottom:6px;}
+#qe .qe-sugs.v button{height:46px;border:0;border-bottom:1px solid var(--border);border-radius:0;text-align:left;
+  padding:0 2px;display:flex;align-items:center;gap:10px;min-width:0;}
+#qe .qe-sugs.v .nm{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#qe .qe-sugs.v .ct{flex:0 1 auto;min-width:0;max-width:52%;font-size:12px;color:var(--text-faint);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#qe .qe-drow{display:flex;gap:6px;}
+#qe .qe-in{flex:1;width:100%;min-width:0;height:46px;padding:0 12px;background:var(--panel-2);border:1px solid var(--border);
+  border-radius:var(--r-md);color:var(--text);font-size:16px;font-family:var(--sans);}
+#qe .qe-in:focus{outline:none;border-color:var(--accent-text);}
+#qe .qe-go{flex:0 0 68px;height:46px;border:0;border-radius:var(--r-md);background:var(--accent-fill);
+  color:var(--ink-on-accent);font-weight:700;font-size:15px;font-family:var(--sans);}
+#qe .qe-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+#qe .qe-pad button{height:48px;border-radius:var(--r-md);border:1px solid var(--border);background:var(--panel-2);
+  font-family:var(--mono);font-size:20px;font-weight:600;color:var(--text);}
+#qe .qe-pad button:active{background:var(--accent-fill);color:var(--ink-on-accent);}
+#qe .qe-pad button.fn{font-family:var(--sans);font-size:15px;color:var(--text-dim);background:var(--panel);}
+#qe .qe-save{width:100%;height:50px;margin-top:8px;border:0;border-radius:var(--r-md);background:var(--accent-fill);
+  color:var(--ink-on-accent);font-size:16px;font-weight:700;font-family:var(--sans);}
+#qe .qe-save:disabled{opacity:.45;}
+/* 빠른 기록 중에는 알림을 위에 띄운다 — 아래 저장 버튼을 가리지 않게 */
+body.qe-on #en-toast{bottom:auto;top:calc(64px + env(safe-area-inset-top,0px));transform:translate(-50%,-10px);}
+body.qe-on #en-toast.on{transform:translate(-50%,0);}
+
+/* 홈 화면 앱(상태바 겹침)에서도 머리가 노치 아래로 들어가지 않게 */
+@media (max-width:640px){ .site-header{padding-top:calc(8px + env(safe-area-inset-top,0px));} }

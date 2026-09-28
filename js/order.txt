@@ -6,6 +6,7 @@ js/panels/extras.js
 js/core/page.js
 js/core/supabase.js
 js/entry/overlay.js
+js/entry/quick.js
 js/entry/ledger.js
 js/entry/merchants.js
 js/core/remote-keys.js

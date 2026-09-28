@@ -29,7 +29,7 @@ function renderShell() {
       </div>
     </div>
   `;
-  document.getElementById('entry-btn').addEventListener('click', () => enOpen());
+  document.getElementById('entry-btn').addEventListener('click', () => (qeWanted() ? qeOpen() : enOpen()));
   /* 타이틀(아이콘·'해달')을 누르면 어디서든 홈으로 */
   const brand = document.getElementById('brand-home');
   const goHome = () => {
