@@ -350,7 +350,7 @@ async function dbmRenderPane() {
     if (c.t === 'cat' || c.t === 'sel' || c.t === 'tags' || c.t === 'grp') return chipHtml(c, r);
     return `<input class="en-in" id="${id}" data-k="${c.k}"
       ${c.t === 'num' ? 'inputmode="numeric"' : ''} ${c.list ? `list="${c.list}"` : ''}
-      value="${enEsc(v == null ? '' : v)}" placeholder="${enEsc(c.l)}">`;
+      value="${enEsc(v == null ? '' : v)}" placeholder="${enEsc(c.mid ? '—' : c.l)}">`;   /* 좁은 가운데 칸은 머리글 대신 — (잘려 보이지 않게) */
   };
   const cell = (c, r, idPrefix) => {
     const id = `${idPrefix}-${c.k}`;

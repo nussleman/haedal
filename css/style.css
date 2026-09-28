@@ -3242,3 +3242,22 @@ body{padding-left:0;padding-right:0;}
   .bk-cols .vd,.bk-row .vd{flex:0 0 auto;}
   .bk-row .gd em{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
 }
+
+/* ================= 손가락 조작 (터치 화면) =================
+   마우스 기준으로 만든 26~30px 버튼은 손가락으로 누르기 작다. 터치 기기에서만 최소 34px.
+   글자 크기는 그대로 두고 높이·여백만 늘려서 글자가 칸을 벗어나지 않게 한다.
+   아주 작은 아이콘 버튼(✕, ＋, 📌)은 모양은 그대로, 눌리는 영역만 투명하게 넓힌다. */
+@media (pointer:coarse){
+  .range-toggle button,.btn.small,.nav-act,.dbm-btn,.xp-fb,.xp-clear,.bk-add,.lg-fbtn,
+  .sdb-chip,.gv-filter button,.series-chk,.bt-mbtn,.sn-nav,.fm-add,.rl-log,.xp-chip,
+  .bk-pickbtn,.bk-clear,.xp-quick button,.xp-seg button,.lg-pager button,.month-nav button,
+  .subnav button,.dbm-views button,.nw-fig,.fx-acts button{min-height:34px;}
+  .month-nav button{min-width:34px;}
+  .range-toggle button,.xp-seg button{display:inline-flex;align-items:center;justify-content:center;}
+  .xp-chip,.sdb-chip,.rl-log,.fm-add{display:inline-flex;align-items:center;}
+  .en-in,.bt-in,.budc-in,.xp-q,select{min-height:34px;}
+  .series-toggles{row-gap:6px;}
+  .lg-tg,.lg-dayadd,.dbm-x,.sn-x,.hm-lnk{position:relative;}
+  .lg-tg::after,.lg-dayadd::after,.dbm-x::after,.sn-x::after,.gb-rec-x::after,.hm-lnk::after{
+    content:'';position:absolute;inset:-8px -4px;}
+}
