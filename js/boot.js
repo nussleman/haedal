@@ -11,8 +11,8 @@
     const { data } = await sb.auth.getSession();
     if (data.session) {
       init(data.session.user && data.session.user.id);
-      /* 폰 홈 화면 아이콘(예전 가계부 앱)은 #quick 으로 들어온다 — 바로 기록 화면을 연다 */
-      if (location.hash === '#quick') { history.replaceState(null, '', location.pathname + '#home/main'); qeOpen(); }
+      /* 폰 홈 화면 아이콘(예전 가계부 앱)은 #quick 으로 들어온다 — 홈 화면으로 연다 (기록은 가운데 ＋) */
+      if (location.hash === '#quick') history.replaceState(null, '', location.pathname + '#home/main');
     } else { cacheClear(); enShowLock(); }
     sb.auth.onAuthStateChange((evt) => { if (evt === 'SIGNED_OUT') { cacheClear(); location.reload(); } });
   } catch (e) {
