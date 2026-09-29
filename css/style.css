@@ -2969,5 +2969,27 @@ body.ap-on input,body.ap-on select,body.ap-on textarea{font-size:max(16px,1em);}
 .ap-del{flex:0 0 90px;height:52px;border-radius:26px;border:1px solid rgba(193,72,63,.4);background:none;color:var(--expense-text);font-size:15px;}
 .ap-save{flex:1;height:52px;border-radius:26px;border:0;background:var(--accent-fill);color:var(--ink-on-accent);font-size:16px;font-weight:700;}
 .ap-save:disabled{opacity:.5;}
-body.ap-on #en-toast{bottom:calc(96px + env(safe-area-inset-bottom,0px));}
+/* 앱 화면의 알림은 위쪽 한 줄 — (위·아래를 동시에 잡으면 세로로 길게 늘어난다) */
+body.ap-on #en-toast,body.ap-on.qe-on #en-toast{top:calc(62px + env(safe-area-inset-top,0px));bottom:auto;height:auto;
+  max-width:calc(100% - 32px);white-space:nowrap;border-radius:20px;transform:translate(-50%,-10px);z-index:260;}
+body.ap-on #en-toast.on{transform:translate(-50%,0);}
+/* 앱에서는 두 번 톡톡 눌러도 확대되지 않게 */
+html.ap-app,html.ap-app body{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:100%;}
+/* 지출 · 수입 · 이체 구분 */
+#qe .qe-kinds{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;}
+#qe .qe-kinds button{display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-width:0;padding:10px 12px;border-radius:14px;
+  border:1px solid var(--border);background:var(--panel);color:var(--text-dim);text-align:left;font-family:var(--sans);}
+#qe .qe-kinds b{font-size:16px;font-weight:700;}
+#qe .qe-kinds small{font-size:11px;color:var(--text-faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
+#qe .qe-kinds .k-지출.on{border-color:var(--expense-fill);background:var(--expense-bg);color:var(--expense-strong);}
+#qe .qe-kinds .k-수입.on{border-color:var(--income-fill);background:var(--income-bg);color:var(--income-strong);}
+#qe .qe-kinds .k-이체.on{border-color:var(--transfer-fill);background:var(--transfer-bg);color:var(--transfer-strong);}
+#qe .qe-chips.k-수입 .on,#qe .qe-grid.k-수입 button.on{border-color:var(--income-fill);background:var(--income-bg);color:var(--income-strong);}
+#qe .qe-chips.k-이체 .on,#qe .qe-grid.k-이체 button.on{border-color:var(--transfer-fill);background:var(--transfer-bg);color:var(--transfer-strong);}
+#qe .qe-chips.k-지출 .on,#qe .qe-grid.k-지출 button.on{border-color:var(--expense-fill);background:var(--expense-bg);color:var(--expense-strong);}
+#qe .qe-grid{margin-top:10px;}
+.qe-kt{display:inline-block;font-style:normal;font-size:10.5px;font-weight:700;line-height:1;padding:3px 5px;border-radius:5px;margin-right:6px;vertical-align:1px;}
+.qe-kt.k-지출{background:var(--expense-bg);color:var(--expense-text);}
+.qe-kt.k-수입{background:var(--income-bg);color:var(--income-text);}
+.qe-kt.k-이체{background:var(--transfer-bg);color:var(--transfer-text);}
 @media (prefers-reduced-motion:reduce){.ap-bar-in.swap{animation:none;}.ap-sheet-in,.ap-scrim{transition:none;}}

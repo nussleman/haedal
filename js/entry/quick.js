@@ -34,6 +34,8 @@ function qeWanted() { return window.matchMedia('(max-width: 640px)').matches; }
 
 const qeCat = (id) => QE.cats.find(x => x.id === id) || QE.allCats.find(x => x.id === id);
 const qeCatLabel = (id) => { const c = qeCat(id); return c ? `${c.category} › ${c.subcategory}` : '분류 없음'; };
+/* 지출·수입·이체 표시 (색 점 + 글자) */
+const qeKindTag = (id) => { const c = qeCat(id); return c ? `<i class="qe-kt k-${qeEsc(c.kind)}">${qeEsc(c.kind)}</i>` : ''; };
 const qeMerch = (name) => QE.merchants.find(x => x.name === name);
 
 let QE_LOADING = null;
@@ -52,7 +54,8 @@ async function qeLoadRun() {
   ]);
   if (cats.error) throw new Error(cats.error.message);
   QE.allCats = cats.data || [];
-  QE.cats = QE.allCats.filter(x => x.is_active !== false);
+  /* '자산' 구분은 월말 결산 전용이라 기록에는 안 쓴다 — 이체와 이름(연금 자산·저축 자산…)이 겹쳐 헷갈린다 */
+  QE.cats = QE.allCats.filter(x => x.is_active !== false && x.kind !== '자산');
   QE.merchants = merch.data || [];
   /* 사용처별: 몇 번 썼나, 가장 많이 쓴 분류, 자주 찍은 금액 */
   const st = {};
@@ -168,7 +171,7 @@ function qeRowHTML(i, val) {
   const n = i + 1;
   const filled = !!val[i];
   return `<button class="qe-row" data-s="${n}"><span class="k">${QE_STEPS[i]}</span>
-    <span class="v${i === 2 ? ' num' : ''}${filled ? '' : ' ph'}">${qeEsc(filled ? val[i] : '—')}</span><span class="ed">바꾸기</span></button>`;
+    <span class="v${i === 2 ? ' num' : ''}${filled ? '' : ' ph'}">${i === 1 && QE.d.catId ? qeKindTag(QE.d.catId) : ''}${qeEsc(filled ? val[i] : '—')}</span><span class="ed">바꾸기</span></button>`;
 }
 
 function qePaint() {
@@ -285,7 +288,7 @@ function qeSugs() {
   const typed = QE.d.merchant.trim();
   const rows = r.list.map((x, i) => `<button data-m="${qeEsc(x.name)}" class="${i === 0 ? 'best' : ''}">
       <span class="nm">${qeEsc(x.name)}</span>
-      ${x.catId ? `<span class="ct">${qeEsc(qeCatLabel(x.catId))}</span>` : ''}${i === 0 ? '<span class="kb">다음 ↵</span>' : ''}</button>`);
+      ${x.catId ? `<span class="ct">${qeKindTag(x.catId)}${qeEsc(qeCatLabel(x.catId))}</span>` : ''}${i === 0 ? '<span class="kb">다음 ↵</span>' : ''}</button>`);
   if (typed && r.isNew) rows.push(`<button data-m="${qeEsc(typed)}" class="new${r.list.length ? '' : ' best'}"><span class="nm">'${qeEsc(typed)}' 새로 쓰기</span>${r.list.length ? '' : '<span class="kb">다음 ↵</span>'}</button>`);
   rows.push(`<button data-m="" class="mut"><span class="nm">사용처 없이 넘어가기</span></button>`);
   /* 아래(입력칸 쪽)부터 가까운 순 — 첫 후보가 입력칸 바로 위에 온다 */
@@ -302,24 +305,32 @@ function qeSugs() {
   if (m) m.scrollTop = m.scrollHeight;
 }
 
-/* 2) 분류 — 누르기만 하므로 키보드 없음 */
+/* 2) 분류 — 먼저 지출 · 수입 · 이체 중 무엇인지, 그다음 분류, 세부 분류. 누르기만 하므로 키보드 없음 */
+const QE_KINDS = [['지출', '지출', '나간 돈'], ['수입', '수입', '들어온 돈'], ['이체', '이체', '저축·투자']];
 function qeStepCat(cur) {
   const d = QE.d;
   const c0 = d.catId ? qeCat(d.catId) : null;
-  const groups = [...new Set(QE.cats.map(c => c.category))];
-  const openGroup = d.cat || (c0 ? c0.category : groups[0]);
-  const subs = QE.cats.filter(c => c.category === openGroup);
-  cur.innerHTML = `<div class="qe-lab">분류</div>
-    <div class="qe-chips">${groups.map(g =>
+  const kinds = QE_KINDS.filter(([k]) => QE.cats.some(c => c.kind === k));
+  QE.cats.forEach(c => { if (!kinds.some(x => x[0] === c.kind)) kinds.push([c.kind, c.kind, '']); });
+  const kind = d.kindTab || (c0 ? c0.kind : '지출');
+  const inKind = QE.cats.filter(c => c.kind === kind);
+  const groups = [...new Set(inKind.map(c => c.category))];
+  const openGroup = groups.includes(d.cat) ? d.cat : (c0 && c0.kind === kind ? c0.category : groups[0]);
+  const subs = inKind.filter(c => c.category === openGroup);
+  cur.innerHTML = `<div class="qe-lab">무엇인가요?</div>
+    <div class="qe-kinds">${kinds.map(([k, l, h]) =>
+      `<button data-kind="${qeEsc(k)}" class="k-${qeEsc(k)}${k === kind ? ' on' : ''}"><b>${qeEsc(l)}</b>${h ? `<small>${qeEsc(h)}</small>` : ''}</button>`).join('')}</div>
+    <div class="qe-lab">분류</div>
+    <div class="qe-chips k-${qeEsc(kind)}">${groups.map(g =>
       `<button data-g="${qeEsc(g)}" class="${g === openGroup ? 'on' : ''}">${qeEsc(g)}</button>`).join('')}</div>
-    <div class="qe-lab sm">${qeEsc(openGroup || '')}</div>
-    <div class="qe-grid">${subs.map(c =>
+    <div class="qe-grid k-${qeEsc(kind)}">${subs.map(c =>
       `<button data-c="${c.id}" class="${d.catId === c.id ? 'on' : ''}">${qeEsc(c.subcategory)}</button>`).join('')}</div>`;
-  cur.querySelectorAll('[data-g]').forEach(b => b.addEventListener('click', () => { d.cat = b.dataset.g; qePaint(); }));
+  cur.querySelectorAll('[data-kind]').forEach(b => b.addEventListener('click', () => { d.kindTab = b.dataset.kind; d.cat = null; qePaint(); }));
+  cur.querySelectorAll('[data-g]').forEach(b => b.addEventListener('click', () => { d.kindTab = kind; d.cat = b.dataset.g; qePaint(); }));
   cur.querySelectorAll('[data-c]').forEach(b => b.addEventListener('click', () => {
     d.catId = Number(b.dataset.c);
     const c = qeCat(d.catId);
-    if (c) { d.kind = c.kind; d.cat = c.category; }
+    if (c) { d.kind = c.kind; d.cat = c.category; d.kindTab = c.kind; }
     d.step = 3; qePaint();
   }));
 }

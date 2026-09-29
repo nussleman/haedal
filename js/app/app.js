@@ -60,6 +60,11 @@ const AP_TITLE = { home: '해달', list: '내역', cal: '달력', more: '더보�
 /* ---------------- 틀 ---------------- */
 function apShell() {
   AP.on = true;
+  /* 앱처럼: 두 번 톡톡·핀치로 화면이 커지지 않게 */
+  document.documentElement.classList.add('ap-app');
+  const vp = document.querySelector('meta[name=viewport]');
+  if (vp) vp.setAttribute('content', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover');
+  document.addEventListener('dblclick', (e) => e.preventDefault(), { passive: false });
   document.body.classList.add('ap-on');
   const app = document.getElementById('app');
   app.innerHTML = `
