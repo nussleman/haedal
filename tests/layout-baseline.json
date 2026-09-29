@@ -55,49 +55,7 @@
    "offscreen": []
   }
  },
- "invest/ovGrowth": {
-  "phone": {
-   "vertical": [],
-   "clipped": [],
-   "overlap": [],
-   "offscreen": []
-  },
-  "pc": {
-   "vertical": [],
-   "clipped": [],
-   "overlap": [],
-   "offscreen": []
-  }
- },
- "invest/ovTransfer": {
-  "phone": {
-   "vertical": [],
-   "clipped": [],
-   "overlap": [],
-   "offscreen": []
-  },
-  "pc": {
-   "vertical": [],
-   "clipped": [],
-   "overlap": [],
-   "offscreen": []
-  }
- },
- "invest/ovRealized": {
-  "phone": {
-   "vertical": [],
-   "clipped": [],
-   "overlap": [],
-   "offscreen": []
-  },
-  "pc": {
-   "vertical": [],
-   "clipped": [],
-   "overlap": [],
-   "offscreen": []
-  }
- },
- "invest/ovUnrealized": {
+ "invest/overview": {
   "phone": {
    "vertical": [],
    "clipped": [],
@@ -125,34 +83,6 @@
    "offscreen": []
   }
  },
- "invest/bench": {
-  "phone": {
-   "vertical": [],
-   "clipped": [],
-   "overlap": [],
-   "offscreen": []
-  },
-  "pc": {
-   "vertical": [],
-   "clipped": [],
-   "overlap": [],
-   "offscreen": []
-  }
- },
- "invest/tax": {
-  "phone": {
-   "vertical": [],
-   "clipped": [],
-   "overlap": [],
-   "offscreen": []
-  },
-  "pc": {
-   "vertical": [],
-   "clipped": [],
-   "overlap": [],
-   "offscreen": []
-  }
- },
  "invest/rules": {
   "phone": {
    "vertical": [],
@@ -167,91 +97,7 @@
    "offscreen": []
   }
  },
- "invest/journal": {
-  "phone": {
-   "vertical": [],
-   "clipped": [],
-   "overlap": [],
-   "offscreen": []
-  },
-  "pc": {
-   "vertical": [],
-   "clipped": [],
-   "overlap": [],
-   "offscreen": []
-  }
- },
- "goals/active": {
-  "phone": {
-   "vertical": [],
-   "clipped": [],
-   "overlap": [],
-   "offscreen": []
-  },
-  "pc": {
-   "vertical": [],
-   "clipped": [],
-   "overlap": [],
-   "offscreen": []
-  }
- },
- "goals/done": {
-  "phone": {
-   "vertical": [],
-   "clipped": [],
-   "overlap": [],
-   "offscreen": []
-  },
-  "pc": {
-   "vertical": [],
-   "clipped": [],
-   "overlap": [],
-   "offscreen": []
-  }
- },
- "goals/next": {
-  "phone": {
-   "vertical": [],
-   "clipped": [],
-   "overlap": [],
-   "offscreen": []
-  },
-  "pc": {
-   "vertical": [],
-   "clipped": [],
-   "overlap": [],
-   "offscreen": []
-  }
- },
- "goals/board": {
-  "phone": {
-   "vertical": [],
-   "clipped": [],
-   "overlap": [],
-   "offscreen": []
-  },
-  "pc": {
-   "vertical": [],
-   "clipped": [],
-   "overlap": [],
-   "offscreen": []
-  }
- },
- "goals/all": {
-  "phone": {
-   "vertical": [],
-   "clipped": [],
-   "overlap": [],
-   "offscreen": []
-  },
-  "pc": {
-   "vertical": [],
-   "clipped": [],
-   "overlap": [],
-   "offscreen": []
-  }
- },
- "goals/category": {
+ "goals/list": {
   "phone": {
    "vertical": [],
    "clipped": [],
@@ -294,90 +140,6 @@
   }
  },
  "report/networth": {
-  "phone": {
-   "vertical": [],
-   "clipped": [],
-   "overlap": [],
-   "offscreen": []
-  },
-  "pc": {
-   "vertical": [],
-   "clipped": [],
-   "overlap": [],
-   "offscreen": []
-  }
- },
- "report/pension": {
-  "phone": {
-   "vertical": [],
-   "clipped": [],
-   "overlap": [],
-   "offscreen": []
-  },
-  "pc": {
-   "vertical": [],
-   "clipped": [],
-   "overlap": [],
-   "offscreen": []
-  }
- },
- "report/savings": {
-  "phone": {
-   "vertical": [],
-   "clipped": [],
-   "overlap": [],
-   "offscreen": []
-  },
-  "pc": {
-   "vertical": [],
-   "clipped": [],
-   "overlap": [],
-   "offscreen": []
-  }
- },
- "lab/explore": {
-  "phone": {
-   "vertical": [],
-   "clipped": [],
-   "overlap": [],
-   "offscreen": []
-  },
-  "pc": {
-   "vertical": [],
-   "clipped": [],
-   "overlap": [],
-   "offscreen": []
-  }
- },
- "lab/sim": {
-  "phone": {
-   "vertical": [],
-   "clipped": [],
-   "overlap": [],
-   "offscreen": []
-  },
-  "pc": {
-   "vertical": [],
-   "clipped": [],
-   "overlap": [],
-   "offscreen": []
-  }
- },
- "lab/flowmap": {
-  "phone": {
-   "vertical": [],
-   "clipped": [],
-   "overlap": [],
-   "offscreen": []
-  },
-  "pc": {
-   "vertical": [],
-   "clipped": [],
-   "overlap": [],
-   "offscreen": []
-  }
- },
- "lab/fixed": {
   "phone": {
    "vertical": [],
    "clipped": [],
@@ -483,6 +245,38 @@
    "offscreen": []
   },
   "pc": {
+   "vertical": [],
+   "clipped": [],
+   "overlap": [],
+   "offscreen": []
+  }
+ },
+ "app/home": {
+  "phone": {
+   "vertical": [],
+   "clipped": [],
+   "overlap": [],
+   "offscreen": []
+  }
+ },
+ "app/list": {
+  "phone": {
+   "vertical": [],
+   "clipped": [],
+   "overlap": [],
+   "offscreen": []
+  }
+ },
+ "app/cal": {
+  "phone": {
+   "vertical": [],
+   "clipped": [],
+   "overlap": [],
+   "offscreen": []
+  }
+ },
+ "app/more": {
+  "phone": {
    "vertical": [],
    "clipped": [],
    "overlap": [],

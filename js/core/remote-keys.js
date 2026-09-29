@@ -104,6 +104,7 @@ function lgTouched() {
       }
       /* 흐름(오늘·이번달·올해) 화면은 원장을 그대로 그리므로, 고친 값이 바로 보이게 다시 그린다.
          전체 내역·자산 화면은 각자 다시 읽으므로 여기서 건드리지 않는다. */
+      if (AP.on) { if (AP.tab !== 'more') apRender(false); return; }
       if (state.page === 'entry' && !document.querySelector('.lg-ed')) renderPage();
       /* 전체 내역도 열려 있으면 같이 맞춘다 — 단, 그 안에서 뭔가 입력 중이면 건드리지 않는다 */
       const lgList = document.getElementById('lg-list');

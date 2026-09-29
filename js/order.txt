@@ -28,4 +28,5 @@ js/settings/lists.js
 js/settings/budget.js
 js/settings/saving.js
 js/core/data-load.js
+js/app/app.js
 js/boot.js

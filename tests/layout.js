@@ -34,12 +34,22 @@ async function route(ctx) {
     const ctx = await browser.newContext(opts);
     await ctx.addInitScript(mock); await ctx.addInitScript(probe); await route(ctx);
     const page = await ctx.newPage();
-    await page.goto('https://app.test/index.html'); await page.waitForTimeout(1500);
+    await page.goto('https://app.test/index.html' + (vname === 'phone' ? '?view=site' : '')); await page.waitForTimeout(1500);
     const subs = await page.evaluate(() => Object.entries(SECTION_SUBS).flatMap(([s, l]) => l.filter(x => x[0] !== '#').map(x => s + '/' + x[0])));
     for (const k of subs) {
       const [s, sub] = k.split('/');
       await page.evaluate(([s, sub]) => goTo(s, sub), [s, sub]); await page.waitForTimeout(350);
       (result[k] ||= {})[vname] = await page.evaluate(() => window.__layoutProbe('#app'));
+    }
+    if (vname === 'phone') {
+      /* 폰 앱 화면(홈 · 내역 · 달력 · 더보기) */
+      const pa = await ctx.newPage(); await pa.goto('https://app.test/index.html'); await pa.waitForTimeout(1500);
+      for (const t of ['home', 'list', 'cal', 'more']) {
+        await pa.evaluate(() => { const b = document.querySelector('[data-act=back]'); if (b) b.click(); });
+        await pa.evaluate((t) => document.querySelector(`[data-go=${t}]`).click(), t); await pa.waitForTimeout(400);
+        (result['app/' + t] ||= {})[vname] = await pa.evaluate(() => window.__layoutProbe('#app'));
+      }
+      await pa.close();
     }
     for (const [k, url] of [['app/gagyebu', 'gagyebu.html'], ['app/date', 'date/index.html']]) {
       const p2 = await ctx.newPage(); await p2.goto('https://app.test/' + url); await p2.waitForTimeout(1500);

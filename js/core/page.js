@@ -1,6 +1,8 @@
 /* ---------------- 화면 틀: 머리·메뉴·배너·페이지 전환 ---------------- */
 
 function renderShell() {
+  /* 폰이면 사이트 대신 앱 화면 (js/app/app.js) */
+  if (apWanted()) { apShell(); return; }
   const app = document.getElementById('app');
   app.innerHTML = `
     <div class="site-header" id="site-header">
@@ -12,6 +14,7 @@ function renderShell() {
         </div>
         <div class="sync-box">
           <button class="nav-act accent" id="entry-btn" title="가계부 기록 (N)">＋ 기록<kbd>N</kbd></button>
+          <button class="hdr-btn hdr-app" id="app-view-btn" title="폰 앱 화면으로">앱 화면</button>
           <button class="hdr-btn" id="signout-btn">로그아웃</button>
         </div>
       </div>
@@ -42,6 +45,10 @@ function renderShell() {
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goHome(); }
   });
   document.getElementById('signout-btn').addEventListener('click', enSignOut);
+  document.getElementById('app-view-btn').addEventListener('click', () => {
+    try { localStorage.removeItem(AP_VIEW_KEY); } catch (e) {}
+    location.href = location.pathname;
+  });
   document.getElementById('navbar').addEventListener('click', (e) => {
     const btn = e.target.closest('.nav-btn');
     if (!btn) return;
@@ -137,6 +144,12 @@ function navSectionDot(sec) {
 }
 
 function renderPage() {
+  if (AP.on) {
+    /* 월말 결산은 입력 중일 수 있으니 데이터가 새로 와도 다시 그리지 않는다 */
+    if (AP.tab === 'more' && AP.sub === 'snap' && document.getElementById('ap-snap')) apPaintBarIfIdle();
+    else apRender(false);
+    return;
+  }
   if (!state.data) {
     /* 첫 로딩이 끝나기 전(또는 실패)에는 옛 숫자 대신 빈 자리만 보여준다 */
     const body0 = document.getElementById('page-content');

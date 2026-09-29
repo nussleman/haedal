@@ -41,6 +41,21 @@ async function shoot(browser, dir, tag) {
     shots[k] = await page.screenshot({ fullPage: true, animations: 'disabled' });
     fs.writeFileSync(path.join(OUT, tag, k.replace('/', '_') + '.png'), shots[k]);
   }
+  /* 폰 앱 화면 — 탭마다 한 장 (기준 커밋에 없으면 '새 화면') */
+  {
+    const pa = await ctx.newPage(); pa.on('pageerror', (e) => errs.push('app: ' + e.message));
+    await pa.setViewportSize({ width: 390, height: 844 });
+    await pa.goto('https://app.test/index.html'); await pa.waitForTimeout(1500);
+    const isApp = await pa.evaluate(() => !!document.getElementById('ap-bar'));
+    if (isApp) for (const t of ['home', 'list', 'cal', 'more']) {
+      await pa.evaluate(() => { const b = document.querySelector('[data-act=back]'); if (b) b.click(); });
+      await pa.evaluate((t) => document.querySelector(`[data-go=${t}]`).click(), t); await pa.waitForTimeout(450);
+      const k = 'phone/' + t;
+      shots[k] = await pa.screenshot({ fullPage: true, animations: 'disabled' });
+      fs.writeFileSync(path.join(OUT, tag, k.replace('/', '_') + '.png'), shots[k]);
+    }
+    await pa.close();
+  }
   /* 모바일 앱 두 개는 첫 화면만 비교한다 */
   for (const [k, url] of [['app/gagyebu', 'gagyebu.html'], ['app/date', 'date/index.html']]) {
     const p2 = await ctx.newPage(); p2.on('pageerror', (e) => errs.push(k + ': ' + e.message));

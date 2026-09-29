@@ -20,7 +20,8 @@ const nm = p => path.join(ROOT, 'node_modules', p);
     const errs = [];
     page.on('pageerror', e => errs.push(e.message));
     page.on('console', m => { if (m.type() === 'error' && !/Failed to load resource|net::ERR/.test(m.text())) errs.push(m.text()); });
-    await page.goto('https://app.test/index.html'); await page.waitForTimeout(1500);
+    /* 폰은 기본이 앱 화면이라, 사이트 메뉴는 ?view=site 로 따로 연다 */
+    await page.goto('https://app.test/index.html' + (W < 600 ? '?view=site' : '')); await page.waitForTimeout(1500);
     const subs = await page.evaluate(() => Object.entries(SECTION_SUBS).flatMap(([s, l]) => l.filter(x => x[0] !== '#').map(x => s + '/' + x[0])));
     for (const k of subs) {
       const n0 = errs.length;
@@ -31,6 +32,25 @@ const nm = p => path.join(ROOT, 'node_modules', p);
       await page.evaluate(() => document.querySelectorAll('#page-content .range-toggle button, #page-content [data-view], #page-content [data-gf], #page-content [data-gd]').forEach((b, i) => { if (i < 12) try { b.click(); } catch (e) {} }));
       await page.waitForTimeout(200);
       if (errs.length > n0) { bad++; console.log(vn, k, '→', [...new Set(errs.slice(n0))].join(' | ').slice(0, 300)); }
+    }
+    if (W < 600) {
+      /* 앱 화면: 탭바 · 하위 버튼 · 기록 고치기 시트 · 빠른 기록을 한 번씩 눌러 본다 */
+      const pa = await ctx.newPage(); const ea = [];
+      pa.on('pageerror', e => ea.push(e.message));
+      pa.on('console', m => { if (m.type() === 'error' && !/Failed to load resource|net::ERR/.test(m.text())) ea.push(m.text()); });
+      await pa.goto('https://app.test/index.html'); await pa.waitForTimeout(1500);
+      const click = async (sel) => { await pa.evaluate((q) => { const el = document.querySelector(q); if (!el) throw new Error('없음: ' + q); el.click(); }, sel).catch(e => ea.push(e.message.split('\n')[0])); await pa.waitForTimeout(250); };
+      for (const t of ['list', 'cal', 'more']) {
+        await click(`[data-go=${t}]`);
+        const subs = await pa.evaluate(() => [...document.querySelectorAll('#ap-bar [data-sub]')].map(b => b.dataset.sub).filter(x => x !== 'm:site' && x !== 'm:out'));
+        for (const sb of subs) await click(`#ap-bar [data-sub="${sb}"]`);
+        await click('#ap-bar [data-act=back]');
+      }
+      await click('[data-go=home]');
+      await click('.ap-tx'); await pa.waitForTimeout(300); await click('#ap-sheet [data-x]');
+      await click('[data-act=add]'); await pa.waitForTimeout(300); await click('#qe-x');
+      if (ea.length) { bad++; console.log(vn, 'app →', [...new Set(ea)].join(' | ').slice(0, 300)); }
+      await pa.close();
     }
     for (const url of ['gagyebu.html', 'date/index.html']) {
       if (!fs.existsSync(path.join(ROOT, url))) continue;
