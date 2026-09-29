@@ -75,6 +75,15 @@ function apShell() {
   document.getElementById('ap-bar').addEventListener('click', apBarClick);
   document.getElementById('ap-main').addEventListener('click', apMainClick);
   apPaintBar();
+  /* 기록 화면에 쓸 사용처·분류를 미리 받아 둔다 */
+  qeLoad().catch(() => {});
+}
+
+/* 기록 화면이 열리고 닫힐 때 — 탭바는 그대로 두고 ＋ 만 켜 둔다 */
+function apQeChanged() {
+  if (!AP.on) return;
+  if (QE.open) AP.bar = null;
+  apPaintBar();
 }
 
 function apPaintBar() {
@@ -83,8 +92,8 @@ function apPaintBar() {
   let html;
   if (!AP.bar) {
     html = AP_TABS.map(([k, l]) => k === 'add'
-      ? `<button class="ap-add" data-act="add" aria-label="기록하기">${apIcon('add')}</button>`
-      : `<button class="ap-tb${AP.tab === k ? ' on' : ''}" data-go="${k}">${apIcon(k)}<span>${l}</span></button>`).join('');
+      ? `<button class="ap-add${QE.open ? ' on' : ''}" data-act="add" aria-label="기록하기">${apIcon('add')}</button>`
+      : `<button class="ap-tb${AP.tab === k && !QE.open ? ' on' : ''}" data-go="${k}">${apIcon(k)}<span>${l}</span></button>`).join('');
   } else {
     const cur = AP.bar === 'list' ? 'f:' + AP.kind : AP.bar === 'more' && AP.sub ? 'm:' + AP.sub
       : AP.bar === 'cal' && (AP.calMonth || thisMonthKey()) === thisMonthKey() ? 'c:0' : '';
@@ -103,6 +112,8 @@ function apBarClick(e) {
   if (b.dataset.act === 'back') { AP.bar = null; AP.anim = true; apPaintBar(); return; }
   if (b.dataset.go) {
     const t = b.dataset.go;
+    /* 기록 중에 다른 탭을 누르면 기록 화면을 닫고 그 탭으로 */
+    if (QE.open) qeClose();
     const changed = AP.tab !== t;
     AP.tab = t;
     if (t === 'more') AP.sub = null;
@@ -359,6 +370,8 @@ async function apEdit(id) {
   sh.innerHTML = `<div class="ap-scrim" data-x></div><div class="ap-sheet-in"><div class="ap-empty">불러오는 중…</div></div>`;
   sh.hidden = false;
   document.body.classList.add('ap-sheet-on');
+  qeLockSync();
+  qeFitViewport();
   requestAnimationFrame(() => sh.classList.add('on'));
   sh.querySelector('[data-x]').addEventListener('click', apEditClose);
   try { await enEnsureRefs(); } catch (e) {}
@@ -371,12 +384,12 @@ async function apEdit(id) {
   sh.querySelector('.ap-sheet-in').innerHTML = `
     <div class="ap-grab"></div>
     <div class="ap-sht"><b>기록 고치기</b><button data-x class="ap-shx">닫기</button></div>
-    <label class="ap-fl"><span>금액</span><input id="ap-e-amt" inputmode="numeric" class="mono" value="${wonComma(Math.abs(r.amount))}"></label>
-    <label class="ap-fl"><span>사용처</span><input id="ap-e-mer" value="${enEsc(r.merch || '')}" autocomplete="off"></label>
+    <label class="ap-fl"><span>금액</span><input id="ap-e-amt" inputmode="numeric" pattern="[0-9]*" enterkeyhint="done" class="mono" value="${wonComma(Math.abs(r.amount))}"></label>
+    <label class="ap-fl"><span>사용처</span><input id="ap-e-mer" value="${enEsc(r.merch || '')}" autocomplete="off" autocorrect="off" autocapitalize="off" enterkeyhint="done"></label>
     <label class="ap-fl"><span>분류</span><select id="ap-e-cat">${Object.entries(groups).map(([g, list]) =>
       `<optgroup label="${enEsc(g)}">${list.map(c => `<option value="${c.id}"${c.id === r.catId ? ' selected' : ''}>${enEsc(c.subcategory || c.category)}</option>`).join('')}</optgroup>`).join('')}</select></label>
     <label class="ap-fl"><span>날짜</span><input id="ap-e-date" type="date" value="${r.dayKey}"></label>
-    <label class="ap-fl"><span>메모</span><input id="ap-e-note" value="${enEsc(r.memo || '')}" placeholder="없음"></label>
+    <label class="ap-fl"><span>메모</span><input id="ap-e-note" value="${enEsc(r.memo || '')}" placeholder="없음" enterkeyhint="done"></label>
     <div class="ap-chips">
       <button data-t="neg" class="${neg ? 'on' : ''}">환불(−)</button>
       <button data-t="fixed" class="${f.fixed ? 'on' : ''}">고정비</button>
@@ -387,6 +400,12 @@ async function apEdit(id) {
     <p class="ap-err" id="ap-e-err"></p>
     <div class="ap-acts"><button class="ap-del" id="ap-e-del">삭제</button><button class="ap-save" id="ap-e-save">저장</button></div>`;
   sh.querySelectorAll('[data-x]').forEach(b => b.addEventListener('click', apEditClose));
+  /* 키보드의 '완료'는 키보드만 내린다 */
+  sh.querySelectorAll('input').forEach(inp => inp.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.isComposing && e.keyCode !== 229) { e.preventDefault(); inp.blur(); }
+  }));
+  /* 저장·삭제를 누르는 순간 키보드가 내려가며 버튼이 밀리지 않게 */
+  sh.querySelectorAll('.ap-acts button').forEach(b => b.addEventListener('pointerdown', (e) => { if (e.pointerType !== 'mouse') e.preventDefault(); }));
   const amt = sh.querySelector('#ap-e-amt');
   amt.addEventListener('input', () => {
     const v = amt.value.replace(/[^\d]/g, '');
@@ -463,6 +482,8 @@ function apEditClose() {
   const sh = document.getElementById('ap-sheet');
   if (!sh) return;
   sh.classList.remove('on');
+  if (document.activeElement && sh.contains(document.activeElement)) document.activeElement.blur();
   document.body.classList.remove('ap-sheet-on');
+  qeLockSync();
   setTimeout(() => { if (!sh.classList.contains('on')) { sh.hidden = true; sh.innerHTML = ''; } }, 220);
 }
