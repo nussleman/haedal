@@ -156,6 +156,7 @@ async function renderLedgerPage(body) {
         <div class="lg-hd">
           <button class="lg-fbtn" data-pop="period" id="lg-hd-period">기간<i>▾</i></button>
           <input class="en-in grow" id="lg-q" placeholder="사용처 · 메모 검색" value="${enEsc(g.q)}">
+          <button class="lg-fbtn${g.nogroup ? ' act' : ''}" id="lg-nogroup" title="사용처는 있는데 사용처 그룹이 비어 있는 기록만" aria-pressed="${g.nogroup ? 'true' : 'false'}">그룹 없음</button>
           <button class="lg-fbtn add" id="lg-addnew">＋ 새 행<kbd>A</kbd></button>
           <button class="lg-fbtn save" id="lg-savetop" hidden>모두 저장<kbd>⌘⏎</kbd></button>
           <button class="lg-reset" id="lg-reset">초기화</button>
@@ -295,6 +296,13 @@ async function renderLedgerPage(body) {
     timer = setTimeout(() => { g.q = e.target.value.trim(); g.page = 1; enLoadLedger(); }, 300);
   });
   enQS('#lg-sort').addEventListener('change', e => { g.sort = e.target.value; g.page = 1; enLoadLedger(); });
+  /* 사용처 그룹이 안 정해진 기록만 — 그룹을 채워 넣으면 목록에서 빠진다 */
+  enQS('#lg-nogroup').addEventListener('click', (e) => {
+    g.nogroup = !g.nogroup; g.page = 1;
+    e.currentTarget.classList.toggle('act', g.nogroup);
+    e.currentTarget.setAttribute('aria-pressed', g.nogroup ? 'true' : 'false');
+    enLoadLedger();
+  });
   enQS('#lg-reset').addEventListener('click', () => {
     EN.lg = { q: '', kind: 'all', cat: 'all', from: '', to: '', quick: '3m', sort: 'date_desc', page: 1, size: 60 };
     renderLedgerPage(document.getElementById('lg-body'));
@@ -545,6 +553,7 @@ function enLedgerQuery(sb, mode) {
   else q = sb.from('v_transactions').select('id,date,kind,category,subcategory,emoji_category,amount,merchant_group,merchant,note,good_bad,company_paid,is_fixed,category_id');
   if (g.kind !== 'all') q = q.eq('kind', g.kind);
   if (g.cat !== 'all') q = q.eq('category_id', Number(g.cat));
+  if (g.nogroup) q = q.is('merchant_group', null).not('merchant', 'is', null).neq('merchant', '');
   if (g.from) q = q.gte('date', g.from);
   if (g.to) q = q.lte('date', g.to);
   if (g.q) { const t = g.q.replace(/[,%]/g, ' '); q = q.or(`merchant.ilike.%${t}%,note.ilike.%${t}%`); }

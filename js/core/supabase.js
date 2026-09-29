@@ -3,7 +3,7 @@
 const EN = {
   sb: null, cats: [], catById: {}, freq: {}, merchants: [], merchCat: {}, merchFixed: {},
   catId: null, neg: false, loaded: false,
-  lg: { q: '', kind: 'all', cat: 'all', from: '', to: '', quick: '3m', sort: 'date_desc', page: 1, size: 60 },
+  lg: { q: '', kind: 'all', cat: 'all', from: '', to: '', quick: '3m', sort: 'date_desc', page: 1, size: 60, nogroup: false },
   draft: []
 };
 const EN_WD = ['일', '월', '화', '수', '목', '금', '토'];
