@@ -27,7 +27,7 @@ function qeDateLabel(k) {
 function qeFresh() {
   return { step: 1, reach: 1, kind: '지출', amount: '', neg: false, catId: null, cat: null,
     merchant: '', noMerch: false, note: '', date: qeDay(0),
-    good: null, fixed: false, co: false, focus: false };
+    good: null, fixed: false, co: false, focus: true };
 }
 /* 폰(좁은 화면)에서만 이 화면을 쓴다. PC 는 기존 기록 창 */
 function qeWanted() { return window.matchMedia('(max-width: 640px)').matches; }
@@ -114,21 +114,11 @@ document.addEventListener('focusout', () => {
   setTimeout(() => { if (!qeTyping(document.activeElement)) { document.body.classList.remove('kb-on'); qeFitViewport(); } }, 80);
 });
 
-/* 기록 화면·시트가 떠 있는 동안 뒤 화면이 같이 밀리지 않게 고정한다 (아이폰은 overflow:hidden 만으로는 안 된다) */
-let QE_LOCK_Y = null;
-function qeLockScroll(on) {
-  const b = document.body;
-  if (on && QE_LOCK_Y === null) {
-    QE_LOCK_Y = window.scrollY;
-    b.style.position = 'fixed'; b.style.top = -QE_LOCK_Y + 'px'; b.style.left = '0'; b.style.right = '0';
-  } else if (!on && QE_LOCK_Y !== null) {
-    const y = QE_LOCK_Y; QE_LOCK_Y = null;
-    b.style.position = ''; b.style.top = ''; b.style.left = ''; b.style.right = '';
-    window.scrollTo(0, y);
-  }
-}
+/* 기록 화면·시트가 떠 있는 동안 뒤 화면이 같이 밀리지 않게 한다.
+   (body 를 position:fixed 로 묶으면 아이폰에서 아래 탭바 같은 고정 요소 위치가 틀어진다 — overflow 만 막는다) */
 function qeLockSync() {
-  qeLockScroll(document.body.classList.contains('qe-on') || document.body.classList.contains('ap-sheet-on'));
+  const on = document.body.classList.contains('qe-on') || document.body.classList.contains('ap-sheet-on');
+  document.documentElement.classList.toggle('qe-lock', on);
 }
 
 async function qeOpen() {
@@ -140,32 +130,35 @@ async function qeOpen() {
   document.body.classList.add('qe-on');
   qeLockSync();
   qeFitViewport();
-  if (typeof apQeChanged === 'function') apQeChanged();
   el.innerHTML = `<div class="qe-top"><b>기록</b><span class="qe-cnt" id="qe-cnt"></span><span class="sp"></span>
       <button class="qe-x" id="qe-x" aria-label="닫기">닫기</button></div>
-    <div class="qe-main"><div class="qe-empty">불러오는 중…</div></div><div class="qe-dock"></div>`;
+    <div class="qe-main"></div><div class="qe-dock"></div>`;
   el.querySelector('#qe-x').addEventListener('click', qeClose);
-  /* 이미 불러 둔 경우에는 await 없이 바로 그린다 (누른 손길 그대로 입력칸에 커서를 줄 수 있게) */
-  if (!QE.loaded) {
-    try { await qeLoad(); } catch (e) {
-      el.querySelector('.qe-main').innerHTML = `<div class="qe-empty">불러오지 못했어요 — ${qeEsc(e.message || e)}</div>`;
-      return;
-    }
-    if (!QE.open) return;
-  }
+  if (typeof apQeChanged === 'function') apQeChanged();
+  /* 사용처 칸은 불러오기를 기다리지 않고 바로 그리고 커서를 준다 —
+     아이폰은 누른 그 순간(같은 손길) 안에서 커서를 줘야 키보드가 올라온다 */
   QE.d = qeFresh();
   qePaint();
+  if (!QE.loaded) {
+    try { await qeLoad(); } catch (e) {
+      const er = document.getElementById('qe-err');
+      if (er) er.textContent = '사용처·분류를 불러오지 못했어요 — ' + (e.message || e);
+      return;
+    }
+    if (QE.open && QE.d && QE.d.step === 1) qeSugs();
+  }
 }
 
 function qeClose() {
   const el = document.getElementById('qe');
-  if (el) { el.hidden = true; el.innerHTML = ''; }
   if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
-  document.body.classList.remove('qe-on', 'kb-on');
-  qeLockSync();
   QE.open = false;
   QE.d = null;
+  /* 탭바를 먼저 제자리로 돌려놓고 기록 화면을 비운다 */
   if (typeof apQeChanged === 'function') apQeChanged();
+  if (el) { el.hidden = true; el.innerHTML = ''; }
+  document.body.classList.remove('qe-on', 'kb-on');
+  qeLockSync();
   /* 새로 넣은 기록이 홈·내역 숫자에 바로 반영되게 다시 읽는다 */
   if (QE.saved && typeof fetchLive === 'function') fetchLive(false, Promise.resolve());
 }
@@ -206,13 +199,14 @@ function qePaint() {
     d.step = Number(b.dataset.s); d.focus = d.step === 1; qePaint();
   }));
   const cur = m.querySelector('#qe-cur');
+  el.dataset.step = d.step;
   dock.innerHTML = '';
   if (d.step === 1) qeStepMerch(cur, dock);
   else if (d.step === 2) qeStepCat(cur, dock);
   else if (d.step === 3) qeStepAmount(cur, dock);
   else qeStepDate(cur, dock);
   dock.hidden = !dock.innerHTML.trim();
-  m.scrollTop = 0;
+  m.scrollTop = d.step === 1 ? m.scrollHeight : 0;
 }
 
 /* 사용처를 고르면 지난번 분류를 데려온다 — 분류가 정해지면 지출·수입·이체도 같이 정해진다 */
@@ -232,18 +226,19 @@ function qePickMerch(name) {
   qePaint();
 }
 
-/* 1) 사용처 — 입력칸은 맨 위, 바로 아래에 후보. 키보드가 올라와도 둘 다 보인다 */
-function qeStepMerch(cur) {
+/* 1) 사용처 — 채팅 앱처럼 입력칸은 맨 아래(키보드 바로 위), 후보는 그 위로 쌓인다.
+   가장 그럴듯한 후보가 입력칸 바로 위에 불이 켜져 있고, 키보드의 '다음'을 누르면 그걸 고른다.
+   목록에 없는 이름이면 '다음'이 곧 새로 쓰기. 엄지 하나로 끝난다. */
+function qeStepMerch(cur, dock) {
   const d = QE.d;
-  cur.innerHTML = `<label class="qe-lab" for="qe-merch">어디에 썼나요?</label>
-    <div class="qe-drow">
-      <input class="qe-in" id="qe-merch" placeholder="사용처 검색 · 새로 입력" autocomplete="off" autocorrect="off"
+  cur.innerHTML = `<div class="qe-list" id="qe-sugs"></div>`;
+  dock.innerHTML = `<div class="qe-drow">
+      <input class="qe-in" id="qe-merch" placeholder="어디에 썼나요?" autocomplete="off" autocorrect="off"
              autocapitalize="off" spellcheck="false" enterkeyhint="next" value="${qeEsc(d.merchant)}">
       <button class="qe-go" id="qe-mgo">다음</button>
-    </div>
-    <div class="qe-list" id="qe-sugs"></div>`;
+    </div>`;
   qeSugs();
-  const mi = cur.querySelector('#qe-merch');
+  const mi = dock.querySelector('#qe-merch');
   /* 한글은 여러 번의 input 으로 한 글자가 된다 — 입력칸은 그대로 두고 후보만 다시 그린다 */
   const sync = () => { d.merchant = mi.value; qeSugs(); };
   mi.addEventListener('input', sync);
@@ -252,31 +247,59 @@ function qeStepMerch(cur) {
   mi.addEventListener('keydown', (e) => {
     if (e.key !== 'Enter' || e.isComposing || e.keyCode === 229) return;
     e.preventDefault();
-    qePickMerch(mi.value.trim());
+    d.merchant = mi.value;
+    qePickBest();
   });
-  cur.querySelector('#qe-mgo').addEventListener('click', () => qePickMerch(mi.value.trim()));
+  const go = dock.querySelector('#qe-mgo');
+  go.addEventListener('pointerdown', (e) => { if (e.pointerType !== 'mouse') e.preventDefault(); });
+  go.addEventListener('click', () => { d.merchant = mi.value; qePickBest(); });
   /* 누른 손길 안에서 바로 커서를 줘야 아이폰 키보드가 올라온다 (setTimeout 이면 안 올라온다) */
-  if (d.focus) { d.focus = false; mi.focus(); }
+  if (d.focus) { d.focus = false; mi.focus({ preventScroll: true }); }
+}
+
+/* 지금 입력에 가장 맞는 후보: 같은 이름 > 앞글자가 같은 것 > 들어 있는 것 (자주 쓴 순).
+   아무것도 안 맞으면 '새로 쓰기', 아무것도 안 쳤으면 가장 자주 쓴 곳. */
+function qeRank() {
+  const q = QE.d.merchant.trim().toLowerCase();
+  const all = Object.values(QE.stats);
+  const byUse = (a, b) => b.count - a.count || a.name.localeCompare(b.name, 'ko');
+  if (!q) return { list: all.sort(byUse).slice(0, 6), best: all.length ? all.sort(byUse)[0].name : null, isNew: false, q };
+  const exact = all.filter(x => x.name.toLowerCase() === q);
+  const pre = all.filter(x => x.name.toLowerCase() !== q && x.name.toLowerCase().startsWith(q)).sort(byUse);
+  const inc = all.filter(x => !x.name.toLowerCase().startsWith(q) && x.name.toLowerCase().includes(q)).sort(byUse);
+  const list = [...exact, ...pre, ...inc].slice(0, 6);
+  return { list, best: list.length ? list[0].name : null, isNew: !exact.length, q };
+}
+function qePickBest() {
+  const typed = QE.d.merchant.trim();
+  const r = qeRank();
+  /* 친 글자가 후보의 일부일 때만 후보를 고른다 — 아니면 친 그대로 새 사용처 */
+  if (r.best !== null && (!typed || r.list.length)) qePickMerch(r.best);
+  else qePickMerch(typed);
 }
 
 function qeSugs() {
   const host = document.getElementById('qe-sugs');
   if (!host) return;
-  const q = QE.d.merchant.trim().toLowerCase();
-  let list = Object.values(QE.stats);
-  if (q) list = list.filter(x => x.name.toLowerCase().includes(q));
-  list = list.sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'ko')).slice(0, 8);
-  const exact = q && list.some(x => x.name.toLowerCase() === q);
-  host.innerHTML = (q && !exact ? `<button data-m="${qeEsc(QE.d.merchant.trim())}" class="new"><span class="nm">'${qeEsc(QE.d.merchant.trim())}' 새로 쓰기</span></button>` : '')
-    + list.map(x => `<button data-m="${qeEsc(x.name)}"><span class="nm">${qeEsc(x.name)}</span>
-      ${x.catId ? `<span class="ct">${qeEsc(qeCatLabel(x.catId))}</span>` : ''}</button>`).join('')
-    + `<button data-m="" class="mut"><span class="nm">사용처 없이 넘어가기</span></button>`;
+  const r = qeRank();
+  const typed = QE.d.merchant.trim();
+  const rows = r.list.map((x, i) => `<button data-m="${qeEsc(x.name)}" class="${i === 0 ? 'best' : ''}">
+      <span class="nm">${qeEsc(x.name)}</span>
+      ${x.catId ? `<span class="ct">${qeEsc(qeCatLabel(x.catId))}</span>` : ''}${i === 0 ? '<span class="kb">다음 ↵</span>' : ''}</button>`);
+  if (typed && r.isNew) rows.push(`<button data-m="${qeEsc(typed)}" class="new${r.list.length ? '' : ' best'}"><span class="nm">'${qeEsc(typed)}' 새로 쓰기</span>${r.list.length ? '' : '<span class="kb">다음 ↵</span>'}</button>`);
+  rows.push(`<button data-m="" class="mut"><span class="nm">사용처 없이 넘어가기</span></button>`);
+  /* 아래(입력칸 쪽)부터 가까운 순 — 첫 후보가 입력칸 바로 위에 온다 */
+  host.innerHTML = `${!QE.loaded ? '<div class="qe-hint">사용처 불러오는 중…</div>' : !typed && !r.list.length ? '<div class="qe-hint">사용처를 입력하세요</div>' : ''}`
+    + rows.reverse().join('');
   /* 누르는 순간 키보드가 먼저 내려가며 화면이 움직여 엉뚱한 줄이 눌리지 않게, 손을 대는 순간 고른다 */
   host.querySelectorAll('[data-m]').forEach(b => {
     b.addEventListener('pointerdown', (e) => { if (e.pointerType !== 'mouse') { e.preventDefault(); b.dataset.hit = '1'; } });
     b.addEventListener('pointerup', (e) => { if (b.dataset.hit) { e.preventDefault(); delete b.dataset.hit; qePickMerch(b.dataset.m); } });
+    b.addEventListener('pointercancel', () => { delete b.dataset.hit; });
     b.addEventListener('click', () => { if (QE.d && QE.d.step === 1) qePickMerch(b.dataset.m); });
   });
+  const m = host.closest('.qe-main');
+  if (m) m.scrollTop = m.scrollHeight;
 }
 
 /* 2) 분류 — 누르기만 하므로 키보드 없음 */
@@ -428,6 +451,8 @@ async function qeSave() {
     const keep = d.date;
     QE.d = qeFresh();
     QE.d.date = keep;
+    /* 저장은 서버를 기다린 뒤라 아이폰이 키보드를 안 올려 준다 — 커서 없이 두고, 입력칸을 누르면 올라온다 */
+    QE.d.focus = false;
     qePaint();
   } catch (e) {
     err.textContent = '저장하지 못했습니다 — ' + (e.message || e);

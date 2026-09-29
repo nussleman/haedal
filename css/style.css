@@ -2677,7 +2677,12 @@ body.kb-on #qe .qe-top{padding-top:10px;}
 #qe .qe-top .sp{margin-left:auto;}
 #qe .qe-x{height:34px;padding:0 14px;border-radius:17px;border:1px solid var(--border);background:transparent;
   color:var(--text-dim);font-size:14px;font-family:var(--sans);}
-#qe .qe-main{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:6px 16px 14px;}
+#qe .qe-main{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:6px 16px 14px;
+  display:flex;flex-direction:column;}
+/* 사용처·분류는 아래(엄지 쪽)에 붙인다 */
+#qe[data-step="1"] .qe-cur,#qe[data-step="2"] .qe-cur{margin-top:auto;}
+#qe[data-step="1"] .qe-main{padding-bottom:4px;}
+html.qe-lock,html.qe-lock body{overflow:hidden;overscroll-behavior:none;}
 #qe .qe-dock{flex:0 0 auto;padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));background:var(--bg);}
 #qe .qe-dock[hidden]{display:none;}
 body.kb-on #qe .qe-dock{padding-bottom:10px;}
@@ -2708,15 +2713,18 @@ body.kb-on #qe .qe-dock{padding-bottom:10px;}
 #qe .qe-go{flex:0 0 72px;height:50px;border:0;border-radius:14px;background:var(--accent-fill);
   color:var(--ink-on-accent);font-weight:700;font-size:15px;font-family:var(--sans);}
 /* 사용처 후보 */
-#qe .qe-list{display:flex;flex-direction:column;margin-top:8px;}
-#qe .qe-list button{display:flex;align-items:center;gap:10px;min-width:0;height:50px;padding:0 4px;border:0;
+#qe .qe-list{display:flex;flex-direction:column;}
+#qe .qe-hint{padding:10px 4px;font-size:13px;color:var(--text-faint);}
+#qe .qe-list button.best{background:var(--accent-bg);border-radius:12px;border-bottom-color:transparent;color:var(--accent-strong);}
+#qe .qe-list .kb{flex:0 0 auto;font-size:11.5px;color:var(--accent-text);margin-left:2px;}
+#qe .qe-list button{flex:0 0 auto;display:flex;align-items:center;gap:10px;min-width:0;height:50px;padding:0 10px;border:0;
   border-bottom:1px solid var(--border);background:none;color:var(--text);text-align:left;font-size:16px;font-family:var(--sans);}
 #qe .qe-list button:active{background:rgba(255,255,255,.05);}
 #qe .qe-list .nm{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 #qe .qe-list .ct{flex:0 1 auto;min-width:0;max-width:52%;font-size:12.5px;color:var(--text-faint);
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 #qe .qe-list .new{color:var(--accent-text);}
-#qe .qe-list .mut{color:var(--text-faint);border-bottom:0;}
+#qe .qe-list .mut{color:var(--text-faint);font-size:14px;height:42px;}
 /* 칩 */
 #qe .qe-chips{display:flex;flex-wrap:wrap;gap:8px;}
 #qe .qe-chips button,#qe .qe-datepick{position:relative;height:40px;padding:0 15px;border-radius:20px;border:1px solid var(--border);
@@ -2753,6 +2761,7 @@ body.kb-on #qe .qe-dock{padding-bottom:10px;}
 }
 /* 앱 화면에서는 기록 중에도 아래 탭바가 그대로 보인다 — 키보드가 올라와 있을 때만 숨는다 */
 body.ap-on #qe{padding-bottom:calc(88px + env(safe-area-inset-bottom,0px));}
+#qe > .ap-bar{position:absolute;}
 body.ap-on #qe .qe-dock{padding-bottom:8px;}
 body.ap-on.kb-on #qe{padding-bottom:0;}
 /* 빠른 기록 중에는 알림을 위에 띄운다 — 아래 저장 버튼을 가리지 않게 */
