@@ -2101,6 +2101,13 @@ body{font-variant-numeric:tabular-nums;}
 .bt-in::placeholder{color:var(--text-faint);font-weight:400;opacity:.7;}
 .bt-sum{display:block;padding:5px 9px;font-size:var(--fs-sm);font-weight:700;color:var(--accent-text);
   border:1px dashed var(--border-strong);border-radius:var(--r-sm);cursor:help;}
+.bt-pin{flex:0 0 auto;margin-left:auto;width:24px;height:20px;padding:0;border:0;border-radius:var(--r-sm);
+  background:transparent;font-size:12px;line-height:20px;cursor:pointer;opacity:.25;filter:grayscale(1);}
+.bt-pin:hover{opacity:.7;}
+.bt-pin.on{opacity:1;filter:none;}
+.bt-pin:disabled{cursor:default;opacity:.55;filter:none;}
+.bud-split{margin-top:10px;font-size:var(--fs-xs);color:var(--text-faint);line-height:1.6;}
+.bud-split b{color:var(--text);font-weight:600;}
 .bt-mbtn{width:28px;height:28px;border-radius:var(--r-sm);border:1px solid transparent;background:transparent;
   color:var(--text-faint);font-size:14px;line-height:1;padding:0;opacity:.55;}
 .bt-mbtn:hover{opacity:1;border-color:var(--border-strong);}

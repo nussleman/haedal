@@ -251,13 +251,15 @@ function apHomePage(main, data) {
   const inc = apSum(cur, '수입');
   const days = daysInMonthKey(mk);
   const daysLeft = days - now.getDate() + 1;
-  const hasBudget = budgetMonthlyTotal() > 0;
-  const budget = budgetPaceMonthly(data);
-  const left = budget - out;
+  /* 남은 예산 = 변동 예산 − 변동 지출 (📌 고정 예산은 따로 센다 — home.js budgetSplit) */
+  const bs = budgetSplit(data, cur.filter(r => apKind(r) === '지출'));
+  const hasBudget = bs.has;
+  const budget = bs.varBudget;
+  const left = bs.left;
   const perDay = left > 0 ? left / daysLeft : 0;
-  const usedPct = budget > 0 ? Math.min(100, (out / budget) * 100) : 0;
+  const usedPct = budget > 0 ? Math.min(100, (bs.varSpent / budget) * 100) : 0;
   const dayPct = (now.getDate() / days) * 100;
-  const over = budget > 0 && out > budget * dayPct / 100;
+  const over = budget > 0 && bs.varSpent > budget * dayPct / 100;
   /* 이번 주 = 월요일부터 */
   const wk = shiftDayKey(today, -((now.getDay() + 6) % 7));
   const todayOut = apSum(ledger.filter(r => r.dayKey === today), '지출');
@@ -280,7 +282,7 @@ function apHomePage(main, data) {
       <div class="ap-big mono ${left < 0 ? 'neg' : ''}">${left < 0 ? '−' : ''}${wonComma(Math.abs(left))}<small>원</small></div>
       ${budget > 0 ? `<div class="ap-prog"><i class="${over ? 'over' : ''}" style="width:${usedPct}%"></i><em style="left:${dayPct}%"></em></div>` : ''}
       <div class="ap-hs"><span>하루 <b class="mono">${left > 0 ? apWon(Math.round(perDay)) : '0원'}</b></span>
-        <span>예산 ${formatKrw(budget)}${hasBudget ? '' : ' (평균)'}</span></div>
+        <span>${bs.fixedBudget > 0 ? `📌 고정 ${formatKrw(bs.fixedSpent)}/${formatKrw(bs.fixedBudget)}` : `예산 ${formatKrw(budget)}${hasBudget ? '' : ' (평균)'}`}</span></div>
     </section>
     <div class="ap-tiles">
       <div class="ap-tile"><span>오늘 쓴 돈</span><b class="mono">${formatKrw(todayOut)}</b></div>

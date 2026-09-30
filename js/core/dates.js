@@ -36,6 +36,12 @@ function netExpenseOf(r) { return r.amount - (r.refund || 0); }
    ※ 예산·누적 지출 모두 '환급 제외' 기준으로 통일 */
 function monthlyExpenseTarget(data, ledger, monthKey) {
   const goals = data.goals || [];
+  /* 예산 저장이 쓰는 목표 줄(metric_source = monthly_expense)이 먼저 — 제목 글자로는 못 찾는다 */
+  for (const g of goals) {
+    if (g.__metric !== 'monthly_expense' || /중단/.test(g['상태'] || '')) continue;
+    const n = parseFloat(String(g['금액 or 비율'] || '').replace(/,/g, ''));
+    if (n > 0) return { amount: n, source: '목표', label: g['항목'] || null };
+  }
   for (const g of goals) {
     const title = pickGoalField(g, 'title');
     if (!title) continue;

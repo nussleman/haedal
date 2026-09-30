@@ -75,13 +75,17 @@ function renderHomePage(container, data, d) {
   const mNet = mIn - mOut;
   const mRate = mIn > 0 ? (mNet / mIn) * 100 : null;
   const days = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-  /* 더 써도 되는 돈 = 이번 달 예산 − 쓴 돈. 예산을 안 적었으면 최근 12개월 평균 지출을 예산으로 본다 */
-  const hasBudget = budgetMonthlyTotal() > 0;
-  const budget = budgetPaceMonthly(data);
-  const left = budget - mOut;
+  /* 더 써도 되는 돈 = 변동 예산 − 변동 지출. 고정(📌) 예산과 그 지출은 따로 센다.
+     예산을 안 적었으면 최근 12개월 평균 지출을 예산으로 본다 */
+  const bs = budgetSplit(data, curM.filter(isExpense));
+  const hasBudget = bs.has;
+  const budget = bs.varBudget;
+  const vOut = bs.varSpent;
+  const left = bs.left;
   const daysLeft = days - now.getDate() + 1;
   const perDay = left > 0 ? left / daysLeft : 0;
-  const usedPct = budget > 0 ? Math.min(100, (mOut / budget) * 100) : 0;
+  const usedPct = budget > 0 ? Math.min(100, (vOut / budget) * 100) : 0;
+  const hasFixed = bs.fixedBudget > 0;
   const dayPct = (now.getDate() / days) * 100;
   const todayOut = ledger.filter(r => ledgerDayKey(r.date) === dayKey && isExpense(r)).reduce((a, r) => a + netExpenseOf(r), 0);
 
@@ -111,11 +115,13 @@ function renderHomePage(container, data, d) {
         <div class="hm-tri">
           <div><span>남은 예산</span><b class="mono" style="color:${left >= 0 ? 'var(--net-text)' : 'var(--expense-text)'}">${left >= 0 ? '' : '−'}${formatKrw(Math.abs(left))}</b></div>
           <div><span>하루에</span><b class="mono">${left > 0 ? formatKrw(perDay) : '0원'}</b></div>
-          <div><span>쓴 돈</span><b class="mono out">${formatKrw(mOut)}</b></div>
+          <div><span>${hasFixed ? '쓴 돈 (고정 제외)' : '쓴 돈'}</span><b class="mono out">${formatKrw(vOut)}</b></div>
         </div>
         ${budget > 0 ? `<div class="hm-budbar" title="예산 ${formatKrw(budget)} 중 ${usedPct.toFixed(0)}% 사용 · 달의 ${dayPct.toFixed(0)}% 지남">
-          <i class="${mOut > budget * dayPct / 100 ? 'over' : ''}" style="width:${usedPct}%"></i><em style="left:${dayPct}%"></em></div>` : ''}
-        <div class="hm-paceS">${left < 0 ? `예산보다 <b class="out">${formatKrw(-left)}</b> 더 썼어요 · ` : ''}예산 ${formatKrw(budget)}${hasBudget ? '' : ' (최근 12개월 평균)'}
+          <i class="${vOut > budget * dayPct / 100 ? 'over' : ''}" style="width:${usedPct}%"></i><em style="left:${dayPct}%"></em></div>` : ''}
+        <div class="hm-paceS">${left < 0 ? `예산보다 <b class="out">${formatKrw(-left)}</b> 더 썼어요 · ` : ''}${hasFixed
+            ? `쓸 수 있는 예산 ${formatKrw(budget)} · 📌 고정 ${formatKrw(bs.fixedSpent)} / ${formatKrw(bs.fixedBudget)} 나감${bs.fixedSpent > bs.fixedBudget ? ` <b class="out">(${formatKrw(bs.fixedSpent - bs.fixedBudget)} 초과)</b>` : ''} · 전체 ${formatKrw(mOut)} / ${formatKrw(bs.total)}`
+            : `예산 ${formatKrw(budget)}${hasBudget ? '' : ' (최근 12개월 평균)'}`}
           · 오늘 ${formatKrw(todayOut)} 씀 · 수입 ${formatKrw(mIn)}${mRate === null ? '' : ` · 저축률 <b>${mRate.toFixed(1)}%</b>`} ·
           <button class="hm-lnk" data-go="${hasBudget ? 'report/monthly' : 'set/budget'}">${hasBudget ? '월간 리포트' : '예산 정하기'}</button></div>
       </section>
@@ -331,7 +337,7 @@ function buildBudgetTree(data) {
 
 /* ---------------- 예산 저장 형식 ----------------
    app_settings.budget_categories =
-     { 분류: { amount, memo, items: { 세부분류: { amount, memo } } } }
+     { 분류: { amount, memo, fixed?, items: { 세부분류: { amount, memo, fixed? } } } }
    세부분류에 금액이 하나라도 있으면 분류 예산 = 세부분류 합계, 없으면 분류에 직접 적은 amount.
    예전 형식({ 분류: 숫자 }, { "분류|세부분류": 숫자 })도 그대로 읽어 들인다. */
 function budgetNorm(raw) {
@@ -348,9 +354,11 @@ function budgetNorm(raw) {
     if (v === null || typeof v !== 'object') { g.amount = Number(v) || 0; return; }
     g.amount = Number(v.amount) || 0;
     g.memo = v.memo || '';
+    if (v.fixed) g.fixed = true;
     Object.entries(v.items || {}).forEach(([n, x]) => {
       const o = (x && typeof x === 'object') ? x : { amount: x };
       g.items[n] = { amount: Number(o.amount) || 0, memo: o.memo || '' };
+      if (o.fixed) g.items[n].fixed = true;
     });
   });
   return out;
@@ -374,6 +382,41 @@ function budgetPaceMonthly(data) {
   try {
     return buildBudgetTree(data).groups.reduce((a, g) => a + g.avg, 0);
   } catch (e) { return 0; }
+}
+
+/* ---------------- 고정 예산 ----------------
+   데이트 통장·주거·구독처럼 달이 시작하면 이미 정해진 돈은 📌(fixed) 로 표시한다.
+   분류에 📌 → 그 분류 전체가 고정, 세부분류에 📌 → 그 세부분류만 고정.
+   홈의 '남은 예산'은 고정을 뺀 변동 예산 − 변동 지출이라, 월초에 고정비가 나가도 줄지 않는다. */
+function budgetLineFixed(c, i, map) {
+  const g = (map || state.budgets || {})[c];
+  if (!g) return false;
+  if (g.fixed) return true;
+  const it = i && g.items && g.items[i];
+  return !!(it && it.fixed);
+}
+function budgetFixedTotal(map) {
+  let t = 0;
+  Object.values(map || state.budgets || {}).forEach(g => {
+    if (g.fixed) { t += budgetCatAmount(g); return; }
+    Object.values(g.items || {}).forEach(x => { if (x.fixed) t += Number(x.amount) || 0; });
+  });
+  return t;
+}
+/* 이번 달 예산을 고정·변동으로 나눈다. rows = 이번 달 지출 기록.
+   예산을 안 적었으면(평균으로 대신하는 경우) 고정 구분 없이 전부 변동으로 본다. */
+function budgetSplit(data, rows) {
+  const total = budgetPaceMonthly(data);
+  const has = budgetMonthlyTotal() > 0;
+  const fixedBudget = has ? budgetFixedTotal() : 0;
+  let fixedSpent = 0, varSpent = 0;
+  rows.forEach(r => {
+    const v = netExpenseOf(r);
+    if (has && budgetLineFixed(r.minor || '기타', r.item || '기타')) fixedSpent += v; else varSpent += v;
+  });
+  const varBudget = total - fixedBudget;
+  return { total, has, fixedBudget, fixedSpent, varBudget, varSpent,
+           left: varBudget - varSpent, spent: fixedSpent + varSpent };
 }
 
 /* ---------------- 데이터 점검 ----------------

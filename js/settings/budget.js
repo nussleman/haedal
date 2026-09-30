@@ -49,6 +49,10 @@ function renderBudgetSettings(container, data, d) {
   };
   const memoBtn = (key, memo) => `<button class="bt-mbtn ${memo ? 'has' : ''} ${BUD.memo[key] ? 'on' : ''}"
       data-memo="${esc(key)}" title="${memo ? esc(memo) : '예산 근거 메모'}" aria-label="메모">✎</button>`;
+  /* 📌 고정 — 달이 시작하면 이미 정해진 돈. 홈의 '남은 예산'에서 빠진다 */
+  const pinBtn = (key, on, inherited) => `<button class="bt-pin ${on ? 'on' : ''}" data-pin="${esc(key)}" ${inherited ? 'disabled' : ''}
+      title="${inherited ? '분류 전체가 고정이에요' : on ? '고정 예산 — 누르면 해제' : '고정 예산으로 표시 (데이트 통장·월세·구독처럼 매달 정해진 돈)'}"
+      aria-label="고정" aria-pressed="${on ? 'true' : 'false'}">📌</button>`;
   const memoRow = (key, memo, item) => BUD.memo[key] ? `
       <div class="bt-memo ${item ? 'item' : ''}">
         <textarea class="bt-mta" data-key="${esc(key)}" rows="2"
@@ -71,6 +75,7 @@ function renderBudgetSettings(container, data, d) {
           <span class="bt-caret ${items.length ? '' : 'none'}">▸</span>
           <span class="bt-tt"><b>${esc(c)}</b>${items.length ? `<em>${items.length}</em>` : ''}
             ${g.memo ? `<small class="bt-mprev">${esc(g.memo)}</small>` : ''}</span>
+          ${pinBtn(c, !!g.fixed)}
         </span>
         <span class="bt-now mono">${won(used)}${barHtml(used, lim)}</span>
         <span class="bt-avg mono">${won(avg[c])}</span>
@@ -84,7 +89,7 @@ function renderBudgetSettings(container, data, d) {
       return `
       <div class="bt-row bt-item ${it.amount && u > it.amount ? 'over' : ''}">
         <span class="bt-nm"><span class="bt-tt">${esc(i)}
-          ${it.memo ? `<small class="bt-mprev">${esc(it.memo)}</small>` : ''}</span></span>
+          ${it.memo ? `<small class="bt-mprev">${esc(it.memo)}</small>` : ''}</span>${pinBtn(key, !!(g.fixed || it.fixed), !!g.fixed)}</span>
         <span class="bt-now mono">${won(u)}${barHtml(u, it.amount)}</span>
         <span class="bt-avg mono">${won(avg[key])}</span>
         <span class="bt-cell"><input class="bt-in mono" data-c="${esc(c)}" data-i="${esc(i)}" type="text" inputmode="numeric"
@@ -95,6 +100,7 @@ function renderBudgetSettings(container, data, d) {
   }).join('');
 
   const total = budgetMonthlyTotal(B);
+  const fixedTotal = budgetFixedTotal(B);
   let avg3 = 0; cats.forEach(c => { avg3 += avg[c] || 0; });
   container.innerHTML = `
     <div class="narrow-page bt-page">
@@ -107,6 +113,7 @@ function renderBudgetSettings(container, data, d) {
         </div>
         <div class="bud-total mono" id="bud-total">${enComma(total)}<small>원</small></div>
       </div>
+      <div class="bud-split" id="bud-split">${budSplitHtml(total, fixedTotal)}</div>
       <div class="bud-note">
         홈과 리포트의 예산 페이스가 이 값을 기준으로 계산됩니다.
         ${avg3 ? `최근 3개월 실지출 평균은 ${enComma(Math.round(avg3))}원입니다.` : ''}
@@ -143,11 +150,25 @@ function renderBudgetSettings(container, data, d) {
     BUD.dirty = true;
     const t = document.getElementById('bud-total');
     if (t) t.innerHTML = enComma(budgetMonthlyTotal(B)) + '<small>원</small>';
+    const sp = document.getElementById('bud-split');
+    if (sp) sp.innerHTML = budSplitHtml(budgetMonthlyTotal(B), budgetFixedTotal(B));
     ['bt-dirty', 'budc-reset'].forEach(id => { const el = document.getElementById(id); if (el) el.hidden = false; });
   };
   const box = container.querySelector('.bt');
 
   box.addEventListener('click', (e) => {
+    const pb = e.target.closest('.bt-pin');
+    if (pb) {
+      e.stopPropagation();
+      if (pb.disabled) return;
+      const [c, i] = pb.dataset.pin.split('|');
+      const g = grp(c);
+      if (i === undefined) g.fixed = !g.fixed;
+      else { const it = g.items[i] = g.items[i] || { amount: 0, memo: '' }; it.fixed = !it.fixed; }
+      markDirty();
+      redraw();
+      return;
+    }
     const mb = e.target.closest('.bt-mbtn');
     if (mb) {
       const k = mb.dataset.memo;
@@ -210,15 +231,23 @@ function renderBudgetSettings(container, data, d) {
       const items = {};
       Object.entries(g.items).forEach(([i, x]) => {
         const memo = (x.memo || '').trim();
-        if (x.amount || memo) items[i] = { amount: x.amount || 0, memo };
+        if (x.amount || memo || x.fixed) items[i] = { amount: x.amount || 0, memo, ...(x.fixed ? { fixed: true } : {}) };
       });
       const memo = (g.memo || '').trim();
       const amount = budgetCatAmount({ amount: g.amount, items });
-      if (amount || memo || Object.keys(items).length) clean[c] = { amount, memo, items };
+      if (amount || memo || g.fixed || Object.keys(items).length)
+        clean[c] = { amount, memo, ...(g.fixed ? { fixed: true } : {}), items };
     });
     const ok = await budgetCatSave(clean, budgetMonthlyTotal(clean));
     if (ok) { BUD.dirty = false; BUD.draft = null; renderPage(); }
   });
+}
+
+/* 총액 아래 한 줄: 📌 고정 N · 쓸 수 있는 돈 M — 홈의 '남은 예산'은 M 에서 시작한다 */
+function budSplitHtml(total, fixed) {
+  if (!fixed) return '📌 을 눌러 월세·구독·데이트 통장처럼 매달 정해진 돈을 고정으로 표시하면, 홈에는 나머지 쓸 수 있는 돈만 보여요.';
+  return `📌 고정 <b class="mono">${enComma(fixed)}</b>원 · 쓸 수 있는 돈 <b class="mono">${enComma(total - fixed)}</b>원
+    <span>— 홈의 '남은 예산'은 쓸 수 있는 돈에서 시작해요</span>`;
 }
 
 /* 분류별 예산은 예전에 window.storage 에 넣었는데, GitHub Pages 에는 그 API 가 없어
