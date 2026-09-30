@@ -550,7 +550,7 @@ function enLedgerQuery(sb, mode) {
   let q;
   if (mode === 'count') q = sb.from('v_transactions').select('id', { count: 'exact', head: true });
   else if (mode === 'sum') q = sb.from('v_transactions').select('kind,amount');
-  else q = sb.from('v_transactions').select('id,date,kind,category,subcategory,emoji_category,amount,merchant_group,merchant,note,good_bad,company_paid,is_fixed,category_id');
+  else q = sb.from('v_transactions').select('id,date,kind,category,subcategory,emoji_category,amount,merchant_group,merchant,note,good_bad,company_paid,category_id');
   if (g.kind !== 'all') q = q.eq('kind', g.kind);
   if (g.cat !== 'all') q = q.eq('category_id', Number(g.cat));
   if (g.nogroup) q = q.is('merchant_group', null).not('merchant', 'is', null).neq('merchant', '');
@@ -622,7 +622,7 @@ async function enLoadLedger() {
           <span class="mm" data-ed="note" title="더블클릭해서 메모 수정">${r.note ? enEsc(r.note) : '<i class="lg-ph">메모</i>'}</span>
           <span class="f">
             <button class="lg-tg ${r.company_paid ? 'on' : ''}" data-tg="company_paid" title="회사 환급" tabindex="-1">🏢</button>
-            ${lgFixedBtn(r.merchant, r.is_fixed)}
+            ${lgFixedMark(txFixed(r.kind, r.category, r.subcategory))}
           </span>
           <span class="g">${r.kind === '지출'
             ? `<button class="lg-gb ${r.good_bad === 'Good' ? 'good' : r.good_bad === 'Bad' ? 'bad' : ''}" data-gb tabindex="-1" title="클릭해서 Good → Bad → 해제">${r.good_bad === 'Good' ? 'GOOD' : r.good_bad === 'Bad' ? 'BAD' : '—'}</button>`
@@ -796,13 +796,6 @@ function lgBindEdit(box) {
     const ok = await lgUpdate(Number(line.dataset.id), patch);
     if (!ok) { btn.classList.toggle('on', !on); return; }
     lgTouched();
-    /* 사용처 기준과 어긋나면 그 자리에서 표시해 준다 — 예외인 줄 모르고 두는 일이 없게 */
-    if (btn.dataset.tg === 'is_fixed') {
-      const mfx = enMerchFixed(line.dataset.merch);
-      btn.classList.toggle('auto', mfx && on);
-      btn.classList.toggle('exc', mfx && !on);
-      btn.title = mfx ? (on ? '고정비 — 사용처 기준' : '사용처는 고정비인데 이 줄만 예외') : '고정비';
-    }
   }));
 
   box.querySelectorAll('[data-gb]').forEach(btn => btn.addEventListener('click', async () => {
@@ -819,15 +812,9 @@ function lgBindEdit(box) {
   }));
 }
 
-/* 사용처가 고정비로 지정돼 있으면 왜 켜져 있는지가 보여야 한다.
-   auto = 사용처 기준으로 켜진 것 · exc = 사용처는 고정비인데 이 줄만 뺀 것. */
-function lgFixedBtn(merchant, on) {
-  const mfx = enMerchFixed(merchant);
-  const cls = ['lg-tg', on ? 'on' : '', mfx ? (on ? 'auto' : 'exc') : ''].filter(Boolean).join(' ');
-  const tip = mfx
-    ? (on ? '고정비 — 사용처 기준' : '사용처는 고정비인데 이 줄만 예외')
-    : '고정비';
-  return `<button class="${cls}" data-tg="is_fixed" title="${tip}" tabindex="-1">📌</button>`;
+/* 고정비 표시 — 누르는 버튼이 아니라 예산 분류(📌)를 따라 켜지는 표시다. 바꾸려면 설정 › 예산 */
+function lgFixedMark(on) {
+  return `<span class="rx-tg ${on ? 'on' : ''}" title="${on ? '고정비 — 설정 › 예산에서 📌 인 분류' : '고정비 아님'}">📌</span>`;
 }
 
 /* 분류를 셀렉트 대신 검색으로 고른다 — 소분류가 수십 개라 스크롤로는 못 찾는다.
@@ -1352,7 +1339,6 @@ function lgBulkPaint() {
     <span class="sep"></span>
     <input class="lg-ed" type="date" id="lg-bk-date" title="잡힌 행의 날짜를 한꺼번에">
     <button data-b="company_paid" title="회사 환급 전환">🏢</button>
-    <button data-b="is_fixed" title="고정비 전환">📌</button>
     <button data-b="Good">GOOD</button>
     <button data-b="Bad">BAD</button>
     <button data-b="gbnull">GOOD/BAD 해제</button>
@@ -1420,14 +1406,14 @@ function lgBulkPaint() {
       enLoadLedger();
       return;
     }
-    if (k === 'company_paid' || k === 'is_fixed') {
+    if (k === 'company_paid') {
       /* 다 켜져 있으면 끄고, 하나라도 꺼져 있으면 모두 켠다 — 결과를 예측할 수 있게 */
       const allOn = rows.every(el => {
         const t = el.querySelector(`[data-tg="${k}"]`);
         return t && t.classList.contains('on');
       });
       const patch = {}; patch[k] = !allOn;
-      lgBulkApply(ids, patch, `${ids.length}건 ${k === 'is_fixed' ? '고정비' : '회사 환급'} ${allOn ? '해제' : '표시'}했습니다`);
+      lgBulkApply(ids, patch, `${ids.length}건 회사 환급 ${allOn ? '해제' : '표시'}했습니다`);
       return;
     }
     /* Good/Bad 는 지출에만 매긴다 */
@@ -1463,7 +1449,6 @@ function lgDraftRowHTML(i, seed) {
     <span class="am"><input class="lg-ed mono" data-d="amount" inputmode="numeric" placeholder="0" value="${enEsc(seed.amount || '')}"></span>
     <span class="tg">
       <button class="lg-tg ${seed.company_paid ? 'on' : ''}" data-dtg="company_paid" title="회사 환급" tabindex="-1">🏢</button>
-      <button class="lg-tg ${seed.is_fixed || enMerchFixed(seed.merchant) ? 'on' : ''}${enMerchFixed(seed.merchant) ? ' auto' : ''}" data-dtg="is_fixed" title="고정비" tabindex="-1">📌</button>
     </span>
     <span class="gb"><button class="lg-gb ${c && c.kind !== '지출' ? 'off' : ''} ${seed.good_bad === 'Good' ? 'good' : seed.good_bad === 'Bad' ? 'bad' : ''}" data-dgb tabindex="-1" ${c && c.kind !== '지출' ? 'disabled' : ''}>${seed.good_bad === 'Good' ? 'GOOD' : seed.good_bad === 'Bad' ? 'BAD' : '—'}</button></span>
     <button class="x" data-drx="${i}" aria-label="이 행 삭제" tabindex="-1">×</button>
@@ -1531,19 +1516,10 @@ function lgRenderAdd(focusIdx) {
       if (q && c) q.value = c.category + ' › ' + c.subcategory;
       hid.dispatchEvent(new Event('change'));
     };
-    /* 손으로 끈 것을 다시 켜지는 않는다 — 자동은 auto 표시가 남아 있을 때만 */
-    const applyFixed = (m) => {
-      const b = row.querySelector('[data-dtg="is_fixed"]');
-      if (!b) return;
-      const mfx = enMerchFixed(m);
-      if (mfx) { b.classList.add('on', 'auto'); }
-      else if (b.classList.contains('auto')) { b.classList.remove('on', 'auto'); }
-    };
-    lgMerchantAC(inp, (m, cid) => { apply(cid); applyFixed(m); });
+    lgMerchantAC(inp, (m, cid) => { apply(cid); });
     inp.addEventListener('change', () => {
       const m = lgSplitMerchant(inp.value).merchant;
       apply(EN.merchCat[m]);
-      applyFixed(m);
     });
   });
 
@@ -1690,7 +1666,6 @@ function lgDraftSync() {
       note: v('note').trim(),
       amount: v('amount'),
       company_paid: row.querySelector('[data-dtg="company_paid"]').classList.contains('on'),
-      is_fixed: row.querySelector('[data-dtg="is_fixed"]').classList.contains('on'),
       good_bad: gb.classList.contains('good') ? 'Good' : gb.classList.contains('bad') ? 'Bad' : null
     };
   });
@@ -1702,7 +1677,7 @@ function lgDraftAdd(date, catId) {
   EN.draft.push({
     date: date || (EN.draft.length ? EN.draft[EN.draft.length - 1].date : enToday()),
     catId: catId || null, merchant: '', note: '', amount: '',
-    company_paid: false, is_fixed: false, good_bad: null
+    company_paid: false, good_bad: null
   });
   lgRenderAdd();
 }
@@ -1766,7 +1741,7 @@ async function lgDraftSaveRun() {
     rows.push({
       date: d.date, category_id: d.catId, amount: neg ? -n : n,
       merchant_group: group, merchant, note: d.note || null,
-      good_bad: d.good_bad, company_paid: d.company_paid, is_fixed: d.is_fixed
+      good_bad: d.good_bad, company_paid: d.company_paid
     });
   });
 

@@ -27,7 +27,7 @@ function qeDateLabel(k) {
 function qeFresh() {
   return { step: 1, reach: 1, kind: '지출', amount: '', neg: false, catId: null, cat: null,
     merchant: '', noMerch: false, note: '', date: qeDay(0),
-    good: null, fixed: false, co: false, focus: true };
+    good: null, co: false, focus: true };
 }
 /* 폰(좁은 화면)에서만 이 화면을 쓴다. PC 는 기존 기록 창 */
 function qeWanted() { return window.matchMedia('(max-width: 640px)').matches; }
@@ -48,7 +48,7 @@ async function qeLoadRun() {
   const c = await haedalSupabase();
   const [cats, merch, recent] = await Promise.all([
     c.from('categories').select('id,kind,category,subcategory,emoji_kind,emoji_category,sort_order,is_active').order('sort_order'),
-    c.from('merchants').select('id,name,merchant_group,is_fixed').order('name'),
+    c.from('merchants').select('id,name,merchant_group').order('name'),
     c.from('transactions').select('merchant,category_id,date,amount').not('merchant', 'is', null)
       .order('date', { ascending: false }).limit(1200)
   ]);
@@ -223,8 +223,6 @@ function qePickMerch(name) {
     const c = qeCat(st.catId);
     d.kind = c.kind; d.cat = c.category; d.catId = st.catId;
   }
-  const mm = qeMerch(name);
-  if (mm && mm.is_fixed) d.fixed = true;
   d.step = d.catId ? 3 : 2;
   qePaint();
 }
@@ -391,7 +389,6 @@ function qeStepDate(cur, dock) {
     </div>
     <div class="qe-lab">표시 <i>선택</i></div>
     <div class="qe-chips">
-      <button data-t="fixed" class="${d.fixed ? 'on' : 'mut'}">고정비</button>
       <button data-t="co" class="${d.co ? 'on' : 'mut'}">회사 환급</button>
       <button data-t="good" class="${d.good === 'Good' ? 'on' : 'mut'}">좋은 지출</button>
       <button data-t="bad" class="${d.good === 'Bad' ? 'on' : 'mut'}">아쉬운 지출</button>
@@ -404,11 +401,10 @@ function qeStepDate(cur, dock) {
   dp.addEventListener('change', () => { if (dp.value) { d.date = dp.value; qeRepaintKeepNote(); } });
   cur.querySelectorAll('[data-t]').forEach(b => b.addEventListener('click', () => {
     const t = b.dataset.t;
-    if (t === 'fixed') d.fixed = !d.fixed;
-    else if (t === 'co') d.co = !d.co;
+    if (t === 'co') d.co = !d.co;
     else if (t === 'good') d.good = d.good === 'Good' ? null : 'Good';
     else if (t === 'bad') d.good = d.good === 'Bad' ? null : 'Bad';
-    b.className = (t === 'fixed' ? d.fixed : t === 'co' ? d.co : t === 'good' ? d.good === 'Good' : d.good === 'Bad') ? 'on' : 'mut';
+    b.className = (t === 'co' ? d.co : t === 'good' ? d.good === 'Good' : d.good === 'Bad') ? 'on' : 'mut';
     if (t === 'good' || t === 'bad') cur.querySelectorAll('[data-t=good],[data-t=bad]').forEach(x => {
       x.className = d.good === (x.dataset.t === 'good' ? 'Good' : 'Bad') ? 'on' : 'mut';
     });
@@ -448,7 +444,7 @@ async function qeSave() {
     const { error } = await c.from('transactions').insert({
       date: d.date, category_id: d.catId, amount: d.neg ? -n : n,
       merchant: nm || null, merchant_group: g ? g.merchant_group : null,
-      note: d.note.trim() || null, good_bad: d.good, company_paid: d.co, is_fixed: d.fixed
+      note: d.note.trim() || null, good_bad: d.good, company_paid: d.co
     });
     if (error) throw new Error(error.message);
     if (nm) {

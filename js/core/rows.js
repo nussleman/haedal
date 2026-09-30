@@ -62,7 +62,7 @@ function rxLedgerLineEdit(r) {
     <span class="mm" data-ed="note" title="더블클릭해서 메모 수정">${r.memo ? rxEsc(r.memo) : '<i class="lg-ph">메모</i>'}</span>
     <span class="f">
       <button class="lg-tg ${r.refund ? 'on' : ''}" data-tg="company_paid" title="회사 환급">🏢</button>
-      ${lgFixedBtn(merch, !!r.fixed)}
+      ${lgFixedMark(!!r.fixed)}
     </span>
     <span class="g">${k === '지출'
       ? `<button class="lg-gb ${gb === 'Good' ? 'good' : gb === 'Bad' ? 'bad' : ''}" data-gb title="클릭해서 Good → Bad → 해제">${gb === 'Good' ? 'GOOD' : gb === 'Bad' ? 'BAD' : '—'}</button>`
@@ -100,14 +100,6 @@ function rxMountEditableDays(host, rows, emptyMsg) {
   if (!editable) return;
   enEnsureRefs().then(() => {
     if (!host.isConnected) return;
-    host.querySelectorAll('.lg-line[data-id]').forEach(line => {
-      const btn = line.querySelector('[data-tg="is_fixed"]');
-      if (!btn) return;
-      const mfx = enMerchFixed(line.dataset.merch);
-      const on = btn.classList.contains('on');
-      btn.classList.toggle('auto', mfx && on);
-      btn.classList.toggle('exc', mfx && !on);
-    });
     lgBindEdit(host);
     host.querySelectorAll('.x').forEach(b => b.addEventListener('click', async () => {
       if (!confirm('이 기록을 삭제할까요?')) return;

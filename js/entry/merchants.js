@@ -41,7 +41,7 @@ async function mgLoad(force) {
   /* 3천~4천 행이라 한 번에 다 받는다. 페이지를 나누면 집계가 틀어진다. */
   for (let from = 0; from < 20000; from += 1000) {
     const { data, error } = await sb.from('v_transactions')
-      .select('merchant,merchant_group,category_id,kind,amount,date,is_fixed')
+      .select('merchant,merchant_group,category_id,kind,amount,date')
       .order('id', { ascending: false }).range(from, from + 999);
     if (error || !data || !data.length) break;
     out.push(...data);
@@ -52,10 +52,9 @@ async function mgLoad(force) {
     const m = (r.merchant || '').trim();
     if (!m) return;
     const k = m;
-    if (!map[k]) map[k] = { name: m, groups: {}, tags: {}, cats: {}, cnt: 0, fixedCnt: 0, sum: 0, last: '', kind: r.kind };
+    if (!map[k]) map[k] = { name: m, groups: {}, tags: {}, cats: {}, cnt: 0, sum: 0, last: '', kind: r.kind };
     const e = map[k];
     e.cnt++;
-    if (r.is_fixed) e.fixedCnt++;
     e.sum += Math.abs(Number(r.amount) || 0);
     if (String(r.date) > e.last) { e.last = String(r.date); e.kind = r.kind; }
     /* 그룹이 비어 있는 것도 하나의 상태로 센다 — 일부만 묶여 있으면 그것도 흔들림이다 */
@@ -68,27 +67,18 @@ async function mgLoad(force) {
     Object.keys(o).forEach(k => { if (o[k] > n) { n = o[k]; best = k; } });
     return best;
   };
-  const fixedReg = {};
   try {
-    const { data: reg } = await sb.from('merchants').select('name,merchant_group,is_fixed');
+    const { data: reg } = await sb.from('merchants').select('name,merchant_group');
     (reg || []).forEach(r => {
       const m = String(r.name || '').trim();
       if (!m) return;
-      if (r.is_fixed) fixedReg[m] = true;
       if (map[m]) return;
       map[m] = { name: m, groups: { [r.merchant_group || '']: 1 },
-        tags: r.merchant_group ? { [r.merchant_group]: 1 } : {}, cats: {}, cnt: 0, fixedCnt: 0, sum: 0, last: '', kind: '지출' };
+        tags: r.merchant_group ? { [r.merchant_group]: 1 } : {}, cats: {}, cnt: 0, sum: 0, last: '', kind: '지출' };
     });
   } catch (e) {}
-  /* 사전 값이 기준이다. 자동완성 쪽 캐시도 여기서 같이 맞춰 둔다. */
-  EN.merchFixed = {};
-  Object.keys(fixedReg).forEach(m => { EN.merchFixed[m] = true; });
   MG.rows = Object.values(map).map(e => ({
     name: e.name, cnt: e.cnt, sum: e.sum, last: e.last, kind: e.kind,
-    fixed: !!fixedReg[e.name],
-    fixedCnt: e.fixedCnt,
-    /* 사용처는 고정비인데 기록 일부가 빠져 있는 상태 — 표에서 바로 보이게 */
-    fixedGap: (fixedReg[e.name] ? e.cnt - e.fixedCnt : e.fixedCnt),
     group: top(e.groups) || '',
     tags: Object.keys(e.tags).sort((a, b) => e.tags[b] - e.tags[a]),
     catId: Number(top(e.cats)) || null,

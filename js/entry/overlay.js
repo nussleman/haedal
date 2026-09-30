@@ -75,7 +75,6 @@ function enRenderEntry() {
 
           <div class="en-tgs">
             <button class="en-tg" id="en-co" aria-pressed="false">🏢 회사비</button>
-            <button class="en-tg" id="en-fx" aria-pressed="false">📌 고정비</button>
             <button class="en-tg en-tg-good" id="en-good" aria-pressed="false">👍 Good</button>
             <button class="en-tg en-tg-bad" id="en-bad" aria-pressed="false">👎 Bad</button>
           </div>
@@ -120,7 +119,7 @@ function enRenderEntry() {
     enSave();
   });
 
-  ['#en-co', '#en-fx'].forEach(sel => enQS(sel).addEventListener('click', () => {
+  ['#en-co'].forEach(sel => enQS(sel).addEventListener('click', () => {
     const el = enQS(sel);
     el.setAttribute('aria-pressed', el.getAttribute('aria-pressed') === 'true' ? 'false' : 'true');
   }));
@@ -212,8 +211,6 @@ function enSetupMerchant() {
     onPick: (name) => {
       const cid = EN.merchCat[name];
       if (cid) { EN.catId = cid; enSyncCat(); }
-      const fx = enQS('#en-fx');
-      if (fx && enMerchFixed(name)) fx.setAttribute('aria-pressed', 'true');
       enQS('#en-amt').focus();
     }
   });
@@ -328,8 +325,7 @@ ${dupRow.date} ${enComma(n)}원 ${dupRow.merchant || ''}
     merchant: merchant,
     note: enQS('#en-note').value.trim() || null,
     good_bad: gb,
-    company_paid: enQS('#en-co').getAttribute('aria-pressed') === 'true',
-    is_fixed: enQS('#en-fx').getAttribute('aria-pressed') === 'true'
+    company_paid: enQS('#en-co').getAttribute('aria-pressed') === 'true'
   });
   enQS('#en-save').disabled = false;
   if (error) { enQS('#en-serr').textContent = '저장하지 못했습니다. 다시 시도하세요.'; return; }
@@ -342,7 +338,7 @@ ${dupRow.date} ${enComma(n)}원 ${dupRow.merchant || ''}
   amt.value = ''; enQS('#en-merch').value = ''; enQS('#en-note').value = '';
   EN.neg = false; EN.catId = null;
   amt.classList.remove('neg');
-  ['#en-co', '#en-fx', '#en-good', '#en-bad'].forEach(x => enQS(x).setAttribute('aria-pressed', 'false'));
+  ['#en-co', '#en-good', '#en-bad'].forEach(x => enQS(x).setAttribute('aria-pressed', 'false'));
   enSyncCat();
   enQS('#en-merch').focus();
   enLoadRecent();
@@ -350,7 +346,7 @@ ${dupRow.date} ${enComma(n)}원 ${dupRow.merchant || ''}
 
 async function enLoadRecent() {
   const { data } = await (await enClient()).from('v_transactions')
-    .select('id,date,kind,category,subcategory,emoji_category,amount,merchant,note,company_paid,is_fixed')
+    .select('id,date,kind,category,subcategory,emoji_category,amount,merchant,note,company_paid')
     .order('date', { ascending: false }).order('id', { ascending: false }).limit(8);
   const box = enQS('#en-recent');
   if (!box) return;
@@ -359,7 +355,7 @@ async function enLoadRecent() {
     <div class="en-row">
       <span aria-hidden="true">${r.emoji_category || ''}</span>
       <div class="m">
-        <div class="l1">${enEsc(r.merchant || r.subcategory)}${r.company_paid ? ' 🏢' : ''}${r.is_fixed ? ' 📌' : ''}</div>
+        <div class="l1">${enEsc(r.merchant || r.subcategory)}${r.company_paid ? ' 🏢' : ''}${txFixed(r.kind, r.category, r.subcategory) ? ' 📌' : ''}</div>
         <div class="l2">${String(r.date).slice(5).replace('-', '.')}<span class="dv">·</span>${enEsc(r.subcategory)}</div>
       </div>
       <span class="v ${r.kind}">${Number(r.amount) < 0 ? '−' : ''}${enComma(Math.abs(r.amount))}</span>

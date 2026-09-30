@@ -14,15 +14,14 @@ const DBM_TABS = [
    'all' 은 있는 그대로의 표, 나머지는 그 층만 모아 놓고 고치면 아래가 따라 바뀐다. */
 const DBM_VIEWS = {
   cat:   [['all', '전체'], ['kind', '종류'], ['group', '분류'], ['sub', '세부분류']],
-  merch: [['all', '전체'], ['group', '사용처 그룹'], ['fixed', '고정비']],
+  merch: [['all', '전체'], ['group', '사용처 그룹']],
   stock: [['all', '전체'], ['theme', '테마']]
 };
 /* 다른 표를 그대로 빌려 쓰는 탭 */
 const DBM_DELEGATE = { 'stock:theme': 'theme' };
 /* 같은 표를 열만 줄이거나 행만 걸러 보여 주는 탭 */
 const DBM_SUBSET = {
-  'cat:sub': { cols: ['kind', 'category', 'emoji_category', 'subcategory', 'sort_order', 'is_active'] },
-  'merch:fixed': { filter: (r) => !!r.is_fixed }
+  'cat:sub': { cols: ['kind', 'category', 'emoji_category', 'subcategory', 'sort_order', 'is_active'] }
 };
 
 const DBM_COLS = {
@@ -38,7 +37,6 @@ const DBM_COLS = {
   merch: [
     { k: 'merchant_group', l: '그룹', t: 'grp', w: '170px' },
     { k: 'name', l: '사용처', t: 'txt', w: 'auto', tone: 'key' },
-    { k: 'is_fixed', l: '고정비', t: 'bool', w: '68px', mid: true, tone: 'meta' },
     { k: 'category_id', l: '주로 쓰는 분류', t: 'cat', w: '236px', tint: 'cat' },
     { k: '_cnt', l: '건수', t: 'ro', num: true, w: '74px' },
     { k: '_sum', l: '합계', t: 'ro', num: true, w: '112px' },
@@ -71,8 +69,7 @@ const DBM_COLS = {
 const DBM_FILTER = {
   cat: [{ k: 'kind', l: '종류', opts: ['수입', '지출', '이체', '자산'] }],
   merch: [
-    { k: 'merchant_group', l: '그룹', dyn: true, noneLabel: '그룹 없음', noneQuick: '그룹 없음' },
-    { k: 'is_fixed', l: '고정비', opts: [['1', '📌 고정비'], ['0', '일반']] }
+    { k: 'merchant_group', l: '그룹', dyn: true, noneLabel: '그룹 없음', noneQuick: '그룹 없음' }
   ],
   acct: [{ k: 'asset_class', l: '분류', opts: ['현금 자산', '투자 자산', '저축 자산', '연금 자산'] }],
   stock: [{ k: 'market', l: '시장', opts: ['US', 'KR'] }]
@@ -86,7 +83,7 @@ const DBM_ORDER = {
 };
 const DBM_NEW = {
   cat: { kind: '지출', emoji_kind: '', category: '', emoji_category: '', subcategory: '', sort_order: 0, is_active: true },
-  merch: { merchant_group: '', name: '', is_fixed: false, category_id: null },
+  merch: { merchant_group: '', name: '', category_id: null },
   acct: { name: '', asset_class: '현금 자산', sort_order: 0, note: '', is_active: true },
   stock: { name: '', ticker: '', market: '', themes: [], category: '', is_active: true },
   theme: { name: '', note: '', sort_order: 0 }
@@ -255,9 +252,9 @@ async function dbmLoad(tabId, force) {
     const list = await mgLoad();
     DBM.rows.merch = list.map(r => ({
       id: r.name, name: r.name, merchant_group: r.group || '',
-      is_fixed: !!r.fixed, category_id: r.catId || null,
+      category_id: r.catId || null,
       _cnt: r.cnt, _sum: Math.round(r.sum), _last: r.last || '',
-      _gap: r.fixedGap, _mixedCat: r.mixedCat, _mixedGroup: r.mixedGroup
+      _mixedCat: r.mixedCat, _mixedGroup: r.mixedGroup
     }));
     return;
   }
@@ -284,10 +281,10 @@ function dbmRender(host) {
   dbmRenderPane();
 }
 
-/* 좌측 메뉴에서 고른 탭으로 목록을 연다. '고정비 지정'은 사용처 탭의 고정비 보기다. */
+/* 좌측 메뉴에서 고른 탭으로 목록을 연다 */
 function dbmRenderFor(host, sub) {
   const map = { cat: ['cat', null], merch: ['merch', null], acct: ['acct', null],
-                stock: ['stock', null], fixedm: ['merch', 'fixed'] };
+                stock: ['stock', null] };
   const [tab, view] = map[sub] || ['cat', null];
   if (DBM.tab !== tab || (view && dbmView(tab) !== view)) {
     DBM.q = ''; DBM.draft = null; DBM.dirty = {}; DBM.adding = false;

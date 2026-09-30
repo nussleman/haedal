@@ -395,6 +395,11 @@ function budgetLineFixed(c, i, map) {
   const it = i && g.items && g.items[i];
   return !!(it && it.fixed);
 }
+/* 기록 한 줄이 고정비인가 — 지출이고, 그 분류·세부분류가 예산에서 📌 인 것.
+   (예전엔 사용처·기록마다 📌 를 따로 켰다. 2026-09-30 부터 예산 분류 하나로 통일, DB is_fixed 는 안 읽는다) */
+function txFixed(kind, cat, sub) {
+  return String(kind || '').includes('지출') && budgetLineFixed(cat || '기타', sub || '기타');
+}
 function budgetFixedTotal(map) {
   let t = 0;
   Object.values(map || state.budgets || {}).forEach(g => {

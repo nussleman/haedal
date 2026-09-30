@@ -617,7 +617,7 @@ async function dbmAdd() {
     try {
       const sb = await enClient();
       const { error } = await sb.from('merchants').upsert(
-        { name: nm, merchant_group: String(rec.merchant_group || '').trim() || null, is_fixed: !!rec.is_fixed },
+        { name: nm, merchant_group: String(rec.merchant_group || '').trim() || null },
         { onConflict: 'owner_id,name' });
       if (error) throw new Error(error.message);
       DBM.draft = null; DBM.adding = false;
@@ -660,7 +660,6 @@ async function dbmSaveMerch() {
       const c = EN.catById[patch.category_id];
       bits.push(`분류 → ${c ? c.category + ' › ' + c.subcategory : '없음'}`);
     }
-    if ('is_fixed' in patch) bits.push(patch.is_fixed ? '고정비로 지정' : '고정비 해제');
     return `· ${rec.name} (기록 ${enComma(rec._cnt)}건) — ${bits.join(', ')}`;
   });
   if (!confirm(`아래대로 바꿉니다. 지난 기록도 함께 바뀝니다.\n\n${lines.join('\n')}\n\n계속할까요?`)) return;
@@ -671,7 +670,6 @@ async function dbmSaveMerch() {
     if ('name' in patch && patch.name) tx.merchant = patch.name;
     if ('merchant_group' in patch) tx.merchant_group = patch.merchant_group || null;
     if ('category_id' in patch) tx.category_id = patch.category_id || null;
-    if ('is_fixed' in patch) tx.is_fixed = !!patch.is_fixed;
     if (Object.keys(tx).length) {
       const { error } = await sb.from('transactions').update(tx).eq('merchant', rec.name);
       if (error) throw new Error(error.message);
@@ -679,8 +677,7 @@ async function dbmSaveMerch() {
     /* 등록표에도 같은 값을 남긴다 — 기록이 없는 사용처도 자동완성에 계속 뜨도록 */
     const reg = {
       name: ('name' in patch && patch.name) ? patch.name : rec.name,
-      merchant_group: ('merchant_group' in patch ? patch.merchant_group : rec.merchant_group) || null,
-      is_fixed: 'is_fixed' in patch ? !!patch.is_fixed : !!rec.is_fixed
+      merchant_group: ('merchant_group' in patch ? patch.merchant_group : rec.merchant_group) || null
     };
     const { error: e2 } = await sb.from('merchants').upsert(reg, { onConflict: 'owner_id,name' });
     if (e2) throw new Error(e2.message);

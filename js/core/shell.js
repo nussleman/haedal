@@ -130,7 +130,7 @@ const SECTION_SUBS = {
   invest: [['overview', '요약'], ['book', '종목'], ['rules', '매매원칙']],
   goals:  [['list', '목록']],
   report: [['monthly', '월간'], ['yearly', '연간'], ['networth', '순자산']],
-  set:    [['#', '가계부'], ['cat', '분류'], ['merch', '사용처'], ['fixedm', '고정비'],
+  set:    [['#', '가계부'], ['cat', '분류'], ['merch', '사용처'],
            ['#', '계획'], ['budget', '예산'], ['saving', '적립'],
            ['#', '자산·투자'], ['acct', '계좌'], ['stock', '종목']]
 };
@@ -179,9 +179,11 @@ const LEGACY_ROUTE = {
   'invest/bench': 'invest/overview', 'invest/journal': 'invest/rules', 'invest/tax': 'report/yearly', 'assets/pension': 'report/networth',
   'assets/savings': 'report/networth',
   'todo': 'goals/list', 'todo/goals': 'goals/list',
-  'todo/fixed': 'set/fixedm', 'todo/structure': 'home/main',
+  'todo/fixed': 'set/budget', 'todo/structure': 'home/main',
   /* 2026-09-28 실험실 폐지 */
-  'lab': 'home/main', 'lab/explore': 'entry/ledger', 'lab/sim': 'home/main', 'lab/flowmap': 'report/monthly', 'lab/fixed': 'set/fixedm',
+  'lab': 'home/main', 'lab/explore': 'entry/ledger', 'lab/sim': 'home/main', 'lab/flowmap': 'report/monthly', 'lab/fixed': 'set/budget',
+  /* 2026-09-30 고정비는 예산 분류 📌 로 통일 — 사용처 고정비 화면 폐지 */
+  'set/fixedm': 'set/budget',
   'data': 'entry/ledger', 'data/ledger': 'entry/ledger',
   'data/snapshot': 'entry/snapshot', 'data/dbm': 'set/cat'
 };

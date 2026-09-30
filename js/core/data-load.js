@@ -50,7 +50,7 @@ async function sbFetchAll(table, columns, orderCol, label) {
 
 async function fetchLedgerFromDB() {
   const raw = await sbFetchAll('v_transactions',
-    'id,category_id,date,kind,category,subcategory,emoji_category,amount,merchant_group,merchant,note,good_bad,company_paid,is_fixed',
+    'id,category_id,date,kind,category,subcategory,emoji_category,amount,merchant_group,merchant,note,good_bad,company_paid',
     'date', '가계부');
   /* 시트 파서가 내주던 모양 그대로 맞춘다 — 아래 집계 코드를 건드리지 않기 위해서 */
   return raw.map(r => {
@@ -68,7 +68,8 @@ async function fetchLedgerFromDB() {
       mgroup: r.merchant_group || '',
       emoji: r.emoji_category || '',
       memo: r.note || '',
-      fixed: !!r.is_fixed,
+      /* 고정비 = 예산에서 📌 인 분류 — 예산이 나중에 불러와져도 맞도록 그때그때 계산한다 */
+      get fixed() { return txFixed(this.major, this.minor, this.item); },
       good: r.good_bad === 'Good',
       regret: r.good_bad === 'Bad',
       refund: r.company_paid ? amount : 0

@@ -1,7 +1,7 @@
 /* ================= Supabase : 로그인 · 가계부 기록 · 전체 내역 ================= */
 
 const EN = {
-  sb: null, cats: [], catById: {}, freq: {}, merchants: [], merchCat: {}, merchFixed: {},
+  sb: null, cats: [], catById: {}, freq: {}, merchants: [], merchCat: {},
   catId: null, neg: false, loaded: false,
   lg: { q: '', kind: 'all', cat: 'all', from: '', to: '', quick: '3m', sort: 'date_desc', page: 1, size: 60, nogroup: false },
   draft: []
@@ -125,26 +125,18 @@ async function enLoadAllMerchants() {
       if (data.length < 1000) break;
     }
     /* 아직 거래가 없는, 직접 등록만 해 둔 사용처 */
-    const { data: reg } = await sb.from('merchants').select('name,merchant_group,is_fixed');
+    const { data: reg } = await sb.from('merchants').select('name,merchant_group');
     (reg || []).forEach(r => {
       const m = String(r.name || '').trim();
       if (!m) return;
       if (!seen[m]) { seen[m] = 1; EN.merchants.push(m); }
       if (r.merchant_group) EN.merchGroup[m] = r.merchant_group;
-      if (r.is_fixed) EN.merchFixed[m] = true;
     });
     EN.merchants.sort((a, b) => a.localeCompare(b, 'ko'));
   } catch (e) { /* 다음 열 때 다시 시도된다 */ }
   EN.merchLoading = false;
 }
 
-/* ---------- 사용처 = 고정비 ----------
-   고정비는 원래 기록 한 줄마다 손으로 찍던 값이었다. 그런데 '넷플릭스'가 고정비면
-   넷플릭스로 찍힌 모든 줄이 고정비다 — 줄마다 판단할 일이 아니라 사용처의 성질이다.
-   그래서 기준은 사용처에 두고, 기록은 그 기준을 따라간다. */
-function enMerchFixed(name) {
-  return !!(EN.merchFixed && EN.merchFixed[String(name || '').trim()]);
-}
 
 
 /* 사용처를 사전에만 등록한다 — 거래 없이도 자동완성에 뜨게 */
@@ -169,15 +161,13 @@ async function enEnsureRefs() {
   if (EN.loaded) return;
   const sb = await enClient();
   const since = new Date(Date.now() - 180 * 864e5).toISOString().slice(0, 10);
-  const [catRes, recentRes, fixRes, grpRes] = await Promise.all([
+  const [catRes, recentRes, grpRes] = await Promise.all([
     sb.from('categories').select('id,kind,category,subcategory,emoji_category,sort_order')
       .neq('kind', '자산').eq('is_active', true).order('sort_order'),
     /* 여기서는 '자주 쓰는 분류' 계산용이라 최근 1000건이면 충분하다.
        전체 사용처 목록은 enLoadAllMerchants 가 따로 끝까지 읽는다. */
     sb.from('transactions').select('category_id,merchant,merchant_group').gte('date', since)
       .order('date', { ascending: false }).limit(1000),
-    /* 고정비로 지정된 사용처는 많지 않다. 첫 그림부터 맞게 그리려면 여기서 같이 받아야 한다. */
-    sb.from('merchants').select('name').eq('is_fixed', true),
     /* 사용처 그룹에 붙인 그림 — 직접 지정한 값이 기본 그림보다 앞선다 */
     sb.from('merchant_groups').select('name,emoji')
   ]);
@@ -197,11 +187,6 @@ async function enEnsureRefs() {
       mc[mname][r.category_id] = (mc[mname][r.category_id] || 0) + 1;
       if (r.merchant_group && !EN.merchGroup[mname]) EN.merchGroup[mname] = r.merchant_group;
     }
-  });
-  EN.merchFixed = {};
-  (fixRes && fixRes.data || []).forEach(r => {
-    const m = String(r.name || '').trim();
-    if (m) EN.merchFixed[m] = true;
   });
   EN.groupEmoji = {};
   ((grpRes && grpRes.data) || []).forEach(r => {

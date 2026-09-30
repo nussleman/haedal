@@ -393,7 +393,7 @@ async function apEdit(id) {
   if (r.catId && !cats.some(c => c.id === r.catId)) cats.unshift({ id: r.catId, kind: r.major, category: r.minor, subcategory: r.item });
   const groups = {};
   cats.forEach(c => { const g = `${c.kind} · ${c.category}`; (groups[g] = groups[g] || []).push(c); });
-  const f = { good: r.good ? 'Good' : r.regret ? 'Bad' : null, fixed: !!r.fixed, co: !!r.refund };
+  const f = { good: r.good ? 'Good' : r.regret ? 'Bad' : null, co: !!r.refund };
   const neg = r.amount < 0;
   sh.querySelector('.ap-sheet-in').innerHTML = `
     <div class="ap-grab"></div>
@@ -406,7 +406,6 @@ async function apEdit(id) {
     <label class="ap-fl"><span>메모</span><input id="ap-e-note" value="${enEsc(r.memo || '')}" placeholder="없음" enterkeyhint="done"></label>
     <div class="ap-chips">
       <button data-t="neg" class="${neg ? 'on' : ''}">환불(−)</button>
-      <button data-t="fixed" class="${f.fixed ? 'on' : ''}">고정비</button>
       <button data-t="co" class="${f.co ? 'on' : ''}">회사</button>
       <button data-t="Good" class="${f.good === 'Good' ? 'on' : ''}">좋은</button>
       <button data-t="Bad" class="${f.good === 'Bad' ? 'on' : ''}">아쉬운</button>
@@ -429,12 +428,11 @@ async function apEdit(id) {
   sh.querySelectorAll('[data-t]').forEach(b => b.addEventListener('click', () => {
     const t = b.dataset.t;
     if (t === 'neg') isNeg = !isNeg;
-    else if (t === 'fixed') f.fixed = !f.fixed;
     else if (t === 'co') f.co = !f.co;
     else f.good = f.good === t ? null : t;
     sh.querySelectorAll('[data-t]').forEach(x => {
       const k = x.dataset.t;
-      x.classList.toggle('on', k === 'neg' ? isNeg : k === 'fixed' ? f.fixed : k === 'co' ? f.co : f.good === k);
+      x.classList.toggle('on', k === 'neg' ? isNeg : k === 'co' ? f.co : f.good === k);
     });
   }));
   sh.querySelector('#ap-e-save').addEventListener('click', async (ev) => {
@@ -447,7 +445,7 @@ async function apEdit(id) {
       amount: isNeg ? -n : n, category_id: catId, date: sh.querySelector('#ap-e-date').value || r.dayKey,
       merchant: nm || null, merchant_group: nm === (r.merch || '') ? (r.mgroup || null) : ((EN.merchGroup || {})[nm] || null),
       note: sh.querySelector('#ap-e-note').value.trim() || null,
-      good_bad: f.good, is_fixed: f.fixed, company_paid: f.co
+      good_bad: f.good, company_paid: f.co
     };
     ev.target.disabled = true; ev.target.textContent = '저장 중…';
     try {
@@ -486,7 +484,7 @@ function apApplyLocal(r, p) {
   Object.assign(r, {
     amount: p.amount, catId: p.category_id, dayKey: p.date, date: `${y}. ${Number(mo)}. ${Number(d)}`,
     merch: p.merchant || '', vendor: p.merchant || p.merchant_group || '', mgroup: p.merchant_group || '',
-    memo: p.note || '', fixed: p.is_fixed, good: p.good_bad === 'Good', regret: p.good_bad === 'Bad',
+    memo: p.note || '', good: p.good_bad === 'Good', regret: p.good_bad === 'Bad',
     refund: p.company_paid ? p.amount : 0
   });
   if (c) Object.assign(r, { major: c.kind, minor: c.category, item: c.subcategory, emoji: c.emoji_category || r.emoji });
