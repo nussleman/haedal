@@ -50,6 +50,7 @@ alter table public.asset_snapshots add constraint asset_snapshots_owner_id_month
 alter table public.braindump_archive add constraint braindump_archive_uniq UNIQUE (owner_id, entry_date);
 alter table public.categories add constraint categories_owner_id_kind_category_subcategory_key UNIQUE (owner_id, kind, category, subcategory);
 alter table public.date_books add constraint date_books_invite_code_key UNIQUE (invite_code);
+alter table public.date_tx add constraint date_tx_haedal_tx_id_key UNIQUE (haedal_tx_id);
 alter table public.goal_links add constraint goal_links_uniq UNIQUE (from_goal_id, to_goal_id, kind);
 alter table public.holdings add constraint holdings_owner_id_snapshot_at_name_key UNIQUE (owner_id, snapshot_at, name);
 alter table public.life_groups add constraint life_groups_owner_id_name_key UNIQUE (owner_id, name);
@@ -100,6 +101,7 @@ alter table public.date_members add constraint date_members_book_id_fkey FOREIGN
 alter table public.date_members add constraint date_members_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
 alter table public.date_tx add constraint date_tx_book_id_fkey FOREIGN KEY (book_id) REFERENCES date_books(id) ON DELETE CASCADE;
 alter table public.date_tx add constraint date_tx_created_by_fkey FOREIGN KEY (created_by) REFERENCES auth.users(id) ON DELETE SET NULL;
+alter table public.date_tx add constraint date_tx_haedal_tx_id_fkey FOREIGN KEY (haedal_tx_id) REFERENCES transactions(id) ON DELETE CASCADE;
 alter table public.drawings add constraint drawings_owner_id_fkey FOREIGN KEY (owner_id) REFERENCES auth.users(id) ON DELETE CASCADE;
 alter table public.goal_files add constraint goal_files_goal_id_fkey FOREIGN KEY (goal_id) REFERENCES goals(id) ON DELETE CASCADE;
 alter table public.goal_files add constraint goal_files_owner_id_fkey FOREIGN KEY (owner_id) REFERENCES auth.users(id) ON DELETE CASCADE;

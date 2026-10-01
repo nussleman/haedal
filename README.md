@@ -19,9 +19,9 @@ js/
   panels/           여러 화면에 끼워 쓰는 패널 (자산배분, 부채, 방치 계좌 점검)
   app/              폰 앱 화면 — 폰으로 열면 사이트 대신 뜬다 (홈 지표 · 내역 · 기록 · 달력 · 더보기)
   boot.js           로그인 확인 후 시작 — 항상 마지막에 불러온다
-shared/supabase.js  대시보드·데이트 통장 공용 Supabase 연결 (키 · 라이브러리 버전 고정)
+shared/supabase.js  대시보드·말랑한 통장 공용 Supabase 연결 (키 · 라이브러리 버전 고정)
 gagyebu.html        예전 폰 가계부 앱 주소 → index.html#quick 으로 넘김 (설치된 아이콘 유지용)
-date/               데이트 통장 앱 (PWA)
+date/               말랑한 통장 앱 (PWA, 예전 이름 데이트 통장) — 해달에서 그 통장으로 보낸 돈은 자동 반영, 홈에 잔액 나무
 supabase/           DB 구조 스냅샷(schema)과 변경 기록(migrations)
 collector/          토스 수집기 사본 (실제로는 맥에서 15분마다 돈다)
 tests/              화면 회귀·글자 깨짐·오류·DB 구조 검사

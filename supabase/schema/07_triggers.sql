@@ -3,6 +3,7 @@
 
 CREATE TRIGGER braindump_touch BEFORE UPDATE ON public.braindump_blocks FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
 CREATE TRIGGER date_tx_check_depositor BEFORE INSERT OR UPDATE OF depositor, book_id ON public.date_tx FOR EACH ROW EXECUTE FUNCTION date_tx_check_depositor();
+CREATE TRIGGER date_sync_from_haedal AFTER INSERT OR UPDATE OF date, category_id, amount, merchant, note, owner_id ON public.transactions FOR EACH ROW EXECUTE FUNCTION date_sync_from_haedal();
 CREATE TRIGGER goals_touch BEFORE UPDATE ON public.goals FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
 CREATE TRIGGER trg_study_cards_touch BEFORE UPDATE ON public.study_cards FOR EACH ROW EXECUTE FUNCTION study_cards_touch();
 

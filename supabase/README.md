@@ -16,7 +16,8 @@
 - `verify.sql` 을 돌려 나온 값이 `expected.md5` 와 같으면 스냅샷 = 실제 DB.
 - 구조만 담는다(데이터·권한 부여 GRANT 제외). 개인 정보는 들어 있지 않다.
 - 토스 수집기(`collector/`)는 `toss_ingest(비밀값, 요약, 보유종목)` 한 함수만 부른다. 비밀값의 해시는 `private.ingest_keys` 에 있고 API 로는 보이지 않는다.
-- 데이트 통장은 `date_books` 한 줄에 `allowed_emails`(들어올 사람) · `editor_emails`(고칠 사람) · `people`(입금자 이름)을 넣어야 쓸 수 있다.
+- 말랑한 통장(예전 이름 데이트 통장, 테이블 이름은 date_*)은 `date_books` 한 줄에 `allowed_emails`(들어올 사람) · `editor_emails`(고칠 사람) · `people`(입금자 이름)을 넣어야 쓸 수 있다.
+- 같은 줄의 `link_owner`(해달 사용자) · `link_merchant`(해달 사용처 이름) · `link_depositor`(입금자 이름)을 채우면, 해달 입출금 내역에서 그 사용처로 적은 기록이 트리거(`date_sync_from_haedal`)로 통장 기록에 자동으로 들어간다 (`date_tx.haedal_tx_id` 로 연결).
 
 ## migrations/ — 스냅샷 이후 변경
 

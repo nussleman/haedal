@@ -3,19 +3,19 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>데이트 통장</title>
+<title>말랑한 통장</title>
 
 <!-- iOS 홈 화면 앱 설정 -->
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-<meta name="apple-mobile-web-app-title" content="데이트 통장" />
+<meta name="apple-mobile-web-app-title" content="말랑한 통장" />
 <meta name="theme-color" content="#101712" media="(prefers-color-scheme: dark)" />
 <meta name="theme-color" content="#f3f6ec" media="(prefers-color-scheme: light)" />
 <!-- 탭 아이콘 — 🌳 한 글자를 SVG 로 -->
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2064%2064%22%3E%3Crect%20width=%2264%22%20height=%2264%22%20rx=%2214%22%20fill=%22%231b2a1e%22/%3E%3Ctext%20x=%2232%22%20y=%2234%22%20font-size=%2240%22%20text-anchor=%22middle%22%20dominant-baseline=%22central%22%3E%F0%9F%8C%B3%3C/text%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="../icon.png" />
-<link rel="manifest" href='data:application/manifest+json,{"name":"데이트 통장","short_name":"데이트","start_url":"https://nussleman.github.io/haedal/date/","scope":"https://nussleman.github.io/haedal/date/","display":"standalone","background_color":"%23101712","theme_color":"%23101712","icons":[{"src":"https://nussleman.github.io/haedal/icon.png","sizes":"512x512","type":"image/png","purpose":"any"}]}' />
+<link rel="manifest" href='data:application/manifest+json,{"name":"말랑한 통장","short_name":"말랑한","start_url":"https://nussleman.github.io/haedal/date/","scope":"https://nussleman.github.io/haedal/date/","display":"standalone","background_color":"%23101712","theme_color":"%23101712","icons":[{"src":"https://nussleman.github.io/haedal/icon.png","sizes":"512x512","type":"image/png","purpose":"any"}]}' />
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -34,6 +34,7 @@
   --in-fill:#5fae98; --in-text:#8fd1bd; --in-bg:rgba(95,174,152,0.15);
   --out-fill:#b9824f; --out-text:#dcae82; --out-bg:rgba(185,130,79,0.16);
   --etc-fill:#c8b75a; --etc-text:#e2d48c; --etc-bg:rgba(200,183,90,0.15);
+  --bark:#7a5638; --fruit:#e0645a; --ground:rgba(214,232,200,0.07);
   --shade:rgba(4,8,5,0.72);
   --sans:'Noto Sans KR',-apple-system,BlinkMacSystemFont,sans-serif;
   --mono:'IBM Plex Mono',ui-monospace,monospace;
@@ -54,6 +55,7 @@
     --in-fill:#3f9a82; --in-text:#2b7a64; --in-bg:rgba(63,154,130,0.12);
     --out-fill:#a86a35; --out-text:#8c5324; --out-bg:rgba(168,106,53,0.12);
     --etc-fill:#b39a2b; --etc-text:#7f6c12; --etc-bg:rgba(179,154,43,0.13);
+    --bark:#7b5333; --fruit:#d4483e; --ground:rgba(38,64,30,0.07);
     --shade:rgba(30,45,25,0.45);
     color-scheme:light;
   }
@@ -167,6 +169,17 @@ button{cursor:pointer;}
 .note{font-size:var(--fs-xs);color:var(--text-faint);line-height:1.6;margin-top:10px;}
 .empty{text-align:center;color:var(--text-faint);font-size:var(--fs-sm);padding:26px 0;}
 .pill{display:inline-block;font-size:var(--fs-tiny);padding:1px 7px;border-radius:var(--r-pill);border:1px solid var(--border);color:var(--text-faint);}
+
+/* ═══ 잔액 나무 — 잎 하나 = 1만 원, 열매 하나 = 100만 원, 바닥 낙엽 = 이번 달 지출 ═══ */
+.tree-hero{display:grid;grid-template-columns:minmax(0,340px) minmax(0,1fr);gap:22px;align-items:center;}
+.tree-svg{width:100%;height:auto;display:block;}
+.tree-svg .crown{transform-origin:50% 92%;animation:sway 7s ease-in-out infinite;}
+@keyframes sway{0%,100%{transform:rotate(-0.8deg);}50%{transform:rotate(0.8deg);}}
+@media (prefers-reduced-motion: reduce){ .tree-svg .crown{animation:none;} }
+.stage{display:inline-block;font-size:var(--fs-xs);font-weight:700;color:var(--accent-text);background:var(--accent-bg);
+  border:1px solid var(--accent-line);border-radius:var(--r-pill);padding:2px 10px;margin-bottom:8px;}
+.tree-key{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:var(--fs-xs);color:var(--text-faint);margin-top:10px;}
+@media (max-width:860px){ .tree-hero{grid-template-columns:1fr;gap:6px;} .tree-svg{max-width:300px;margin:0 auto;} }
 
 /* ═══ 도구줄 ═══ */
 .toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
@@ -310,13 +323,14 @@ textarea.in{height:auto;min-height:74px;padding:9px 12px;line-height:1.5;resize:
 <div id="toast" role="status"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
-<script src="../shared/supabase.js?v=e5e29da45d"></script>
+<script src="../shared/supabase.js?v=f29618b082"></script>
 <script>
-/* ================= 데이트 통장 =================
+/* ================= 말랑한 통장 (예전 이름: 데이트 통장 — 테이블 이름은 그대로 date_*) =================
    해달과 같은 Supabase 를 쓰지만 테이블은 완전히 따로다 (date_books · date_members · date_tx · date_balance_checks).
    누가 들어오고(allowed_emails), 누가 고칠 수 있고(editor_emails), 입금자 이름이 무엇인지(people)는
    모두 DB 의 date_books 에 있다 — 코드에는 개인 정보를 두지 않는다. 막는 건 DB(date_enter · RLS)가 한다.
-   해달 본 장부(transactions)는 이 화면에서 한 줄도 읽지 않는다.
+   해달 본 장부(transactions)는 이 화면에서 한 줄도 읽지 않는다. 대신 해달에서 이 통장으로 보낸 돈을 적으면
+   DB 트리거(date_sync_from_haedal)가 통장 기록을 대신 적어 준다 — 그런 줄은 haedal_tx_id 가 있고, 해달에서만 고친다.
 
    화면 구조는 해달 웹을 따른다: 위에 최상위 메뉴(홈·내역·리포트·설정), 왼쪽 레일에 하위 메뉴,
    오른쪽 위 '＋ 기록'(단축키 N)이 어디서든 기록 창을 띄운다.
@@ -500,7 +514,8 @@ function tableHtml(rows, withDate) {
   return `<table class="tbl tx"><thead><tr>${withDate ? '<th>날짜</th>' : ''}<th>내용</th><th>분류</th><th>메모</th><th style="text-align:right">금액</th></tr></thead><tbody>
     ${rows.map(r => {
       const first = r.date !== prev; prev = r.date;
-      const mk = r.good_bad === 'Good' ? '<span class="mk">👍</span>' : r.good_bad === 'Bad' ? '<span class="mk">👎</span>' : '';
+      const mk = (r.good_bad === 'Good' ? '<span class="mk">👍</span>' : r.good_bad === 'Bad' ? '<span class="mk">👎</span>' : '')
+        + (r.haedal_tx_id ? '<span class="mk" title="해달에서 적은 기록">🦦</span>' : '');
       const msub = [r.kind === '입금' ? null : r.category, r.memo].filter(Boolean).map(esc).join(' · ');
       return `<tr class="rw ${first && withDate ? 'day-first' : ''}" data-id="${r.id}">
         ${withDate ? `<td class="dt">${first ? shortDay(r.date) : ''}</td>` : ''}
@@ -511,6 +526,77 @@ function tableHtml(rows, withDate) {
     }).join('')}</tbody></table>`;
 }
 function bindRows(host) { if (S.canEdit) $$('tr.rw', host).forEach(tr => tr.addEventListener('click', () => openForm(Number(tr.dataset.id)))); }
+
+/* ================= 잔액 나무 =================
+   지금 남은 돈을 나무 한 그루로 그린다.
+   - 잎 하나 = 1만 원 (240장이 다 차면 그 뒤로는 열매만 늘어난다)
+   - 빨간 열매 하나 = 100만 원
+   - 나무 키·가지 폭은 잔액이 300만 원에 가까울수록 커진다
+   - 바닥에 떨어진 갈색 잎 = 이번 달 지출 (1만 원에 한 장)
+   잎 자리는 매번 같은 곳에 오도록 고정된 난수로 뽑는다 — 새로 고침해도 나무 모양이 흔들리지 않는다. */
+const LEAF_WON = 10000, FRUIT_WON = 1000000, FULL_WON = 3000000;
+function seeded(seed) { let x = seed >>> 0; return () => { x = (x * 1664525 + 1013904223) >>> 0; return x / 4294967296; }; }
+function treeStage(bal) {
+  if (bal <= 0) return '빈 가지';
+  if (bal < 200000) return '새싹';
+  if (bal < 1000000) return '어린 나무';
+  if (bal < FULL_WON) return '자라는 나무';
+  return '큰 나무';
+}
+function treeSvg(bal, monthOut) {
+  const W = 320, H = 250, gy = 222, cx = W / 2;
+  const s = Math.max(0.28, Math.min(1, Math.sqrt(Math.max(bal, 0) / FULL_WON)));
+  const th = 30 + 70 * s;                 // 줄기 높이
+  const tw = 5 + 9 * s;                   // 줄기 아래쪽 반폭
+  const top = gy - th;
+  const R = 24 + 58 * s;                  // 수관 반지름
+  const cy = top - R * 0.35;
+  const leaves = Math.min(240, Math.max(0, Math.floor(bal / LEAF_WON)));
+  const fruits = Math.min(14, Math.max(0, Math.floor(bal / FRUIT_WON)));
+  const fallen = Math.min(48, Math.max(0, Math.round(monthOut / LEAF_WON)));
+  const rnd = seeded(20260926);
+  const leafCols = ['var(--accent-fill)', 'var(--accent-text)', 'var(--in-fill)'];
+  /* 줄기 + 가지 두 개 */
+  const trunk = `<path d="M${cx - tw} ${gy} C${cx - tw * 0.6} ${gy - th * 0.45}, ${cx - tw * 0.35} ${top + 10}, ${cx - 2} ${top}
+      L${cx + 2} ${top} C${cx + tw * 0.35} ${top + 10}, ${cx + tw * 0.6} ${gy - th * 0.45}, ${cx + tw} ${gy} Z" fill="var(--bark)"/>
+    <path d="M${cx - 1} ${top + th * 0.32} Q${cx - R * 0.45} ${top + th * 0.05} ${cx - R * 0.62} ${cy + R * 0.05}" stroke="var(--bark)" stroke-width="${2 + 3 * s}" fill="none" stroke-linecap="round"/>
+    <path d="M${cx + 1} ${top + th * 0.2} Q${cx + R * 0.4} ${top - th * 0.02} ${cx + R * 0.58} ${cy - R * 0.1}" stroke="var(--bark)" stroke-width="${1.6 + 2.6 * s}" fill="none" stroke-linecap="round"/>`;
+  /* 수관 바탕 — 잎이 있을 때만 옅게 */
+  const fill = Math.min(1, leaves / 240);
+  const blobs = leaves ? [[0, 0, 1], [-0.45, 0.18, 0.62], [0.45, 0.15, 0.6], [0, -0.38, 0.62]].map(([dx, dy, r]) =>
+    `<circle cx="${cx + dx * R}" cy="${cy + dy * R}" r="${R * r * (0.55 + 0.45 * fill)}" fill="var(--accent-fill)" opacity="${0.08 + 0.1 * fill}"/>`).join('') : '';
+  /* 잎 — 수관 안에 고르게 (반지름은 √ 로 뽑아 가운데 몰림을 막는다) */
+  let leafHtml = '';
+  for (let i = 0; i < leaves; i++) {
+    const a = rnd() * Math.PI * 2, r = Math.sqrt(rnd()) * R;
+    const x = cx + Math.cos(a) * r * 1.08, y = cy + Math.sin(a) * r * 0.86;
+    const rot = Math.round(rnd() * 360), col = leafCols[Math.floor(rnd() * leafCols.length)];
+    leafHtml += `<ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="4.6" ry="2.5" fill="${col}" opacity="${(0.72 + rnd() * 0.28).toFixed(2)}" transform="rotate(${rot} ${x.toFixed(1)} ${y.toFixed(1)})"/>`;
+  }
+  /* 열매 — 수관 아래쪽 반에 */
+  let fruitHtml = '';
+  const fr = seeded(7);
+  for (let i = 0; i < fruits; i++) {
+    const a = Math.PI * (0.08 + fr() * 0.84), r = (0.35 + fr() * 0.55) * R;
+    const x = cx + Math.cos(a) * r * (fr() < 0.5 ? -1 : 1), y = cy + Math.sin(a) * r * 0.7;
+    fruitHtml += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4.4" fill="var(--fruit)"/><circle cx="${(x - 1.3).toFixed(1)}" cy="${(y - 1.4).toFixed(1)}" r="1.2" fill="#fff" opacity=".55"/>`;
+  }
+  /* 새싹 — 잎이 하나도 없으면 줄기 꼭대기에 작은 싹만 */
+  const sprout = leaves ? '' : `<path d="M${cx} ${top} q-9 -10 -15 -4 q7 6 15 4z M${cx} ${top} q9 -12 16 -6 q-7 7 -16 6z" fill="var(--accent-fill)" opacity=".8"/>`;
+  /* 낙엽 — 바닥 띠 위에 */
+  let fallHtml = '';
+  const fl = seeded(99);
+  for (let i = 0; i < fallen; i++) {
+    const x = cx + (fl() - 0.5) * W * 0.82, y = gy + 4 + fl() * 16, rot = Math.round(fl() * 360);
+    fallHtml += `<ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="4.2" ry="2.2" fill="var(--out-fill)" opacity="${(0.55 + fl() * 0.35).toFixed(2)}" transform="rotate(${rot} ${x.toFixed(1)} ${y.toFixed(1)})"/>`;
+  }
+  const label = `잔액 ${comma(bal)}원 — 잎 ${leaves}장, 열매 ${fruits}개. 이번 달 지출로 떨어진 잎 ${fallen}장`;
+  return `<svg class="tree-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="${label}">
+    <ellipse cx="${cx}" cy="${gy + 12}" rx="${W * 0.46}" ry="15" fill="var(--ground)"/>
+    ${fallHtml}
+    <g class="crown">${trunk}${blobs}${leafHtml}${fruitHtml}${sprout}</g>
+  </svg>`;
+}
 
 /* ================= 홈 ================= */
 function pageHome(host) {
@@ -526,14 +612,19 @@ function pageHome(host) {
   const dates = new Set(rows.filter(r => r.kind === '지출').map(r => r.date)).size;
 
   host.innerHTML = `
-    <div class="grid3">
-      <div class="box">
-        <div class="hd"><b>통장 잔액</b><button class="lnk" data-go="report/balance">맞춰보기 ›</button></div>
+    <div class="box tree-hero">
+      ${treeSvg(bal, t.out)}
+      <div>
+        <span class="stage">🌳 ${treeStage(bal)}</span>
+        <div class="hd" style="margin-bottom:6px;"><b>지금 남은 돈</b><button class="lnk" data-go="report/balance">맞춰보기 ›</button></div>
         <div class="big">${comma(bal)}<small>원</small></div>
         <div class="subline"><span>이번 달 <b class="${t.net >= 0 ? 'i' : 'o'}">${signed(t.net)}</b></span>
           ${last ? `<span>${shortDay(last.on_date)} 확인 ${Math.abs(lastDiff) < 1 ? '<b class="i">✓ 일치</b>' : `<b class="o">차이 ${signed(lastDiff)}</b>`}</span>` : '<span>실제 잔액을 아직 맞춰 보지 않았어요</span>'}</div>
+        <div class="tree-key"><span>🍃 잎 하나 = 1만 원</span><span>🍎 열매 하나 = 100만 원</span><span>🍂 바닥 낙엽 = 이번 달 지출</span></div>
         <div class="sep">${triHtml(t)}</div>
       </div>
+    </div>
+    <div class="grid2">
       <div class="box">
         <div class="hd"><b>${+m.slice(5)}월 어디에 썼나</b><button class="lnk" data-go="report/monthly">자세히 ›</button></div>
         ${cats.length ? cats.map(([c, v]) => `<div class="brow">
@@ -799,7 +890,7 @@ function pageSetBook(host) {
     </div>`;
   moneyInput($('#s-open', host));
   $('#s-save', host).addEventListener('click', () => saveBook({
-    name: $('#s-name', host).value.trim() || '데이트 통장',
+    name: $('#s-name', host).value.trim() || '말랑한 통장',
     opening_balance: Number(digits($('#s-open', host).value)) || 0,
     opening_on: $('#s-open-on', host).value || null
   }));
@@ -857,6 +948,7 @@ function openForm(id, date) {
   if (id) {
     const r = S.tx.find(x => x.id === id);
     if (!r) return;
+    if (r.haedal_tx_id) { toast('🦦 해달에서 적은 기록이에요 — 해달에서 고치면 여기도 바뀌어요'); return; }
     S.form = { id, kind: r.kind, amount: String(Math.round(r.amount)), category: r.category, merchant: r.merchant || '',
                memo: r.memo || '', good: r.good_bad, depositor: r.depositor || PEOPLE[0], date: r.date };
   } else {
@@ -999,7 +1091,7 @@ function showGate(html) { $('#app').innerHTML = `<div class="gate">${html}</div>
 function showLogin(msg) {
   showGate(`
     <div class="mark">🌳</div>
-    <h2>데이트 통장</h2>
+    <h2>말랑한 통장</h2>
     <p class="sub">${esc(msg || '이메일로 로그인 링크를 보내 드려요')}</p>
     <label class="lab">이메일</label>
     <input class="in" id="lk-em" type="email" autocomplete="username" inputmode="email">

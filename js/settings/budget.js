@@ -51,7 +51,7 @@ function renderBudgetSettings(container, data, d) {
       data-memo="${esc(key)}" title="${memo ? esc(memo) : '예산 근거 메모'}" aria-label="메모">✎</button>`;
   /* 📌 고정 — 달이 시작하면 이미 정해진 돈. 홈의 '남은 예산'에서 빠진다 */
   const pinBtn = (key, on, inherited) => `<button class="bt-pin ${on ? 'on' : ''}" data-pin="${esc(key)}" ${inherited ? 'disabled' : ''}
-      title="${inherited ? '분류 전체가 고정이에요' : on ? '고정 예산 — 누르면 해제' : '고정 예산으로 표시 (데이트 통장·월세·구독처럼 매달 정해진 돈)'}"
+      title="${inherited ? '분류 전체가 고정이에요' : on ? '고정 예산 — 누르면 해제' : '고정 예산으로 표시 (말랑한 통장·월세·구독처럼 매달 정해진 돈)'}"
       aria-label="고정" aria-pressed="${on ? 'true' : 'false'}">📌</button>`;
   const memoRow = (key, memo, item) => BUD.memo[key] ? `
       <div class="bt-memo ${item ? 'item' : ''}">
@@ -245,7 +245,7 @@ function renderBudgetSettings(container, data, d) {
 
 /* 총액 아래 한 줄: 📌 고정 N · 쓸 수 있는 돈 M — 홈의 '남은 예산'은 M 에서 시작한다 */
 function budSplitHtml(total, fixed) {
-  if (!fixed) return '📌 을 눌러 월세·구독·데이트 통장처럼 매달 정해진 돈을 고정으로 표시하면, 홈에는 나머지 쓸 수 있는 돈만 보여요.';
+  if (!fixed) return '📌 을 눌러 월세·구독·말랑한 통장처럼 매달 정해진 돈을 고정으로 표시하면, 홈에는 나머지 쓸 수 있는 돈만 보여요.';
   return `📌 고정 <b class="mono">${enComma(fixed)}</b>원 · 쓸 수 있는 돈 <b class="mono">${enComma(total - fixed)}</b>원
     <span>— 홈의 '남은 예산'은 쓸 수 있는 돈에서 시작해요</span>`;
 }

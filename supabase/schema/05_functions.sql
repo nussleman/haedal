@@ -59,7 +59,7 @@ begin
   perform pg_advisory_xact_lock(hashtext('date_enter'));
   select id into b from public.date_books order by id limit 1;
   if b is null then
-    insert into public.date_books (name, created_by) values ('데이트 통장', auth.uid()) returning id into b;
+    insert into public.date_books (name, created_by) values ('말랑한 통장', auth.uid()) returning id into b;
   end if;
   insert into public.date_members (book_id, user_id, nickname)
     values (b, auth.uid(), split_part(em, '@', 1))
@@ -74,6 +74,41 @@ CREATE OR REPLACE FUNCTION public.date_is_editor()
  SET search_path TO ''
 AS $function$ select exists (select 1 from public.date_books b
                      where lower(coalesce(auth.jwt() ->> 'email', '')) = any (b.editor_emails)) $function$
+;
+CREATE OR REPLACE FUNCTION public.date_sync_from_haedal()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+declare
+  b public.date_books;
+  ck text;
+  k text;
+begin
+  select * into b from public.date_books
+   where link_owner = new.owner_id and link_merchant = new.merchant
+   order by id limit 1;
+  if not found or coalesce(new.amount, 0) = 0 then
+    -- 사용처가 바뀌어 더는 연결 대상이 아니면 통장 쪽 기록을 지운다
+    if tg_op = 'UPDATE' then delete from public.date_tx where haedal_tx_id = new.id; end if;
+    return new;
+  end if;
+  select c.kind into ck from public.categories c where c.id = new.category_id;
+  k := case when ck = '수입' then '지출' else '입금' end;
+  insert into public.date_tx (book_id, date, kind, amount, category, merchant, memo, depositor, created_by, haedal_tx_id)
+  values (b.id, new.date, k, abs(new.amount),
+          case when k = '지출' then '기타' end,
+          case when k = '지출' then b.link_depositor || ' 계좌로' end,
+          new.note,
+          case when k = '입금' then b.link_depositor end,
+          new.owner_id, new.id)
+  on conflict (haedal_tx_id) do update
+    set book_id = excluded.book_id, date = excluded.date, kind = excluded.kind, amount = excluded.amount,
+        category = excluded.category, merchant = excluded.merchant, memo = excluded.memo,
+        depositor = excluded.depositor, good_bad = null, updated_at = now();
+  return new;
+end $function$
 ;
 CREATE OR REPLACE FUNCTION public.date_tx_check_depositor()
  RETURNS trigger

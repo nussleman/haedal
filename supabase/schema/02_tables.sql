@@ -131,7 +131,7 @@ create table public.date_balance_checks (
 
 create table public.date_books (
   id bigint generated always as identity not null,
-  name text default '데이트 통장'::text not null,
+  name text default '말랑한 통장'::text not null,
   invite_code text default substr(replace((gen_random_uuid())::text, '-'::text, ''::text), 1, 10) not null,
   opening_balance numeric(14,2) default 0 not null,
   opening_on date,
@@ -141,7 +141,10 @@ create table public.date_books (
   deposit_goals jsonb default '{}'::jsonb not null,
   allowed_emails text[] default '{}'::text[] not null,
   editor_emails text[] default '{}'::text[] not null,
-  people text[] default '{}'::text[] not null
+  people text[] default '{}'::text[] not null,
+  link_owner uuid,
+  link_merchant text,
+  link_depositor text
 );
 
 create table public.date_members (
@@ -165,7 +168,8 @@ create table public.date_tx (
   created_by uuid default auth.uid() not null,
   created_at timestamp with time zone default now() not null,
   updated_at timestamp with time zone default now() not null,
-  depositor text
+  depositor text,
+  haedal_tx_id bigint
 );
 
 create table public.drawing_eras (
