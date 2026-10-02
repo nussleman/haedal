@@ -12,8 +12,8 @@
 <meta name="apple-mobile-web-app-title" content="웨스티" />
 <meta name="theme-color" content="#faf7f2" media="(prefers-color-scheme: light)" />
 <meta name="theme-color" content="#19171a" media="(prefers-color-scheme: dark)" />
-<!-- 탭 아이콘 — 반다나 빨강 바탕에 흰 글자 '웨' -->
-<link rel="icon" href="data:image/svg+xml,<svg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'><rect%20width='64'%20height='64'%20rx='15'%20fill='%23c8443b'/><text%20x='32'%20y='34'%20font-size='36'%20font-weight='700'%20fill='white'%20text-anchor='middle'%20dominant-baseline='central'%20font-family='sans-serif'>웨</text></svg>">
+<!-- 탭 아이콘 — 웨스티 얼굴 사진 -->
+<link rel="icon" href="icon.png">
 <link rel="apple-touch-icon" href="icon.png" />
 <link rel="manifest" href='data:application/manifest+json,{"name":"웨스티","short_name":"웨스티","start_url":"https://nussleman.github.io/haedal/date/","scope":"https://nussleman.github.io/haedal/date/","display":"standalone","background_color":"%23faf7f2","theme_color":"%23faf7f2","icons":[{"src":"https://nussleman.github.io/haedal/date/icon.png","sizes":"512x512","type":"image/png","purpose":"any"}]}' />
 
@@ -172,8 +172,12 @@ button{cursor:pointer;}
 .empty{text-align:center;color:var(--text-faint);font-size:var(--fs-sm);padding:26px 0;}
 .pill{display:inline-block;font-size:var(--fs-tiny);padding:1px 7px;border-radius:var(--r-pill);border:1px solid var(--border);color:var(--text-faint);}
 
-/* ═══ 홈 첫 상자 — 지금 남은 돈 ═══ */
-.hero{border-top:4px solid var(--accent-fill);}
+/* ═══ 홈 첫 상자 — 웨스티 사진 + 지금 남은 돈 ═══ */
+.hero{display:grid;grid-template-columns:220px minmax(0,1fr);gap:22px;align-items:center;}
+.hero-photo{width:100%;aspect-ratio:1/1;object-fit:cover;object-position:50% 30%;border-radius:var(--r-lg);display:block;}
+@media (max-width:860px){ .hero{grid-template-columns:1fr;gap:14px;} .hero-photo{aspect-ratio:4/3;object-position:50% 32%;} }
+.brand .face{width:32px;height:32px;border-radius:50%;object-fit:cover;align-self:center;flex:0 0 auto;}
+.gate .face{display:block;width:150px;height:150px;border-radius:50%;object-fit:cover;margin:0 auto;border:4px solid var(--panel);box-shadow:var(--lift);}
 
 /* ═══ 도구줄 ═══ */
 .toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
@@ -446,7 +450,7 @@ function renderShell() {
     <header class="site-header" id="hdr">
       <div class="topbar">
         <div class="brand" id="brand" role="link" tabindex="0" title="홈으로">
-          <h1>웨스티</h1><span class="tagline" id="tagline"></span>
+          <img class="face" src="icon.png" alt=""><h1>웨스티</h1><span class="tagline" id="tagline"></span>
         </div>
         <div class="acts">
           <span class="bal-pill" id="bal-pill"></span>
@@ -568,6 +572,7 @@ function pageHome(host) {
 
   host.innerHTML = `
     <div class="box hero">
+      <img class="hero-photo" src="westie.jpg" alt="안경 쓰고 반다나를 맨 웨스티">
       <div>
         <div class="hd" style="margin-bottom:6px;"><b>지금 남은 돈</b><button class="lnk" data-go="report/balance">맞춰보기 ›</button></div>
         <div class="big">${comma(bal)}<small>원</small></div>
@@ -1042,6 +1047,7 @@ function showGate(html) { $('#app').innerHTML = `<div class="gate">${html}</div>
    비밀번호가 있는 계정은 비밀번호로도 들어올 수 있다. */
 function showLogin(msg) {
   showGate(`
+    <img class="face" src="icon.png" alt="웨스티">
     <h2>웨스티</h2>
     <p class="sub">${esc(msg || '말랑한 통장 · 이메일로 로그인 링크를 보내 드려요')}</p>
     <label class="lab">이메일</label>
