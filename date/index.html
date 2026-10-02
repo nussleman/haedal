@@ -3,61 +3,68 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>말랑한 통장</title>
+<title>웨스티</title>
 
 <!-- iOS 홈 화면 앱 설정 -->
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-<meta name="apple-mobile-web-app-title" content="말랑한 통장" />
-<meta name="theme-color" content="#101712" media="(prefers-color-scheme: dark)" />
-<meta name="theme-color" content="#f3f6ec" media="(prefers-color-scheme: light)" />
-<!-- 탭 아이콘 — 🌳 한 글자를 SVG 로 -->
-<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2064%2064%22%3E%3Crect%20width=%2264%22%20height=%2264%22%20rx=%2214%22%20fill=%22%231b2a1e%22/%3E%3Ctext%20x=%2232%22%20y=%2234%22%20font-size=%2240%22%20text-anchor=%22middle%22%20dominant-baseline=%22central%22%3E%F0%9F%8C%B3%3C/text%3E%3C/svg%3E">
-<link rel="apple-touch-icon" href="../icon.png" />
-<link rel="manifest" href='data:application/manifest+json,{"name":"말랑한 통장","short_name":"말랑한","start_url":"https://nussleman.github.io/haedal/date/","scope":"https://nussleman.github.io/haedal/date/","display":"standalone","background_color":"%23101712","theme_color":"%23101712","icons":[{"src":"https://nussleman.github.io/haedal/icon.png","sizes":"512x512","type":"image/png","purpose":"any"}]}' />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="웨스티" />
+<meta name="theme-color" content="#faf7f2" media="(prefers-color-scheme: light)" />
+<meta name="theme-color" content="#19171a" media="(prefers-color-scheme: dark)" />
+<!-- 탭 아이콘 — 빨간 반다나색 바탕의 웨스티 얼굴 (아래 westieHead 와 같은 그림) -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%22-56%20-176%20112%20112%22%3E%3Crect%20x%3D%22-56%22%20y%3D%22-176%22%20width%3D%22112%22%20height%3D%22112%22%20rx%3D%2226%22%20fill%3D%22%23c8443b%22%2F%3E%3Cpath%20d%3D%22M-27%20-128%20L-23%20-163%20Q-21%20-167%20-17%20-164%20L-3%20-144%20Z%22%20fill%3D%22%23ffffff%22%20stroke%3D%22%23ead9cc%22%20stroke-width%3D%222%22%20stroke-linejoin%3D%22round%22%2F%3E%3Cpath%20d%3D%22M-22%20-138%20L-20%20-157%20L-10%20-145%20Z%22%20fill%3D%22%23f1c2bb%22%2F%3E%3Cpath%20d%3D%22M27%20-128%20L23%20-163%20Q21%20-167%2017%20-164%20L3%20-144%20Z%22%20fill%3D%22%23ffffff%22%20stroke%3D%22%23ead9cc%22%20stroke-width%3D%222%22%20stroke-linejoin%3D%22round%22%2F%3E%3Cpath%20d%3D%22M22%20-138%20L20%20-157%20L10%20-145%20Z%22%20fill%3D%22%23f1c2bb%22%2F%3E%3Ccircle%20cx%3D%22-34%22%20cy%3D%22-108%22%20r%3D%2211%22%20fill%3D%22%23ead9cc%22%2F%3E%3Ccircle%20cx%3D%22-33%22%20cy%3D%22-118%22%20r%3D%2211%22%20fill%3D%22%23ead9cc%22%2F%3E%3Ccircle%20cx%3D%22-28%22%20cy%3D%22-127%22%20r%3D%2211%22%20fill%3D%22%23ead9cc%22%2F%3E%3Ccircle%20cx%3D%22-21%22%20cy%3D%22-134%22%20r%3D%2211%22%20fill%3D%22%23ead9cc%22%2F%3E%3Ccircle%20cx%3D%22-11%22%20cy%3D%22-138%22%20r%3D%2211%22%20fill%3D%22%23ead9cc%22%2F%3E%3Ccircle%20cx%3D%220%22%20cy%3D%22-140%22%20r%3D%2211%22%20fill%3D%22%23ead9cc%22%2F%3E%3Ccircle%20cx%3D%2211%22%20cy%3D%22-138%22%20r%3D%2211%22%20fill%3D%22%23ead9cc%22%2F%3E%3Ccircle%20cx%3D%2221%22%20cy%3D%22-134%22%20r%3D%2211%22%20fill%3D%22%23ead9cc%22%2F%3E%3Ccircle%20cx%3D%2228%22%20cy%3D%22-127%22%20r%3D%2211%22%20fill%3D%22%23ead9cc%22%2F%3E%3Ccircle%20cx%3D%2233%22%20cy%3D%22-118%22%20r%3D%2211%22%20fill%3D%22%23ead9cc%22%2F%3E%3Ccircle%20cx%3D%2234%22%20cy%3D%22-108%22%20r%3D%2211%22%20fill%3D%22%23ead9cc%22%2F%3E%3Ccircle%20cx%3D%220%22%20cy%3D%22-108%22%20r%3D%2235%22%20fill%3D%22%23ead9cc%22%2F%3E%3Ccircle%20cx%3D%22-21%22%20cy%3D%22-96%22%20r%3D%2221%22%20fill%3D%22%23ead9cc%22%2F%3E%3Ccircle%20cx%3D%2221%22%20cy%3D%22-96%22%20r%3D%2221%22%20fill%3D%22%23ead9cc%22%2F%3E%3Ccircle%20cx%3D%220%22%20cy%3D%22-134%22%20r%3D%2222%22%20fill%3D%22%23ead9cc%22%2F%3E%3Ccircle%20cx%3D%22-16%22%20cy%3D%22-128%22%20r%3D%2217%22%20fill%3D%22%23ead9cc%22%2F%3E%3Ccircle%20cx%3D%2216%22%20cy%3D%22-128%22%20r%3D%2217%22%20fill%3D%22%23ead9cc%22%2F%3E%3Ccircle%20cx%3D%220%22%20cy%3D%22-86%22%20r%3D%2219%22%20fill%3D%22%23ead9cc%22%2F%3E%3Ccircle%20cx%3D%22-29%22%20cy%3D%22-112%22%20r%3D%2215%22%20fill%3D%22%23ead9cc%22%2F%3E%3Ccircle%20cx%3D%2229%22%20cy%3D%22-112%22%20r%3D%2215%22%20fill%3D%22%23ead9cc%22%2F%3E%3Ccircle%20cx%3D%22-34%22%20cy%3D%22-108%22%20r%3D%229%22%20fill%3D%22%23ffffff%22%2F%3E%3Ccircle%20cx%3D%22-33%22%20cy%3D%22-118%22%20r%3D%229%22%20fill%3D%22%23ffffff%22%2F%3E%3Ccircle%20cx%3D%22-28%22%20cy%3D%22-127%22%20r%3D%229%22%20fill%3D%22%23ffffff%22%2F%3E%3Ccircle%20cx%3D%22-21%22%20cy%3D%22-134%22%20r%3D%229%22%20fill%3D%22%23ffffff%22%2F%3E%3Ccircle%20cx%3D%22-11%22%20cy%3D%22-138%22%20r%3D%229%22%20fill%3D%22%23ffffff%22%2F%3E%3Ccircle%20cx%3D%220%22%20cy%3D%22-140%22%20r%3D%229%22%20fill%3D%22%23ffffff%22%2F%3E%3Ccircle%20cx%3D%2211%22%20cy%3D%22-138%22%20r%3D%229%22%20fill%3D%22%23ffffff%22%2F%3E%3Ccircle%20cx%3D%2221%22%20cy%3D%22-134%22%20r%3D%229%22%20fill%3D%22%23ffffff%22%2F%3E%3Ccircle%20cx%3D%2228%22%20cy%3D%22-127%22%20r%3D%229%22%20fill%3D%22%23ffffff%22%2F%3E%3Ccircle%20cx%3D%2233%22%20cy%3D%22-118%22%20r%3D%229%22%20fill%3D%22%23ffffff%22%2F%3E%3Ccircle%20cx%3D%2234%22%20cy%3D%22-108%22%20r%3D%229%22%20fill%3D%22%23ffffff%22%2F%3E%3Ccircle%20cx%3D%220%22%20cy%3D%22-108%22%20r%3D%2233%22%20fill%3D%22%23ffffff%22%2F%3E%3Ccircle%20cx%3D%22-21%22%20cy%3D%22-96%22%20r%3D%2219%22%20fill%3D%22%23ffffff%22%2F%3E%3Ccircle%20cx%3D%2221%22%20cy%3D%22-96%22%20r%3D%2219%22%20fill%3D%22%23ffffff%22%2F%3E%3Ccircle%20cx%3D%220%22%20cy%3D%22-134%22%20r%3D%2220%22%20fill%3D%22%23ffffff%22%2F%3E%3Ccircle%20cx%3D%22-16%22%20cy%3D%22-128%22%20r%3D%2215%22%20fill%3D%22%23ffffff%22%2F%3E%3Ccircle%20cx%3D%2216%22%20cy%3D%22-128%22%20r%3D%2215%22%20fill%3D%22%23ffffff%22%2F%3E%3Ccircle%20cx%3D%220%22%20cy%3D%22-86%22%20r%3D%2217%22%20fill%3D%22%23ffffff%22%2F%3E%3Ccircle%20cx%3D%22-29%22%20cy%3D%22-112%22%20r%3D%2213%22%20fill%3D%22%23ffffff%22%2F%3E%3Ccircle%20cx%3D%2229%22%20cy%3D%22-112%22%20r%3D%2213%22%20fill%3D%22%23ffffff%22%2F%3E%3Ccircle%20cx%3D%22-11%22%20cy%3D%22-110%22%20r%3D%224.6%22%20fill%3D%22%231d1918%22%2F%3E%3Ccircle%20cx%3D%2211%22%20cy%3D%22-110%22%20r%3D%224.6%22%20fill%3D%22%231d1918%22%2F%3E%3Ccircle%20cx%3D%22-12.5%22%20cy%3D%22-111.8%22%20r%3D%221.5%22%20fill%3D%22%23fff%22%2F%3E%3Ccircle%20cx%3D%229.5%22%20cy%3D%22-111.8%22%20r%3D%221.5%22%20fill%3D%22%23fff%22%2F%3E%3Cellipse%20cx%3D%220%22%20cy%3D%22-93%22%20rx%3D%227.5%22%20ry%3D%225.6%22%20fill%3D%22%231d1918%22%2F%3E%3Cellipse%20cx%3D%22-2.2%22%20cy%3D%22-95%22%20rx%3D%222.4%22%20ry%3D%221.2%22%20fill%3D%22%23fff%22%20opacity%3D%22.55%22%2F%3E%3Cellipse%20cx%3D%220%22%20cy%3D%22-82.5%22%20rx%3D%223.2%22%20ry%3D%222.6%22%20fill%3D%22%23e8837f%22%2F%3E%3Cpath%20d%3D%22M0%20-88%20q-3%205%20-8%203%20M0%20-88%20q3%205%208%203%22%20stroke%3D%22%231d1918%22%20stroke-width%3D%221.6%22%20fill%3D%22none%22%20stroke-linecap%3D%22round%22%2F%3E%3C%2Fsvg%3E">
+<link rel="apple-touch-icon" href="icon.png" />
+<link rel="manifest" href='data:application/manifest+json,{"name":"웨스티","short_name":"웨스티","start_url":"https://nussleman.github.io/haedal/date/","scope":"https://nussleman.github.io/haedal/date/","display":"standalone","background_color":"%23faf7f2","theme_color":"%23faf7f2","icons":[{"src":"https://nussleman.github.io/haedal/date/icon.png","sizes":"512x512","type":"image/png","purpose":"any"}]}' />
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
 <style>
-/* ═══ 색 — 숲 ═══
-   바탕은 밤숲, 강조는 눈이 편한 연두(새잎), 지출은 나무껍질 갈색, 입금은 개울 민트.
-   시스템이 라이트 모드면 낮숲(연한 풀빛 바탕)으로 바뀐다. */
+/* ═══ 색 — 웨스티 ═══
+   흰 털(바탕·상자), 까만 코(글자), 빨간 반다나(강조), 갈색 친구 털(지출), 하늘색 산책길(입금), 꿀빛 간식(수입).
+   기본은 낮(흰 털 위), 시스템이 다크 모드면 밤 거실(어두운 바탕 위의 흰 강아지)로 바뀐다. */
 :root{
-  --bg:#101712; --bg-2:#141d17; --panel:#19241c; --panel-2:#203024;
-  --border:rgba(214,232,200,0.09); --border-strong:rgba(214,232,200,0.17);
-  --text:#e5eddd; --text-dim:#aebba5; --text-faint:#86937e;
-  --accent-fill:#9ccc65; --accent-text:#b9df8c; --accent-bg:rgba(156,204,101,0.13); --accent-line:rgba(156,204,101,0.45);
-  --ink-on-accent:#15210c;
-  --in-fill:#5fae98; --in-text:#8fd1bd; --in-bg:rgba(95,174,152,0.15);
-  --out-fill:#b9824f; --out-text:#dcae82; --out-bg:rgba(185,130,79,0.16);
-  --etc-fill:#c8b75a; --etc-text:#e2d48c; --etc-bg:rgba(200,183,90,0.15);
-  --bark:#7a5638; --fruit:#e0645a; --ground:rgba(214,232,200,0.07);
-  --shade:rgba(4,8,5,0.72);
+  --bg:#faf7f2; --bg-2:#f3eee6; --panel:#ffffff; --panel-2:#f8f3ec;
+  --border:rgba(70,48,36,0.10); --border-strong:rgba(70,48,36,0.18);
+  --text:#221d1b; --text-dim:#5a514b; --text-faint:#8b8179;
+  --accent-fill:#c8443b; --accent-text:#a9352d; --accent-bg:rgba(200,68,59,0.08); --accent-line:rgba(200,68,59,0.40);
+  --ink-on-accent:#ffffff;
+  --in-fill:#4a7db0; --in-text:#2f6496; --in-bg:rgba(74,125,176,0.10);
+  --out-fill:#9a6a46; --out-text:#7f5232; --out-bg:rgba(154,106,70,0.11);
+  --etc-fill:#c0952e; --etc-text:#86660f; --etc-bg:rgba(192,149,46,0.12);
+  --fur:#ffffff; --fur-line:#dccfc2; --ink:#1d1918; --ear:#f1c2bb; --tongue:#e8837f; --frame:#6b2a26;
+  --treat:#d9a35a; --treat-2:#b97f3a; --treat-3:#ecc283; --glass:rgba(255,255,255,0.55); --glass-line:rgba(70,48,36,0.22);
+  --ground:rgba(70,48,36,0.06);
+  --lift:0 1px 2px rgba(70,48,36,0.04), 0 8px 22px -14px rgba(70,48,36,0.28);
+  --shade:rgba(40,28,22,0.38);
   --sans:'Noto Sans KR',-apple-system,BlinkMacSystemFont,sans-serif;
+  --round:'Jua','Noto Sans KR',sans-serif;
   --mono:'IBM Plex Mono',ui-monospace,monospace;
   --fs-tiny:10.5px; --fs-xs:11.5px; --fs-sm:12.5px; --fs-base:13px; --fs-md:14px; --fs-lg:16px;
   --fs-xl:19px; --fs-2xl:22px; --fs-3xl:26px; --fs-4xl:32px;
-  --r-sm:5px; --r-md:8px; --r-lg:12px; --r-pill:20px;
-  --gap:10px; --edge:clamp(12px,1.6vw,26px);
+  --r-sm:7px; --r-md:11px; --r-lg:18px; --r-pill:999px;
+  --gap:12px; --edge:clamp(12px,1.6vw,26px);
   --top:env(safe-area-inset-top,0px); --bot:env(safe-area-inset-bottom,0px);
-  color-scheme:dark;
+  color-scheme:light;
 }
-@media (prefers-color-scheme: light){
+@media (prefers-color-scheme: dark){
   :root{
-    --bg:#f3f6ec; --bg-2:#e9efe0; --panel:#fbfdf7; --panel-2:#eef3e5;
-    --border:rgba(38,64,30,0.11); --border-strong:rgba(38,64,30,0.2);
-    --text:#1f2d1c; --text-dim:#4a5a44; --text-faint:#75836e;
-    --accent-fill:#7cb342; --accent-text:#4a7d1c; --accent-bg:rgba(124,179,66,0.14); --accent-line:rgba(124,179,66,0.55);
+    --bg:#19171a; --bg-2:#1f1c20; --panel:#252226; --panel-2:#2d292e;
+    --border:rgba(255,244,232,0.08); --border-strong:rgba(255,244,232,0.16);
+    --text:#f4efe8; --text-dim:#c6bcb2; --text-faint:#988e85;
+    --accent-fill:#d65a50; --accent-text:#f08b82; --accent-bg:rgba(214,90,80,0.14); --accent-line:rgba(214,90,80,0.48);
     --ink-on-accent:#ffffff;
-    --in-fill:#3f9a82; --in-text:#2b7a64; --in-bg:rgba(63,154,130,0.12);
-    --out-fill:#a86a35; --out-text:#8c5324; --out-bg:rgba(168,106,53,0.12);
-    --etc-fill:#b39a2b; --etc-text:#7f6c12; --etc-bg:rgba(179,154,43,0.13);
-    --bark:#7b5333; --fruit:#d4483e; --ground:rgba(38,64,30,0.07);
-    --shade:rgba(30,45,25,0.45);
-    color-scheme:light;
+    --in-fill:#6f9fd0; --in-text:#9cc2ea; --in-bg:rgba(111,159,208,0.15);
+    --out-fill:#b98560; --out-text:#dcb08c; --out-bg:rgba(185,133,96,0.16);
+    --etc-fill:#d2ad55; --etc-text:#e8cd84; --etc-bg:rgba(210,173,85,0.15);
+    --fur:#f7f2ea; --fur-line:#b9ad9f; --frame:#8a3a34;
+    --glass:rgba(255,255,255,0.06); --glass-line:rgba(255,244,232,0.24);
+    --ground:rgba(255,244,232,0.06);
+    --lift:0 1px 0 rgba(255,244,232,0.03), 0 10px 26px -16px rgba(0,0,0,0.7);
+    --shade:rgba(8,6,8,0.7);
+    color-scheme:dark;
   }
 }
 
@@ -73,9 +80,10 @@ button{cursor:pointer;}
 .site-header{position:sticky;top:0;z-index:40;background:var(--bg);
   padding:calc(12px + var(--top)) var(--edge) 0;}
 .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px;}
-.brand{display:flex;align-items:baseline;gap:10px;cursor:pointer;user-select:none;min-width:0;}
-.brand .mark{font-size:var(--fs-xl);line-height:1;}
-.brand h1{font-size:var(--fs-xl);font-weight:700;margin:0;letter-spacing:-0.01em;white-space:nowrap;}
+.brand{display:flex;align-items:baseline;gap:9px;cursor:pointer;user-select:none;min-width:0;}
+.brand .mark{display:block;width:34px;height:34px;flex:0 0 auto;align-self:center;}
+.brand .mark svg{display:block;width:100%;height:100%;}
+.brand h1{font-family:var(--round);font-size:24px;font-weight:400;margin:0;letter-spacing:0;white-space:nowrap;line-height:1.2;}
 .brand .tagline{font-size:var(--fs-xs);color:var(--text-faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .acts{display:flex;align-items:center;gap:8px;flex:0 0 auto;}
 .bal-pill{font-family:var(--mono);font-size:var(--fs-sm);font-weight:600;color:var(--accent-text);
@@ -137,7 +145,7 @@ button{cursor:pointer;}
 }
 
 /* ═══ 상자 ═══ */
-.box{background:var(--panel);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px 18px;min-width:0;}
+.box{background:var(--panel);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px 18px;min-width:0;box-shadow:var(--lift);}
 .hd{display:flex;align-items:baseline;gap:10px;margin-bottom:12px;}
 .hd b{font-size:var(--fs-md);font-weight:700;letter-spacing:-0.01em;}
 .hd span,.hd .lnk{margin-left:auto;font-size:var(--fs-xs);color:var(--text-faint);}
@@ -170,16 +178,18 @@ button{cursor:pointer;}
 .empty{text-align:center;color:var(--text-faint);font-size:var(--fs-sm);padding:26px 0;}
 .pill{display:inline-block;font-size:var(--fs-tiny);padding:1px 7px;border-radius:var(--r-pill);border:1px solid var(--border);color:var(--text-faint);}
 
-/* ═══ 잔액 나무 — 잎 하나 = 1만 원, 열매 하나 = 100만 원, 바닥 낙엽 = 이번 달 지출 ═══ */
-.tree-hero{display:grid;grid-template-columns:minmax(0,340px) minmax(0,1fr);gap:22px;align-items:center;}
-.tree-svg{width:100%;height:auto;display:block;}
-.tree-svg .crown{transform-origin:50% 92%;animation:sway 7s ease-in-out infinite;}
-@keyframes sway{0%,100%{transform:rotate(-0.8deg);}50%{transform:rotate(0.8deg);}}
-@media (prefers-reduced-motion: reduce){ .tree-svg .crown{animation:none;} }
-.stage{display:inline-block;font-size:var(--fs-xs);font-weight:700;color:var(--accent-text);background:var(--accent-bg);
-  border:1px solid var(--accent-line);border-radius:var(--r-pill);padding:2px 10px;margin-bottom:8px;}
-.tree-key{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:var(--fs-xs);color:var(--text-faint);margin-top:10px;}
-@media (max-width:860px){ .tree-hero{grid-template-columns:1fr;gap:6px;} .tree-svg{max-width:300px;margin:0 auto;} }
+/* ═══ 웨스티의 간식통 — 알갱이 하나 = 1만 원, 뼈다귀 하나 = 100만 원, 바닥 발자국 = 이번 달 지출 ═══ */
+.jar-hero{display:grid;grid-template-columns:minmax(0,360px) minmax(0,1fr);gap:22px;align-items:center;}
+.jar-svg{width:100%;height:auto;display:block;}
+.jar-svg .tail{transform-box:view-box;transform-origin:var(--tail-o);animation:wag 1.6s ease-in-out infinite;}
+.jar-svg .head{transform-box:view-box;transform-origin:var(--head-o);animation:tilt 6s ease-in-out infinite;}
+@keyframes wag{0%,100%{transform:rotate(-9deg);}50%{transform:rotate(12deg);}}
+@keyframes tilt{0%,70%,100%{transform:rotate(0deg);}80%{transform:rotate(-5deg);}90%{transform:rotate(-5deg);}}
+@media (prefers-reduced-motion: reduce){ .jar-svg .tail,.jar-svg .head{animation:none;} }
+.stage{display:inline-block;font-family:var(--round);font-size:var(--fs-md);color:var(--accent-text);background:var(--accent-bg);
+  border:1px solid var(--accent-line);border-radius:var(--r-pill);padding:2px 12px;margin-bottom:8px;}
+.jar-key{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:var(--fs-xs);color:var(--text-faint);margin-top:10px;}
+@media (max-width:860px){ .jar-hero{grid-template-columns:1fr;gap:6px;} .jar-svg{max-width:320px;margin:0 auto;} }
 
 /* ═══ 도구줄 ═══ */
 .toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
@@ -307,7 +317,8 @@ textarea.in{height:auto;min-height:74px;padding:9px 12px;line-height:1.5;resize:
 /* ═══ 로그인 ═══ */
 .gate{max-width:380px;margin:0 auto;padding:calc(12vh + var(--top)) 20px 40px;}
 .gate .mark{font-size:46px;text-align:center;}
-.gate h2{text-align:center;margin:6px 0 4px;font-size:var(--fs-2xl);}
+.gate .mark svg{display:block;width:150px;height:auto;margin:0 auto;}
+.gate h2{text-align:center;margin:6px 0 4px;font-family:var(--round);font-weight:400;font-size:30px;}
 .gate p.sub{text-align:center;color:var(--text-faint);font-size:var(--fs-sm);margin:0 0 22px;}
 .gate summary{font-size:var(--fs-sm);color:var(--text-faint);cursor:pointer;margin-top:16px;}
 
@@ -315,6 +326,26 @@ textarea.in{height:auto;min-height:74px;padding:9px 12px;line-height:1.5;resize:
   background:var(--panel-2);border:1px solid var(--border-strong);color:var(--text);font-size:var(--fs-md);
   padding:9px 16px;border-radius:var(--r-pill);opacity:0;pointer-events:none;transition:.18s;z-index:200;white-space:nowrap;}
 #toast.on{opacity:1;transform:translateX(-50%);}
+
+/* ═══ 폰 — 위 메뉴 대신 아래에 떠 있는 둥근 탭바 (홈 · 내역 · ＋ · 리포트 · 설정) ═══ */
+.tabbar{display:none;}
+@media (max-width:640px){
+  .navrow{display:none;}
+  #add-btn{display:none;}
+  .topbar{margin-bottom:10px;}
+  .tabbar{position:fixed;left:12px;right:12px;bottom:calc(10px + var(--bot));z-index:60;display:flex;align-items:center;
+    height:62px;padding:0 4px;background:var(--panel);border:1px solid var(--border-strong);border-radius:26px;
+    box-shadow:0 12px 30px -12px rgba(40,28,22,0.45);}
+  .tab{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:0;
+    color:var(--text-faint);font-size:var(--fs-tiny);padding:6px 0;}
+  .tab .ic{font-size:19px;line-height:1;filter:grayscale(1);opacity:.6;}
+  .tab.on{color:var(--accent-text);font-weight:700;}
+  .tab.on .ic{filter:none;opacity:1;}
+  .tab.plus .ic{filter:none;opacity:1;width:46px;height:46px;border-radius:50%;background:var(--accent-fill);color:var(--ink-on-accent);
+    display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:300;box-shadow:0 6px 14px -6px var(--accent-fill);}
+  .site-main{padding-bottom:calc(100px + var(--bot));}
+  #toast{bottom:calc(84px + var(--bot));}
+}
 </style>
 </head>
 <body>
@@ -325,7 +356,8 @@ textarea.in{height:auto;min-height:74px;padding:9px 12px;line-height:1.5;resize:
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
 <script src="../shared/supabase.js?v=f29618b082"></script>
 <script>
-/* ================= 말랑한 통장 (예전 이름: 데이트 통장 — 테이블 이름은 그대로 date_*) =================
+/* ================= 웨스티 — 하랑·태준의 말랑한 통장 앱 (예전 이름: 데이트 통장 — 테이블 이름은 그대로 date_*) =================
+   앱 이름은 '웨스티'(웨스트 하이랜드 화이트 테리어), 통장 이름(date_books.name)은 설정에서 따로 바꾼다.
    해달과 같은 Supabase 를 쓰지만 테이블은 완전히 따로다 (date_books · date_members · date_tx · date_balance_checks).
    누가 들어오고(allowed_emails), 누가 고칠 수 있고(editor_emails), 입금자 이름이 무엇인지(people)는
    모두 DB 의 date_books 에 있다 — 코드에는 개인 정보를 두지 않는다. 막는 건 DB(date_enter · RLS)가 한다.
@@ -368,8 +400,9 @@ function toast(msg) {
 }
 
 const CAT_EMOJI = { '식사': '🍽️', '카페': '☕', '술': '🍻', '문화·여가': '🎬', '여행': '⛺', '교통': '🚌',
-  '선물': '🎁', '생활': '🧺', '기타': '🌱' };
-const catEmoji = (c) => CAT_EMOJI[c] || '🍃';
+  '선물': '🎁', '생활': '🧺', '기타': '🐾' };
+const catEmoji = (c) => CAT_EMOJI[c] || '🐾';
+const DEPOSIT_EMOJI = '🦴';
 const KIND_SIGN = { '지출': -1, '입금': 1, '수입': 1 };
 
 const S = {
@@ -421,6 +454,7 @@ const SUBS = {
   report: [['#', '기간별'], ['monthly', '월간'], ['trend', '추이'], ['#', '우리 둘'], ['deposit', '입금 현황'], ['balance', '잔액 맞추기']],
   set: [['book', '통장'], ['goals', '입금 약속'], ['cats', '지출 분류']]
 };
+const TAB_ICON = { home: '🏠', entry: '📒', report: '📊', set: '⚙️' };
 const subLabel = (p, v) => ((SUBS[p] || []).find(x => x[0] === v) || [])[1];
 /* 보기 전용이면 설정 메뉴를 아예 두지 않는다 */
 const navItems = () => NAV.filter(([p]) => S.canEdit || p !== 'set');
@@ -430,7 +464,7 @@ function renderShell() {
     <header class="site-header" id="hdr">
       <div class="topbar">
         <div class="brand" id="brand" role="link" tabindex="0" title="홈으로">
-          <span class="mark">🌳</span><h1 id="book-name"></h1><span class="tagline" id="tagline"></span>
+          <span class="mark">${westieFaceSvg()}</span><h1>웨스티</h1><span class="tagline" id="tagline"></span>
         </div>
         <div class="acts">
           <span class="bal-pill" id="bal-pill"></span>
@@ -444,13 +478,18 @@ function renderShell() {
     <div class="site-layout" id="layout">
       <aside class="railnav" id="rail"></aside>
       <div class="site-main"><div class="page-head" id="page-head"></div><div id="page"></div></div>
-    </div>`;
+    </div>
+    <nav class="tabbar" id="tabbar"></nav>`;
   $('#brand').addEventListener('click', () => go('home'));
   $('#brand').addEventListener('keydown', e => { if (e.key === 'Enter') go('home'); });
   if (S.canEdit) $('#add-btn').addEventListener('click', () => openForm());
   $('#out-btn').addEventListener('click', async () => { await (await sb()).auth.signOut(); location.replace(location.pathname); });
   $('#navbar').addEventListener('click', e => { const b = e.target.closest('.nav-btn'); if (b) go(b.dataset.p); });
   $('#rail').addEventListener('click', e => { const b = e.target.closest('.sub-btn'); if (b) go(S.page, b.dataset.s); });
+  $('#tabbar').addEventListener('click', e => {
+    const b = e.target.closest('.tab'); if (!b) return;
+    if (b.dataset.p === '+') openForm(); else go(b.dataset.p);
+  });
   const syncHdr = () => document.documentElement.style.setProperty('--hdr-h', $('#hdr').offsetHeight + 'px');
   window.addEventListener('resize', syncHdr); syncHdr();
 }
@@ -470,10 +509,15 @@ function readHash() {
 }
 
 function renderPage() {
-  $('#book-name').textContent = S.book.name;
-  $('#tagline').textContent = PEOPLE.join(' · ') + '의 숲속 통장';
+  $('#tagline').textContent = `${PEOPLE.join(' · ')}의 ${S.book.name || '말랑한 통장'}`;
+  document.title = `웨스티 · ${S.book.name || '말랑한 통장'}`;
   $('#bal-pill').innerHTML = `<small>잔액</small>${comma(ledgerBalance())}원`;
   $('#navbar').innerHTML = navItems().map(([p, l]) => `<button class="nav-btn ${S.page === p ? 'active' : ''}" data-p="${p}">${l}</button>`).join('');
+  /* 폰 탭바 — 가운데 ＋ 는 기록할 수 있을 때만 */
+  const tabs = navItems().map(([p, l]) => [p, l, TAB_ICON[p]]);
+  if (S.canEdit) tabs.splice(2, 0, ['+', '기록', '＋']);
+  $('#tabbar').innerHTML = tabs.map(([p, l, ic]) => `<button class="tab ${p === '+' ? 'plus' : ''} ${S.page === p ? 'on' : ''}" data-p="${p}" aria-label="${l}">
+    <span class="ic">${ic}</span>${p === '+' ? '' : `<span>${l}</span>`}</button>`).join('');
   const subs = SUBS[S.page];
   $('#layout').classList.toggle('no-rail', !subs.length);
   $('#rail').innerHTML = subs.map(([v, l]) => v === '#' ? `<div class="sub-cat">${l}</div>`
@@ -519,7 +563,7 @@ function tableHtml(rows, withDate) {
       const msub = [r.kind === '입금' ? null : r.category, r.memo].filter(Boolean).map(esc).join(' · ');
       return `<tr class="rw ${first && withDate ? 'day-first' : ''}" data-id="${r.id}">
         ${withDate ? `<td class="dt">${first ? shortDay(r.date) : ''}</td>` : ''}
-        <td><span class="em">${r.kind === '입금' ? '💧' : catEmoji(r.category)}</span><span class="ttl">${esc(rowTitle(r))}${mk}</span>${msub ? `<span class="msub">${msub}</span>` : ''}</td>
+        <td><span class="em">${r.kind === '입금' ? DEPOSIT_EMOJI : catEmoji(r.category)}</span><span class="ttl">${esc(rowTitle(r))}${mk}</span>${msub ? `<span class="msub">${msub}</span>` : ''}</td>
         <td class="cat">${r.kind === '입금' ? '<span class="pill">입금</span>' : esc(r.category || '')}</td>
         <td class="memo" title="${esc(r.memo || '')}">${esc(r.memo || '')}</td>
         <td class="num">${rowAmount(r)}</td></tr>`;
@@ -527,74 +571,112 @@ function tableHtml(rows, withDate) {
 }
 function bindRows(host) { if (S.canEdit) $$('tr.rw', host).forEach(tr => tr.addEventListener('click', () => openForm(Number(tr.dataset.id)))); }
 
-/* ================= 잔액 나무 =================
-   지금 남은 돈을 나무 한 그루로 그린다.
-   - 잎 하나 = 1만 원 (240장이 다 차면 그 뒤로는 열매만 늘어난다)
-   - 빨간 열매 하나 = 100만 원
-   - 나무 키·가지 폭은 잔액이 300만 원에 가까울수록 커진다
-   - 바닥에 떨어진 갈색 잎 = 이번 달 지출 (1만 원에 한 장)
-   잎 자리는 매번 같은 곳에 오도록 고정된 난수로 뽑는다 — 새로 고침해도 나무 모양이 흔들리지 않는다. */
-const LEAF_WON = 10000, FRUIT_WON = 1000000, FULL_WON = 3000000;
-function seeded(seed) { let x = seed >>> 0; return () => { x = (x * 1664525 + 1013904223) >>> 0; return x / 4294967296; }; }
-function treeStage(bal) {
-  if (bal <= 0) return '빈 가지';
-  if (bal < 200000) return '새싹';
-  if (bal < 1000000) return '어린 나무';
-  if (bal < FULL_WON) return '자라는 나무';
-  return '큰 나무';
+/* ================= 웨스티 그림 =================
+   흰 털 동그라미를 겹쳐 복슬복슬한 몸을 만든다 — 테두리 원을 먼저 다 그리고 흰 원을 위에 덮어서 이음매가 안 보인다.
+   좌표는 강아지 발밑 가운데가 (0,0). 색은 모두 CSS 변수라 다크 모드에서 같이 바뀐다. */
+const WC = { fur: 'var(--fur)', line: 'var(--fur-line)', ink: 'var(--ink)', pink: 'var(--ear)', tongue: 'var(--tongue)',
+  scarf: 'var(--accent-fill)', frame: 'var(--frame)' };
+function fluff(blobs, lw) {
+  return blobs.map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r + lw}" fill="${WC.line}"/>`).join('')
+    + blobs.map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${WC.fur}"/>`).join('');
 }
-function treeSvg(bal, monthOut) {
-  const W = 320, H = 250, gy = 222, cx = W / 2;
-  const s = Math.max(0.28, Math.min(1, Math.sqrt(Math.max(bal, 0) / FULL_WON)));
-  const th = 30 + 70 * s;                 // 줄기 높이
-  const tw = 5 + 9 * s;                   // 줄기 아래쪽 반폭
-  const top = gy - th;
-  const R = 24 + 58 * s;                  // 수관 반지름
-  const cy = top - R * 0.35;
-  const leaves = Math.min(240, Math.max(0, Math.floor(bal / LEAF_WON)));
-  const fruits = Math.min(14, Math.max(0, Math.floor(bal / FRUIT_WON)));
-  const fallen = Math.min(48, Math.max(0, Math.round(monthOut / LEAF_WON)));
-  const rnd = seeded(20260926);
-  const leafCols = ['var(--accent-fill)', 'var(--accent-text)', 'var(--in-fill)'];
-  /* 줄기 + 가지 두 개 */
-  const trunk = `<path d="M${cx - tw} ${gy} C${cx - tw * 0.6} ${gy - th * 0.45}, ${cx - tw * 0.35} ${top + 10}, ${cx - 2} ${top}
-      L${cx + 2} ${top} C${cx + tw * 0.35} ${top + 10}, ${cx + tw * 0.6} ${gy - th * 0.45}, ${cx + tw} ${gy} Z" fill="var(--bark)"/>
-    <path d="M${cx - 1} ${top + th * 0.32} Q${cx - R * 0.45} ${top + th * 0.05} ${cx - R * 0.62} ${cy + R * 0.05}" stroke="var(--bark)" stroke-width="${2 + 3 * s}" fill="none" stroke-linecap="round"/>
-    <path d="M${cx + 1} ${top + th * 0.2} Q${cx + R * 0.4} ${top - th * 0.02} ${cx + R * 0.58} ${cy - R * 0.1}" stroke="var(--bark)" stroke-width="${1.6 + 2.6 * s}" fill="none" stroke-linecap="round"/>`;
-  /* 수관 바탕 — 잎이 있을 때만 옅게 */
-  const fill = Math.min(1, leaves / 240);
-  const blobs = leaves ? [[0, 0, 1], [-0.45, 0.18, 0.62], [0.45, 0.15, 0.6], [0, -0.38, 0.62]].map(([dx, dy, r]) =>
-    `<circle cx="${cx + dx * R}" cy="${cy + dy * R}" r="${R * r * (0.55 + 0.45 * fill)}" fill="var(--accent-fill)" opacity="${0.08 + 0.1 * fill}"/>`).join('') : '';
-  /* 잎 — 수관 안에 고르게 (반지름은 √ 로 뽑아 가운데 몰림을 막는다) */
-  let leafHtml = '';
-  for (let i = 0; i < leaves; i++) {
-    const a = rnd() * Math.PI * 2, r = Math.sqrt(rnd()) * R;
-    const x = cx + Math.cos(a) * r * 1.08, y = cy + Math.sin(a) * r * 0.86;
-    const rot = Math.round(rnd() * 360), col = leafCols[Math.floor(rnd() * leafCols.length)];
-    leafHtml += `<ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="4.6" ry="2.5" fill="${col}" opacity="${(0.72 + rnd() * 0.28).toFixed(2)}" transform="rotate(${rot} ${x.toFixed(1)} ${y.toFixed(1)})"/>`;
+function westieHead(glasses) {
+  const scallop = [...Array(11)].map((_, i) => { const a = Math.PI * (0.98 + i * 0.104); return [Math.round(Math.cos(a) * 34), Math.round(-110 + Math.sin(a) * 30), 9]; });
+  const head = [...scallop, [0, -108, 33], [-21, -96, 19], [21, -96, 19], [0, -134, 20], [-16, -128, 15], [16, -128, 15], [0, -86, 17], [-29, -112, 13], [29, -112, 13]];
+  const ear = (s) => `<path d="M${-27 * s} -128 L${-23 * s} -163 Q${-21 * s} -167 ${-17 * s} -164 L${-3 * s} -144 Z" fill="${WC.fur}" stroke="${WC.line}" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M${-22 * s} -138 L${-20 * s} -157 L${-10 * s} -145 Z" fill="${WC.pink}"/>`;
+  return `${ear(1)}${ear(-1)}${fluff(head, 2)}
+    <circle cx="-11" cy="-110" r="4.6" fill="${WC.ink}"/><circle cx="11" cy="-110" r="4.6" fill="${WC.ink}"/>
+    <circle cx="-12.5" cy="-111.8" r="1.5" fill="#fff"/><circle cx="9.5" cy="-111.8" r="1.5" fill="#fff"/>
+    <ellipse cx="0" cy="-93" rx="7.5" ry="5.6" fill="${WC.ink}"/><ellipse cx="-2.2" cy="-95" rx="2.4" ry="1.2" fill="#fff" opacity=".55"/>
+    <ellipse cx="0" cy="-82.5" rx="3.2" ry="2.6" fill="${WC.tongue}"/>
+    <path d="M0 -88 q-3 5 -8 3 M0 -88 q3 5 8 3" stroke="${WC.ink}" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+    ${glasses ? `<g fill="none" stroke="${WC.frame}" stroke-width="1.8"><circle cx="-11" cy="-110" r="9"/><circle cx="11" cy="-110" r="9"/>
+      <path d="M-2 -111 Q0 -113.5 2 -111 M-20 -112 L-29 -115 M20 -112 L29 -115" stroke-linecap="round"/></g>` : ''}`;
+}
+/* 앉아 있는 웨스티 한 마리 — 꼬리(.tail)와 머리(.head)는 따로 움직인다 */
+function westieDog(glasses) {
+  const body = [[0, -40, 32], [-20, -24, 22], [20, -24, 22], [0, -62, 24], [-26, -46, 14], [26, -46, 14]];
+  return `<g class="tail"><ellipse cx="36" cy="-50" rx="8" ry="15" transform="rotate(30 36 -50)" fill="${WC.fur}" stroke="${WC.line}" stroke-width="2"/></g>
+    ${fluff(body, 2)}
+    <ellipse cx="-13" cy="-5" rx="10" ry="6.5" fill="${WC.fur}" stroke="${WC.line}" stroke-width="2"/>
+    <ellipse cx="13" cy="-5" rx="10" ry="6.5" fill="${WC.fur}" stroke="${WC.line}" stroke-width="2"/>
+    <path d="M-16 -7 v4 M-10 -7 v4 M10 -7 v4 M16 -7 v4" stroke="${WC.line}" stroke-width="1.4" stroke-linecap="round"/>
+    <path d="M-27 -79 Q0 -68 27 -79 L4 -46 Q0 -42 -4 -46 Z" fill="${WC.scarf}"/>
+    <g class="head">${westieHead(glasses)}</g>`;
+}
+const westieFaceSvg = () => `<svg viewBox="-54 -176 108 108" aria-hidden="true">${westieHead(false)}</svg>`;
+const westieDogSvg = () => `<svg viewBox="-62 -182 124 186" aria-hidden="true">${westieDog(true)}</svg>`;
+
+/* ================= 웨스티의 간식통 =================
+   지금 남은 돈을 웨스티 옆 간식통으로 그린다.
+   - 사료 알갱이 하나 = 1만 원 (240알 = 240만 원이면 통이 가득 찬다)
+   - 뼈다귀 하나 = 100만 원 (14개까지)
+   - 바닥 발자국 = 이번 달 지출 (1만 원에 한 개, 같이 걸어 다닌 만큼 찍힌다)
+   알갱이 자리는 고정된 난수로 뽑는다 — 새로 고침해도 모양이 흔들리지 않는다. */
+const KIBBLE_WON = 10000, BONE_WON = 1000000, FULL_KIBBLE = 240;
+function seeded(seed) { let x = seed >>> 0; return () => { x = (x * 1664525 + 1013904223) >>> 0; return x / 4294967296; }; }
+function jarStage(bal) {
+  if (bal <= 0) return '빈 간식통';
+  if (bal < 200000) return '한 줌';
+  if (bal < 1000000) return '조금씩 차는 중';
+  if (bal < FULL_KIBBLE * KIBBLE_WON) return '거의 가득';
+  return '가득 찼어요';
+}
+function boneSvg(x, y, rot, k) {
+  return `<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${rot}) scale(${k})">
+    <path d="M-9 -2.2 H9 A3.4 3.4 0 1 1 11.6 -5.6 A3.4 3.4 0 1 1 11.6 5.6 A3.4 3.4 0 1 1 9 2.2 H-9 A3.4 3.4 0 1 1 -11.6 5.6 A3.4 3.4 0 1 1 -11.6 -5.6 A3.4 3.4 0 1 1 -9 -2.2 Z"
+      fill="var(--fur)" stroke="var(--fur-line)" stroke-width="1.4" stroke-linejoin="round"/></g>`;
+}
+function pawSvg(x, y, rot, op) {
+  return `<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${rot})" fill="var(--out-fill)" opacity="${op}">
+    <ellipse cx="0" cy="1.3" rx="2.7" ry="2.2"/><circle cx="-2.5" cy="-1.6" r="1.05"/><circle cx="-0.85" cy="-2.9" r="1.05"/>
+    <circle cx="0.85" cy="-2.9" r="1.05"/><circle cx="2.5" cy="-1.6" r="1.05"/></g>`;
+}
+function jarSvg(bal, monthOut) {
+  const W = 360, H = 250, gy = 226, dx = 108;
+  const jx0 = 210, jx1 = 310, jTop = 100, jBot = gy - 3, inTop = jTop + 6;
+  const kibbles = Math.min(FULL_KIBBLE, Math.max(0, Math.floor(bal / KIBBLE_WON)));
+  const bones = Math.min(14, Math.max(0, Math.floor(bal / BONE_WON)));
+  const paws = Math.min(44, Math.max(0, Math.round(monthOut / KIBBLE_WON)));
+  const level = jBot - (jBot - inTop) * Math.min(1, kibbles / FULL_KIBBLE);   // 사료가 찬 높이
+  const jar = `M${jx0 + 6} ${jTop} H${jx1 - 6} Q${jx1} ${jTop} ${jx1} ${jTop + 10} V${jBot - 16} Q${jx1} ${jBot} ${jx1 - 16} ${jBot}
+    H${jx0 + 16} Q${jx0} ${jBot} ${jx0} ${jBot - 16} V${jTop + 10} Q${jx0} ${jTop} ${jx0 + 6} ${jTop} Z`;
+  const kc = ['var(--treat)', 'var(--treat-2)', 'var(--treat-3)'];
+  let kib = '';
+  const r1 = seeded(20261002);
+  for (let i = 0; i < kibbles; i++) {
+    const x = jx0 + 5 + r1() * (jx1 - jx0 - 10), y = level + 3 + r1() * Math.max(1, jBot - level - 6);
+    const rot = Math.round(r1() * 180);
+    kib += `<ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="4" ry="3" fill="${kc[Math.floor(r1() * 3)]}" transform="rotate(${rot} ${x.toFixed(1)} ${y.toFixed(1)})"/>`;
   }
-  /* 열매 — 수관 아래쪽 반에 */
-  let fruitHtml = '';
-  const fr = seeded(7);
-  for (let i = 0; i < fruits; i++) {
-    const a = Math.PI * (0.08 + fr() * 0.84), r = (0.35 + fr() * 0.55) * R;
-    const x = cx + Math.cos(a) * r * (fr() < 0.5 ? -1 : 1), y = cy + Math.sin(a) * r * 0.7;
-    fruitHtml += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4.4" fill="var(--fruit)"/><circle cx="${(x - 1.3).toFixed(1)}" cy="${(y - 1.4).toFixed(1)}" r="1.2" fill="#fff" opacity=".55"/>`;
+  /* 뼈다귀 — 사료 윗면 근처에 눕혀 둔다 (통이 넘치면 위로 쌓인다) */
+  let bn = '';
+  const r2 = seeded(7);
+  for (let i = 0; i < bones; i++) {
+    const row = Math.floor(i / 3), x = jx0 + 22 + (i % 3) * 28 + (r2() - 0.5) * 8;
+    const y = Math.max(inTop + 10, level - 2 - row * 11 + (r2() - 0.5) * 4);
+    bn += boneSvg(x, y, Math.round((r2() - 0.5) * 40), 0.95);
   }
-  /* 새싹 — 잎이 하나도 없으면 줄기 꼭대기에 작은 싹만 */
-  const sprout = leaves ? '' : `<path d="M${cx} ${top} q-9 -10 -15 -4 q7 6 15 4z M${cx} ${top} q9 -12 16 -6 q-7 7 -16 6z" fill="var(--accent-fill)" opacity=".8"/>`;
-  /* 낙엽 — 바닥 띠 위에 */
-  let fallHtml = '';
-  const fl = seeded(99);
-  for (let i = 0; i < fallen; i++) {
-    const x = cx + (fl() - 0.5) * W * 0.82, y = gy + 4 + fl() * 16, rot = Math.round(fl() * 360);
-    fallHtml += `<ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="4.2" ry="2.2" fill="var(--out-fill)" opacity="${(0.55 + fl() * 0.35).toFixed(2)}" transform="rotate(${rot} ${x.toFixed(1)} ${y.toFixed(1)})"/>`;
+  let pw = '';
+  const r3 = seeded(99);
+  for (let i = 0; i < paws; i++) {
+    const x = 18 + r3() * (W - 36), y = gy + 5 + r3() * 15;
+    pw += pawSvg(x, y, Math.round(-30 + r3() * 60), (0.45 + r3() * 0.35).toFixed(2));
   }
-  const label = `잔액 ${comma(bal)}원 — 잎 ${leaves}장, 열매 ${fruits}개. 이번 달 지출로 떨어진 잎 ${fallen}장`;
-  return `<svg class="tree-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="${label}">
-    <ellipse cx="${cx}" cy="${gy + 12}" rx="${W * 0.46}" ry="15" fill="var(--ground)"/>
-    ${fallHtml}
-    <g class="crown">${trunk}${blobs}${leafHtml}${fruitHtml}${sprout}</g>
+  const label = `잔액 ${comma(bal)}원 — 사료 ${kibbles}알, 뼈다귀 ${bones}개. 이번 달 지출 발자국 ${paws}개`;
+  return `<svg class="jar-svg" viewBox="0 48 ${W} ${H - 48}" role="img" aria-label="${label}" style="--tail-o:${dx + 26}px ${gy - 36}px;--head-o:${dx}px ${gy - 76}px">
+    <defs><clipPath id="jar-in"><path d="${jar}"/></clipPath></defs>
+    <ellipse cx="${W / 2}" cy="${gy + 12}" rx="${W * 0.47}" ry="15" fill="var(--ground)"/>
+    ${pw}
+    <g transform="translate(${dx} ${gy})">${westieDog(true)}</g>
+    <path d="${jar}" fill="var(--glass)"/>
+    <g clip-path="url(#jar-in)">${kib}</g>${bn}
+    <path d="${jar}" fill="none" stroke="var(--glass-line)" stroke-width="2"/>
+    <rect x="${jx0 + 9}" y="${jTop + 14}" width="6" height="${jBot - jTop - 40}" rx="3" fill="#fff" opacity=".45"/>
+    <rect x="${jx0 - 5}" y="${jTop - 15}" width="${jx1 - jx0 + 10}" height="17" rx="7" fill="var(--accent-fill)"/>
+    <rect x="${(jx0 + jx1) / 2 - 13}" y="${jTop - 23}" width="26" height="10" rx="5" fill="var(--accent-fill)"/>
+    <rect x="${jx0 - 5}" y="${jTop - 4}" width="${jx1 - jx0 + 10}" height="4" fill="#000" opacity=".12"/>
   </svg>`;
 }
 
@@ -612,15 +694,15 @@ function pageHome(host) {
   const dates = new Set(rows.filter(r => r.kind === '지출').map(r => r.date)).size;
 
   host.innerHTML = `
-    <div class="box tree-hero">
-      ${treeSvg(bal, t.out)}
+    <div class="box jar-hero">
+      ${jarSvg(bal, t.out)}
       <div>
-        <span class="stage">🌳 ${treeStage(bal)}</span>
+        <span class="stage">🦴 ${jarStage(bal)}</span>
         <div class="hd" style="margin-bottom:6px;"><b>지금 남은 돈</b><button class="lnk" data-go="report/balance">맞춰보기 ›</button></div>
         <div class="big">${comma(bal)}<small>원</small></div>
         <div class="subline"><span>이번 달 <b class="${t.net >= 0 ? 'i' : 'o'}">${signed(t.net)}</b></span>
           ${last ? `<span>${shortDay(last.on_date)} 확인 ${Math.abs(lastDiff) < 1 ? '<b class="i">✓ 일치</b>' : `<b class="o">차이 ${signed(lastDiff)}</b>`}</span>` : '<span>실제 잔액을 아직 맞춰 보지 않았어요</span>'}</div>
-        <div class="tree-key"><span>🍃 잎 하나 = 1만 원</span><span>🍎 열매 하나 = 100만 원</span><span>🍂 바닥 낙엽 = 이번 달 지출</span></div>
+        <div class="jar-key"><span>🟤 사료 한 알 = 1만 원</span><span>🦴 뼈다귀 하나 = 100만 원</span><span>🐾 바닥 발자국 = 이번 달 지출</span></div>
         <div class="sep">${triHtml(t)}</div>
       </div>
     </div>
@@ -693,7 +775,7 @@ function pageList(host) {
   bindRows(host);
 }
 
-/* ================= 내역 › 캘린더 — 데이트한 날이 연두로 칠해진다 ================= */
+/* ================= 내역 › 캘린더 — 데이트한 날이 반다나색으로 옅게 칠해진다 ================= */
 function pageCalendar(host) {
   const m = S.month;
   const rows = monthRows(m);
@@ -802,7 +884,7 @@ function pageDeposit(host) {
     const gap = depositOf(a, S.tx) - depositOf(b, S.tx);
     gapHtml = Math.abs(gap) >= 1
       ? `지금까지 <b>${esc(gap > 0 ? a : b)}</b> 쪽이 <b class="a">${comma(Math.abs(gap))}원</b> 더 넣었어요.`
-      : '지금까지 두 사람이 똑같이 넣었어요 🌿';
+      : '지금까지 두 사람이 똑같이 넣었어요 🐾';
   }
   host.innerHTML = `
     <div class="toolbar">${mnavHtml()}</div>
@@ -1090,9 +1172,9 @@ function showGate(html) { $('#app').innerHTML = `<div class="gate">${html}</div>
    비밀번호가 있는 계정은 비밀번호로도 들어올 수 있다. */
 function showLogin(msg) {
   showGate(`
-    <div class="mark">🌳</div>
-    <h2>말랑한 통장</h2>
-    <p class="sub">${esc(msg || '이메일로 로그인 링크를 보내 드려요')}</p>
+    <div class="mark">${westieDogSvg()}</div>
+    <h2>웨스티</h2>
+    <p class="sub">${esc(msg || '말랑한 통장 · 이메일로 로그인 링크를 보내 드려요')}</p>
     <label class="lab">이메일</label>
     <input class="in" id="lk-em" type="email" autocomplete="username" inputmode="email">
     <p class="err" id="lk-err"></p>
