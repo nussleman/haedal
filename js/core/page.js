@@ -92,7 +92,7 @@ function destroyPageCharts() {
 }
 
 /* 이번 달 자산 스냅샷이 아직 비어 있으면 알린다 — 탭의 빨간 점, 홈 '확인할 것', 폰 홈 배너가 모두 이 한 기준을 쓴다.
-   스냅샷은 달 초에 '이번 달' 칸에 적는다(결산 화면도 이번 달을 먼저 연다).
+   스냅샷은 달 초에 '이번 달' 칸에 적는다(스냅샷 화면도 이번 달을 먼저 연다).
    달이 바뀌면(1일부터) 자동으로 켜지고, 그 달 값을 한 줄이라도 넣으면 사라진다. */
 function snapNeedsInput(data) {
   const rows = ((data || state.data) && (data || state.data).assetRows) || [];
@@ -146,7 +146,7 @@ function navSectionDot(sec) {
 
 function renderPage() {
   if (AP.on) {
-    /* 월말 결산은 입력 중일 수 있으니 데이터가 새로 와도 다시 그리지 않는다 */
+    /* 자산 스냅샷은 입력 중일 수 있으니 데이터가 새로 와도 다시 그리지 않는다 */
     if (AP.tab === 'more' && AP.sub === 'snap' && document.getElementById('ap-snap')) apPaintBarIfIdle();
     else apRender(false);
     return;

@@ -52,7 +52,7 @@ function apSubItems(tab) {
     const mo = (k) => Number(k.split('-')[1]) + '월';
     return [['c:-1', '‹ ' + mo(shiftMonthKey(mk, -1))], ['c:0', '이번 달'], ['c:1', mo(shiftMonthKey(mk, 1)) + ' ›']];
   }
-  if (tab === 'more') return [['m:snap', '월말 결산'], ['m:site', 'PC 화면'], ['m:out', '로그아웃']];
+  if (tab === 'more') return [['m:snap', '자산 스냅샷'], ['m:site', 'PC 화면'], ['m:out', '로그아웃']];
   return [];
 }
 const AP_TITLE = { home: '해달', list: '내역', cal: '달력', more: '더보기' };
@@ -172,7 +172,7 @@ function apRender(toTop) {
   const main = document.getElementById('ap-main');
   if (!main) return;
   const t = document.getElementById('ap-title');
-  if (t) t.textContent = AP.tab === 'more' && AP.sub === 'snap' ? '월말 결산' : AP_TITLE[AP.tab];
+  if (t) t.textContent = AP.tab === 'more' && AP.sub === 'snap' ? '자산 스냅샷' : AP_TITLE[AP.tab];
   apPaintBarIfIdle();
   if (!state.data) {
     main.innerHTML = `<div class="ap-empty">${state.lastError ? '데이터를 불러오지 못했어요. 위의 ‘다시 시도’를 눌러 주세요.' : '불러오는 중…'}</div>`;
@@ -186,7 +186,7 @@ function apRender(toTop) {
   else apHomePage(main, data);
   if (toTop) window.scrollTo(0, 0);
 }
-/* 데이터가 새로 와서 다시 그릴 때 탭바 점(결산 알림)도 맞춘다 — 애니메이션 없이 */
+/* 데이터가 새로 와서 다시 그릴 때 탭바 점(스냅샷 알림)도 맞춘다 — 애니메이션 없이 */
 function apPaintBarIfIdle() {
   const bar = document.getElementById('ap-bar');
   if (bar && !bar.querySelector('.swap')) apPaintBar();
@@ -266,7 +266,7 @@ function apHomePage(main, data) {
   const weekOut = apSum(ledger.filter(r => r.dayKey >= wk && r.dayKey <= today), '지출');
   const rate = inc > 0 ? ((inc - out) / inc) * 100 : null;
 
-  /* 순자산 — 마지막 월말 결산 기준 */
+  /* 순자산 — 마지막 자산 스냅샷 기준 */
   const d = computeDerived({ ...data, assetRows: (data.assetRows || []).filter(r => assetMonthKey(r.date) <= now.getFullYear() * 100 + now.getMonth() + 1) });
   /* 이번 달 자산 스냅샷을 아직 안 적었으면(1일부터 적을 때까지) 홈 맨 위에서 알려 준다 */
   const needSnap = snapNeedsInput(data);
@@ -367,7 +367,7 @@ function apMorePage(main, data) {
   const n = (data.ledger || []).length;
   main.innerHTML = `
     <div class="ap-menu">
-      <button data-ap="snap"><b>월말 결산</b><span>계좌마다 이번 달 잔액 적기${snapDone ? '' : ' · <i>이번 달 아직</i>'}</span></button>
+      <button data-ap="snap"><b>자산 스냅샷</b><span>계좌마다 이번 달 잔액 적기${snapDone ? '' : ' · <i>이번 달 아직</i>'}</span></button>
     </div>
     <p class="ap-foot">기록 ${wonComma(n)}건 · ${state.lastSync ? state.lastSync.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) + ' 갱신' : '저장된 값 표시 중'}<br>
       리포트·목표·투자는 PC 화면에서 보세요.</p>`;

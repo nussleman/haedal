@@ -54,7 +54,7 @@ async function qeLoadRun() {
   ]);
   if (cats.error) throw new Error(cats.error.message);
   QE.allCats = cats.data || [];
-  /* '자산' 구분은 월말 결산 전용이라 기록에는 안 쓴다 — 이체와 이름(연금 자산·저축 자산…)이 겹쳐 헷갈린다 */
+  /* '자산' 구분은 자산 스냅샷 전용이라 기록에는 안 쓴다 — 이체와 이름(연금 자산·저축 자산…)이 겹쳐 헷갈린다 */
   QE.cats = QE.allCats.filter(x => x.is_active !== false && x.kind !== '자산');
   QE.merchants = merch.data || [];
   /* 사용처별: 몇 번 썼나, 가장 많이 쓴 분류, 자주 찍은 금액 */
