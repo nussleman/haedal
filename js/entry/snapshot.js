@@ -74,12 +74,6 @@ function snapMonthRows(mk) {
 function snapMonthTotal(mk) {
   return SNAP.rows.reduce((a, r) => a + (r.mk === mk ? r.amount : 0), 0);
 }
-function snapMonthList() {
-  const set = new Set(SNAP.rows.map(r => r.mk));
-  set.add(snapNowMonth());
-  if (SNAP.month) set.add(SNAP.month);
-  return [...set].sort().reverse();
-}
 const snapNum = (v) => {
   const t = String(v == null ? '' : v).replace(/[^0-9-]/g, '');
   if (t === '' || t === '-') return null;
@@ -113,8 +107,6 @@ async function renderSnapshotPage(body) {
   const mk = SNAP.month;
   const cur = snapMonthRows(mk), prev = snapMonthRows(snapMonthShift(mk, -1));
   const accounts = snapAccounts();
-  const months = snapMonthList();
-  const filled = Object.keys(cur).length;
 
   const byCls = {};
   accounts.forEach(a => { (byCls[a.cls] = byCls[a.cls] || []).push(a); });
@@ -137,27 +129,19 @@ async function renderSnapshotPage(body) {
   };
 
   body.innerHTML = `
-    <div class="lg-wrap sn-wrap">
-      <div class="sn-head">
-        <div class="sn-mo">
-          <button class="sn-nav" id="sn-prev" aria-label="이전 달">‹</button>
-          <select class="en-in sn-sel" id="sn-msel">
-            ${months.map(m => `<option value="${m}" ${m === mk ? 'selected' : ''}>${snapMonthLabel(m)}</option>`).join('')}
-          </select>
-          <button class="sn-nav" id="sn-next" aria-label="다음 달">›</button>
-          <span class="sn-badge ${filled ? 'ok' : 'new'}">${filled ? '입력함' : '미입력'}</span>
-        </div>
-        <div class="sn-acts">
-          <button class="lg-reset" id="sn-fill">전월 값 채우기</button>
-          <button class="bk-add" id="sn-save">저장</button>
-        </div>
+    <div class="sn-wrap">
+      <div class="sn-mo">
+        <button class="sn-nav" id="sn-prev" aria-label="이전 달">‹</button>
+        <b class="sn-mlabel">${snapMonthLabel(mk)}</b>
+        <button class="sn-nav" id="sn-next" aria-label="다음 달">›</button>
       </div>
-
-      <div class="sn-card">
-        ${clsOrder.map(c => `
-          <div class="sn-cls"><i style="background:${CAT_COLORS[c] || 'var(--text-faint)'}"></i>${enEsc(c)}</div>
-          ${byCls[c].map(rowHtml).join('')}`).join('')}
-        <div class="sn-total"><span>합계</span><b id="sn-total"></b></div>
+      ${clsOrder.map(c => `
+        <div class="sn-cls">${enEsc(c)}</div>
+        ${byCls[c].map(rowHtml).join('')}`).join('')}
+      <div class="sn-total"><span>합계</span><b id="sn-total"></b></div>
+      <div class="sn-acts">
+        <button class="sn-fill" id="sn-fill">전월 값 채우기</button>
+        <button class="sn-save" id="sn-save">저장</button>
       </div>
     </div>`;
 
@@ -171,7 +155,6 @@ async function renderSnapshotPage(body) {
   const go = (m) => { SNAP.month = m; SNAP.extra = []; renderSnapshotPage(body); };
   document.getElementById('sn-prev').addEventListener('click', () => go(snapMonthShift(mk, -1)));
   document.getElementById('sn-next').addEventListener('click', () => go(snapMonthShift(mk, 1)));
-  document.getElementById('sn-msel').addEventListener('change', (e) => go(e.target.value));
 
   body.querySelectorAll('.sn-in').forEach(el => {
     el.addEventListener('input', sumUp);
