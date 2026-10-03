@@ -91,10 +91,11 @@ function destroyPageCharts() {
   state.charts = {};
 }
 
-/* 이번 달 자산 스냅샷이 아직 비어 있으면 탭에 빨간 점을 띄운다.
+/* 이번 달 자산 스냅샷이 아직 비어 있으면 알린다 — 탭의 빨간 점, 홈 '확인할 것', 폰 홈 배너가 모두 이 한 기준을 쓴다.
+   스냅샷은 달 초에 '이번 달' 칸에 적는다(결산 화면도 이번 달을 먼저 연다).
    달이 바뀌면(1일부터) 자동으로 켜지고, 그 달 값을 한 줄이라도 넣으면 사라진다. */
-function snapNeedsInput() {
-  const rows = (state.data && state.data.assetRows) || [];
+function snapNeedsInput(data) {
+  const rows = ((data || state.data) && (data || state.data).assetRows) || [];
   if (!rows.length) return false;
   const now = new Date();
   const k = now.getFullYear() * 100 + (now.getMonth() + 1);

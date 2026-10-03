@@ -10,3 +10,6 @@ CREATE TRIGGER trg_study_cards_touch BEFORE UPDATE ON public.study_cards FOR EAC
 -- 코알라 앱 변경 반영 (2026-09-28)
 CREATE TRIGGER media_routine_sync AFTER INSERT OR DELETE OR UPDATE OF status, finished_on, kind, title ON public.media_items FOR EACH ROW EXECUTE FUNCTION media_routine_trg();
 CREATE TRIGGER routine_media_relink AFTER UPDATE OF media_kinds, started_on, ended_on ON public.routines FOR EACH ROW EXECUTE FUNCTION routine_media_relink();
+
+-- 사용처 그룹 자동 채우기 (2026-10-03)
+CREATE TRIGGER tx_fill_merchant_group BEFORE INSERT ON public.transactions FOR EACH ROW EXECUTE FUNCTION tx_fill_merchant_group();

@@ -268,15 +268,13 @@ function apHomePage(main, data) {
 
   /* 순자산 — 마지막 월말 결산 기준 */
   const d = computeDerived({ ...data, assetRows: (data.assetRows || []).filter(r => assetMonthKey(r.date) <= now.getFullYear() * 100 + now.getMonth() + 1) });
-  /* 지난달 결산을 아직 안 했으면(1~10일) 기록하라고 알려 준다 */
-  const pm = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-  const pNum = pm.getFullYear() * 100 + pm.getMonth() + 1;
-  const needSnap = now.getDate() <= 10 && !(data.assetRows || []).some(r => assetMonthKey(String(r.date || '')) === pNum);
+  /* 이번 달 자산 스냅샷을 아직 안 적었으면(1일부터 적을 때까지) 홈 맨 위에서 알려 준다 */
+  const needSnap = snapNeedsInput(data);
 
   const recent = [...ledger].filter(r => r.dayKey <= today).sort(apSortDesc).slice(0, 6);
 
   main.innerHTML = `
-    ${needSnap ? `<button class="ap-nudge" data-ap="snap"><b>${pm.getMonth() + 1}월 결산을 아직 안 했어요</b><span>계좌 잔액 적기 ›</span></button>` : ''}
+    ${needSnap ? `<button class="ap-nudge" data-ap="snap"><b>${now.getMonth() + 1}월 자산 스냅샷을 아직 안 적었어요</b><span>계좌 잔액 적기 ›</span></button>` : ''}
     <section class="ap-hero">
       <div class="ap-hl">${now.getMonth() + 1}월 남은 예산 <span>${daysLeft}일 남음</span></div>
       <div class="ap-big mono ${left < 0 ? 'neg' : ''}">${left < 0 ? '−' : ''}${wonComma(Math.abs(left))}<small>원</small></div>

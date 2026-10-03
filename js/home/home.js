@@ -442,11 +442,8 @@ function hmChecks(data) {
     if (seen[k]) dup++; else seen[k] = 1;
   });
   if (dup) out.push({ text: `중복 의심 ${dup}건`, go: 'entry/ledger' });
-  /* 3) 지난달 월말 결산(스냅샷)을 아직 안 적었다 — 매달 1~10일 사이에만 알린다 */
-  const pm = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-  const pNum = pm.getFullYear() * 100 + pm.getMonth() + 1;
-  const hasPrev = (data.assetRows || []).some(r => assetMonthKey(String(r.date || '')) === pNum);
-  if (now.getDate() <= 10 && !hasPrev) out.push({ text: `${pm.getMonth() + 1}월 결산 안 함`, go: 'entry/snapshot' });
+  /* 3) 이번 달 자산 스냅샷(계좌 잔액)을 아직 안 적었다 — 1일부터 적을 때까지 */
+  if (snapNeedsInput(data)) out.push({ text: `${now.getMonth() + 1}월 자산 스냅샷 입력하기`, go: 'entry/snapshot' });
   /* 4) 토스 수집이 하루 넘게 멈췄다 */
   const s = data.toss && data.toss.summary;
   if (s) {

@@ -307,3 +307,27 @@ begin
    where routine_logs.media_id is not null;              -- 자동 체크끼리만 바꿔 끼운다
 end $function$
 ;
+
+-- 2026-10-03 사용처 그룹 자동 채우기 (migrations/20261003000001)
+CREATE OR REPLACE FUNCTION public.tx_fill_merchant_group()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SET search_path TO ''
+AS $function$
+begin
+  if new.merchant_group is null and coalesce(trim(new.merchant), '') <> '' then
+    select m.merchant_group into new.merchant_group
+      from public.merchants m
+     where m.owner_id = new.owner_id and m.name = trim(new.merchant) and m.merchant_group is not null
+     limit 1;
+    if new.merchant_group is null then
+      select t.merchant_group into new.merchant_group
+        from public.transactions t
+       where t.owner_id = new.owner_id and t.merchant = new.merchant and t.merchant_group is not null
+       order by t.date desc, t.id desc
+       limit 1;
+    end if;
+  end if;
+  return new;
+end $function$
+;
