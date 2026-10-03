@@ -138,10 +138,12 @@ async function renderSnapshotPage(body) {
       ${clsOrder.map(c => `
         <div class="sn-cls">${enEsc(c)}</div>
         ${byCls[c].map(rowHtml).join('')}`).join('')}
-      <div class="sn-total"><span>합계</span><b id="sn-total"></b></div>
-      <div class="sn-acts">
-        <button class="sn-fill" id="sn-fill">전월 값 채우기</button>
-        <button class="sn-save" id="sn-save">저장</button>
+      <div class="sn-foot">
+        <div class="sn-total"><span>합계</span><b id="sn-total"></b></div>
+        <div class="sn-acts">
+          <button class="sn-fill" id="sn-fill">전월 값 채우기</button>
+          <button class="sn-save" id="sn-save">저장</button>
+        </div>
       </div>
     </div>`;
 

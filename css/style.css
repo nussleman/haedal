@@ -1706,24 +1706,25 @@ body{font-variant-numeric:tabular-nums;}
 /* ---------- 밸류에이션 밴드 ---------- */
 
 /* ---------- 현황 › 자산 스냅샷 ---------- */
-.sn-wrap{max-width:420px;margin:0 auto;padding:28px 0 60px;}
-.sn-mo{display:flex;align-items:center;justify-content:center;gap:18px;margin-bottom:22px;}
+.sn-wrap{max-width:420px;margin:0 auto;padding:4px 0 24px;}
+.sn-mo{display:flex;align-items:center;justify-content:center;gap:18px;margin-bottom:6px;}
 .sn-mlabel{font-family:var(--mono);font-size:var(--fs-lg);color:var(--text);font-weight:600;min-width:96px;text-align:center;}
 .sn-nav{width:32px;height:32px;border:none;border-radius:50%;background:transparent;color:var(--text-dim);
   cursor:pointer;font-size:var(--fs-lg);line-height:1;}
 .sn-nav:hover{background:var(--panel-2);color:var(--text);}
-.sn-cls{font-size:var(--fs-xs);color:var(--text-faint);margin:18px 0 4px;}
-.sn-row{display:flex;align-items:center;gap:12px;height:44px;border-bottom:1px solid var(--border);cursor:text;}
+.sn-cls{font-size:var(--fs-xs);color:var(--text-faint);margin:12px 0 0;}
+.sn-row{display:flex;align-items:center;gap:12px;height:34px;border-bottom:1px solid var(--border);cursor:text;}
 .sn-row .ac{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:var(--fs-base);color:var(--text);}
-.sn-in{flex:0 1 180px;width:180px;text-align:right;font-family:var(--mono);height:34px;padding:0 2px;
+.sn-in{flex:0 1 180px;width:180px;text-align:right;font-family:var(--mono);height:30px;min-height:0;padding:0 2px;
   border:none;background:transparent;box-shadow:none;border-radius:0;}
 .sn-in:focus{outline:none;border-bottom:1px solid var(--accent-fill);}
-.sn-total{display:flex;align-items:baseline;justify-content:space-between;margin-top:18px;font-size:var(--fs-sm);color:var(--text-dim);}
+.sn-foot{position:sticky;bottom:0;margin-top:8px;padding:8px 0 12px;background:var(--bg);}
+.sn-total{display:flex;align-items:baseline;justify-content:space-between;font-size:var(--fs-sm);color:var(--text-dim);}
 .sn-total b{font-family:var(--mono);font-size:var(--fs-lg);color:var(--text);}
-.sn-acts{display:flex;gap:10px;margin-top:22px;}
-.sn-fill{flex:1;height:42px;border:1px solid var(--border);border-radius:var(--r-md);background:transparent;color:var(--text-dim);cursor:pointer;}
+.sn-acts{display:flex;gap:10px;margin-top:8px;}
+.sn-fill{flex:1;height:40px;border:1px solid var(--border);border-radius:var(--r-md);background:transparent;color:var(--text-dim);cursor:pointer;}
 .sn-fill:hover{color:var(--text);border-color:var(--border-strong);}
-.sn-save{flex:1;height:42px;border:none;border-radius:var(--r-md);background:var(--accent-fill);color:var(--ink-on-accent);font-weight:600;cursor:pointer;}
+.sn-save{flex:1;height:40px;border:none;border-radius:var(--r-md);background:var(--accent-fill);color:var(--ink-on-accent);font-weight:600;cursor:pointer;}
 .sn-save:disabled{opacity:.6;}
 }
 
@@ -2902,6 +2903,7 @@ body.kb-on .ap-bar,body.ap-sheet-on .ap-bar{display:none;}
 .ap-foot{margin:18px 4px;font-size:12.5px;line-height:1.7;color:var(--text-faint);}
 .ap-snap .lg-wrap{padding:0;}
 .ap-snap .sn-wrap{padding:6px 2px 40px;}
+.ap-snap .sn-foot{position:static;background:none;}
 
 /* --- 기록 고치기 시트 --- */
 #ap-sheet{position:fixed;left:0;right:0;top:var(--vvt,0px);height:var(--vvh,100dvh);z-index:250;}
