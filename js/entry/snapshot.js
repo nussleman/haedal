@@ -2,7 +2,7 @@
    달마다 계좌 잔액을 한 번 적어 두는 자리. Supabase asset_snapshots 가 유일한 원본이고,
    여기서 저장하면 자산·흐름·목표 화면이 같은 값을 그대로 쓴다. (시트는 더 이상 쓰지 않는다) */
 
-const SNAP = { rows: [], accounts: [], accountsLoaded: false, month: null, uid: null, loaded: false, saving: false, extra: [], err: null };
+const SNAP = { savedAt: {}, rows: [], accounts: [], accountsLoaded: false, month: null, uid: null, loaded: false, saving: false, extra: [], err: null };
 
 /* 계좌 목록은 accounts 테이블이 원본이다 (목록 관리 › 계좌에서 고친다).
    과거 스냅샷에만 있고 목록에는 없는 계좌도 빠뜨리지 않고 함께 보여준다. */
@@ -45,13 +45,18 @@ async function snapLoad(force) {
     SNAP.uid = data && data.user ? data.user.id : null;
   }
   const { data, error } = await sb.from('asset_snapshots')
-    .select('id,month,asset_class,account,amount')
+    .select('id,month,asset_class,account,amount,created_at')
     .order('month', { ascending: true });
   if (error) throw new Error(error.message);
   SNAP.rows = (data || []).map(r => ({
     id: r.id, mk: snapMonthKeyOf(r.month), cls: r.asset_class,
-    account: r.account, amount: Number(r.amount) || 0
+    account: r.account, amount: Number(r.amount) || 0, at: r.created_at
   }));
+  /* 달마다 마지막으로 저장한 때 — 저장할 때 설정(app_settings)에 적어 둔다.
+     예전 달은 기록이 처음 들어간 때로 대신한다 */
+  const saved = (await appSettingLoad('snapshot_saved_at')) || {};
+  Object.keys(SNAP.savedAt).forEach(k => { if (!saved[k] || SNAP.savedAt[k] > saved[k]) saved[k] = SNAP.savedAt[k]; });
+  SNAP.savedAt = saved;
   SNAP.loaded = true;
 }
 
@@ -70,6 +75,15 @@ function snapMonthRows(mk) {
   const m = {};
   SNAP.rows.forEach(r => { if (r.mk === mk) m[r.account] = r; });
   return m;
+}
+/* '10월 3일 오후 3:47 저장' — 그 달을 언제 적었는지 */
+function snapSavedLabel(mk) {
+  let at = SNAP.savedAt[mk];
+  if (!at) SNAP.rows.forEach(r => { if (r.mk === mk && r.at && (!at || r.at > at)) at = r.at; });
+  if (!at) return '';
+  const d = new Date(at);
+  const t = d.toLocaleTimeString('ko-KR', { hour: 'numeric', minute: '2-digit' });
+  return `${d.getMonth() + 1}월 ${d.getDate()}일 ${t} 저장`;
 }
 function snapMonthTotal(mk) {
   return SNAP.rows.reduce((a, r) => a + (r.mk === mk ? r.amount : 0), 0);
@@ -135,6 +149,7 @@ async function renderSnapshotPage(body) {
         <b class="sn-mlabel">${snapMonthLabel(mk)}</b>
         <button class="sn-nav" id="sn-next" aria-label="다음 달">›</button>
       </div>
+      <div class="sn-when ${snapSavedLabel(mk) ? 'ok' : ''}">${snapSavedLabel(mk) || '아직 입력 안 함'}</div>
       ${clsOrder.map(c => `
         <div class="sn-cls">${enEsc(c)}</div>
         ${byCls[c].map(rowHtml).join('')}`).join('')}
@@ -209,6 +224,8 @@ async function snapSave(body) {
       const { error } = await sb.from('asset_snapshots').delete().in('id', dels);
       if (error) throw new Error(error.message);
     }
+    SNAP.savedAt = { ...SNAP.savedAt, [mk]: new Date().toISOString() };
+    await appSettingSave('snapshot_saved_at', SNAP.savedAt, true);
     await snapLoad(true);
     SNAP.extra = [];
     snapPushToDashboard();

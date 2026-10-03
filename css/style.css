@@ -1712,6 +1712,8 @@ body{font-variant-numeric:tabular-nums;}
 .sn-nav{width:32px;height:32px;border:none;border-radius:50%;background:transparent;color:var(--text-dim);
   cursor:pointer;font-size:var(--fs-lg);line-height:1;}
 .sn-nav:hover{background:var(--panel-2);color:var(--text);}
+.sn-when{text-align:center;font-size:var(--fs-xs);color:var(--accent-text);margin:-2px 0 4px;}
+.sn-when.ok{color:var(--income-text);}
 .sn-cls{font-size:var(--fs-xs);color:var(--text-faint);margin:12px 0 0;}
 .sn-row{display:flex;align-items:center;gap:12px;height:34px;border-bottom:1px solid var(--border);cursor:text;}
 .sn-row .ac{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:var(--fs-base);color:var(--text);}
