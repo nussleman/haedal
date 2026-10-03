@@ -149,7 +149,6 @@ async function renderSnapshotPage(body) {
         <b class="sn-mlabel">${snapMonthLabel(mk)}</b>
         <button class="sn-nav" id="sn-next" aria-label="다음 달">›</button>
       </div>
-      <div class="sn-when ${snapSavedLabel(mk) ? 'ok' : ''}">${snapSavedLabel(mk) || '아직 입력 안 함'}</div>
       ${clsOrder.map(c => `
         <div class="sn-cls">${enEsc(c)}</div>
         ${byCls[c].map(rowHtml).join('')}`).join('')}
@@ -159,6 +158,8 @@ async function renderSnapshotPage(body) {
           <button class="sn-fill" id="sn-fill">전월 값 채우기</button>
           <button class="sn-save" id="sn-save">저장</button>
         </div>
+        <div class="sn-when ${snapSavedLabel(mk) ? 'ok' : ''}">${snapSavedLabel(mk) || '아직 입력 안 함'}</div>
+
       </div>
     </div>`;
 
