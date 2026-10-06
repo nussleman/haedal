@@ -292,6 +292,22 @@ textarea.in{height:auto;min-height:74px;padding:9px 12px;line-height:1.5;resize:
 .two{display:grid;grid-template-columns:1fr 1fr;gap:22px;}
 .modal-ft{display:flex;align-items:center;gap:8px;padding:12px 18px;border-top:1px solid var(--border);}
 .modal-ft .meta{font-size:var(--fs-xs);color:var(--text-faint);margin-right:auto;}
+.modal-ft .meta kbd{font-family:var(--mono);font-size:10px;border:1px solid var(--border-strong);border-radius:4px;padding:1px 4px;margin:0 1px;}
+/* 키보드로 다닐 때 지금 어디에 있는지 — 마우스 클릭에는 안 뜬다 */
+.modal :is(button,.chip,.tog):focus-visible{outline:2px solid var(--accent-fill);outline-offset:2px;}
+.lab .auto{color:var(--accent-text);margin-left:6px;}
+.lab .auto:empty{display:none;}
+/* 사용처 추천 — 자주·최근 쓴 곳, 금액이 비슷한 곳이 위로 */
+.sug-wrap{position:relative;}
+.sug{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:5;background:var(--panel);border:1px solid var(--border-strong);
+  border-radius:var(--r-md);box-shadow:0 12px 30px -12px rgba(0,0,0,.4);padding:4px;max-height:262px;overflow-y:auto;}
+.sug-hd{font-size:var(--fs-tiny);color:var(--text-faint);padding:4px 8px 3px;}
+.sug-it{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:var(--r-sm);cursor:pointer;font-size:var(--fs-sm);}
+.sug-it.hi{background:var(--accent-bg);box-shadow:inset 0 0 0 1px var(--accent-line);}
+@media (hover:hover){ .sug-it:hover{background:var(--accent-bg);} }
+.sug-it b{font-weight:600;color:var(--text);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.sug-it .sc{color:var(--text-faint);font-size:var(--fs-xs);white-space:nowrap;}
+.sug-it .sa{font-family:var(--mono);color:var(--text-dim);font-size:var(--fs-xs);white-space:nowrap;}
 @media (max-width:760px){
   #ov{padding:0;align-items:flex-end;}
   .modal{border-radius:16px 16px 0 0;max-height:92vh;overflow-y:auto;}
@@ -386,7 +402,7 @@ function toast(msg) {
 }
 
 const CAT_EMOJI = { '식사': '🍽️', '카페': '☕', '술': '🍻', '문화·여가': '🎬', '여행': '⛺', '교통': '🚌',
-  '선물': '🎁', '생활': '🧺', '기타': '🐾' };
+  '선물': '🎁', '생활': '🧺', '간식': '🍦', '기타': '🐾' };
 const catEmoji = (c) => CAT_EMOJI[c] || '🐾';
 const DEPOSIT_EMOJI = '🦴';
 const KIND_SIGN = { '지출': -1, '입금': 1, '수입': 1 };
@@ -895,10 +911,106 @@ function pageSetCats(host) {
   $('#s-new', host).addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) add(); });
 }
 
-/* ================= 기록 창 (새로 · 수정) ================= */
+/* ================= 기록 창 (새로 · 수정) =================
+   키보드만으로 끝까지 적을 수 있게 만든다.
+   · Tab / Shift+Tab : 칸 이동 (창 밖으로 나가지 않고 처음↔끝을 돈다)
+   · 화살표 : 종류·분류·입금자·날짜 칩 사이를 옮겨 다니며 바로 고른다. 사용처 칸에선 추천 목록을 오르내리고,
+              날짜 칸에선 하루씩 옮긴다.
+   · Enter : 금액·사용처·날짜 칸에선 다음 칸으로, 추천 목록이 열려 있으면 그 사용처를 고른다.
+   · Ctrl(⌘)+Enter : 어디서든 기록(저장). Esc : 추천 목록 → 창 순서로 닫는다.
+   사용처를 적으면 예전 기록에서 종류·분류를 찾아 자동으로 채운다 — 같은 곳이라도 금액이 비슷했던 분류를 고른다
+   (메가박스 26,000원 = 문화·여가, 9,000원 = 간식). 예전 기록이 없으면 이름(카페·택시·호텔…)으로 짐작한다.
+   손으로 고른 분류·종류는 자동이 덮어쓰지 않는다. */
+
+/* 이름으로 분류 짐작 — 앞에 있는 것이 먼저. 분류 목록에 없는 이름은 건너뛴다. */
+const CAT_HINTS = [
+  ['카페', /카페|커피|coffee|cafe|스타벅스|starbucks|투썸|이디야|메가커피|빽다방|컴포즈|폴바셋|블루보틀|할리스|공차|커피빈|파스쿠찌|엔제리너스/i],
+  ['간식', /베이커리|제과|빵|배스킨|베라|아이스크림|젤라또|디저트|도넛|던킨|크리스피|케이크|마카롱|와플|붕어빵|탕후루|팝콘|떡집|씨유|^cu\b|gs25|세븐일레븐|이마트24|편의점/i],
+  ['술', /술집|맥주|호프|포차|이자카야|펍|\bpub\b|\bbar\b|와인|칵테일|막걸리|소주|하이볼/i],
+  ['문화·여가', /영화|cgv|메가박스|롯데시네마|노래|공연|뮤지컬|연극|전시|미술관|박물관|티켓|인터파크|볼링|방탈출|pc방|보드게임|뽑기|인형|오락|놀이공원|에버랜드|롯데월드|아쿠아리움/i],
+  ['여행', /호텔|모텔|펜션|숙소|에어비앤비|airbnb|리조트|게스트하우스|항공|airline|여기어때|야놀자|글램핑|캠핑/i],
+  ['교통', /택시|카카오\s?t|버스|지하철|ktx|srt|코레일|기차|주차|주유|칼텍스|에너지|s-?oil|톨게이트|하이패스|쏘카|그린카|따릉이|킥보드/i],
+  ['선물', /선물|꽃집|플라워|flower|기프트|gift/i],
+  ['생활', /다이소|문고|서점|교보|올리브영|이마트|홈플러스|롯데마트|쿠팡|약국|세탁|마트/i],
+  ['식사', /식당|밥|국밥|칼국수|육칼|라멘|라면|우동|소바|초밥|스시|돈까스|돈가스|김밥|분식|떡볶이|치킨|피자|버거|맥도날드|롯데리아|맘스터치|고기|갈비|삼겹|곱창|족발|보쌈|냉면|짜장|중국집|마라|쌀국수|파스타|레스토랑|비스트로|브런치|샐러드|샤브|훠궈|덮밥|정식|한식|양식|일식|중식|식당|키친|kitchen/i]
+];
+const INCOME_HINT = /이자|환불|캐시백|리워드|포인트\s?적립|취소/;
+
+const norm = (s) => String(s || '').trim().toLowerCase().replace(/\s+/g, ' ');
+/* 초성만 쳐도(ㅂㅅㄹ) 찾는다 */
+const CHO = 'ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ';
+const choOf = (s) => [...String(s)].map(ch => { const c = ch.charCodeAt(0) - 0xac00; return c >= 0 && c < 11172 ? CHO[Math.floor(c / 588)] : ch.toLowerCase(); }).join('').replace(/\s+/g, '');
+
+/* 사용처별 예전 기록 묶음 — 기록이 바뀌면(S.tx 가 새 배열) 다시 만든다 */
+let MIDX = { tx: null, list: [] };
+function merchantIndex() {
+  if (MIDX.tx === S.tx) return MIDX.list;
+  const m = new Map();
+  S.tx.forEach(r => {
+    if (!r.merchant || r.kind === '입금') return;
+    const k = norm(r.merchant);
+    let e = m.get(k);
+    if (!e) { e = { key: k, name: r.merchant, cho: choOf(r.merchant), n: 0, last: '', rows: [] }; m.set(k, e); }
+    e.n++; e.rows.push(r);
+    if (r.date > e.last) { e.last = r.date; e.name = r.merchant; }
+  });
+  MIDX = { tx: S.tx, list: [...m.values()] };
+  return MIDX.list;
+}
+const daysAgo = (k) => Math.max(0, (new Date(todayKey() + 'T00:00:00') - new Date(k + 'T00:00:00')) / 864e5);
+/* 금액이 얼마나 가까운가 0~1 (두 배 차이면 약 0.4) */
+const nearAmt = (a, b) => (a > 0 && b > 0) ? 1 / (1 + Math.abs(Math.log(a / b)) * 2) : 0;
+
+/* 한 사용처의 예전 기록에서 종류·분류 고르기 — 횟수·최근·금액이 비슷한 기록에 무게를 둔다 */
+function guessFrom(e, amount) {
+  const g = {};
+  e.rows.forEach(r => {
+    const k = r.kind + '|' + (r.category || '');
+    const w = 1 + 1 / (1 + daysAgo(r.date) / 60) + (amount ? nearAmt(amount, Number(r.amount)) * 3 : 0);
+    g[k] = (g[k] || 0) + w;
+  });
+  const [kind, category] = Object.entries(g).sort((a, b) => b[1] - a[1])[0][0].split('|');
+  /* 보여 줄 금액도 고른 분류의 기록에서 (메가박스 간식이면 9,800 · 문화·여가면 26,000) */
+  const amts = e.rows.filter(r => r.kind === kind && (r.category || '') === category).map(r => Number(r.amount)).sort((a, b) => a - b);
+  return { kind, category: category || null, typical: amts[Math.floor(amts.length / 2)], from: 'history' };
+}
+function guessByName(name) {
+  const cats = S.book.categories || [];
+  if (INCOME_HINT.test(name)) return { kind: '수입', category: null, from: 'name' };
+  const hit = CAT_HINTS.find(([c, re]) => cats.includes(c) && re.test(name));
+  return hit ? { kind: '지출', category: hit[0], from: 'name' } : null;
+}
+function guessMerchant(name, amount) {
+  const k = norm(name);
+  if (!k) return null;
+  const e = merchantIndex().find(x => x.key === k);
+  return e ? guessFrom(e, amount) : guessByName(name);
+}
+
+/* 추천 목록 — 글자가 없으면 자주·최근·금액 비슷한 곳, 있으면 이름(초성 포함)이 맞는 곳 */
+function suggestMerchants(q, amount) {
+  const nq = norm(q), choQ = /^[ㄱ-ㅎ]+$/.test(nq.replace(/\s/g, '')) ? nq.replace(/\s/g, '') : null;
+  return merchantIndex().map(e => {
+    let s = Math.log2(1 + e.n) + 1.5 / (1 + daysAgo(e.last) / 30);
+    if (amount) s += 2.5 * Math.max(...e.rows.map(r => nearAmt(amount, Number(r.amount))));
+    if (nq) {
+      let m = 0;
+      if (e.key === nq) m = 6;
+      else if (e.key.startsWith(nq)) m = 4;
+      else if (e.key.split(' ').some(w => w.startsWith(nq))) m = 3;
+      else if (e.key.includes(nq)) m = 2;
+      else if (choQ && e.cho.includes(choQ)) m = e.cho.startsWith(choQ) ? 2.5 : 1.5;
+      if (!m) return null;
+      s += m * 3;
+    }
+    return { e, s };
+  }).filter(Boolean).sort((a, b) => b.s - a.s).slice(0, 7).map(x => x.e);
+}
+
 function freshDraft(keep) {
   return { id: null, kind: (keep && keep.kind) || '지출', amount: '', category: null, merchant: '', memo: '',
-           good: null, depositor: (keep && keep.depositor) || PEOPLE[0], date: (keep && keep.date) || todayKey() };
+           good: null, depositor: (keep && keep.depositor) || PEOPLE[0], date: (keep && keep.date) || todayKey(),
+           autoCat: null, kindTouched: false };
 }
 function openForm(id, date) {
   if (!S.canEdit) return;
@@ -907,98 +1019,267 @@ function openForm(id, date) {
     if (!r) return;
     if (r.haedal_tx_id) { toast('🦦 해달에서 적은 기록이에요 — 해달에서 고치면 여기도 바뀌어요'); return; }
     S.form = { id, kind: r.kind, amount: String(Math.round(r.amount)), category: r.category, merchant: r.merchant || '',
-               memo: r.memo || '', good: r.good_bad, depositor: r.depositor || PEOPLE[0], date: r.date };
+               memo: r.memo || '', good: r.good_bad, depositor: r.depositor || PEOPLE[0], date: r.date,
+               autoCat: null, kindTouched: true };
   } else {
     if (!S.draft) S.draft = freshDraft();
     if (date) S.draft.date = date;
     S.form = S.draft;
   }
-  drawForm(true);
+  drawForm('open');
 }
-function closeForm() { $('#ov').hidden = true; $('#ov').innerHTML = ''; document.body.style.overflow = ''; S.form = null; }
+function closeForm() { $('#ov').hidden = true; $('#ov').innerHTML = ''; $('#ov').onkeydown = null; document.body.style.overflow = ''; S.form = null; }
 
-function drawForm(focus) {
+/* 다시 그려도 키보드 위치가 그대로 있도록, 지금 칸을 가리키는 선택자 */
+function focusSel(el) {
+  if (!el || !$('#ov').contains(el)) return null;
+  if (el.id) return '#' + el.id;
+  for (const a of ['k', 'c', 'u', 'day']) if (el.dataset && el.dataset[a] != null) return `[data-${a}="${CSS.escape(el.dataset[a])}"]`;
+  return null;
+}
+/* 창 안에서 Tab 으로 갈 수 있는 것들 (화면 순서) */
+const tabbables = () => $$('.modal button, .modal input, .modal textarea', $('#ov'))
+  .filter(el => !el.disabled && el.tabIndex >= 0 && el.offsetParent !== null);
+function focusNext(from) {
+  const list = tabbables(), i = list.indexOf(from);
+  const nx = list[i + 1];
+  if (nx) nx.focus();
+}
+
+/* 칩 묶음을 화살표로 — 한 묶음에 Tab 자리는 하나(고른 것), 화살표로 옮기면 바로 고른다(follow) */
+function rovingGroup(box, follow) {
+  if (!box) return;
+  const items = $$('button', box);
+  if (!items.length) return;
+  const cur = items.findIndex(b => b.classList.contains('on') || b.getAttribute('aria-pressed') === 'true');
+  items.forEach((b, i) => { b.tabIndex = i === (cur < 0 ? 0 : cur) ? 0 : -1; });
+  box.addEventListener('keydown', e => {
+    const i = items.indexOf(document.activeElement);
+    if (i < 0 || e.altKey || e.ctrlKey || e.metaKey) return;
+    const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
+    let j;
+    if (step) j = (i + step + items.length) % items.length;
+    else if (e.key === 'Home') j = 0;
+    else if (e.key === 'End') j = items.length - 1;
+    else return;
+    e.preventDefault();
+    items[i].tabIndex = -1; items[j].tabIndex = 0; items[j].focus();
+    if (follow) items[j].click();
+  });
+}
+
+function drawForm(mode) {
   const d = S.form, isEdit = !!d.id;
+  const keep = mode === 'open' ? null : (typeof mode === 'string' ? mode : focusSel(document.activeElement));
   const cats = S.book.categories || [];
-  const merchants = [...new Set(S.tx.filter(r => r.merchant).map(r => r.merchant))].slice(0, 300);
   const r = isEdit ? S.tx.find(x => x.id === d.id) : null;
+  const mac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
   const ov = $('#ov');
   ov.hidden = false;
   document.body.style.overflow = 'hidden';
+  const autoNote = () => d.autoCat === 'history' ? '· 예전 기록에서 자동' : d.autoCat === 'name' ? '· 이름으로 짐작' : '';
   ov.innerHTML = `
-    <div class="modal" role="dialog" aria-modal="true">
-      <div class="modal-hd"><h3>${isEdit ? '기록 수정' : '기록'}</h3><button class="x" id="f-x" aria-label="닫기">×</button></div>
+    <div class="modal" role="dialog" aria-modal="true" aria-label="${isEdit ? '기록 수정' : '기록'}">
+      <div class="modal-hd"><h3>${isEdit ? '기록 수정' : '기록'}</h3><button class="x" id="f-x" aria-label="닫기" tabindex="-1">×</button></div>
       <div class="modal-bd"><div class="two">
         <div>
-          <div class="seg" id="f-kind">${['지출', '입금', '수입'].map(k => `<button data-k="${k}" class="${d.kind === k ? 'on' : ''}">${k}</button>`).join('')}</div>
-          <label class="lab">금액</label>
+          <div class="seg" id="f-kind" role="radiogroup" aria-label="종류">${['지출', '입금', '수입'].map(k => `<button data-k="${k}" role="radio" aria-checked="${d.kind === k}" class="${d.kind === k ? 'on' : ''}">${k}</button>`).join('')}</div>
+          <label class="lab" for="f-amt">금액</label>
           <input class="amt" id="f-amt" inputmode="numeric" placeholder="0" value="${d.amount ? comma(d.amount) : ''}" autocomplete="off">
           ${d.kind === '입금' ? `
             <label class="lab">누가 넣었나요</label>
-            <div class="chips" id="f-who">${PEOPLE.map(who => `<button class="chip ${d.depositor === who ? 'on' : ''}" data-u="${esc(who)}">${esc(who)}</button>`).join('')}</div>
+            <div class="chips" id="f-who" role="radiogroup">${PEOPLE.map(who => `<button class="chip ${d.depositor === who ? 'on' : ''}" role="radio" aria-checked="${d.depositor === who}" data-u="${esc(who)}">${esc(who)}</button>`).join('')}</div>
           ` : `
-            <label class="lab">분류</label>
-            <div class="chips" id="f-cat">${cats.map(c => `<button class="chip ${d.category === c ? 'on' : ''}" data-c="${esc(c)}">${catEmoji(c)} ${esc(c)}</button>`).join('')}</div>
+            <label class="lab" for="f-merch">${d.kind === '지출' ? '사용처' : '어디서'}</label>
+            <div class="sug-wrap">
+              <input class="in" id="f-merch" value="${esc(d.merchant)}" placeholder="${d.kind === '지출' ? '예) 북한산 입구 칼국수' : '예) 이자, 환불'}" autocomplete="off"
+                role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="f-sug">
+              <div class="sug" id="f-sug" role="listbox" hidden></div>
+            </div>
+            <label class="lab">분류<span class="auto" id="f-auto">${autoNote()}</span></label>
+            <div class="chips" id="f-cat" role="radiogroup" aria-label="분류">${cats.map(c => `<button class="chip ${d.category === c ? 'on' : ''}" role="radio" aria-checked="${d.category === c}" data-c="${esc(c)}">${catEmoji(c)} ${esc(c)}</button>`).join('')}</div>
           `}
         </div>
         <div>
-          ${d.kind === '입금' ? '' : `
-            <label class="lab">${d.kind === '지출' ? '사용처' : '어디서'}</label>
-            <input class="in" id="f-merch" list="f-merch-list" value="${esc(d.merchant)}" placeholder="${d.kind === '지출' ? '예) 북한산 입구 칼국수' : '예) 이자, 환불'}" autocomplete="off">
-            <datalist id="f-merch-list">${merchants.map(x => `<option value="${esc(x)}">`).join('')}</datalist>`}
-          <label class="lab">날짜</label>
+          <label class="lab" for="f-date">날짜</label>
           <div class="row">
             <input class="in" id="f-date" type="date" value="${d.date}">
-            <button class="chip ${d.date === shiftDay(todayKey(), -1) ? 'on' : ''}" data-day="-1">어제</button>
-            <button class="chip ${d.date === todayKey() ? 'on' : ''}" data-day="0">오늘</button>
+            <span class="chips" id="f-days" role="radiogroup" aria-label="빠른 날짜">
+              <button class="chip ${d.date === shiftDay(todayKey(), -1) ? 'on' : ''}" data-day="-1">어제</button>
+              <button class="chip ${d.date === todayKey() ? 'on' : ''}" data-day="0">오늘</button>
+            </span>
           </div>
-          <label class="lab">메모</label>
+          <label class="lab" for="f-memo">메모</label>
           <textarea class="in" id="f-memo" rows="3" placeholder="어디서 무엇을 했는지…">${esc(d.memo)}</textarea>
           ${d.kind === '지출' ? `
             <label class="lab">어땠나요</label>
-            <div class="chips">
+            <div class="chips" id="f-gb">
               <button class="tog g" id="f-good" aria-pressed="${d.good === 'Good'}">👍 좋은 지출</button>
               <button class="tog b" id="f-bad" aria-pressed="${d.good === 'Bad'}">👎 아쉬운 지출</button>
             </div>` : ''}
         </div>
-      </div><p class="err" id="f-err"></p></div>
+      </div><p class="err" id="f-err" role="alert"></p></div>
       <div class="modal-ft">
-        <span class="meta">${r ? `${esc(String(r.created_at).slice(0, 10))} 기록` : 'Enter 로 저장 · Esc 로 닫기'}</span>
+        <span class="meta">${r ? `${esc(String(r.created_at).slice(0, 10))} 기록 · ` : ''}<kbd>${mac ? '⌘' : 'Ctrl'}</kbd>+<kbd>Enter</kbd> 저장 · <kbd>Tab</kbd> 칸 · <kbd>←→</kbd> 고르기 · <kbd>Esc</kbd> 닫기</span>
         ${isEdit ? '<button class="btn danger" id="f-del">삭제</button>' : ''}
         <button class="btn" id="f-save">${isEdit ? '수정 저장' : '기록'}</button>
       </div>
     </div>`;
 
+  const amt = $('#f-amt'), mi = $('#f-merch');
   const sync = () => {
-    d.amount = digits($('#f-amt').value);
-    const mi = $('#f-merch'); if (mi) d.merchant = mi.value;
+    d.amount = digits(amt.value);
+    if (mi) d.merchant = mi.value;
     d.memo = $('#f-memo').value;
     d.date = $('#f-date').value || todayKey();
   };
+  const redraw = (sel) => { sync(); drawForm(sel); };
+
+  /* 분류 칩만 제자리에서 바꾼다 — 사용처를 치는 중에 창을 다시 그리면 한글 조합이 끊긴다 */
+  const paintCats = () => {
+    $$('#f-cat .chip').forEach(b => {
+      const on = b.dataset.c === d.category;
+      b.classList.toggle('on', on); b.setAttribute('aria-checked', on);
+    });
+    const items = $$('#f-cat .chip'), cur = items.findIndex(b => b.classList.contains('on'));
+    items.forEach((b, i) => { b.tabIndex = i === (cur < 0 ? 0 : cur) ? 0 : -1; });
+    const au = $('#f-auto'); if (au) au.textContent = autoNote();
+  };
+  /* 사용처(+금액)로 분류를 자동으로 — 손으로 고른 분류는 건드리지 않는다. 종류는 칸을 떠날 때 바꾼다. */
+  const autoFill = (withKind) => {
+    if (!mi) return;
+    const g = guessMerchant(mi.value, Number(digits(amt.value)));
+    if (d.category == null || d.autoCat) {
+      if (g && g.category && cats.includes(g.category)) { d.category = g.category; d.autoCat = g.from; }
+      else if (d.autoCat) { d.category = null; d.autoCat = null; }
+      paintCats();
+    }
+    if (withKind && g && !d.kindTouched && g.kind !== d.kind && g.kind !== '입금') {
+      d.kind = g.kind;
+      if (d.kind !== '지출') d.good = null;
+      return true;
+    }
+    return false;
+  };
+
   $('#f-x').addEventListener('click', closeForm);
   ov.onclick = (e) => { if (e.target === ov) closeForm(); };
+
+  /* 종류 */
   $$('#f-kind button').forEach(b => b.addEventListener('click', () => {
-    sync(); d.kind = b.dataset.k;
-    if (d.kind === '입금') d.category = null;
+    sync(); d.kind = b.dataset.k; d.kindTouched = true;
+    if (d.kind === '입금') { d.category = null; d.autoCat = null; }
     if (d.kind !== '지출') d.good = null;
-    drawForm(false);
+    drawForm();
   }));
-  const amt = $('#f-amt');
+  rovingGroup($('#f-kind'), true);
+
+  /* 금액 — Enter 는 다음 칸. 금액이 바뀌면 자동 분류도 다시 본다(같은 곳이라도 금액 따라 분류가 다를 수 있다) */
   moneyInput(amt);
-  $$('#f-cat .chip').forEach(b => b.addEventListener('click', () => { sync(); d.category = d.category === b.dataset.c ? null : b.dataset.c; drawForm(false); }));
-  $$('#f-who .chip').forEach(b => b.addEventListener('click', () => { sync(); d.depositor = b.dataset.u; drawForm(false); }));
-  $$('[data-day]').forEach(b => b.addEventListener('click', () => { sync(); d.date = shiftDay(todayKey(), Number(b.dataset.day)); drawForm(false); }));
-  const gb = (sel, v) => { const el = $(sel); if (el) el.addEventListener('click', () => { sync(); d.good = d.good === v ? null : v; drawForm(false); }); };
+  amt.addEventListener('input', () => { if (mi && mi.value && (d.autoCat || d.category == null)) autoFill(false); });
+  amt.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.isComposing && !e.ctrlKey && !e.metaKey) { e.preventDefault(); focusNext(amt); }
+  });
+
+  /* 사용처 + 추천 목록 */
+  if (mi) {
+    const box = $('#f-sug');
+    let list = [], hi = -1, moved = false;
+    const open = () => !box.hidden;
+    const close = () => { box.hidden = true; mi.setAttribute('aria-expanded', 'false'); mi.removeAttribute('aria-activedescendant'); hi = -1; moved = false; };
+    const paintHi = () => {
+      $$('.sug-it', box).forEach((el, i) => el.classList.toggle('hi', i === hi));
+      if (hi >= 0) { mi.setAttribute('aria-activedescendant', 'f-sug-' + hi); const el = $('#f-sug-' + hi); if (el) el.scrollIntoView({ block: 'nearest' }); }
+      else mi.removeAttribute('aria-activedescendant');
+    };
+    const render = () => {
+      const q = mi.value, a = Number(digits(amt.value));
+      list = suggestMerchants(q, a);
+      /* 이미 다 친 이름 하나만 맞으면 굳이 띄우지 않는다 */
+      if (!list.length || (list.length === 1 && list[0].key === norm(q))) { close(); return; }
+      hi = norm(q) ? 0 : -1; moved = false;
+      box.innerHTML = `<div class="sug-hd">${norm(q) ? '예전에 쓴 곳' : a ? '자주 쓴 곳 · 비슷한 금액 먼저' : '자주 · 최근 쓴 곳'} — ↑↓ 고르고 Enter</div>` +
+        list.map((e, i) => { const g = guessFrom(e, a);
+          return `<div class="sug-it" role="option" id="f-sug-${i}" data-i="${i}"><span class="em">${g.kind === '수입' ? '💰' : catEmoji(g.category)}</span>
+            <b>${esc(e.name)}</b><span class="sc">${esc(g.kind === '수입' ? '수입' : (g.category || ''))} · ${e.n}번</span><span class="sa">${comma(g.typical)}</span></div>`; }).join('');
+      box.hidden = false; mi.setAttribute('aria-expanded', 'true');
+      paintHi();
+    };
+    const pick = (i) => {
+      const e = list[i]; if (!e) return;
+      mi.value = e.name; d.merchant = e.name;
+      const g = guessFrom(e, Number(digits(amt.value)));
+      if ((d.category == null || d.autoCat) && g.category && cats.includes(g.category)) { d.category = g.category; d.autoCat = 'history'; }
+      if (!d.kindTouched && g.kind !== d.kind && g.kind !== '입금') { d.kind = g.kind; if (d.kind !== '지출') d.good = null; }
+      close();
+      /* 골랐으면 분류로 — 맞으면 Tab 으로 넘어가고, 틀리면 화살표로 바로 고친다 */
+      redraw(d.kind === '지출' || d.category ? '#f-cat .chip[tabindex="0"]' : '#f-date');
+    };
+    mi.addEventListener('focus', render);
+    mi.addEventListener('input', () => { autoFill(false); render(); });
+    mi.addEventListener('blur', () => setTimeout(() => {
+      if (!$('#ov').contains(mi)) return;
+      close();
+      /* 칸을 떠날 때 종류(지출↔수입)까지 맞춘다 — 창을 다시 그리니 지금 간 칸을 기억해 둔다 */
+      if (autoFill(true)) redraw();
+    }, 0));
+    box.addEventListener('mousedown', e => {
+      const it = e.target.closest('.sug-it'); if (!it) return;
+      e.preventDefault(); pick(Number(it.dataset.i));
+    });
+    mi.addEventListener('keydown', e => {
+      if (e.isComposing || e.ctrlKey || e.metaKey || e.altKey) return;
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (!open()) { render(); if (!open()) return; }
+        const n = list.length;
+        hi = e.key === 'ArrowDown' ? (hi + 1) % n : (hi <= 0 ? n - 1 : hi - 1);
+        moved = true; paintHi();
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (open() && hi >= 0) pick(hi); else { close(); focusNext(mi); }
+      } else if (e.key === 'Tab' && !e.shiftKey && open() && moved && hi >= 0) {
+        e.preventDefault(); pick(hi);   // 화살표로 골라 둔 것이 있으면 Tab 도 그걸 고른다
+      } else if (e.key === 'Escape' && open()) {
+        e.preventDefault(); e.stopPropagation(); close();
+      }
+    });
+  }
+
+  /* 분류 · 입금자 */
+  $$('#f-cat .chip').forEach(b => b.addEventListener('click', () => {
+    sync(); d.category = d.category === b.dataset.c ? null : b.dataset.c; d.autoCat = null; drawForm();
+  }));
+  rovingGroup($('#f-cat'), true);
+  $$('#f-who .chip').forEach(b => b.addEventListener('click', () => { sync(); d.depositor = b.dataset.u; drawForm(); }));
+  rovingGroup($('#f-who'), true);
+
+  /* 날짜 — 입력칸은 ↑↓로 날짜가 바뀌고(브라우저 기본), 어제·오늘 칩은 ←→ 로 오간다 */
+  $$('[data-day]').forEach(b => b.addEventListener('click', () => { sync(); d.date = shiftDay(todayKey(), Number(b.dataset.day)); drawForm(); }));
+  rovingGroup($('#f-days'), true);
+  /* 날짜 칸 — 화살표는 하루씩(←↓ 하루 전 · →↑ 하루 뒤). 브라우저 기본(연·월·일 칸 사이 이동)은 키보드로 쓰기 불편하다 */
+  $('#f-date').addEventListener('keydown', e => {
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.key === 'Enter') { e.preventDefault(); $('#f-memo').focus(); return; }
+    const step = { ArrowLeft: -1, ArrowDown: -1, ArrowRight: 1, ArrowUp: 1 }[e.key];
+    if (step) { e.preventDefault(); sync(); d.date = shiftDay(d.date, step); drawForm('#f-date'); }
+  });
+
+  /* 좋은·아쉬운 지출 — ←→ 로 옮기고 Space 로 켜고 끈다 */
+  const gb = (sel, v) => { const el = $(sel); if (el) el.addEventListener('click', () => { sync(); d.good = d.good === v ? null : v; drawForm(); }); };
   gb('#f-good', 'Good'); gb('#f-bad', 'Bad');
+  rovingGroup($('#f-gb'), false);
 
   const save = async () => {
     sync();
     const err = $('#f-err');
     const n = Number(d.amount || 0);
     if (!n) { err.textContent = '금액을 넣으세요.'; amt.focus(); return; }
-    if (d.kind === '지출' && !d.category) { err.textContent = '분류를 고르세요.'; return; }
+    if (d.kind === '지출' && !d.category) { err.textContent = '분류를 고르세요. (←→ 로 고를 수 있어요)'; const c = $('#f-cat .chip[tabindex="0"]'); if (c) c.focus(); return; }
     if (d.kind === '입금' && !PEOPLE.includes(d.depositor)) { err.textContent = '누가 넣었는지 고르세요.'; return; }
-    const btn = $('#f-save'); btn.disabled = true;
+    const btn = $('#f-save');
+    if (btn.disabled) return;
+    btn.disabled = true;
     const payload = {
       kind: d.kind, amount: n, date: d.date,
       category: d.kind === '입금' ? null : d.category,
@@ -1019,7 +1300,19 @@ function drawForm(focus) {
     await loadAll(); renderPage();
   };
   $('#f-save').addEventListener('click', save);
-  $$('#f-amt, #f-merch, #f-date').forEach(el => el.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) save(); }));
+
+  /* 창 전체 — Ctrl/⌘+Enter 저장, Tab 은 창 안에서만 돈다 */
+  ov.onkeydown = (e) => {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); e.stopPropagation(); save(); return; }
+    /* Tab 은 칸 단위로 직접 옮긴다 — 날짜 칸 속 연·월·일에 갇히지 않고, 창 밖으로도 나가지 않는다 */
+    if (e.key === 'Tab' && !e.defaultPrevented && !e.ctrlKey && !e.altKey && !e.metaKey) {
+      const list = tabbables(); if (!list.length) return;
+      e.preventDefault();
+      const i = list.indexOf(document.activeElement), n = list.length;
+      list[i < 0 ? 0 : (i + (e.shiftKey ? -1 : 1) + n) % n].focus();
+    }
+  };
+
   const del = $('#f-del');
   if (del) del.addEventListener('click', async () => {
     if (!confirm('이 기록을 삭제할까요?')) return;
@@ -1028,12 +1321,14 @@ function drawForm(focus) {
     closeForm(); toast('삭제했어요');
     await loadAll(); renderPage();
   });
-  if (focus && !isEdit && window.matchMedia('(min-width: 761px)').matches) amt.focus();
+
+  if (mode === 'open') { if (!isEdit && window.matchMedia('(min-width: 761px)').matches) { amt.focus(); amt.select(); } }
+  else if (keep) { const el = $(keep, ov); if (el) el.focus(); }
 }
 
 document.addEventListener('keydown', (e) => {
   if (!S.book) return;
-  if (e.key === 'Escape' && !$('#ov').hidden) { closeForm(); return; }
+  if (e.key === 'Escape' && !$('#ov').hidden) { e.preventDefault(); closeForm(); return; }
   const typing = /INPUT|TEXTAREA|SELECT/.test((e.target && e.target.tagName) || '');
   if (S.canEdit && !typing && $('#ov').hidden && (e.key === 'n' || e.key === 'N' || e.key === 'ㅜ') && !e.metaKey && !e.ctrlKey && !e.altKey) {
     e.preventDefault(); openForm();
