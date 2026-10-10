@@ -162,6 +162,14 @@ function apMainClick(e) {
 }
 
 /* renderPage 가 앱 모드일 때 대신 부른다 */
+/* 홈으로 — 기록을 저장한 뒤에 쓴다 */
+function apGoHome() {
+  AP.tab = 'home';
+  AP.bar = null;
+  apPaintBar();
+  apRender(true);
+}
+
 function apRender(toTop) {
   const main = document.getElementById('ap-main');
   if (!main) return;

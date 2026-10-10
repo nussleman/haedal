@@ -455,6 +455,8 @@ async function qeSave() {
     enToast(qeComma(n) + '원 기록했습니다');
     if (typeof lgTouched === 'function') lgTouched();
     if (typeof enLoadLedger === 'function') enLoadLedger();
+    /* 폰 앱에서는 한 건 기록하면 기록 화면을 닫고 홈으로 간다 */
+    if (typeof apOn === 'function' && apOn()) { qeClose(); apGoHome(); return; }
     const keep = d.date;
     QE.d = qeFresh();
     QE.d.date = keep;
