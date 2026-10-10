@@ -84,17 +84,11 @@ function apShell() {
   qeLoad().catch(() => {});
 }
 
-/* 기록 화면이 열리고 닫힐 때 — 탭바는 그대로 두고 ＋ 만 켜 둔다 */
+/* 기록 화면이 열리고 닫힐 때 — 탭바 표시만 새로 그린다 */
 function apQeChanged() {
   if (!AP.on) return;
   if (QE.open) AP.bar = null;
-  /* 기록 화면이 떠 있는 동안 탭바를 그 안으로 옮긴다 — 기록 화면(보이는 영역 기준) 맨 아래에 정확히 붙게 */
-  const bar = document.getElementById('ap-bar');
-  const qe = document.getElementById('qe');
-  if (bar) {
-    if (QE.open && qe) { if (bar.parentNode !== qe) qe.appendChild(bar); }
-    else if (bar.parentNode !== document.getElementById('app')) document.getElementById('app').appendChild(bar);
-  }
+  /* 기록하는 동안 탭바는 CSS(body.qe-on)로 숨는다 — 닫으면 그대로 다시 보인다 */
   apPaintBar();
 }
 

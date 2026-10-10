@@ -2650,7 +2650,6 @@ body{padding-left:0;padding-right:0;}
 #qe[hidden]{display:none;}
 #qe .qe-top{flex:0 0 auto;display:flex;align-items:center;gap:8px;padding:10px 16px;
   padding-top:calc(10px + env(safe-area-inset-top,0px));border-bottom:1px solid var(--border);}
-body.kb-on #qe .qe-top{padding-top:10px;}
 #qe .qe-top b{font-size:18px;font-weight:700;}
 #qe .qe-cnt{font-size:12.5px;color:var(--income-text);}
 #qe .qe-top .sp{margin-left:auto;}
@@ -2738,11 +2737,8 @@ body.kb-on #qe .qe-dock{padding-bottom:10px;}
   #qe .qe-pad button{height:44px;} #qe .qe-save{height:48px;} #qe .qe-amt{font-size:34px;margin-bottom:10px;}
   #qe .qe-row{min-height:40px;} #qe .qe-cur{padding-top:8px;} #qe .qe-cur .qe-lab:not(:first-child){margin-top:14px;}
 }
-/* 앱 화면에서는 기록 중에도 아래 탭바가 그대로 보인다 — 키보드가 올라와 있을 때만 숨는다 */
-body.ap-on #qe{padding-bottom:calc(72px + env(safe-area-inset-bottom,0px));}
-#qe > .ap-bar{position:absolute;}
-body.ap-on #qe .qe-dock{padding-bottom:8px;}
-body.ap-on.kb-on #qe{padding-bottom:0;}
+/* 앱 화면에서 기록하는 동안에는 뒤 화면을 감춘다 — 키보드 위 아이폰 막대 뒤로 내역이 비쳐 보이지 않게 */
+body.ap-on.qe-on #app{visibility:hidden;}
 /* 빠른 기록 중에는 알림을 위에 띄운다 — 아래 저장 버튼을 가리지 않게 */
 body.qe-on #en-toast{bottom:auto;top:calc(64px + env(safe-area-inset-top,0px));transform:translate(-50%,-10px);}
 body.qe-on #en-toast.on{transform:translate(-50%,0);}
@@ -2786,8 +2782,8 @@ body.ap-on button{font-family:var(--sans);}
   bottom:calc(4px + env(safe-area-inset-bottom,0px) * .6);height:58px;border-radius:29px;
   background:rgba(30,38,53,.82);-webkit-backdrop-filter:blur(20px) saturate(1.4);backdrop-filter:blur(20px) saturate(1.4);
   border:1px solid var(--border-strong);box-shadow:0 12px 32px rgba(0,0,0,.5),0 2px 6px rgba(0,0,0,.3);}
-body.qe-on .ap-bar{z-index:210;}
-body.kb-on .ap-bar,body.ap-sheet-on .ap-bar{display:none;}
+/* 기록하는 동안에는 탭바를 아예 숨긴다 — 닫기로 나온다 */
+body.qe-on .ap-bar,body.kb-on .ap-bar,body.ap-sheet-on .ap-bar{display:none;}
 /* 탭바 아래(화면 맨 밑) 흘러가는 내용은 흐리게 — 위로 갈수록 자연스럽게 사라진다 */
 body.ap-on::after{content:'';position:fixed;z-index:140;left:0;right:0;bottom:0;pointer-events:none;
   height:calc(78px + env(safe-area-inset-bottom,0px));
