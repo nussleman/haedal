@@ -198,28 +198,27 @@ async function renderLedgerPage(body) {
             </div>
           </div>
           <div data-panel="kind">
-            <span class="lg-glab">종류</span>
-            <div class="lg-gin lg-kinds" id="lg-kinds">
-              <button data-k="all">전체</button>
-              <button data-k="지출" class="kd 지출">지출</button>
-              <button data-k="수입" class="kd 수입">수입</button>
-              <button data-k="이체" class="kd 이체">이체</button>
+            <div class="lg-phd"><span class="lg-glab">종류 · 여러 개 고를 수 있음</span>
+              <button class="lg-pclr" id="lg-kindclr" type="button">해제</button></div>
+            <div class="lg-gin lg-kinds lg-multi" id="lg-kinds" role="group" aria-label="종류">
+              <button data-k="지출" class="kd 지출" aria-pressed="false"><b class="ck" aria-hidden="true"></b>지출</button>
+              <button data-k="수입" class="kd 수입" aria-pressed="false"><b class="ck" aria-hidden="true"></b>수입</button>
+              <button data-k="이체" class="kd 이체" aria-pressed="false"><b class="ck" aria-hidden="true"></b>이체</button>
             </div>
           </div>
           <div data-panel="cat">
-            <span class="lg-glab">분류</span>
-            <div class="lg-gin lg-catpick">
-              <input class="en-in grow" id="lg-catq" placeholder="입력해서 찾기" autocomplete="off"
-                     role="combobox" aria-expanded="false" aria-controls="lg-catdrop">
-              <button class="lg-catx" id="lg-catx" aria-label="분류 해제" hidden>×</button>
-              <div class="lg-catdrop" id="lg-catdrop" role="listbox" hidden></div>
-            </div>
+            <div class="lg-phd"><span class="lg-glab">분류 · 여러 개 고를 수 있음</span>
+              <button class="lg-pclr" id="lg-catclr" type="button">해제</button></div>
+            <div class="lg-catsel" id="lg-catsel"></div>
+            <input class="en-in lg-catfind" id="lg-catq" placeholder="입력해서 찾기" autocomplete="off"
+                   aria-controls="lg-catlist">
+            <div class="lg-catlist" id="lg-catlist" role="listbox" aria-multiselectable="true"></div>
           </div>
           <div data-panel="amt">
             <span class="lg-glab">금액 정렬</span>
-            <div class="lg-gin lg-kinds">
-              <button data-sortas="amt_desc">큰 순</button>
-              <button data-sortas="amt_asc">작은 순</button>
+            <div class="lg-gin lg-kinds lg-multi">
+              <button data-sortas="amt_desc"><b class="ck" aria-hidden="true"></b>큰 순</button>
+              <button data-sortas="amt_asc"><b class="ck" aria-hidden="true"></b>작은 순</button>
               <button data-sortas="date_desc">해제(최신순)</button>
             </div>
           </div>
@@ -304,7 +303,7 @@ async function renderLedgerPage(body) {
     enLoadLedger();
   });
   enQS('#lg-reset').addEventListener('click', () => {
-    EN.lg = { q: '', kind: 'all', cat: 'all', from: '', to: '', quick: '3m', sort: 'date_desc', page: 1, size: 60 };
+    EN.lg = { q: '', kinds: [], cats: [], from: '', to: '', quick: '3m', sort: 'date_desc', page: 1, size: 60, nogroup: false };
     renderLedgerPage(document.getElementById('lg-body'));
   });
   enQS('#lg-prev').addEventListener('click', () => { if (g.page > 1) { g.page--; enLoadLedger(); } });
@@ -367,7 +366,8 @@ function lgPopOpen(name) {
   pop.style.top = (r.bottom - wrap.top + 4) + 'px';
   btn.setAttribute('aria-expanded', 'true');
   LGPOP.open = name;
-  const first = panel.querySelector('input,select,button');
+  const first = panel.querySelector('input') || panel.querySelector('[data-k],[data-q],[data-sortas]')
+    || panel.querySelector('select,button');
   if (first) setTimeout(() => first.focus(), 20);
 }
 
@@ -383,6 +383,7 @@ function lgPopInit() {
     /* 바깥을 누르면 닫는다. 전파 차단에 기대지 않고 대상으로 판단한다. */
     document.addEventListener('click', (e) => {
       const t = e.target;
+      if (t && t.isConnected === false) return;   // 팝오버 안에서 눌러 다시 그려진 요소
       if (t && t.closest && (t.closest('[data-pop]') || t.closest('#lg-pop'))) return;
       lgPopClose();
     });
@@ -390,24 +391,42 @@ function lgPopInit() {
   }
 }
 
-/* 지금 무엇이 걸려 있는지 머리글에 표시한다 */
+/* 지금 무엇이 걸려 있는지 머리글에 표시한다.
+   걸린 머리글은 색 칠한 알약이 되고, 여러 개를 골랐으면 개수가 붙는다. */
 function lgSyncHead() {
   const g = EN.lg;
-  const setB = (sel, on, label) => {
+  lgNormFilters(g);
+  const setB = (sel, on, label, n) => {
     const b = document.querySelector(sel);
     if (!b) return;
     b.classList.toggle('act', !!on);
-    b.innerHTML = enEsc(label) + '<i>▾</i>';
+    b.setAttribute('aria-label', on ? `${label} 필터 걸림` : label);
+    const inner = `<span class="hl">${enEsc(label)}</span>` + (n > 1 ? `<span class="hn">${n}</span>` : '') + '<i>▾</i>';
+    /* 열 머리글은 칸 폭 전체가 버튼이라, 알약은 안쪽 글자에만 씌운다 */
+    b.innerHTML = b.classList.contains('hcell') ? `<span class="hp">${inner}</span>` : inner;
   };
   const QL = { tm: '이번달', lm: '지난달', '3m': '최근 3개월', ty: '올해', all: '전체' };
   const period = g.quick ? QL[g.quick]
     : (g.from ? `${g.from.slice(0, 7)} ~ ${g.to.slice(0, 7)}` : '기간');
-  setB('#lg-hd-period', g.quick !== '3m', period);
-  setB('[data-pop="kind"]', g.kind !== 'all', g.kind === 'all' ? '종류' : g.kind);
-  const c = g.cat !== 'all' ? EN.catById[Number(g.cat)] : null;
-  setB('[data-pop="cat"]', g.cat !== 'all', c ? c.subcategory : '분류');
+  setB('#lg-hd-period', g.quick !== '3m', period, 0);
+  setB('[data-pop="kind"]', g.kinds.length, g.kinds.length === 1 ? g.kinds[0] : '종류', g.kinds.length);
+  const cs = g.cats.map(id => EN.catById[id]).filter(Boolean);
+  setB('[data-pop="cat"]', cs.length, cs.length ? cs[0].subcategory : '분류', cs.length);
   setB('[data-pop="amt"]', /^amt_/.test(g.sort), g.sort === 'amt_desc' ? '금액 ↓'
-    : g.sort === 'amt_asc' ? '금액 ↑' : '금액');
+    : g.sort === 'amt_asc' ? '금액 ↑' : '금액', 0);
+  document.querySelectorAll('[data-sortas]').forEach(b => {
+    const on = /^amt_/.test(b.dataset.sortas) && b.dataset.sortas === g.sort;
+    b.classList.toggle('on', on);
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
+}
+
+/* 예전 단일 선택(kind·cat)으로 남아 있던 상태를 여러 개 고르는 모양(kinds·cats)으로 옮긴다 */
+function lgNormFilters(g) {
+  if (!Array.isArray(g.kinds)) g.kinds = g.kind && g.kind !== 'all' ? [g.kind] : [];
+  if (!Array.isArray(g.cats)) g.cats = g.cat && g.cat !== 'all' ? [Number(g.cat)] : [];
+  delete g.kind; delete g.cat;
+  g.cats = g.cats.map(Number).filter(n => Number.isFinite(n));
 }
 
 /* 목록·초안 밖에서 쓰는 화면 단축키 */
@@ -430,93 +449,104 @@ function lgBindKeys() {
   document.addEventListener('keydown', h);
 }
 
-/* 종류는 칩으로, 분류는 검색으로 — 고르는 순서가 생각의 순서와 같도록.
-   종류를 먼저 좁히면 분류 후보도 같이 좁아진다. */
+/* 종류도 분류도 여러 개 고른다 — 누를 때마다 켜고 끄며, 팝오버는 열린 채로 남는다.
+   종류를 좁히면 분류 목록도 같이 좁아지고, 고른 종류와 안 맞는 분류는 자동으로 빠진다
+   (결과가 0건인 조합을 남기지 않는다). */
 function lgSetupKindCat(g, cats) {
+  lgNormFilters(g);
   const chips = document.getElementById('lg-kinds');
   const inp = enQS('#lg-catq');
-  const drop = enQS('#lg-catdrop');
-  const clear = enQS('#lg-catx');
-  if (!chips || !inp || !drop) return;
+  const listEl = enQS('#lg-catlist');
+  const selEl = enQS('#lg-catsel');
+  if (!chips || !inp || !listEl || !selEl) return;
 
-  const catLabel = (c) => `${c.category} › ${c.subcategory}`;
-  const paintChips = () => {
-    chips.querySelectorAll('button').forEach(b =>
-      b.classList.toggle('on', b.dataset.k === g.kind));
+  const reload = () => { g.page = 1; enLoadLedger(); };
+  const paintChips = () => chips.querySelectorAll('button').forEach(b => {
+    const on = g.kinds.includes(b.dataset.k);
+    b.classList.toggle('on', on);
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
+  const pool = () => cats.filter(c => !g.kinds.length || g.kinds.includes(c.kind));
+
+  /* 고른 분류는 위에 꼬리표로 모아 보여준다 — 목록을 스크롤해도 무엇이 걸렸는지 보이게 */
+  const paintSel = () => {
+    const cs = g.cats.map(id => EN.catById[id]).filter(Boolean);
+    selEl.hidden = !cs.length;
+    selEl.innerHTML = cs.map(c => `<button type="button" class="lg-ctag ${c.kind}" data-rm="${c.id}" title="빼기">
+        ${c.emoji_category ? `<span class="em">${c.emoji_category}</span>` : ''}${enEsc(c.subcategory)}<i aria-hidden="true">×</i></button>`).join('');
   };
-  const paintCat = () => {
-    const c = EN.catById[Number(g.cat)];
-    if (g.cat !== 'all' && c) {
-      inp.value = catLabel(c);
-      inp.classList.add('picked');
-      clear.hidden = false;
-    } else {
-      inp.value = '';
-      inp.classList.remove('picked');
-      clear.hidden = true;
-    }
-  };
-  const pool = () => cats.filter(c => g.kind === 'all' || c.kind === g.kind);
-  const close = () => { drop.hidden = true; inp.setAttribute('aria-expanded', 'false'); };
 
   let cur = -1, list = [];
-  const paintCursor = () => drop.querySelectorAll('.lg-catopt').forEach((el, i) =>
-    el.classList.toggle('on', i === cur));
-
-  const open = () => {
-    const q = inp.classList.contains('picked') ? '' : inp.value.trim().toLowerCase();
+  const paintCursor = () => listEl.querySelectorAll('.lg-copt').forEach((el, i) => {
+    el.classList.toggle('cur', i === cur);
+    if (i === cur) el.scrollIntoView({ block: 'nearest' });
+  });
+  const paintList = () => {
+    const q = inp.value.trim().toLowerCase();
     list = pool().filter(c => !q ||
-      (c.category + ' ' + c.subcategory + ' ' + c.kind).toLowerCase().includes(q)).slice(0, 60);
+      (c.category + ' ' + c.subcategory + ' ' + c.kind).toLowerCase().includes(q));
     if (!list.length) {
-      drop.innerHTML = '<div class="lg-catempty">일치하는 분류가 없습니다.</div>';
-    } else {
-      let last = '';
-      drop.innerHTML = list.map((c, i) => {
-        const head = c.kind !== last ? `<div class="lg-cathead">${c.kind}</div>` : '';
-        last = c.kind;
-        return head + `<div class="lg-catopt" role="option" data-i="${i}">
-          <span class="lg-kd ${c.kind}">${c.kind}</span>
-          <span class="em">${c.emoji_category || ''}</span>
-          <span class="tx">${enEsc(c.category)} › <b>${enEsc(c.subcategory)}</b></span>
-        </div>`;
-      }).join('');
+      listEl.innerHTML = '<div class="lg-catempty">일치하는 분류가 없습니다.</div>';
+      cur = -1; return;
     }
-    drop.hidden = false;
-    inp.setAttribute('aria-expanded', 'true');
-    cur = -1;
-    drop.querySelectorAll('.lg-catopt').forEach(el =>
-      el.addEventListener('mousedown', (e) => { e.preventDefault(); pick(list[Number(el.dataset.i)]); }));
+    let last = '';
+    listEl.innerHTML = list.map((c, i) => {
+      const head = c.kind !== last ? `<div class="lg-cathead">${c.kind}</div>` : '';
+      last = c.kind;
+      const on = g.cats.includes(c.id);
+      return head + `<div class="lg-copt${on ? ' on' : ''}" role="option" aria-selected="${on}" data-i="${i}">
+        <b class="ck" aria-hidden="true"></b>
+        <span class="em">${c.emoji_category || ''}</span>
+        <span class="tx">${enEsc(c.category)} › <b>${enEsc(c.subcategory)}</b></span>
+      </div>`;
+    }).join('');
+    if (cur >= list.length) cur = list.length - 1;
+    paintCursor();
   };
-  const pick = (c) => {
+  const toggleCat = (c) => {
     if (!c) return;
-    g.cat = String(c.id);
-    if (g.kind !== 'all' && g.kind !== c.kind) { g.kind = c.kind; paintChips(); }
-    g.page = 1;
-    paintCat(); close(); enLoadLedger();
+    const i = g.cats.indexOf(c.id);
+    if (i >= 0) g.cats.splice(i, 1); else g.cats.push(c.id);
+    paintSel(); paintList(); reload();
   };
 
   chips.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
-    g.kind = b.dataset.k;
-    /* 고른 종류와 안 맞는 분류는 자동으로 푼다 — 결과가 0건인 조합을 남기지 않는다 */
-    const c = EN.catById[Number(g.cat)];
-    if (g.kind !== 'all' && c && c.kind !== g.kind) g.cat = 'all';
-    g.page = 1;
-    paintChips(); paintCat(); enLoadLedger();
+    const k = b.dataset.k;
+    const i = g.kinds.indexOf(k);
+    if (i >= 0) g.kinds.splice(i, 1); else g.kinds.push(k);
+    g.kinds.sort((a, b2) => ['지출', '수입', '이체'].indexOf(a) - ['지출', '수입', '이체'].indexOf(b2));
+    if (g.kinds.length) g.cats = g.cats.filter(id => { const c = EN.catById[id]; return c && g.kinds.includes(c.kind); });
+    paintChips(); paintSel(); paintList(); reload();
   }));
+  enQS('#lg-kindclr').addEventListener('click', () => {
+    if (!g.kinds.length) return;
+    g.kinds = []; paintChips(); paintList(); reload();
+  });
+  enQS('#lg-catclr').addEventListener('click', () => {
+    if (!g.cats.length) return;
+    g.cats = []; paintSel(); paintList(); reload();
+  });
 
-  inp.addEventListener('focus', () => { if (inp.classList.contains('picked')) { inp.value = ''; inp.classList.remove('picked'); } open(); });
-  inp.addEventListener('input', open);
-  inp.addEventListener('blur', () => setTimeout(() => { close(); paintCat(); }, 120));
+  listEl.addEventListener('click', (e) => {
+    const el = e.target.closest('.lg-copt');
+    if (!el) return;
+    cur = Number(el.dataset.i);
+    toggleCat(list[cur]);
+  });
+  selEl.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-rm]');
+    if (!b) return;
+    toggleCat(EN.catById[Number(b.dataset.rm)]);
+  });
+
+  inp.addEventListener('input', () => { cur = -1; paintList(); });
   inp.addEventListener('keydown', (e) => {
-    if (drop.hidden) return;
     if (e.key === 'ArrowDown') { e.preventDefault(); cur = Math.min(cur + 1, list.length - 1); paintCursor(); }
     else if (e.key === 'ArrowUp') { e.preventDefault(); cur = Math.max(cur - 1, 0); paintCursor(); }
-    else if (e.key === 'Enter') { e.preventDefault(); pick(list[cur >= 0 ? cur : 0]); }
-    else if (e.key === 'Escape') { e.stopPropagation(); close(); paintCat(); inp.blur(); }
+    else if (e.key === 'Enter') { e.preventDefault(); if (list.length) toggleCat(list[cur >= 0 ? cur : 0]); }
   });
-  clear.addEventListener('click', () => { g.cat = 'all'; g.page = 1; paintCat(); enLoadLedger(); });
 
-  paintChips(); paintCat();
+  paintChips(); paintSel(); paintList();
 }
 
 /* 기존 sticky 헤더 높이만큼 아래에 붙인다 */
@@ -551,8 +581,9 @@ function enLedgerQuery(sb, mode) {
   if (mode === 'count') q = sb.from('v_transactions').select('id', { count: 'exact', head: true });
   else if (mode === 'sum') q = sb.from('v_transactions').select('kind,amount');
   else q = sb.from('v_transactions').select('id,date,kind,category,subcategory,emoji_category,amount,merchant_group,merchant,note,good_bad,company_paid,category_id');
-  if (g.kind !== 'all') q = q.eq('kind', g.kind);
-  if (g.cat !== 'all') q = q.eq('category_id', Number(g.cat));
+  lgNormFilters(g);
+  if (g.kinds.length) q = q.in('kind', g.kinds);
+  if (g.cats.length) q = q.in('category_id', g.cats);
   if (g.nogroup) q = q.is('merchant_group', null).not('merchant', 'is', null).neq('merchant', '');
   if (g.from) q = q.gte('date', g.from);
   if (g.to) q = q.lte('date', g.to);
