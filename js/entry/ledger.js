@@ -198,18 +198,15 @@ async function renderLedgerPage(body) {
             </div>
           </div>
           <div data-panel="kind">
-            <div class="lg-phd"><span class="lg-glab">종류 · 여러 개 고를 수 있음</span>
-              <button class="lg-pclr" id="lg-kindclr" type="button">해제</button></div>
+            <div class="lg-phd"><button class="lg-pclr" id="lg-kindclr" type="button">해제</button></div>
             <div class="lg-gin lg-kinds lg-multi" id="lg-kinds" role="group" aria-label="종류">
-              <button data-k="지출" class="kd 지출" aria-pressed="false"><b class="ck" aria-hidden="true"></b>지출</button>
-              <button data-k="수입" class="kd 수입" aria-pressed="false"><b class="ck" aria-hidden="true"></b>수입</button>
-              <button data-k="이체" class="kd 이체" aria-pressed="false"><b class="ck" aria-hidden="true"></b>이체</button>
+              <button data-k="지출" class="kd 지출" aria-pressed="false">지출</button>
+              <button data-k="수입" class="kd 수입" aria-pressed="false">수입</button>
+              <button data-k="이체" class="kd 이체" aria-pressed="false">이체</button>
             </div>
           </div>
           <div data-panel="cat">
-            <div class="lg-phd"><span class="lg-glab">분류 · 여러 개 고를 수 있음</span>
-              <button class="lg-pclr" id="lg-catclr" type="button">해제</button></div>
-            <div class="lg-catsel" id="lg-catsel"></div>
+            <div class="lg-phd"><button class="lg-pclr" id="lg-catclr" type="button">해제</button></div>
             <input class="en-in lg-catfind" id="lg-catq" placeholder="입력해서 찾기" autocomplete="off"
                    aria-controls="lg-catlist">
             <div class="lg-catlist" id="lg-catlist" role="listbox" aria-multiselectable="true"></div>
@@ -217,8 +214,8 @@ async function renderLedgerPage(body) {
           <div data-panel="amt">
             <span class="lg-glab">금액 정렬</span>
             <div class="lg-gin lg-kinds lg-multi">
-              <button data-sortas="amt_desc"><b class="ck" aria-hidden="true"></b>큰 순</button>
-              <button data-sortas="amt_asc"><b class="ck" aria-hidden="true"></b>작은 순</button>
+              <button data-sortas="amt_desc">큰 순</button>
+              <button data-sortas="amt_asc">작은 순</button>
               <button data-sortas="date_desc">해제(최신순)</button>
             </div>
           </div>
@@ -457,8 +454,7 @@ function lgSetupKindCat(g, cats) {
   const chips = document.getElementById('lg-kinds');
   const inp = enQS('#lg-catq');
   const listEl = enQS('#lg-catlist');
-  const selEl = enQS('#lg-catsel');
-  if (!chips || !inp || !listEl || !selEl) return;
+  if (!chips || !inp || !listEl) return;
 
   const reload = () => { g.page = 1; enLoadLedger(); };
   const paintChips = () => chips.querySelectorAll('button').forEach(b => {
@@ -467,14 +463,6 @@ function lgSetupKindCat(g, cats) {
     b.setAttribute('aria-pressed', on ? 'true' : 'false');
   });
   const pool = () => cats.filter(c => !g.kinds.length || g.kinds.includes(c.kind));
-
-  /* 고른 분류는 위에 꼬리표로 모아 보여준다 — 목록을 스크롤해도 무엇이 걸렸는지 보이게 */
-  const paintSel = () => {
-    const cs = g.cats.map(id => EN.catById[id]).filter(Boolean);
-    selEl.hidden = !cs.length;
-    selEl.innerHTML = cs.map(c => `<button type="button" class="lg-ctag ${c.kind}" data-rm="${c.id}" title="빼기">
-        ${c.emoji_category ? `<span class="em">${c.emoji_category}</span>` : ''}${enEsc(c.subcategory)}<i aria-hidden="true">×</i></button>`).join('');
-  };
 
   let cur = -1, list = [];
   const paintCursor = () => listEl.querySelectorAll('.lg-copt').forEach((el, i) => {
@@ -489,17 +477,19 @@ function lgSetupKindCat(g, cats) {
       listEl.innerHTML = '<div class="lg-catempty">일치하는 분류가 없습니다.</div>';
       cur = -1; return;
     }
-    let last = '';
-    listEl.innerHTML = list.map((c, i) => {
-      const head = c.kind !== last ? `<div class="lg-cathead">${c.kind}</div>` : '';
-      last = c.kind;
-      const on = g.cats.includes(c.id);
-      return head + `<div class="lg-copt${on ? ' on' : ''}" role="option" aria-selected="${on}" data-i="${i}">
-        <b class="ck" aria-hidden="true"></b>
-        <span class="em">${c.emoji_category || ''}</span>
-        <span class="tx">${enEsc(c.category)} › <b>${enEsc(c.subcategory)}</b></span>
-      </div>`;
-    }).join('');
+    /* 종류별로 묶어, 분류 하나하나를 버튼으로 늘어놓는다 */
+    const byKind = [];
+    list.forEach((c, i) => {
+      let grp = byKind[byKind.length - 1];
+      if (!grp || grp.kind !== c.kind) byKind.push(grp = { kind: c.kind, items: [] });
+      grp.items.push([c, i]);
+    });
+    listEl.innerHTML = byKind.map(grp => `<div class="lg-cathead">${grp.kind}</div><div class="lg-cbtns">` +
+      grp.items.map(([c, i]) => {
+        const on = g.cats.includes(c.id);
+        return `<button type="button" class="lg-copt ${c.kind}${on ? ' on' : ''}" role="option" aria-selected="${on}"
+          data-i="${i}" title="${enEsc(c.category)} › ${enEsc(c.subcategory)}">${c.emoji_category ? `<span class="em">${c.emoji_category}</span>` : ''}${enEsc(c.subcategory)}</button>`;
+      }).join('') + '</div>').join('');
     if (cur >= list.length) cur = list.length - 1;
     paintCursor();
   };
@@ -507,7 +497,7 @@ function lgSetupKindCat(g, cats) {
     if (!c) return;
     const i = g.cats.indexOf(c.id);
     if (i >= 0) g.cats.splice(i, 1); else g.cats.push(c.id);
-    paintSel(); paintList(); reload();
+    paintList(); reload();
   };
 
   chips.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
@@ -516,7 +506,7 @@ function lgSetupKindCat(g, cats) {
     if (i >= 0) g.kinds.splice(i, 1); else g.kinds.push(k);
     g.kinds.sort((a, b2) => ['지출', '수입', '이체'].indexOf(a) - ['지출', '수입', '이체'].indexOf(b2));
     if (g.kinds.length) g.cats = g.cats.filter(id => { const c = EN.catById[id]; return c && g.kinds.includes(c.kind); });
-    paintChips(); paintSel(); paintList(); reload();
+    paintChips(); paintList(); reload();
   }));
   enQS('#lg-kindclr').addEventListener('click', () => {
     if (!g.kinds.length) return;
@@ -524,19 +514,14 @@ function lgSetupKindCat(g, cats) {
   });
   enQS('#lg-catclr').addEventListener('click', () => {
     if (!g.cats.length) return;
-    g.cats = []; paintSel(); paintList(); reload();
+    g.cats = []; paintList(); reload();
   });
 
   listEl.addEventListener('click', (e) => {
     const el = e.target.closest('.lg-copt');
     if (!el) return;
-    cur = Number(el.dataset.i);
-    toggleCat(list[cur]);
-  });
-  selEl.addEventListener('click', (e) => {
-    const b = e.target.closest('[data-rm]');
-    if (!b) return;
-    toggleCat(EN.catById[Number(b.dataset.rm)]);
+    cur = -1;   // 마우스로 누른 건 키보드 커서 테두리를 남기지 않는다
+    toggleCat(list[Number(el.dataset.i)]);
   });
 
   inp.addEventListener('input', () => { cur = -1; paintList(); });
@@ -546,7 +531,7 @@ function lgSetupKindCat(g, cats) {
     else if (e.key === 'Enter') { e.preventDefault(); if (list.length) toggleCat(list[cur >= 0 ? cur : 0]); }
   });
 
-  paintChips(); paintSel(); paintList();
+  paintChips(); paintList();
 }
 
 /* 기존 sticky 헤더 높이만큼 아래에 붙인다 */

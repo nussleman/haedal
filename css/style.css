@@ -735,39 +735,28 @@ body{
   background:var(--accent-fill);color:var(--ink-on-accent);font-size:var(--fs-micro);font-weight:700;
   display:inline-flex;align-items:center;justify-content:center;letter-spacing:0;}
 
-/* 팝오버 안 — 여러 개 고르기 */
-.lg-phd{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 5px;}
-.lg-pop .lg-phd .lg-glab{margin:0;}
+/* 팝오버 안 — 여러 개 고르기. 항목 하나하나가 버튼이고, 고른 건 색이 채워진다 */
+.lg-phd{display:flex;justify-content:flex-end;margin:-3px -2px 6px;}
 .lg-pclr{background:none;border:0;padding:0 2px;cursor:pointer;font-size:var(--fs-xs);color:var(--text-faint);}
 .lg-pclr:hover{color:var(--expense-text);}
-.lg-multi button{display:inline-flex;align-items:center;gap:5px;}
-.lg-multi .ck,.lg-copt .ck{flex:0 0 auto;width:12px;height:12px;border-radius:3px;
-  border:1px solid var(--border-strong);display:inline-flex;align-items:center;justify-content:center;
-  font-size:9px;line-height:1;}
-.lg-multi button.on .ck,.lg-copt.on .ck{background:currentColor;border-color:currentColor;}
-.lg-multi button.on .ck:after,.lg-copt.on .ck:after{content:'✓';color:var(--panel);font-weight:900;}
-.lg-catsel{display:flex;flex-wrap:wrap;gap:4px;margin:0 0 6px;}
-.lg-catsel[hidden]{display:none;}
-.lg-ctag{display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 6px 0 8px;
-  border-radius:var(--r-pill);border:1px solid var(--accent-fill);background:var(--accent-bg);
-  color:var(--accent-strong);font-size:var(--fs-xs);cursor:pointer;}
-.lg-ctag.지출{border-color:rgba(193,72,63,.55);background:var(--expense-bg);color:var(--expense-text);}
-.lg-ctag.수입{border-color:rgba(76,140,107,.55);background:var(--income-bg);color:var(--income-text);}
-.lg-ctag.이체{border-color:rgba(57,168,189,.55);background:var(--transfer-bg);color:var(--transfer-strong);}
-.lg-ctag i{font-style:normal;opacity:.7;font-size:var(--fs-sm);}
-.lg-ctag:hover i{opacity:1;}
+.lg-multi{gap:4px;}
+.lg-multi button{border-color:var(--border);}
+.lg-multi button:not(.kd).on{background:var(--accent-bg);border-color:var(--accent-fill);color:var(--accent-strong);}
 .lg-pop .lg-catfind{width:100%;box-sizing:border-box;}
-.lg-catlist{margin-top:6px;max-height:min(300px,46vh);overflow-y:auto;scrollbar-width:thin;
-  min-width:260px;border-top:1px solid var(--border);padding-top:3px;}
-.lg-copt{display:flex;align-items:center;gap:7px;padding:5px 7px;border-radius:var(--r-sm);
-  cursor:pointer;font-size:var(--fs-sm);color:var(--text-dim);}
-.lg-copt:hover,.lg-copt.cur{background:var(--panel-2);color:var(--text);}
-.lg-copt.on{color:var(--accent-strong);}
-.lg-copt.on .ck{color:var(--accent-fill);}
-.lg-copt .em{width:15px;text-align:center;flex:0 0 auto;}
-.lg-copt .tx{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.lg-copt .tx b{color:var(--text);font-weight:600;}
-.lg-copt.on .tx b{color:var(--accent-strong);}
+.lg-catlist{margin-top:6px;max-height:min(320px,48vh);overflow-y:auto;scrollbar-width:thin;
+  width:min(380px,86vw);padding-right:2px;}
+.lg-catlist .lg-cathead{padding:8px 2px 5px;}
+.lg-cbtns{display:flex;flex-wrap:wrap;gap:5px;}
+.lg-copt{display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 10px;
+  border:1px solid var(--border);border-radius:var(--r-pill);background:var(--bg-2);
+  color:var(--text-dim);font-family:var(--sans);font-size:var(--fs-sm);cursor:pointer;white-space:nowrap;}
+.lg-copt:hover{color:var(--text);border-color:var(--border-strong);}
+.lg-copt.cur{outline:2px solid var(--accent-fill);outline-offset:1px;}
+.lg-copt .em{font-size:var(--fs-xs);line-height:1;}
+.lg-copt.on{font-weight:700;}
+.lg-copt.지출.on{background:var(--expense-bg);border-color:rgba(193,72,63,.6);color:var(--expense-text);}
+.lg-copt.수입.on{background:var(--income-bg);border-color:rgba(76,140,107,.6);color:var(--income-text);}
+.lg-copt.이체.on{background:var(--transfer-bg);border-color:rgba(57,168,189,.6);color:var(--transfer-strong);}
 .lg-cols{display:flex;align-items:center;gap:9px;height:28px;padding:0 12px;
   margin-top:8px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);
   font-family:var(--mono);font-size:var(--fs-tiny);color:var(--text-faint);letter-spacing:.06em;}
