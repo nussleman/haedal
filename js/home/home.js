@@ -9,7 +9,8 @@
    이번 분기가 포함되는지로 판단한다. 시기가 비어 있는 목표는 홈에 올리지 않는다. */
 /* ---------------- 홈 ----------------
    홈은 '지금 어떤가'만 본다. 판단·목표·거래내역은 각자의 화면이 있으니 여기서 겹치지 않는다.
-   상자 네 개(이번 달 지출 · 고정비 · 투자 이체 · 비상금 이체)를 2×2로 세운다.
+   윗줄은 자산의 결과(층 1 순자산 · 층 2 저축률 · 층 3 자산 배분), 아랫줄은 이번 달 레버 넷
+   (지출 · 고정비 · 투자 이체 · 비상금 이체)을 2×2로 세운다.
    상자 하나 = 제목 · 가장 큰 숫자 하나 · 흐린 설명 · (필요할 때만) 오른쪽 여백에 게이지. */
 
 /* 이번 달 바로 전 N개월 키 (이번 달은 빼고, 오래된 것부터) */
@@ -40,8 +41,8 @@ function hmGauge(pct, tone, label, mark) {
 }
 
 /* 상자 하나 */
-function hmStatBox({ title, note, go, big, bigTone, sub, desc, gauge }) {
-  return `<section class="hm-box hm-stat${gauge ? ' has-g' : ''}">
+function hmStatBox({ title, note, go, big, bigTone, sub, desc, gauge, extra, cls }) {
+  return `<section class="hm-box hm-stat${gauge ? ' has-g' : ''}${cls ? ' ' + cls : ''}">
     <div class="hm-hd"><b>${title}</b>${go ? `<button class="hm-lnk" data-go="${go}">${note} ›</button>` : `<span>${note}</span>`}</div>
     <div class="hm-sb">
       <div class="hm-st">
@@ -50,6 +51,7 @@ function hmStatBox({ title, note, go, big, bigTone, sub, desc, gauge }) {
       </div>
       ${gauge || ''}
     </div>
+    ${extra || ''}
   </section>`;
 }
 
@@ -167,6 +169,71 @@ function renderHomePage(container, data, d) {
     gauge: emg.plan > 0 ? hmGauge(emgPct, 'emg', '목표', null) : ''
   });
 
+  /* ── 층 1 · 순자산 — 마지막 자산 스냅샷 기준. 다음 목표 = 지금보다 큰 다음 1억 단위 ── */
+  const debt = totalDebt();
+  const netWorth = (d.totalAssets || 0) - debt;
+  const nwGoal = Math.max(1, Math.floor(netWorth / 1e8) + 1) * 1e8;
+  const nwPct = netWorth > 0 ? (netWorth / nwGoal) * 100 : 0;
+  const snapLabel = d.latestMonth ? assetMonthLabel(d.latestMonth) : '';
+  const boxNw = hmStatBox({
+    title: '순자산', note: snapLabel ? `${snapLabel} 스냅샷` : '스냅샷', go: 'entry/snapshot', cls: 'hm-key',
+    big: d.totalAssets ? formatKrw(netWorth) : '—',
+    sub: d.totalAssets ? ` / 다음 목표 ${formatKrw(nwGoal)}` : '',
+    desc: [
+      d.deltaAssets != null ? `전월 대비 <b class="${d.deltaAssets >= 0 ? 'in' : 'out'}">${d.deltaAssets >= 0 ? '+' : '−'}${formatKrw(Math.abs(d.deltaAssets))}</b>${d.deltaPct == null ? '' : ` (${d.deltaPct >= 0 ? '+' : ''}${d.deltaPct.toFixed(1)}%)`}` : '',
+      d.totalAssets ? `목표까지 ${formatKrw(Math.max(nwGoal - netWorth, 0))}${debt ? ` · 부채 ${formatKrw(debt)} 뺀 값` : ''}` : '자산 스냅샷을 아직 안 적었어요',
+      '<i>월 1회 · 이거 하나만 머리에 넣기</i>'
+    ],
+    gauge: d.totalAssets ? hmGauge(nwPct, 'nw', '목표', null) : ''
+  });
+
+  /* ── 층 2 · 월 저축률 — 끝난 달(지난달)을 크게, 진행 중인 이번 달은 참고로 ── */
+  const rateOf = (k) => {
+    const rows = ledger.filter(r => ledgerMonthKey(r.date) === k);
+    const inc = rows.filter(r => r.major.includes('수입')).reduce((a, r) => a + r.amount, 0);
+    const out = rows.filter(isExpense).reduce((a, r) => a + netExpenseOf(r), 0);
+    return inc > 0 ? ((inc - out) / inc) * 100 : null;
+  };
+  const lastK = prev[prev.length - 1];
+  const rLast = rateOf(lastK);
+  const rNow = rateOf(mk);
+  const rList = prev.map(rateOf).filter(v => v !== null);
+  const rAvg = rList.length ? rList.reduce((a, b) => a + b, 0) / rList.length : null;
+  const rTarget = Number(state.goals.savingsRateTarget) || 0;
+  const pct1 = (v) => v === null ? '—' : v.toFixed(0) + '%';
+  const boxRate = hmStatBox({
+    title: '월 저축률', note: `${Number(lastK.split('-')[1])}월 기준`, go: 'report/monthly',
+    big: pct1(rLast), bigTone: rLast !== null && rLast < 0 ? 'out' : '',
+    sub: rTarget ? ` / 목표 ${rTarget}%` : '',
+    desc: [
+      `이번 달(진행 중) ${pct1(rNow)} · 지난 3달 평균 ${pct1(rAvg)}`,
+      '<i>월 1회</i>'
+    ],
+    gauge: rTarget && rLast !== null ? hmGauge(Math.max(rLast, 0) / rTarget * 100, rLast >= rTarget ? 'good' : 'nw', '목표', null) : ''
+  });
+
+  /* ── 층 3 · 자산 배분 — 현금(현금·저축) / 주식(투자) / 연금 / 그 밖 ── */
+  const al = d.allocation || {};
+  const alTot = Object.values(al).reduce((a, v) => a + Math.max(v, 0), 0);
+  const known = ['현금 자산', '저축 자산', '투자 자산', '연금 자산'];
+  const segs = [
+    { k: 'cash', name: '현금', v: (al['현금 자산'] || 0) + (al['저축 자산'] || 0) },
+    { k: 'stock', name: '주식', v: al['투자 자산'] || 0 },
+    { k: 'pen', name: '연금', v: al['연금 자산'] || 0 },
+    { k: 'etc', name: '기타', v: Object.entries(al).filter(([c]) => !known.includes(c)).reduce((a, [, v]) => a + v, 0) }
+  ].filter(x => x.v > 0).map(x => ({ ...x, p: alTot ? (x.v / alTot) * 100 : 0 }));
+  const top = segs.slice().sort((a, b) => b.p - a.p)[0];
+  const boxAlloc = hmStatBox({
+    title: '자산 배분', note: '순자산 화면', go: 'report/networth',
+    big: top ? `<span class="hm-dot big a-${top.k}"></span>${top.name} ${top.p.toFixed(0)}%` : '—',
+    desc: [
+      segs.filter(x => x !== top).map(x => `<span class="hm-dot a-${x.k}"></span>${x.name} ${x.p.toFixed(0)}%`).join(' · '),
+      '<i>분기 1회</i>'
+    ],
+    extra: segs.length ? `<div class="hm-alloc">${segs.map(x =>
+      `<i class="a-${x.k}" style="width:${x.p.toFixed(2)}%" title="${x.name} ${formatKrw(x.v)}"></i>`).join('')}</div>` : ''
+  });
+
   const checks = hmChecks(data);
   const sig = checks.map(c => c.text).join('|');
   let hidden = '';
@@ -177,6 +244,7 @@ function renderHomePage(container, data, d) {
       ${showChecks ? `<div class="hm-checks"><b>확인할 것</b>${checks.map(c =>
         `<button class="hm-chk" data-go="${c.go}">${c.text}</button>`).join('')}
         <button class="hm-chkx" id="hm-chkx" title="이 내용이 바뀔 때까지 숨기기">숨기기</button></div>` : ''}
+      <div class="hm-row hm-row3">${boxNw}${boxRate}${boxAlloc}</div>
       <div class="hm-row hm-row2">${box1}${box2}</div>
       <div class="hm-row hm-row2">${box3}${box4}</div>
     </div>`;
