@@ -9,95 +9,163 @@
    이번 분기가 포함되는지로 판단한다. 시기가 비어 있는 목표는 홈에 올리지 않는다. */
 /* ---------------- 홈 ----------------
    홈은 '지금 어떤가'만 본다. 판단·목표·거래내역은 각자의 화면이 있으니 여기서 겹치지 않는다.
-   이번 달 더 쓸 수 있는 돈 → 최근 3달 추이 순으로, 가운데 한 줄로만 쌓는다. */
+   상자 네 개(이번 달 지출 · 고정비 · 투자 이체 · 비상금 이체)를 2×2로 세운다.
+   상자 하나 = 제목 · 가장 큰 숫자 하나 · 흐린 설명 · (필요할 때만) 오른쪽 여백에 게이지. */
 
-/* 이번 달을 마지막에 두는 최근 N개월 키 */
-function hmRecentMonths(n) {
+/* 이번 달 바로 전 N개월 키 (이번 달은 빼고, 오래된 것부터) */
+function hmPrevMonths(n) {
   const cur = thisMonthKey();
   const out = [];
-  for (let i = n - 1; i >= 0; i--) out.push(shiftMonthKey(cur, -i));
+  for (let i = n; i >= 1; i--) out.push(shiftMonthKey(cur, -i));
   return out;
 }
 
-/* 세 달치 막대 한 장. 숫자를 먼저 읽고, 막대는 크기 비교만 돕는다.
-   goodUp = 늘어나는 게 좋은 항목인지 (투자·비상금은 O, 고정비는 X). */
-function hmTrendCard(title, note, months, values, tone, goodUp) {
-  const max = Math.max(...values.map(v => Math.abs(v)), 1);
-  const last = values[values.length - 1];
-  const prev = values.length > 1 ? values[values.length - 2] : null;
-  const diff = prev === null ? null : last - prev;
-  const good = diff === null || diff === 0 ? null : (diff > 0) === !!goodUp;
-  const rows = months.map((k, i) => {
-    const mo = Number(k.split('-')[1]);
-    const isNow = i === months.length - 1;
-    return `<div class="hm-trw${isNow ? ' now' : ''}">
-      <span class="m">${mo}월${isNow ? '<i>진행 중</i>' : ''}</span>
-      <span class="b"><i class="t-${tone}" style="width:${(Math.abs(values[i]) / max) * 100}%"></i></span>
-      <span class="v mono">${formatKrw(values[i])}</span>
-    </div>`;
-  }).join('');
-  /* 이번 달은 아직 안 끝났으니 '지난달 대비'는 지난 두 달로 비교한다 —
-     반쯤 지난 달을 다 지난 달과 견주면 늘 줄어든 것처럼 보인다. */
-  const cmp = values.length >= 3
-    ? { a: values[values.length - 3], b: values[values.length - 2],
-        la: months[months.length - 3], lb: months[months.length - 2] }
-    : null;
-  let foot = '';
-  if (cmp) {
-    const dv = cmp.b - cmp.a;
-    const g = dv === 0 ? null : (dv > 0) === !!goodUp;
-    foot = `<div class="hm-trd">${Number(cmp.la.split('-')[1])}월 → ${Number(cmp.lb.split('-')[1])}월
-      <b class="${g === null ? '' : g ? 'up' : 'down'}">${dv === 0 ? '동일'
-        : (dv > 0 ? '+' : '−') + formatKrw(Math.abs(dv))}</b></div>`;
-  }
-  return `<section class="hm-box">
-    <div class="hm-hd"><b>${title}</b><span>${note}</span></div>
-    <div class="hm-tr">${rows}</div>
-    ${foot}
+/* 반원 게이지. pct = 채울 비율(0~), mark = 눈금 위치(0~100, 달이 얼마나 지났는지 등) */
+function hmGauge(pct, tone, label, mark) {
+  const p = Math.max(0, Math.min(100, pct || 0));
+  const tick = (mark === null || mark === undefined) ? '' : (() => {
+    const a = Math.PI * (1 - Math.max(0, Math.min(100, mark)) / 100);
+    const x1 = 56 + Math.cos(a) * 38, y1 = 56 - Math.sin(a) * 38;
+    const x2 = 56 + Math.cos(a) * 54, y2 = 56 - Math.sin(a) * 54;
+    return `<line class="tk" x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"/>`;
+  })();
+  return `<div class="hm-gauge g-${tone}">
+    <svg viewBox="0 0 112 64" aria-hidden="true">
+      <path class="tr" d="M10 56 A46 46 0 0 1 102 56" pathLength="100"/>
+      ${p > 0 ? `<path class="fl" d="M10 56 A46 46 0 0 1 102 56" pathLength="100" stroke-dasharray="${p.toFixed(1)} 100"/>` : ''}
+      ${tick}
+    </svg>
+    <b class="mono">${Math.round(pct || 0)}%</b><span>${label}</span>
+  </div>`;
+}
+
+/* 상자 하나 */
+function hmStatBox({ title, note, go, big, bigTone, sub, desc, gauge }) {
+  return `<section class="hm-box hm-stat${gauge ? ' has-g' : ''}">
+    <div class="hm-hd"><b>${title}</b>${go ? `<button class="hm-lnk" data-go="${go}">${note} ›</button>` : `<span>${note}</span>`}</div>
+    <div class="hm-sb">
+      <div class="hm-st">
+        <div class="hm-big mono${bigTone ? ' ' + bigTone : ''}">${big}${sub ? `<small>${sub}</small>` : ''}</div>
+        <div class="hm-desc">${desc.filter(Boolean).map(l => `<p>${l}</p>`).join('')}</div>
+      </div>
+      ${gauge || ''}
+    </div>
   </section>`;
 }
+
+const hmSigned = (n) => (n < 0 ? '−' : '') + formatKrw(Math.abs(n));
 
 function renderHomePage(container, data, d) {
   const ledger = data.ledger || [];
   const now = new Date();
   const mk = thisMonthKey();
-  const dayKey = todayDayKey();
 
-  const isIncome  = (r) => r.major.includes('수입');
   const isExpense = (r) => r.major.includes('지출');
   const isInvTr   = (r) => r.major.includes('이체') && String(r.minor || '').includes('투자');
   const isEmgTr   = (r) => r.major.includes('이체') && String(r.minor || '').includes('비상금');
 
-  /* --- 이번 달 --- */
   const curM = ledger.filter(r => ledgerMonthKey(r.date) === mk);
-  const mIn  = curM.filter(isIncome).reduce((a, r) => a + r.amount, 0);
-  const mOut = curM.filter(isExpense).reduce((a, r) => a + netExpenseOf(r), 0);
-  const mNet = mIn - mOut;
-  const mRate = mIn > 0 ? (mNet / mIn) * 100 : null;
+  const curExp = curM.filter(isExpense);
   const days = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-  /* 더 써도 되는 돈 = 변동 예산 − 변동 지출. 고정(📌) 예산과 그 지출은 따로 센다.
-     예산을 안 적었으면 최근 12개월 평균 지출을 예산으로 본다 */
-  const bs = budgetSplit(data, curM.filter(isExpense));
-  const hasBudget = bs.has;
-  const budget = bs.varBudget;
-  const vOut = bs.varSpent;
-  const left = bs.left;
   const daysLeft = days - now.getDate() + 1;
-  const perDay = left > 0 ? left / daysLeft : 0;
-  const usedPct = budget > 0 ? Math.min(100, (vOut / budget) * 100) : 0;
-  const hasFixed = bs.fixedBudget > 0;
   const dayPct = (now.getDate() / days) * 100;
-  const todayOut = ledger.filter(r => ledgerDayKey(r.date) === dayKey && isExpense(r)).reduce((a, r) => a + netExpenseOf(r), 0);
 
-  /* --- 최근 3달 --- */
-  const months = hmRecentMonths(3);
+  /* 지난 3달 평균 — 이번 달은 아직 안 끝났으니 빼고 센다 */
+  const prev = hmPrevMonths(3);
   const monthSum = (key, pick, val) => ledger
     .filter(r => ledgerMonthKey(r.date) === key && pick(r))
-    .reduce((a, r) => a + (val ? val(r) : Math.abs(r.amount)), 0);
-  const fixedSeries = months.map(k => monthSum(k, r => r.fixed && isExpense(r), netExpenseOf));
-  /* 이체는 출금(음수)도 섞여 있으므로 부호를 살려 순입금으로 센다 — 리포트 화면들과 같은 숫자 */
-  const invSeries   = months.map(k => monthSum(k, isInvTr, r => r.amount));
-  const emgSeries   = months.map(k => monthSum(k, isEmgTr, r => r.amount));
+    .reduce((a, r) => a + val(r), 0);
+  const avg3 = (pick, val) => prev.reduce((a, k) => a + monthSum(k, pick, val), 0) / prev.length;
+
+  /* ① 이번 달 지출 — 전체 예산 대비 */
+  const bs = budgetSplit(data, curExp);
+  const mOut = bs.spent;
+  const budget = bs.total;
+  const leftAll = budget - mOut;
+  const spendPct = budget > 0 ? (mOut / budget) * 100 : 0;
+  const varLeft = bs.left;
+  const perDay = varLeft > 0 ? varLeft / daysLeft : 0;
+  const box1 = hmStatBox({
+    title: '이번 달 지출', note: `${daysLeft}일 남음`, go: 'report/monthly',
+    big: formatKrw(mOut),
+    desc: [
+      budget > 0
+        ? (leftAll >= 0 ? `예산 ${formatKrw(budget)} 중 <b>${formatKrw(leftAll)}</b> 남음`
+                        : `예산 ${formatKrw(budget)}보다 <b class="out">${formatKrw(-leftAll)}</b> 더 씀`)
+          + (bs.has ? '' : ' (최근 12개월 평균)')
+        : '예산을 아직 안 정했어요',
+      bs.fixedBudget > 0
+        ? `고정 빼고 쓸 수 있는 돈 ${hmSigned(varLeft)} · 하루 ${formatKrw(perDay)}`
+        : `하루 ${formatKrw(perDay)}씩 쓸 수 있어요`
+    ],
+    gauge: budget > 0 ? hmGauge(spendPct, mOut > budget * dayPct / 100 ? 'over' : 'spend', '예산', dayPct) : ''
+  });
+
+  /* ② 고정비 — 나간 돈 + 아직 안 나간 📌 예산 = 이번 달 예상 */
+  let fxExpected = 0;
+  if (bs.has) {
+    const lineSpent = (cat, item) => curExp
+      .filter(r => (r.minor || '기타') === cat && (item === null || (r.item || '기타') === item))
+      .reduce((a, r) => a + netExpenseOf(r), 0);
+    Object.entries(state.budgets || {}).forEach(([cat, g]) => {
+      if (g.fixed) { fxExpected += Math.max(budgetCatAmount(g), lineSpent(cat, null)); return; }
+      Object.entries(g.items || {}).forEach(([it, x]) => {
+        if (x.fixed) fxExpected += Math.max(Number(x.amount) || 0, lineSpent(cat, it));
+      });
+    });
+  }
+  fxExpected = Math.max(fxExpected, bs.fixedSpent);
+  const fxAvg = avg3(r => r.fixed && isExpense(r), netExpenseOf);
+  const fxRest = fxExpected - bs.fixedSpent;
+  const box2 = hmStatBox({
+    title: '이번 달 고정비', note: '📌 예산', go: 'set/budget',
+    big: formatKrw(bs.fixedSpent),
+    sub: fxExpected > 0 ? ` / 예상 ${formatKrw(fxExpected)}` : '',
+    desc: [
+      fxExpected > 0 ? (fxRest > 0 ? `아직 안 나간 돈 ${formatKrw(fxRest)}` : '이번 달 고정비는 다 나갔어요') : '예산에 📌 고정 분류가 없어요',
+      `지난 3달 평균 ${formatKrw(fxAvg)}`
+    ]
+  });
+
+  /* ③④ 이체 — 순입금(출금은 빼고)으로 센다. 예상·목표는 설정 › 적립의 대상별 월 기댓값 */
+  const trGoals = state.transferGoals || {};
+  const trBox = (pick) => {
+    const cur = curM.filter(pick).reduce((a, r) => a + r.amount, 0);
+    const avg = avg3(pick, r => r.amount);
+    const dests = [...new Set(ledger.filter(pick).map(r => r.item || r.minor || '기타'))];
+    const goal = dests.reduce((a, k) => a + (Number(trGoals[k]) || 0), 0);
+    return { cur, avg, goal, plan: goal || Math.max(avg, 0), fromAvg: !goal };
+  };
+
+  const inv = trBox(isInvTr);
+  const invRest = inv.plan - inv.cur;
+  const box3 = hmStatBox({
+    title: '이번 달 투자 이체금', note: '적립', go: 'set/saving',
+    big: hmSigned(inv.cur), bigTone: inv.cur < 0 ? 'out' : '',
+    sub: inv.plan > 0 ? ` / 예상 ${formatKrw(inv.plan)}` : '',
+    desc: [
+      inv.plan > 0 ? (invRest > 0 ? `앞으로 보낼 돈 ${formatKrw(invRest)}` : '이번 달 몫은 다 보냈어요')
+        + (inv.fromAvg ? ' (예상 = 3달 평균)' : '') : '',
+      `지난 3달 평균 ${hmSigned(inv.avg)}`
+    ]
+  });
+
+  const emg = trBox(isEmgTr);
+  const emgPct = emg.plan > 0 ? (Math.max(emg.cur, 0) / emg.plan) * 100 : 0;
+  const box4 = hmStatBox({
+    title: '이번 달 비상금 이체금', note: '적립', go: 'set/saving',
+    big: hmSigned(emg.cur), bigTone: emg.cur < 0 ? 'out' : '',
+    sub: emg.plan > 0 ? ` / ${emg.fromAvg ? '예상' : '목표'} ${formatKrw(emg.plan)}` : '',
+    desc: [
+      emg.plan > 0
+        ? (emg.cur < 0 ? `이번 달은 ${formatKrw(-emg.cur)} 꺼내 썼어요`
+          : emg.cur >= emg.plan ? '이번 달 목표 채웠어요' : `목표까지 ${formatKrw(emg.plan - emg.cur)}`)
+          + (emg.fromAvg ? ' (목표 = 3달 평균)' : '')
+        : '적립 목표를 아직 안 정했어요',
+      `지난 3달 평균 ${hmSigned(emg.avg)}`
+    ],
+    gauge: emg.plan > 0 ? hmGauge(emgPct, 'emg', '목표', null) : ''
+  });
 
   const checks = hmChecks(data);
   const sig = checks.map(c => c.text).join('|');
@@ -109,28 +177,8 @@ function renderHomePage(container, data, d) {
       ${showChecks ? `<div class="hm-checks"><b>확인할 것</b>${checks.map(c =>
         `<button class="hm-chk" data-go="${c.go}">${c.text}</button>`).join('')}
         <button class="hm-chkx" id="hm-chkx" title="이 내용이 바뀔 때까지 숨기기">숨기기</button></div>` : ''}
-      <section class="hm-box hm-main">
-        <div class="hm-hd"><b>이번 달 더 쓸 수 있는 돈</b>
-          <span>${monthKeyLabel(mk)} · ${daysLeft}일 남음</span></div>
-        <div class="hm-tri">
-          <div><span>남은 예산</span><b class="mono" style="color:${left >= 0 ? 'var(--net-text)' : 'var(--expense-text)'}">${left >= 0 ? '' : '−'}${formatKrw(Math.abs(left))}</b></div>
-          <div><span>하루에</span><b class="mono">${left > 0 ? formatKrw(perDay) : '0원'}</b></div>
-          <div><span>${hasFixed ? '쓴 돈 (고정 제외)' : '쓴 돈'}</span><b class="mono out">${formatKrw(vOut)}</b></div>
-        </div>
-        ${budget > 0 ? `<div class="hm-budbar" title="예산 ${formatKrw(budget)} 중 ${usedPct.toFixed(0)}% 사용 · 달의 ${dayPct.toFixed(0)}% 지남">
-          <i class="${vOut > budget * dayPct / 100 ? 'over' : ''}" style="width:${usedPct}%"></i><em style="left:${dayPct}%"></em></div>` : ''}
-        <div class="hm-paceS">${left < 0 ? `예산보다 <b class="out">${formatKrw(-left)}</b> 더 썼어요 · ` : ''}${hasFixed
-            ? `쓸 수 있는 예산 ${formatKrw(budget)} · 📌 고정 ${formatKrw(bs.fixedSpent)} / ${formatKrw(bs.fixedBudget)} 나감${bs.fixedSpent > bs.fixedBudget ? ` <b class="out">(${formatKrw(bs.fixedSpent - bs.fixedBudget)} 초과)</b>` : ''} · 전체 ${formatKrw(mOut)} / ${formatKrw(bs.total)}`
-            : `예산 ${formatKrw(budget)}${hasBudget ? '' : ' (최근 12개월 평균)'}`}
-          · 오늘 ${formatKrw(todayOut)} 씀 · 수입 ${formatKrw(mIn)}${mRate === null ? '' : ` · 저축률 <b>${mRate.toFixed(1)}%</b>`} ·
-          <button class="hm-lnk" data-go="${hasBudget ? 'report/monthly' : 'set/budget'}">${hasBudget ? '월간 리포트' : '예산 정하기'}</button></div>
-      </section>
-
-      <div class="hm-row hm-row3">
-      ${hmTrendCard('고정비', '최근 3달', months, fixedSeries, 'fx', false)}
-      ${hmTrendCard('투자 이체', '최근 3달', months, invSeries, 'inv', true)}
-      ${hmTrendCard('비상금 이체', '최근 3달', months, emgSeries, 'emg', true)}
-      </div>
+      <div class="hm-row hm-row2">${box1}${box2}</div>
+      <div class="hm-row hm-row2">${box3}${box4}</div>
     </div>`;
 
   const hx = container.querySelector('#hm-chkx');
